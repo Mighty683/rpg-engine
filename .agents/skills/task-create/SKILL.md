@@ -1,11 +1,25 @@
 ---
 name: task-create
-description: Create a task record following the repository’s task workflow.
+description: Create or update a task navigation page linking its phase documents.
 ---
 
 # Task Create
 
-Read the project's task and product guidance. Create the task using its existing naming, metadata, status, and index conventions. Record the actual creation date and preserve it on later edits. Add only requested phases and link existing phase documents in workflow order; do not invent placeholders or reuse retired identifiers.
+Use the existing task directory or a descriptive kebab-case name. Link only existing documents. Preserve creation metadata; when reducing an existing summary, move unique detail to its owning phase and update references.
 
+## Example: `docs/tasks/<task>/summary.md`
 
-Write the result to `docs/tasks/<task>/create.md`, using the existing task directory or a descriptive kebab-case name. Preserve existing content and creation metadata, link relevant phase documents, and ask before overwriting unrelated work.
+```markdown
+# <task title>
+
+**Created:** 2026-11-04
+**Status:** Proposed
+
+## Task documents
+
+1. [User story](story.md)
+2. [UX journey](ux.md)
+3. [UI solution](ui.md)
+4. [Technical design](tech.md)
+5. [Implementation plan](plan.md)
+```

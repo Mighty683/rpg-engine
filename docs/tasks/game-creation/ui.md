@@ -1,8 +1,8 @@
 # Game creation — UI solution
 
 **Created:** 2026-11-04  
-**Status:** Implemented; see the [recap](recap.md) for verification results and limits.  
-**Related:** [UX journey](ux.md) · [Recap](recap.md)
+
+**Related:** [UX journey](ux.md) · [Task summary](summary.md)
 
 ## Scope and visual approach
 

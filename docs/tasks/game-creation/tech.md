@@ -1,8 +1,8 @@
 # Game creation — technical design
 
 **Created:** 2026-11-04  
-**Status:** Implemented; verification results and limits are recorded in the [recap](recap.md).  
-**Related:** [UX journey](ux.md) · [UI solution](ui.md) · [Recap](recap.md)
+
+**Related:** [UX journey](ux.md) · [UI solution](ui.md) · [Task summary](summary.md)
 
 ## Scope and current foundation
 
@@ -57,7 +57,7 @@ Differentiate validation/known rejection from a transport interruption or server
 
 ## Verification requirements
 
-Follow [testing conventions](../../spec/testing.md): Vitest unit tests cover input branches; browser tests cover complete journeys without duplicating unit cases. The [recap](recap.md) records the executed checks and coverage limits.
+Follow [testing conventions](../../spec/testing.md): Vitest unit tests cover input branches; browser tests cover complete journeys without duplicating unit cases. The [implementation plan](plan.md#verification-results) records the executed checks and coverage limits.
 
 - Unit/API: valid creation, empty or over-limit names, invalid system ID, and empty versus failed list.
 - Database/browser: create and list a game, verify it survives restart, and verify an unfinished form is lost on reload. Check validation and a failed or uncertain save without falsely reporting success.

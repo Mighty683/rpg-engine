@@ -1,7 +1,6 @@
 # AI provider configuration — implementation plan
 
 **Created:** 2026-11-04  
-**Status:** Proposed; not implemented.  
 **Inputs:** [Story](story.md) · [Technical clarification](tech.md) · [Minimal chat UI](ui.md) · [Code conventions](../../spec/code-conventions.md) · [Testing conventions](../../spec/testing.md)
 
 ## Scope and decisions

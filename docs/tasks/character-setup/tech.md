@@ -1,7 +1,6 @@
 # Character setup — reusable primitives and persistence specification
 
 **Created:** 2026-11-04  
-**Status:** Earlier technical proposal; requires reassessment after the [restart](create.md). No schema or implementation delivered.
 **Scope:** System-independent character setup primitives, validated against the supplied Fabula Ultima PC specification. This document is input to a later PostgreSQL/Drizzle schema, not an implementation plan.
 
 ## Requirements and evidence

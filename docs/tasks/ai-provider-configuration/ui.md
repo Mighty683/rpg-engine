@@ -1,7 +1,6 @@
 # AI chat — minimal UI solution
 
 **Created:** 2026-11-04  
-**Status:** Proposed design; not implemented.  
 **Related:** [Story](story.md) · [Technical clarification](tech.md)
 
 ## Scope and basis

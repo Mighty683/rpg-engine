@@ -1,13 +1,12 @@
 # Character setup — UX journey
 
 **Created:** 2026-11-04
-**Status:** Proposed; not validated with GMs.
 
 ## Evidence and current flow
 
 The [story](story.md) establishes the GM's goal. The supplied Fabula Ultima PC specification describes the creation procedure and permits revisiting choices; the remaining rule data will be supplied in a later task. The [UX guidance](../../spec/ux.md) assumes a single GM and a multi-system product.
 
-The current [games view](../../../packages/frontend/src/modules/games/GamesView.vue) lists games and creates one with a permanent system choice. It does not open a game; the [system catalog](../../../packages/backend/src/modules/rpg-systems/catalog.ts) currently contains Dungeons & Dragons 5e only. There is no player or character flow in the inspected frontend. The saved-game foundation is described in the [game creation recap](../game-creation/recap.md). This journey proposes additions; it does not claim they exist.
+The current [games view](../../../packages/frontend/src/modules/games/GamesView.vue) lists games and creates one with a permanent system choice. It does not open a game; the [system catalog](../../../packages/backend/src/modules/rpg-systems/catalog.ts) currently contains Dungeons & Dragons 5e only. There is no player or character flow in the inspected frontend. The saved-game foundation is described in the [game creation task](../game-creation/summary.md). This journey proposes additions; it does not claim they exist.
 
 ## Journey and screens
 

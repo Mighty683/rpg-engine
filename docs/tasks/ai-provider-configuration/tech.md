@@ -1,7 +1,6 @@
 # AI provider configuration — technical clarification
 
 **Created:** 2026-11-04  
-**Status:** Proposed; not implemented.  
 **Story:** [AI provider configuration](story.md)
 
 ## Scope and repository foundation

@@ -5,10 +5,44 @@ description: Plan implementation work with ownership, dependency waves, and veri
 
 # Task Plan
 
-- Read existing task phases and inspect affected dependencies. Follow the project's task conventions.
-- Structure the plan in clear dependency-ordered waves. Give each task concrete inputs, outputs, completion checks and an assigned agent or owner.
-- Identify tasks that can run in parallel and those that must wait. Give parallel agents exclusive edit boundaries; assign one owner for shared contracts, shared files and integration.
-- Scale agents and waves to the work. Use serial tasks when parallelism adds needless overhead.
-- Include relevant formatting, analysis, tests and runtime checks.
-- Writing a plan does not authorize dispatching agents. Workers must accommodate others' edits and never revert them.
-- Write the result to `docs/tasks/<task>/plan.md`, using the existing task directory or a descriptive kebab-case name. Preserve existing content and creation metadata, link relevant phase documents, and ask before overwriting unrelated work.
+Check the task phases against current dependencies. Scale sequencing and verification to the work. For parallel work, assign exclusive edit boundaries and one owner for shared contracts and integration. Planning does not authorize dispatching agents. Each wave should deliver working part of application and leave it in state for further development.
+Tests are created at end of wave when whole part is integrated.
+
+## Example: `docs/tasks/<task>/plan.md`
+
+```markdown
+# Game creation — implementation plan
+
+**Created:** 2026-11-04
+
+## Wave 1
+Goal: <goal of wave>
+Acceptance criteria: Table of tests to be created at end of wave
+
+
+### Task A
+Area: Backend
+Bounduary: modules connected to task, not list of files
+Task: task description
+Needs: -
+
+### Task B
+Area: Backend
+Bounduary: modules connected to task, not list of files
+Task: task description
+Needs: -
+
+## Wave 2
+
+### Task A
+Area: Frontend
+Bounduary: modules connected to task, not list of files
+Task: task description 
+Needs: Wave-1
+
+### Task B
+Area: Frontend
+Bounduary: modules connected to task, not list of files
+Task: task description 
+Needs: Wave-1-B
+```

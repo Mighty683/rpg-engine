@@ -1,9 +1,7 @@
 # Game creation — implementation plan
 
 **Created:** 2026-11-04  
-**Completed:** 2026-11-04  
-**Status:** Finished.  
-**Inputs:** [UX journey](ux.md) · [UI solution](ui.md) · [Technical design](tech.md) · [Recap](recap.md) · [Code conventions](../../spec/code-conventions.md)
+**Inputs:** [UX journey](ux.md) · [UI solution](ui.md) · [Technical design](tech.md) · [Code conventions](../../spec/code-conventions.md)
 
 ## Delivered scope
 
@@ -16,17 +14,23 @@ The first screen lists saved games and provides game creation. A game requires a
 - Persistence: PostgreSQL, parameterized queries, and an initial SQL migration. Local database configuration, migration, and startup commands are documented in the [README](../../../README.md).
 - HTTP contracts: list games, list available systems, and create a game; validation and error responses follow the [technical design](tech.md).
 
-## Completed waves
+## Implementation waves
 
-| Wave                                       | Status   | Result                                                                                                                                                                                              |
-| ------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — contracts and foundation               | Complete | Express application/server, TypeScript checks, database connection and migration, and frontend API proxy. Root development/build commands still target the frontend; backend commands are explicit. |
-| 2A — game persistence and service boundary | Complete | Module-owned Arrow Express controllers, validated game creation, deterministic listing, catalog label resolution, and no system-change operation.                                                   |
-| 2B — first screen and creation flow        | Complete | Nuxt UI list and form, loading/empty/error states, fixed-system warning, validation, pending submission, success toast, discard confirmation, and draft-preserving unknown-outcome recovery.        |
-| 3 — integrate and document                 | Complete | Application wiring, documented local setup and deployment limits, component browser tests with mocked API responses, and a separate end-to-end package using Cucumber.js through Vitest.            |
+| Wave                                       | Result                                                                                                                                                                                              |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — contracts and foundation               | Express application/server, TypeScript checks, database connection and migration, and frontend API proxy. Root development/build commands still target the frontend; backend commands are explicit. |
+| 2A — game persistence and service boundary | Module-owned Arrow Express controllers, validated game creation, deterministic listing, catalog label resolution, and no system-change operation.                                                   |
+| 2B — first screen and creation flow        | Nuxt UI list and form, loading/empty/error states, fixed-system warning, validation, pending submission, success toast, discard confirmation, and draft-preserving unknown-outcome recovery.        |
+| 3 — integrate and document                 | Application wiring, documented local setup and deployment limits, component browser tests with mocked API responses, and a separate end-to-end package using Cucumber.js through Vitest.            |
 
 ## Verification results
 
-Latest suite run on 2026-11-04: **4 API/unit tests, 1 frontend component browser test, and 1 end-to-end scenario passed**. The end-to-end setup starts the actual frontend and backend with an isolated PostgreSQL schema. Builds, type checks, and `pnpm check` also passed during implementation.
+Latest test run on 2026-11-04:
 
-See the [recap](recap.md) for coverage, persistence evidence, and remaining verification limits.
+| Suite                      | Result            | Coverage                                                                                                                                                                     |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API/unit                   | 4 passed          | Valid creation and trimming; blank/over-limit names and invalid systems; empty versus failed listing; malformed JSON; catalog endpoint; sanitized save failure.              |
+| Frontend component browser | 1 passed          | A failed list request can be retried to reach the empty state, using mocked API responses without a backend.                                                                 |
+| Cucumber end-to-end        | 1 scenario passed | Real frontend, backend, and isolated PostgreSQL schema: visible create button, named game and selected system, success toast, list entry, and persistence after page reload. |
+
+Frontend build, backend and end-to-end type checks, and `pnpm check` passed during implementation. A separate manual database check confirmed that a saved game survived a PostgreSQL container restart.
