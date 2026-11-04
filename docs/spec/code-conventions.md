@@ -8,3 +8,4 @@
 - Document if needed public functions, types, classes, and non-obvious fields with their purpose, rationale, business context, and relevant design tradeoffs.
 - Do not add line-by-line comments inside functions. The code itself must be clear enough to explain the mechanics.
 - Start code files with a purpose and domain header when the language and repository conventions support it. Record consequential architectural decisions and relationships to other domain components which cannot be interpolated from code itself; do not add boilerplate headers where they would reduce clarity.
+- We split code into business domain folders called modules placed in `src/modules`
