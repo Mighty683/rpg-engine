@@ -9,3 +9,4 @@
 - Start code files with a purpose and domain header when the language and repository conventions support it. Record consequential architectural decisions and relationships to other domain components which cannot be interpolated from code itself; do not add boilerplate headers where they would reduce clarity.
 - We split code into business domain folders called modules placed in `src/modules`
 - Reusable code elements of are exported to `src/shared` to be reused
+- External API/SDKs should be wrapped in corruption layer so they are easy to replace
