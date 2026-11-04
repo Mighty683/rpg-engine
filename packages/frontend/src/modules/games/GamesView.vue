@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { h, nextTick, onMounted, ref } from "vue";
+import { useField, useForm } from "vee-validate";
+import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
 
 type System = { id: string; name: string };
@@ -7,14 +9,34 @@ type Game = { id: string; name: string; system: System; createdAt: string };
 type ApiError = { error?: { fields?: Record<string, string>; message?: string } };
 
 const toast = useToast();
+const { t } = useI18n();
+const {
+  handleSubmit,
+  resetForm,
+  setErrors,
+  errors: fields,
+} = useForm({
+  initialValues: { name: "", systemId: "" },
+});
+const { value: name } = useField<string>(
+  "name",
+  (value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return t("games.nameRequired");
+    return Array.from(trimmed).length <= 20 || t("games.nameTooLong");
+  },
+  { validateOnValueUpdate: false },
+);
+const { value: systemId } = useField<string>(
+  "systemId",
+  (value) => Boolean(value) || t("games.systemRequired"),
+  { validateOnValueUpdate: false },
+);
 const view = ref<"list" | "form">("list");
 const games = ref<Game[]>([]);
 const systems = ref<System[]>([]);
 const listState = ref<"loading" | "ready" | "error">("loading");
 const systemState = ref<"loading" | "ready" | "error">("loading");
-const name = ref("");
-const systemId = ref("");
-const fields = ref<Record<string, string>>({});
 const saving = ref(false);
 const outcome = ref<"" | "failed" | "unknown">("");
 const checking = ref(false);
@@ -58,9 +80,7 @@ async function showList() {
   listHeading.value?.focus();
 }
 function clearDraft() {
-  name.value = "";
-  systemId.value = "";
-  fields.value = {};
+  resetForm();
   outcome.value = "";
   checking.value = false;
 }
@@ -82,55 +102,56 @@ function discard() {
   clearDraft();
   void showList();
 }
-async function submit() {
-  fields.value = {};
-  const trimmed = name.value.trim();
-  if (!trimmed) fields.value.name = "Enter a game name";
-  else if (Array.from(trimmed).length > 20) fields.value.name = "Use 20 characters or fewer";
-  if (!systemId.value) fields.value.systemId = "Select an RPG system";
-  if (Object.keys(fields.value).length) {
-    await nextTick();
-    (fields.value.name ? nameInput.value?.inputRef : systemInput.value?.triggerRef)?.focus();
-    return;
-  }
-  saving.value = true;
-  outcome.value = "";
-  try {
-    const response = await fetch("/api/games", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: trimmed, systemId: systemId.value }),
-    });
-    if (response.status === 400 || response.status === 422) {
-      const data: ApiError = await response.json();
-      fields.value = data.error?.fields ?? {};
-      outcome.value = "failed";
-      await nextTick();
-      (fields.value.name
-        ? nameInput.value?.inputRef
-        : fields.value.systemId
-          ? systemInput.value?.triggerRef
-          : undefined
-      )?.focus();
-      return;
-    }
-    if (!response.ok) {
+const submit = handleSubmit(
+  async (values) => {
+    const trimmed = values.name.trim();
+    saving.value = true;
+    outcome.value = "";
+    try {
+      const response = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed, systemId: values.systemId }),
+      });
+      if (response.status === 400 || response.status === 422) {
+        const data: ApiError = await response.json();
+        setErrors(data.error?.fields ?? {});
+        outcome.value = "failed";
+        await nextTick();
+        (fields.value.name
+          ? nameInput.value?.inputRef
+          : fields.value.systemId
+            ? systemInput.value?.triggerRef
+            : undefined
+        )?.focus();
+        return;
+      }
+      if (!response.ok) {
+        outcome.value = "unknown";
+        return;
+      }
+      const data: { game: Game } = await response.json();
+      toast.add({
+        title: h(
+          "span",
+          { "data-testid": "game-created-toast" },
+          t("games.created", { name: data.game.name }),
+        ),
+        color: "success",
+      });
+      clearDraft();
+      await showList();
+    } catch {
       outcome.value = "unknown";
-      return;
+    } finally {
+      saving.value = false;
     }
-    const data: { game: Game } = await response.json();
-    toast.add({
-      title: h("span", { "data-testid": "game-created-toast" }, `Game created: ${data.game.name}.`),
-      color: "success",
-    });
-    clearDraft();
-    await showList();
-  } catch {
-    outcome.value = "unknown";
-  } finally {
-    saving.value = false;
-  }
-}
+  },
+  async ({ errors }) => {
+    await nextTick();
+    (errors.name ? nameInput.value?.inputRef : systemInput.value?.triggerRef)?.focus();
+  },
+);
 function checkGames() {
   checking.value = true;
   void showList();
@@ -144,23 +165,27 @@ onMounted(() => {
   <div class="max-w-2xl space-y-6">
     <template v-if="view === 'list'">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 ref="listHeading" tabindex="-1" class="text-3xl font-semibold">Games</h1>
-        <UButton v-if="!checking" data-testid="open-game-creation" @click="showForm"
-          >Create game</UButton
-        >
-        <UButton v-else @click="showForm">Return to setup</UButton>
+        <h1 ref="listHeading" tabindex="-1" class="text-3xl font-semibold">
+          {{ t("games.title") }}
+        </h1>
+        <UButton v-if="!checking" data-testid="open-game-creation" @click="showForm">{{
+          t("games.create")
+        }}</UButton>
+        <UButton v-else @click="showForm">{{ t("games.returnToSetup") }}</UButton>
       </div>
       <p v-if="checking" role="status">
-        Your setup is still available. A retry may create a duplicate.
+        {{ t("games.setupAvailable") }}
       </p>
       <div aria-live="polite">
-        <p v-if="listState === 'loading'">Loading games…</p>
+        <p v-if="listState === 'loading'">{{ t("games.loading") }}</p>
         <div v-else-if="listState === 'error'" class="space-y-3">
-          <p data-testid="games-load-error">Could not load games.</p>
-          <UButton data-testid="retry-games" variant="outline" @click="loadGames">Retry</UButton>
+          <p data-testid="games-load-error">{{ t("games.loadError") }}</p>
+          <UButton data-testid="retry-games" variant="outline" @click="loadGames">{{
+            t("games.retry")
+          }}</UButton>
         </div>
         <p v-else-if="games.length === 0" data-testid="games-empty" class="text-muted">
-          No games yet. Create your first game.
+          {{ t("games.empty") }}
         </p>
         <ul v-else class="divide-y divide-default rounded-lg border border-default">
           <li
@@ -176,15 +201,16 @@ onMounted(() => {
       </div>
     </template>
     <template v-else>
-      <h1 class="text-3xl font-semibold">Create game</h1>
-      <form class="space-y-6" novalidate @submit.prevent="submit">
+      <h1 class="text-3xl font-semibold">{{ t("games.create") }}</h1>
+      <form class="space-y-6" novalidate @submit="submit">
         <fieldset :disabled="saving || discarding" class="space-y-5">
           <UFormField
-            label="Game name"
+            data-testid="game-name-field"
+            :label="t('games.name')"
             name="name"
             required
             :error="fields.name"
-            hint="Maximum 20 characters."
+            :hint="t('games.nameHint')"
           >
             <UInput
               id="game-name"
@@ -193,15 +219,15 @@ onMounted(() => {
               v-model="name"
               required
               class="w-full"
-              @update:model-value="delete fields.name"
+              @update:model-value="setErrors({ name: undefined })"
             />
           </UFormField>
           <UFormField
-            label="RPG system"
+            :label="t('games.system')"
             name="systemId"
             required
             :error="fields.systemId"
-            description="The RPG system cannot be changed after the game is created."
+            :description="t('games.systemDescription')"
           >
             <USelect
               id="system"
@@ -211,35 +237,38 @@ onMounted(() => {
               :items="systems"
               label-key="name"
               value-key="id"
-              placeholder="Select a system"
+              :placeholder="t('games.systemPlaceholder')"
               class="w-full"
               :disabled="systemState !== 'ready' || !systems.length"
-              @update:model-value="delete fields.systemId"
+              @update:model-value="setErrors({ systemId: undefined })"
             >
               <template #item-label="{ item }">
                 <span :data-testid="`game-system-option-${item.id}`">{{ item.name }}</span>
               </template>
             </USelect>
             <div aria-live="polite" class="mt-2">
-              <p v-if="systemState === 'loading'">Loading RPG systems…</p>
+              <p v-if="systemState === 'loading'">{{ t("games.systemsLoading") }}</p>
               <div v-else-if="systemState === 'error'" class="space-y-2">
-                <p>Could not load RPG systems.</p>
-                <UButton type="button" variant="outline" @click="loadSystems">Retry</UButton>
+                <p>{{ t("games.systemsError") }}</p>
+                <UButton type="button" variant="outline" @click="loadSystems">{{
+                  t("games.retry")
+                }}</UButton>
               </div>
-              <p v-else-if="!systems.length">No RPG systems are available.</p>
+              <p v-else-if="!systems.length">{{ t("games.systemsEmpty") }}</p>
             </div>
           </UFormField>
           <div role="status" aria-live="polite">
-            <p v-if="saving">Creating game…</p>
+            <p v-if="saving">{{ t("games.creating") }}</p>
             <p v-else-if="outcome === 'failed'">
-              Could not create game. Your entries are unchanged.
+              {{ t("games.createFailed") }}
             </p>
             <div v-else-if="outcome === 'unknown'" class="space-y-2">
               <p>
-                We couldn't confirm whether the game was created. Check the games list before trying
-                again.
+                {{ t("games.createUnknown") }}
               </p>
-              <UButton type="button" variant="outline" @click="checkGames">Check games</UButton>
+              <UButton type="button" variant="outline" @click="checkGames">{{
+                t("games.checkGames")
+              }}</UButton>
             </div>
           </div>
           <div class="flex flex-wrap gap-3">
@@ -247,17 +276,21 @@ onMounted(() => {
               type="submit"
               data-testid="submit-game"
               :disabled="systemState !== 'ready' || !systemId"
-              >Create game</UButton
+              >{{ t("games.create") }}</UButton
             >
-            <UButton type="button" variant="outline" @click="cancel">Cancel</UButton>
+            <UButton type="button" variant="outline" @click="cancel">{{
+              t("games.cancel")
+            }}</UButton>
           </div>
         </fieldset>
       </form>
-      <UModal v-model:open="discarding" title="Discard this game setup?" :close="false">
+      <UModal v-model:open="discarding" :title="t('games.discardTitle')" :close="false">
         <template #body>
           <div class="flex gap-3">
-            <UButton type="button" @click="keepEditing">Keep editing</UButton>
-            <UButton type="button" variant="outline" @click="discard">Discard</UButton>
+            <UButton type="button" @click="keepEditing">{{ t("games.keepEditing") }}</UButton>
+            <UButton type="button" variant="outline" @click="discard">{{
+              t("games.discard")
+            }}</UButton>
           </div>
         </template>
       </UModal>
