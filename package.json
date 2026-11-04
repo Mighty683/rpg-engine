@@ -7,7 +7,11 @@
     "dev": "pnpm --filter @rpg-engine/frontend dev",
     "build": "pnpm --filter @rpg-engine/frontend build",
     "preview": "pnpm --filter @rpg-engine/frontend preview",
-    "check": "pnpm --filter @rpg-engine/frontend check"
+    "lint": "vp lint",
+    "check": "vp check packages vite.config.ts package.json"
+  },
+  "devDependencies": {
+    "vite-plus": "1.5.0"
   },
   "devEngines": {
     "packageManager": {

@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "lint": "vp lint --no-error-on-unmatched-pattern",
+    "check": "vp check --no-error-on-unmatched-pattern"
+  },
   "dependencies": {
     "arrow-express": "4.0.0",
     "drizzle-orm": "0.45.4",

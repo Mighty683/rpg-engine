@@ -6,3 +6,6 @@ description: Research affected modules and document technical decisions for a ta
 # Task Tech
 
 Read available task phases, architecture guidance, relevant implementation and tests. Follow the project's documentation conventions. Record affected responsibilities, contracts and data flow, consequential decisions and tradeoffs, invariants, compatibility constraints, and blockers. Use module-level references; include exact APIs only where they settle a boundary. Leave sequencing to the implementation plan.
+
+
+Write the result to `docs/tasks/<task>/tech.md`, using the existing task directory or a descriptive kebab-case name. Preserve existing content and creation metadata, link relevant phase documents, and ask before overwriting unrelated work.
