@@ -1,12 +1,12 @@
 # Game creation — UI solution
 
 **Created:** 2026-11-04  
-**Status:** Proposed design; not implemented or tested.  
+**Status:** Implemented; see the [recap](recap.md) for verification results and limits.  
 **Related:** [UX journey](ux.md) · [Recap](recap.md)
 
 ## Scope and visual approach
 
-Replace the current [landing placeholder](../../../packages/frontend/src/App.vue) with a simple saved-games list and a creation view. The [UX journey](ux.md) defines the single-GM scope, database persistence, fixed RPG system, and deferred player and system-setup workflows. There is no separate story yet. The [GM persona](../../research/personas/game-master.md) and [interview](../../research/interviews/game-master.md) are simulated; they do not validate this design.
+The [application](../../../packages/frontend/src/App.vue) provides a simple saved-games list and a creation view. The [UX journey](ux.md) defines the single-GM scope, database persistence, fixed RPG system, and deferred player and system-setup workflows. There is no separate story yet. The [GM persona](../../research/personas/game-master.md) and [interview](../../research/interviews/game-master.md) are simulated; they do not validate this design.
 
 Retain the existing `UApp`, `UContainer`, and default theme surfaces and text tokens. Use existing Nuxt UI buttons, form controls, and feedback components with restrained spacing and borders; no new visual system is needed. Keep the content in a readable column that fits narrow screens, with controls wrapping rather than overflowing.
 
@@ -16,7 +16,7 @@ Retain the existing `UApp`, `UContainer`, and default theme surfaces and text to
 - Show each saved game's name and RPG system in a simple, non-interactive row. Do not imply a game can be opened, edited, or deleted; those actions are not required for now.
 - While loading, show **Loading games…**. If the list is empty, show **No games yet. Create your first game.** Keep the create button visible.
 - If loading fails, show **Could not load games.** and a **Retry** button. Do not show the empty state for a failed request. Creating remains available if its own dependencies are available.
-- After confirmed creation, return to the list, show **Game created: [name].**, and refresh the list. If the refresh fails, retain the success confirmation and show the list error rather than claiming the save failed.
+- After confirmed creation, return to the list, show a **Game created: [name].** success toast, and refresh the list. If the refresh fails, show the list error without retracting the confirmed save. The toast follows the [UI conventions](../../spec/ui.md).
 
 ## Create game view
 
@@ -30,18 +30,18 @@ Do not ask whether the game is a campaign or a single session, request player in
 
 ### Submission and feedback
 
-| State | Presentation and interaction |
-| --- | --- |
-| Missing or invalid input | On submission, show a specific message beside each affected field, such as **Enter a game name**, **Use 20 characters or fewer**, or **Select an RPG system**. Preserve all entries and focus the first invalid field. |
-| Saving | Show **Creating game…** and disable repeat submission and form changes until the outcome is known. Do not show success before the database confirms the save. |
-| Confirmed failure | Show **Could not create game. Your entries are unchanged.** Preserve entries and allow retry or cancellation. Include a useful, safe explanation when available. |
-| Unknown outcome | Show **We couldn't confirm whether the game was created. Check the games list before trying again.** Offer **Check games**; do not automatically retry or assert success or failure. Keep the draft in memory while checking, and offer **Return to setup**. A retry may create a duplicate. |
-| Confirmed success | Clear the draft only after confirmation, return to the list, and identify the created game as above. |
+| State                    | Presentation and interaction                                                                                                                                                                                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing or invalid input | On submission, show a specific message beside each affected field, such as **Enter a game name**, **Use 20 characters or fewer**, or **Select an RPG system**. Preserve all entries and focus the first invalid field.                                                                       |
+| Saving                   | Show **Creating game…** and disable repeat submission and form changes until the outcome is known. Do not show success before the database confirms the save.                                                                                                                                |
+| Confirmed failure        | Show **Could not create game. Your entries are unchanged.** Preserve entries and allow retry or cancellation. Include a useful, safe explanation when available.                                                                                                                             |
+| Unknown outcome          | Show **We couldn't confirm whether the game was created. Check the games list before trying again.** Offer **Check games**; do not automatically retry or assert success or failure. Keep the draft in memory while checking, and offer **Return to setup**. A retry may create a duplicate. |
+| Confirmed success        | Clear the draft only after confirmation, return to the list, and identify the created game as above.                                                                                                                                                                                         |
 
 ## Navigation, focus, and draft behavior
 
 - On entering the create view, focus the game-name input. Use normal Tab order through the name, system selection, primary action, and Cancel; submitting with Enter follows the form's validation and pending-state rules.
-- Cancel with no entered information returns to the list. If there are entries, ask **Discard this game setup?** with **Keep editing** and **Discard**; keeping returns focus to the initiating control, while discarding returns to the list without creating a game. Apply the same protection to in-app navigation away from a modified draft, except the explicit unknown-outcome check, which preserves it in memory.
+- Cancel with no entered information returns to the list. If there are entries, ask **Discard this game setup?** with **Keep editing** and **Discard**; keeping returns focus to the game-name input, while discarding returns to the list without creating a game. Apply the same protection to in-app navigation away from a modified draft, except the explicit unknown-outcome check, which preserves it in memory.
 - On validation failure, focus the first invalid input; associate each message with its field. On returning to the list, focus its heading or the create button; on returning from an outcome check, restore focus to the relevant form or status message.
 - Preserve input during validation, system-loading errors, confirmed save failure, and an in-app outcome check. Unfinished setup is lost on reload or application restart; do not promise recovery. Browser-controlled leave warnings may be used where supported, but cannot guarantee preservation on restart.
 - Announce loading, errors, and creation confirmation without moving focus unexpectedly. Do not treat the pending state as a successful save.
