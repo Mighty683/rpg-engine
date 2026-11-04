@@ -1,7 +1,7 @@
 # Character setup — reusable primitives and persistence specification
 
 **Created:** 2026-11-04  
-**Status:** Proposed technical design; no schema or implementation delivered.  
+**Status:** Earlier technical proposal; requires reassessment after the [restart](create.md). No schema or implementation delivered.
 **Scope:** System-independent character setup primitives, validated against the supplied Fabula Ultima PC specification. This document is input to a later PostgreSQL/Drizzle schema, not an implementation plan.
 
 ## Requirements and evidence
@@ -11,9 +11,11 @@
 - Support incomplete drafts, deterministic validation/calculation, and explicit rules versions.
 - The supplied `Fabula_Ultima_PC_Character_Spec.md`, §§1–8, provides the mechanical requirements for the first system. Its §9 model is a proposal, not a required engine architecture. Relevant constraints are restated below so this design does not depend on the temporary upload path.
 - The full rulebook and companion skill index were not supplied for this task. Individual skill/spell effects, full item catalogs, and heroic-skill eligibility remain unverified; do not invent them.
-- No story, UX, UI, or implementation plan exists for this task. No additional user research is claimed.
+- At the time of this proposal no story, UX, UI, or implementation plan existed. The restarted [story](story.md) and [UX journey](ux.md) now define the GM flow; this technical proposal has not been reconciled with them. No additional user research is claimed.
 
 ## Repository findings
+
+These findings are historical and no longer describe the current game-creation implementation. Reinspect the repository before relying on the proposal.
 
 - `packages/frontend` contains a Vue placeholder, with no character setup flow or domain model.
 - `packages/backend` declares Express, Arrow Express, PostgreSQL, and Drizzle dependencies, but has no server, source modules, schema, migrations, or tests.
