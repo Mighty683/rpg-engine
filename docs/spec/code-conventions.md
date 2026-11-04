@@ -10,3 +10,5 @@
 - We split code into business domain folders called modules placed in `src/modules`
 - Reusable code elements of are exported to `src/shared` to be reused
 - External API/SDKs should be wrapped in corruption layer so they are easy to replace
+
+- Add stable `data-testid` attributes to UI elements targeted by browser tests.

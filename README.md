@@ -1,13 +1,17 @@
 # RPG Engine
 
-A web application for running tabletop RPG sessions. Session management and persistence have not yet been implemented.
+A web application for running tabletop RPG sessions. Games can be created and saved in PostgreSQL; gameplay and session management are not yet implemented.
 
 ## Development
 
-The pnpm workspace contains the Vue application in `packages/frontend` and backend dependencies in `packages/backend`. Node.js and pnpm are required. The pnpm version is specified in the root `package.json`.
+The pnpm workspace contains the Vue application in `packages/frontend` and backend dependencies in `packages/backend`. Node.js 22.18 or newer and pnpm are required. The pnpm version is specified in the root `package.json`.
 
 ```sh
 pnpm install
+export DATABASE_URL=postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine
+pnpm --filter @rpg-engine/backend migrate
+pnpm --filter @rpg-engine/backend dev
+# In a second terminal:
 pnpm dev
 ```
 
@@ -15,7 +19,8 @@ Run `pnpm build` for frontend type checking and a production build. Run `pnpm ch
 
 ## Backend foundation
 
-The project includes Express and Arrow Express for routing, and Drizzle ORM, Drizzle Kit, and the `pg` driver for PostgreSQL. A backend server, database schema, and migrations have not yet been implemented.
+The backend listens on `127.0.0.1:3000` by default; set `PORT` to change it. The frontend development server proxies `/api` to port 3000. Run `pnpm --filter @rpg-engine/backend migrate` against the target database before starting the backend. The migration is safe to rerun for this initial schema. Run `pnpm --filter @rpg-engine/backend build` for backend type checking and `pnpm exec vp test` for unit/API tests. Browser tests use Chromium (`pnpm --filter @rpg-engine/tests exec playwright install chromium`). Run frontend component browser tests with `pnpm --filter @rpg-engine/frontend test:browser`; they mock the API and require no backend. Full end-to-end tests use Gherkin feature files and Cucumber.js through Vitest in `packages/tests`: set `TEST_DATABASE_URL` to a dedicated PostgreSQL database with permission to create schemas, then run `pnpm --filter @rpg-engine/tests test`. The end-to-end setup starts the real frontend and backend on temporary ports and creates and removes an isolated database schema; it does not use `DATABASE_URL`. For deployment, serve the frontend and proxy `/api` to the backend.
+
 
 ### Local PostgreSQL with Podman
 

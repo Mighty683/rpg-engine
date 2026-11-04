@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "lint": "vp lint --no-error-on-unmatched-pattern",
-    "check": "vp check --no-error-on-unmatched-pattern"
+    "check": "vp check --no-error-on-unmatched-pattern",
+    "dev": "node --watch src/server.ts",
+    "start": "node src/server.ts",
+    "migrate": "node src/migrate.ts",
+    "build": "tsc --noEmit"
   },
   "dependencies": {
     "arrow-express": "4.0.0",
