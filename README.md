@@ -4,14 +4,14 @@ A web application for running tabletop RPG sessions. Session management and pers
 
 ## Development
 
-The project uses Vue 3, TypeScript, Nuxt UI, and the project-local Vite+ toolchain. Node.js and pnpm are required. The pnpm version is specified in `package.json`.
+The pnpm workspace contains the Vue application in `packages/frontend` and backend dependencies in `packages/backend`. Node.js and pnpm are required. The pnpm version is specified in the root `package.json`.
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-Run `pnpm build` for type checking and a production build, or `pnpm exec vp check` for formatting and lint checks.
+Run `pnpm build` for frontend type checking and a production build, or `pnpm check` for frontend formatting and lint checks. Root `dev`, `build`, and `preview` commands target the frontend; use `pnpm --filter @rpg-engine/frontend <command>` to run its commands directly.
 
 ## Backend foundation
 
