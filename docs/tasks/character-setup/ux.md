@@ -2,6 +2,8 @@
 
 **Created:** 2026-11-04
 
+This journey describes the future rules-validated flow. The first release uses a named manual sheet with in-place editing. [UI prototype](ui.md) · [Technical design](tech.md) · [Implementation plan](plan.md)
+
 ## Evidence and current flow
 
 The [story](story.md) establishes the GM's goal. The supplied Fabula Ultima PC specification describes the creation procedure and permits revisiting choices; the remaining rule data will be supplied in a later task. The [UX guidance](../../spec/ux.md) assumes a single GM and a multi-system product.
