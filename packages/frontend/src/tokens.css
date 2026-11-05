@@ -34,20 +34,10 @@
   --value-line-32: 2rem;
   --value-line-36: 2.25rem;
   --value-radius-8: 0.5rem;
+}
 
-  --space-small: var(--value-s8);
-  --space-medium: var(--value-s12);
-  --space-large: var(--value-s16);
-  --space-field: var(--value-s20);
-  --space-section: var(--value-s24);
-  --space-page: var(--value-s48);
-  --space-page-wide: var(--value-s80);
-  --font-body: var(--value-font-sans);
-  --font-size-body: var(--value-font-16);
-  --font-size-section: var(--value-font-24);
-  --font-size-heading: var(--value-font-30);
-  --semantic-radius-panel: var(--value-radius-8);
-
+/* Nuxt UI uses these semantic roles in its components and color utilities. */
+:root {
   --ui-text: var(--value-slate-700);
   --ui-text-muted: var(--value-slate-500);
   --ui-text-highlighted: var(--value-slate-900);
@@ -83,19 +73,20 @@
   --ui-info: var(--value-blue-400);
 }
 
-@theme inline {
-  --spacing-small: var(--space-small);
-  --spacing-medium: var(--space-medium);
-  --spacing-large: var(--space-large);
-  --spacing-field: var(--space-field);
-  --spacing-section: var(--space-section);
-  --spacing-page: var(--space-page);
-  --spacing-page-wide: var(--space-page-wide);
-  --font-sans: var(--font-body);
-  --text-body: var(--font-size-body);
-  --text-section: var(--font-size-section);
+/* Keep semantic variables available to the gallery even without a matching utility. */
+@theme static {
+  --spacing-small: var(--value-s8);
+  --spacing-medium: var(--value-s12);
+  --spacing-large: var(--value-s16);
+  --spacing-field: var(--value-s20);
+  --spacing-section: var(--value-s24);
+  --spacing-page: var(--value-s48);
+  --spacing-page-wide: var(--value-s80);
+  --font-sans: var(--value-font-sans);
+  --text-body: var(--value-font-16);
+  --text-section: var(--value-font-24);
   --text-section--line-height: var(--value-line-32);
-  --text-heading: var(--font-size-heading);
+  --text-heading: var(--value-font-30);
   --text-heading--line-height: var(--value-line-36);
-  --radius-panel: var(--semantic-radius-panel);
+  --radius-panel: var(--value-radius-8);
 }
