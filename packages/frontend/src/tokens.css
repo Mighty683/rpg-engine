@@ -1,0 +1,101 @@
+/* Primitive values are named for what they are; components use semantic aliases. */
+:root {
+  --value-white: #ffffff;
+  --value-slate-50: #f8fafc;
+  --value-slate-100: #f1f5f9;
+  --value-slate-200: #e2e8f0;
+  --value-slate-300: #cbd5e1;
+  --value-slate-400: #94a3b8;
+  --value-slate-500: #64748b;
+  --value-slate-600: #475569;
+  --value-slate-700: #334155;
+  --value-slate-800: #1e293b;
+  --value-slate-900: #0f172a;
+  --value-green-500: #22c55e;
+  --value-green-400: #4ade80;
+  --value-red-500: #ef4444;
+  --value-red-400: #f87171;
+  --value-amber-500: #f59e0b;
+  --value-amber-400: #fbbf24;
+  --value-blue-500: #3b82f6;
+  --value-blue-400: #60a5fa;
+
+  --value-s8: 0.5rem;
+  --value-s12: 0.75rem;
+  --value-s16: 1rem;
+  --value-s20: 1.25rem;
+  --value-s24: 1.5rem;
+  --value-s48: 3rem;
+  --value-s80: 5rem;
+  --value-font-sans: ui-sans-serif, system-ui, sans-serif;
+  --value-font-16: 1rem;
+  --value-font-24: 1.5rem;
+  --value-font-30: 1.875rem;
+  --value-line-32: 2rem;
+  --value-line-36: 2.25rem;
+  --value-radius-8: 0.5rem;
+
+  --space-small: var(--value-s8);
+  --space-medium: var(--value-s12);
+  --space-large: var(--value-s16);
+  --space-field: var(--value-s20);
+  --space-section: var(--value-s24);
+  --space-page: var(--value-s48);
+  --space-page-wide: var(--value-s80);
+  --font-body: var(--value-font-sans);
+  --font-size-body: var(--value-font-16);
+  --font-size-section: var(--value-font-24);
+  --font-size-heading: var(--value-font-30);
+  --semantic-radius-panel: var(--value-radius-8);
+
+  --ui-text: var(--value-slate-700);
+  --ui-text-muted: var(--value-slate-500);
+  --ui-text-highlighted: var(--value-slate-900);
+  --ui-bg: var(--value-white);
+  --ui-bg-muted: var(--value-slate-50);
+  --ui-bg-elevated: var(--value-slate-100);
+  --ui-bg-accented: var(--value-slate-200);
+  --ui-border: var(--value-slate-200);
+  --ui-border-muted: var(--value-slate-200);
+  --ui-border-accented: var(--value-slate-300);
+  --ui-primary: var(--value-green-500);
+  --ui-success: var(--value-green-500);
+  --ui-error: var(--value-red-500);
+  --ui-warning: var(--value-amber-500);
+  --ui-info: var(--value-blue-500);
+}
+
+.dark {
+  --ui-text: var(--value-slate-200);
+  --ui-text-muted: var(--value-slate-400);
+  --ui-text-highlighted: var(--value-white);
+  --ui-bg: var(--value-slate-900);
+  --ui-bg-muted: var(--value-slate-800);
+  --ui-bg-elevated: var(--value-slate-800);
+  --ui-bg-accented: var(--value-slate-700);
+  --ui-border: var(--value-slate-800);
+  --ui-border-muted: var(--value-slate-700);
+  --ui-border-accented: var(--value-slate-700);
+  --ui-primary: var(--value-green-400);
+  --ui-success: var(--value-green-400);
+  --ui-error: var(--value-red-400);
+  --ui-warning: var(--value-amber-400);
+  --ui-info: var(--value-blue-400);
+}
+
+@theme inline {
+  --spacing-small: var(--space-small);
+  --spacing-medium: var(--space-medium);
+  --spacing-large: var(--space-large);
+  --spacing-field: var(--space-field);
+  --spacing-section: var(--space-section);
+  --spacing-page: var(--space-page);
+  --spacing-page-wide: var(--space-page-wide);
+  --font-sans: var(--font-body);
+  --text-body: var(--font-size-body);
+  --text-section: var(--font-size-section);
+  --text-section--line-height: var(--value-line-32);
+  --text-heading: var(--font-size-heading);
+  --text-heading--line-height: var(--value-line-36);
+  --radius-panel: var(--semantic-radius-panel);
+}

@@ -162,10 +162,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="max-w-2xl space-y-6">
+  <div class="max-w-2xl space-y-section">
     <template v-if="view === 'list'">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 ref="listHeading" tabindex="-1" class="text-3xl font-semibold">
+      <div class="flex flex-wrap items-center justify-between gap-large">
+        <h1 ref="listHeading" tabindex="-1" class="text-heading font-semibold">
           {{ t("games.title") }}
         </h1>
         <UButton v-if="!checking" data-testid="open-game-creation" @click="showForm">{{
@@ -178,7 +178,7 @@ onMounted(() => {
       </p>
       <div aria-live="polite">
         <p v-if="listState === 'loading'">{{ t("games.loading") }}</p>
-        <div v-else-if="listState === 'error'" class="space-y-3">
+        <div v-else-if="listState === 'error'" class="space-y-medium">
           <p data-testid="games-load-error">{{ t("games.loadError") }}</p>
           <UButton data-testid="retry-games" variant="outline" @click="loadGames">{{
             t("games.retry")
@@ -187,12 +187,12 @@ onMounted(() => {
         <p v-else-if="games.length === 0" data-testid="games-empty" class="text-muted">
           {{ t("games.empty") }}
         </p>
-        <ul v-else class="divide-y divide-default rounded-lg border border-default">
+        <ul v-else class="divide-y divide-default rounded-panel border border-default">
           <li
             v-for="game in games"
             :key="game.id"
             data-testid="game-row"
-            class="flex flex-wrap justify-between gap-2 p-4"
+            class="flex flex-wrap justify-between gap-small p-large"
           >
             <span data-testid="game-row-name" class="font-medium">{{ game.name }}</span
             ><span data-testid="game-row-system" class="text-muted">{{ game.system.name }}</span>
@@ -201,9 +201,9 @@ onMounted(() => {
       </div>
     </template>
     <template v-else>
-      <h1 class="text-3xl font-semibold">{{ t("games.create") }}</h1>
-      <form class="space-y-6" novalidate @submit="submit">
-        <fieldset :disabled="saving || discarding" class="space-y-5">
+      <h1 class="text-heading font-semibold">{{ t("games.create") }}</h1>
+      <form class="space-y-section" novalidate @submit="submit">
+        <fieldset :disabled="saving || discarding" class="space-y-field">
           <UFormField
             data-testid="game-name-field"
             :label="t('games.name')"
@@ -246,9 +246,9 @@ onMounted(() => {
                 <span :data-testid="`game-system-option-${item.id}`">{{ item.name }}</span>
               </template>
             </USelect>
-            <div aria-live="polite" class="mt-2">
+            <div aria-live="polite" class="mt-small">
               <p v-if="systemState === 'loading'">{{ t("games.systemsLoading") }}</p>
-              <div v-else-if="systemState === 'error'" class="space-y-2">
+              <div v-else-if="systemState === 'error'" class="space-y-small">
                 <p>{{ t("games.systemsError") }}</p>
                 <UButton type="button" variant="outline" @click="loadSystems">{{
                   t("games.retry")
@@ -262,7 +262,7 @@ onMounted(() => {
             <p v-else-if="outcome === 'failed'">
               {{ t("games.createFailed") }}
             </p>
-            <div v-else-if="outcome === 'unknown'" class="space-y-2">
+            <div v-else-if="outcome === 'unknown'" class="space-y-small">
               <p>
                 {{ t("games.createUnknown") }}
               </p>
@@ -271,7 +271,7 @@ onMounted(() => {
               }}</UButton>
             </div>
           </div>
-          <div class="flex flex-wrap gap-3">
+          <div class="flex flex-wrap gap-medium">
             <UButton
               type="submit"
               data-testid="submit-game"
@@ -286,7 +286,7 @@ onMounted(() => {
       </form>
       <UModal v-model:open="discarding" :title="t('games.discardTitle')" :close="false">
         <template #body>
-          <div class="flex gap-3">
+          <div class="flex gap-medium">
             <UButton type="button" @click="keepEditing">{{ t("games.keepEditing") }}</UButton>
             <UButton type="button" variant="outline" @click="discard">{{
               t("games.discard")

@@ -8,7 +8,9 @@
     "build": "vue-tsc -b && vp build",
     "preview": "vp preview",
     "check": "vp check",
-    "test:browser": "vp test --config vitest.browser.config.ts"
+    "test:browser": "vp test --config vitest.browser.config.ts",
+    "prototypes:dev": "vp dev --config prototypes/vite.config.ts",
+    "prototypes:build": "vue-tsc --noEmit -p prototypes/tsconfig.json && vp build --config prototypes/vite.config.ts"
   },
   "dependencies": {
     "@nuxt/ui": "4.12.0",
