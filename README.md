@@ -8,14 +8,12 @@ The pnpm workspace contains the Vue application in `packages/frontend` and backe
 
 ```sh
 pnpm install
-export DATABASE_URL=postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine
+cp packages/backend/.env.example packages/backend/.env
 pnpm --filter @rpg-engine/backend migrate
-pnpm --filter @rpg-engine/backend dev
-# In a second terminal:
 pnpm dev
 ```
 
-Run `pnpm build` for frontend type checking and a production build. Run `pnpm check` for formatting, lint, and type checks across both packages, or `pnpm lint` for lint and type checks only. Shared Oxlint rules live in the root `vite.config.ts`, including a maximum block nesting depth of 6. Root `dev`, `build`, and `preview` commands target the frontend; use `pnpm --filter @rpg-engine/frontend <command>` or `pnpm --filter @rpg-engine/backend <command>` to run package commands directly.
+The backend loads `packages/backend/.env` when present; environment variables already set in the shell take precedence. `pnpm dev` starts both servers. Run `pnpm build` for frontend type checking and a production build. Run `pnpm check` for formatting, lint, and type checks across both packages, or `pnpm lint` for lint and type checks only. Shared Oxlint rules live in the root `vite.config.ts`, including a maximum block nesting depth of 6. Root `build` and `preview` commands target the frontend; use `pnpm --filter @rpg-engine/frontend <command>` or `pnpm --filter @rpg-engine/backend <command>` to run package commands directly.
 
 ## Backend foundation
 

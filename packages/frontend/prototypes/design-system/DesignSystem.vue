@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { ref } from "vue";
+import DetailCard from "./DetailCard.vue";
+import DieIcon from "./DieIcon.vue";
+import ZenitIcon from "./ZenitIcon.vue";
+import WeaponIcon from "./WeaponIcon.vue";
+import EquipmentIcon from "./EquipmentIcon.vue";
 const palettes = [
   {
     title: "Semantic colors",
@@ -47,6 +53,7 @@ const palettes = [
     ],
   },
 ];
+const cardNotes = ref("A versatile adventurer.");
 const spacing = ["small", "medium", "large", "field", "section", "page", "page-wide"];
 </script>
 
@@ -67,6 +74,16 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
           <code class="wrap-anywhere">{{ palette.prefix }}{{ color }}</code>
         </div>
       </div>
+    </section>
+    <section class="space-y-large">
+      <h2 class="text-section font-semibold">Icons</h2>
+      <p class="text-muted">Dice used for attribute tiers.</p>
+      <div class="flex flex-wrap gap-section"><div v-for="sides in [6, 8, 10, 12]" :key="sides" class="flex items-center gap-small"><DieIcon :sides="sides" /><span>d{{ sides }}</span></div><div class="flex items-center gap-small"><ZenitIcon /><span>Zenit</span></div><div class="flex items-center gap-small"><WeaponIcon /><span>Weapon</span></div><div v-for="kind in (['armor', 'other', 'equipped'] as const)" :key="kind" class="flex items-center gap-small"><EquipmentIcon :kind="kind" /><span>{{ kind }}</span></div></div>
+    </section>
+    <section class="space-y-large">
+      <h2 class="text-section font-semibold">Detail card</h2>
+      <p class="text-muted">Select a card to edit details; click outside or press Escape to close.</p>
+      <div class="max-w-sm"><DetailCard title="Wayfarer" :notes="cardNotes"><label class="block">Notes <input v-model="cardNotes" class="mt-small block w-full rounded-panel border border-default bg-default p-small" /></label></DetailCard></div>
     </section>
     <section class="space-y-large">
       <h2 class="text-section font-semibold">Spacing</h2>

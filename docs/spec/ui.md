@@ -6,3 +6,5 @@
 - We only disable actions when they are hard blocked from user
 - Display success messages as toast notifications, not as plain text in the page.
 - While a form is saving, disable its fields and submit action until the save finishes.
+
+- Use the dark application palette; theme switching is not currently supported.

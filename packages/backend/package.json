@@ -6,9 +6,9 @@
   "scripts": {
     "lint": "vp lint --no-error-on-unmatched-pattern",
     "check": "vp check --no-error-on-unmatched-pattern",
-    "dev": "node --watch src/server.ts",
-    "start": "node src/server.ts",
-    "migrate": "node src/migrate.ts",
+    "dev": "node --env-file-if-exists=.env --watch src/server.ts",
+    "start": "node --env-file-if-exists=.env src/server.ts",
+    "migrate": "node --env-file-if-exists=.env src/migrate.ts",
     "build": "tsc --noEmit"
   },
   "dependencies": {

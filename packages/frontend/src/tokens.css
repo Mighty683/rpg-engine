@@ -36,26 +36,9 @@
   --value-radius-8: 0.5rem;
 }
 
-/* Nuxt UI uses these semantic roles in its components and color utilities. */
+/* The application currently uses one dark palette. */
 :root {
-  --ui-text: var(--value-slate-700);
-  --ui-text-muted: var(--value-slate-500);
-  --ui-text-highlighted: var(--value-slate-900);
-  --ui-bg: var(--value-white);
-  --ui-bg-muted: var(--value-slate-50);
-  --ui-bg-elevated: var(--value-slate-100);
-  --ui-bg-accented: var(--value-slate-200);
-  --ui-border: var(--value-slate-200);
-  --ui-border-muted: var(--value-slate-200);
-  --ui-border-accented: var(--value-slate-300);
-  --ui-primary: var(--value-green-500);
-  --ui-success: var(--value-green-500);
-  --ui-error: var(--value-red-500);
-  --ui-warning: var(--value-amber-500);
-  --ui-info: var(--value-blue-500);
-}
-
-.dark {
+  color-scheme: dark;
   --ui-text: var(--value-slate-200);
   --ui-text-muted: var(--value-slate-400);
   --ui-text-highlighted: var(--value-white);

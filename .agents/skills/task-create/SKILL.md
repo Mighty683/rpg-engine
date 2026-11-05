@@ -13,7 +13,7 @@ Use the existing task directory or a descriptive kebab-case name. Link only exis
 # <task title>
 
 **Created:** 2026-11-04
-**Status:** Proposed
+**Status:** <Created/Story/UX/UI/Tech/Plan/Implemented/Dropped>
 
 ## Task documents
 

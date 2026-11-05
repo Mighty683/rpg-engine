@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @rpg-engine/frontend dev",
+    "dev": "pnpm --parallel --filter @rpg-engine/frontend --filter @rpg-engine/backend dev",
     "build": "pnpm --filter @rpg-engine/frontend build",
     "preview": "pnpm --filter @rpg-engine/frontend preview",
     "lint": "vp lint",
