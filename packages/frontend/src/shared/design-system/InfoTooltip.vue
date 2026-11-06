@@ -4,7 +4,7 @@ defineProps<{ label: string; text: string }>();
 
 <template>
   <UTooltip :text="text" :delay-duration="0">
-    <button type="button" class="info" :aria-label="label">
+    <span class="info" tabindex="0" role="img" :aria-label="label" data-testid="info-tooltip">
       <svg viewBox="0 0 16 16" aria-hidden="true">
         <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" />
         <path
@@ -15,7 +15,7 @@ defineProps<{ label: string; text: string }>();
           stroke-width="1.5"
         />
       </svg>
-    </button>
+    </span>
   </UTooltip>
 </template>
 

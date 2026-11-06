@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-defineProps<{ readOnly?: boolean }>();
+defineProps<{ readOnly?: boolean; controller?: string }>();
 const value = defineModel<string>({ required: true });
 const heading = ref<HTMLElement>();
 defineExpose({ focus: () => heading.value?.focus() });
@@ -8,7 +8,10 @@ defineExpose({ focus: () => heading.value?.focus() });
 
 <template>
   <div class="name-field min-w-0">
-    <p class="sheet-kicker">FABULA ULTIMA <span> / CHARACTER SHEET</span></p>
+    <div class="flex flex-wrap items-baseline justify-between gap-x-small">
+      <p class="sheet-kicker">FABULA ULTIMA <span> / CHARACTER SHEET</span></p>
+      <p v-if="controller" class="text-xs text-muted">Controlled by {{ controller }}.</p>
+    </div>
     <h1 ref="heading" tabindex="-1" class="sr-only">Character sheet</h1>
     <div class="flex min-w-0 items-center gap-small">
       <label class="sheet-name min-w-0 flex-1"

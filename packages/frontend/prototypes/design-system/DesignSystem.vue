@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import DetailCard from "./DetailCard.vue";
-import DieIcon from "./DieIcon.vue";
-import ZenitIcon from "./ZenitIcon.vue";
-import WeaponIcon from "./WeaponIcon.vue";
-import EquipmentIcon from "./EquipmentIcon.vue";
+import DetailCard from "../../src/shared/design-system/DetailCard.vue";
+import DieIcon from "../../src/shared/design-system/DieIcon.vue";
+import EquipmentIcon from "../../src/shared/design-system/EquipmentIcon.vue";
+import WeaponIcon from "../../src/shared/design-system/WeaponIcon.vue";
+import ZenitIcon from "../../src/shared/design-system/ZenitIcon.vue";
 const palettes = [
   {
     title: "Semantic colors",

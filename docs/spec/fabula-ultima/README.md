@@ -2,6 +2,7 @@
 
 These specifications capture Fabula Ultima rules relevant across the project. They describe rules, not completed implementation. System-specific behavior must not change other RPG systems.
 
+- [Checks](checks.md)
 - [Weapon attacks](weapon-attacks.md)
 - [Defense and equipment](defense-and-equipment.md)
 

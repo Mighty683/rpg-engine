@@ -13,7 +13,7 @@ defineEmits<{ change: [event: Event] }>();
       :value="level"
       aria-label="Character level"
       @change="$emit('change', $event)"
-    /><small>MANUAL</small></label
+    /></label
   >
 </template>
 
@@ -45,8 +45,5 @@ input {
 input::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
-}
-small {
-  font-size: var(--sheet-meta-size);
 }
 </style>

@@ -60,7 +60,9 @@ watch(optimistic.error, (error) => {
   if (!error) return;
   const message = error.status === 403
     ? "Your edit access changed. Your local draft is preserved."
-    : "Your changes could not be saved. Your local draft is preserved.";
+    : error.status === 400 || error.status === 422
+      ? "The change was rejected and has been reverted."
+      : "Your changes could not be confirmed. Your local draft is preserved.";
   toast.add({ title: message, color: "error" });
 });
 watch(
@@ -81,14 +83,15 @@ watch(
   { deep: true },
 );
 const sheet = computed(() => snapshot.value?.character.sheet);
+const rosterCharacter = computed(() => roster.data.value?.characters.find((character) => character.id === characterId.value));
 const readAccessLost = computed(() => {
   const queryStatus = (query.error.value as { status?: number } | null)?.status;
   const saveStatus = optimistic.error.value?.status;
   return queryStatus === 401 || queryStatus === 404 || saveStatus === 401 || saveStatus === 404;
 });
 const effectiveReadOnly = computed(() => {
-  const canEdit = roster.data.value?.characters.find((character) => character.id === characterId.value)?.canEdit;
-  return (props.readOnly ?? !canEdit) || optimistic.error.value?.status === 403;
+  const canEdit = rosterCharacter.value?.canEdit;
+  return props.readOnly || !canEdit || optimistic.error.value?.status === 403;
 });
 const draft = ref<SheetCharacter | null>(null);
 let syncedDraft = "";
@@ -193,6 +196,10 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
 
 <template>
   <div class="mx-auto max-w-6xl space-y-small">
+    <p v-if="draft && rosterCharacter" data-testid="character-controller" class="text-sm text-muted">
+      {{ rosterCharacter.controllerMembershipId ? `Controlled by ${rosterCharacter.controllerName}` : "Controlled by the GM" }}.
+      <span v-if="effectiveReadOnly">You can view this sheet but cannot edit it.</span>
+    </p>
     <UButton v-if="readAccessLost" to="/" color="neutral" variant="outline">My games</UButton>
     <p v-else-if="query.isPending.value && !draft">Loading character…</p>
     <p v-else-if="query.isError.value && !draft">
@@ -209,12 +216,14 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
       :defense-details="defenseDetails"
     />
     <p v-if="optimistic.saving.value" data-testid="save-status" role="status">Saving…</p>
-    <p v-else-if="optimistic.error.value" role="alert">
+    <div v-else-if="optimistic.error.value" data-testid="save-status" role="alert" class="space-y-small">
+      <p v-if="optimistic.paused.value">Your changes could not be confirmed. Your local draft is shown above.</p>
+      <p v-else>The change was rejected and has been reverted.</p>
       <UButton v-if="optimistic.paused.value" color="neutral" variant="outline" @click="optimistic.retry"
         >Discard draft and reload</UButton
       >
-    </p>
-    <p v-else-if="draft" class="sr-only" data-testid="save-status" role="status">Saved</p>
+    </div>
+    <p v-else-if="draft && !effectiveReadOnly" class="text-sm text-muted" data-testid="save-status" role="status">Saved automatically</p>
     <details v-if="optimistic.paused.value && savedDraft && !readAccessLost" class="space-y-small">
       <summary class="cursor-pointer font-semibold">Review latest saved version</summary>
       <CharacterSheet :character="savedDraft" read-only :maximum="savedMaximum" :maximum-overrides="savedOverrides" :base-defense="savedDefense" :defense-details="emptyDefenseDetails" />

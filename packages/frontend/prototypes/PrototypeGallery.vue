@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import DesignSystem from "./design-system/DesignSystem.vue";
-import GameSeparationPrototype from "./gm-player-separation/GameSeparationPrototype.vue";
+import GameTablePrototype from "./game-table/GameTablePrototype.vue";
 
 const prototypes = [
   {
-    id: "gm-player-separation",
-    name: "GM and player separation",
-    component: GameSeparationPrototype,
+    id: "game-table",
+    name: "Game Table",
+    component: GameTablePrototype,
   },
   { id: "design-system", name: "Design system", component: DesignSystem },
 ];
 const selectedId = ref(prototypes[0]!.id);
+const previewRole = ref<"GM" | "Player">("GM");
 const selected = computed(() => prototypes.find((prototype) => prototype.id === selectedId.value));
 </script>
 
@@ -25,8 +26,15 @@ const selected = computed(() => prototypes.find((prototype) => prototype.id === 
             {{ prototype.name }}
           </option>
         </select>
+        <template v-if="selectedId === 'game-table'">
+          <label for="preview-role" class="mx-medium font-semibold">Preview role</label>
+          <select id="preview-role" v-model="previewRole" class="rounded border border-default p-small">
+            <option value="GM">GM</option>
+            <option value="Player">Player</option>
+          </select>
+        </template>
       </header>
-      <component :is="selected.component" v-if="selected" :key="selected.id" />
+      <component :is="selected.component" v-if="selected" :key="selected.id" v-bind="selected.id === 'game-table' ? { role: previewRole } : {}" />
     </div>
   </UApp>
 </template>

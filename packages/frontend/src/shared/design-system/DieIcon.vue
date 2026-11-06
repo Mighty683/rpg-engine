@@ -7,7 +7,13 @@ withDefaults(defineProps<{ sides: string | number }>(), { sides: 6 });
     <g
       :transform="`translate(16 16) scale(${Number(sides) === 6 ? 1.3 : Number(sides) === 8 ? 1.1667 : Number(sides) === 10 ? 1.0769 : 1} 1) translate(-16 -16)`"
     >
-      <template v-if="Number(sides) === 6">
+      <template v-if="Number(sides) === 4">
+        <path d="M16 3 29 27H3Z M16 3v16M3 27l13-8 13 8" />
+      </template>
+      <template v-else-if="Number(sides) === 20">
+        <path d="M16 2 28 9 28 23 16 30 4 23 4 9Z M4 9l12 5L28 9M4 23l12-9 12 9M16 14v16" />
+      </template>
+      <template v-else-if="Number(sides) === 6">
         <path d="M6 8 16 3 26 8v16l-10 5L6 24Z M6 8l10 5 10-5M16 13v16" />
       </template>
       <template v-else-if="Number(sides) === 8">

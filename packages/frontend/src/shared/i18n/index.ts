@@ -16,6 +16,7 @@ export function createFrontendI18n() {
           loadError: "Could not load games.",
           retry: "Retry",
           empty: "No games yet. Create your first game.",
+          joinHint: "To join a game, ask your GM for an invitation link.",
           name: "Game name",
           nameHint: "Maximum 20 characters.",
           nameRequired: "Enter a game name",

@@ -27,8 +27,12 @@ const sheet = () => ({
     initiative: null,
   },
 });
-async function mount(fetchMock: ReturnType<typeof vi.fn>) {
-  vi.stubGlobal("fetch", fetchMock);
+async function mount(fetchMock: ReturnType<typeof vi.fn>, canEdit = true) {
+  vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input).endsWith("/auth/me")) return Promise.resolve(new Response(JSON.stringify({ account: { id: "p1", username: "Player" } })));
+    if (String(input).endsWith("/characters") && !init?.method) return Promise.resolve(new Response(JSON.stringify({ characters: [{ id: "c1", controllerMembershipId: null, controllerName: null, canEdit }] })));
+    return (fetchMock as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>)(input, init);
+  });
   const root = document.createElement("div");
   document.body.append(root);
   const router = createRouter({
@@ -69,6 +73,23 @@ function response(overrides: Record<string, unknown> = {}) {
     }),
   );
 }
+
+test("read-only sheets explain control and keep informational help focusable", async () => {
+  const fetchMock = vi.fn(() => Promise.resolve(response()));
+  const mounted = await mount(fetchMock, false);
+  try {
+    await expect.element(page.getByTestId("character-controller")).toHaveTextContent("Controlled by the GM. You can view this sheet but cannot edit it.");
+    await expect.element(page.getByTestId("character-name")).toBeDisabled();
+    const help = mounted.root.querySelector<HTMLElement>('[data-testid="info-tooltip"]');
+    expect(help?.tabIndex).toBe(0);
+    help?.focus();
+    expect(document.activeElement).toBe(help);
+  } finally {
+    mounted.app.unmount();
+    mounted.root.remove();
+    vi.unstubAllGlobals();
+  }
+});
 
 test("sheet saves edits and preserves a newer input during a slow acknowledgement", async () => {
   let resolvePatch!: (value: Response) => void;
@@ -150,7 +171,7 @@ test("known validation rejection rolls the sheet back", async () => {
   }
 });
 
-test("conflict refreshes the authoritative sheet", async () => {
+test("conflict keeps the draft and offers the latest saved sheet", async () => {
   let reads = 0;
   const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
     if (init?.method === "PATCH")
@@ -163,8 +184,9 @@ test("conflict refreshes the authoritative sheet", async () => {
   const mounted = await mount(fetchMock);
   try {
     await page.getByTestId("character-theme").fill("Stale");
-    await page.getByTestId("character-name").click();
-    await expect.element(page.getByTestId("character-theme")).toHaveValue("Authoritative");
+    await expect.element(page.getByTestId("save-status")).toHaveTextContent("Your changes could not be confirmed. Your local draft is shown above.Discard draft and reload");
+    const themes = mounted.root.querySelectorAll<HTMLInputElement>('[data-testid="character-theme"]');
+    expect([...themes].map((input) => input.value)).toEqual(["Stale", "Authoritative"]);
   } finally {
     mounted.app.unmount();
     mounted.root.remove();

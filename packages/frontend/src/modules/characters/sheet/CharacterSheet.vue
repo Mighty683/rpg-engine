@@ -15,6 +15,7 @@ import type { Character } from "./types";
 
 const props = defineProps<{
   character: Character;
+  controller?: string;
   readOnly?: boolean;
   maximum: Record<"HP" | "MP" | "IP", number>;
   maximumOverrides: Record<"HP" | "MP" | "IP", number | null>;
@@ -84,12 +85,13 @@ function warnIfEditingLocked(event: PointerEvent) {
   >
     <header class="sheet-header border-b border-default pb-small">
       <fieldset :disabled="editingLocked" class="contents">
-        <CharacterNameField ref="nameField" v-model="identity.name" :read-only="readOnly" />
+        <CharacterNameField ref="nameField" v-model="identity.name" :read-only="readOnly" :controller="controller" />
         <CharacterThemeField v-model="identity.theme" />
         <CharacterLevelField :level="level" @change="setLevel" />
       </fieldset>
       <EditingLockButton v-if="!readOnly" v-model="character.editingLocked" />
     </header>
+    <p v-if="!readOnly" class="text-sm text-muted">Lock editing prevents accidental changes in this browser only. It does not lock the sheet for other people.</p>
     <fieldset :disabled="editingLocked" class="sheet-sections">
       <section class="sheet-panel sheet-split" aria-label="Attributes and resources">
         <AttributesSection :attributes="attributes" /><ResourcesSection
