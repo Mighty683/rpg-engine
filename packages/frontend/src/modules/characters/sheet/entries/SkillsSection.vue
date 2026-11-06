@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SheetSection from "../SheetSection.vue";
+import SheetSection from "../../../../shared/design-system/SheetSection.vue";
 import NamedEntries from "./NamedEntries.vue";
 import InfoTooltip from "../../../../shared/design-system/InfoTooltip.vue";
 import type { NamedEntry } from "../types";

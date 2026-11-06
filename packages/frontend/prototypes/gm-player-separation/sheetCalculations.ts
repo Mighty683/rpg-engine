@@ -1,4 +1,4 @@
-import type { Character, NamedEntry } from "./types";
+import type { Character, NamedEntry } from "../../src/modules/characters/sheet/types";
 
 /** Partial prototype calculations; these do not implement the complete rules. */
 export function calculateResourceMaximum(character: Character) {

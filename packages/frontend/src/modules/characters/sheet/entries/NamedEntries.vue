@@ -70,7 +70,7 @@ function remove(id: string) {
       :id="`${kind}-name`"
       v-model="name"
       :placeholder="`${kind === 'item' ? 'Item' : kind === 'class' ? 'Class' : 'Skill'} name`"
-    /><UButton type="submit" size="sm" variant="outline">Add</UButton>
+    /><UButton type="submit" size="sm" color="neutral" variant="outline">Add</UButton>
   </form>
   <p v-else class="text-muted">Maximum {{ limit }} classes.</p>
 </template>

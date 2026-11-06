@@ -1,5 +1,5 @@
 import { computed, type ComputedRef } from "vue";
-import type { Character } from "./types";
+import type { Character } from "../../src/modules/characters/sheet/types";
 import { calculateDefense, calculateResourceMaximum } from "./sheetCalculations";
 
 export function useSheetCalculations(character: ComputedRef<Character>) {

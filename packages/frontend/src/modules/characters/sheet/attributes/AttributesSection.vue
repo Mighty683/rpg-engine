@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SheetSection from "../SheetSection.vue";
+import SheetSection from "../../../../shared/design-system/SheetSection.vue";
 import AttributeField from "./AttributeField.vue";
 import type { Character } from "../types";
 defineProps<{ attributes: Character["attributes"] }>();

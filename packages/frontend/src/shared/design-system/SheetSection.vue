@@ -1,5 +1,3 @@
-<script setup lang="ts"></script>
-
 <template>
   <section class="sheet-subsection">
     <h2 class="sheet-heading">
@@ -18,8 +16,8 @@
   justify-content: space-between;
   gap: var(--spacing-small);
   color: var(--ui-primary);
-  margin-bottom: var(--sheet-tight);
-  font-size: var(--sheet-label-size);
+  margin-bottom: var(--sheet-tight, var(--spacing-tight));
+  font-size: var(--sheet-label-size, var(--text-label));
   font-weight: 700;
   letter-spacing: 0.05em;
 }

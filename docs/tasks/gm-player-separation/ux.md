@@ -14,9 +14,9 @@ The GM persona and interview are simulated. Their suggestions about finding char
 
 Users create an account and sign in. A signed-in user sees the games they can access and their role in each. The same account can be a GM in one game and a player in another. The creator is the game's sole GM. A GM who plays a character uses a GM-controlled character in the same game.
 
-The game opens to a character overview. Show the game name, the user's role, who controls each character, and whether its sheet is editable. The GM can create and edit every character, assign or reassign one to a player, and take one back under GM control. A GM can run the whole game this way with no player accounts.
+The game opens to a character overview with tabs for active characters. Show the game name, the user's role, and whether the sheet is editable. The GM can assign or reassign characters to a player, and take one back under GM control. A GM can run the whole game this way with no player accounts.
 
-Every member can read every full character sheet, including inactive and GM-controlled characters. Players can edit only the characters assigned to them. They can have several characters, with at most one active at a time. Active status does not change who can read or edit a sheet.
+Every member can read active characters' full sheets, including GM-controlled characters. Players can edit only the characters assigned to them. They can have several characters, with at most one active at a time. Active status determines which sheets appear in the game workspace. Access to inactive sheets remains to be designed.
 
 ## GM journey
 
@@ -72,7 +72,7 @@ flowchart TD
 
 **Regular game link.** The GM can copy and share one persistent, reusable link. After signing in, the user returns to the invitation, sees the game name, and chooses **Join game**. A new member joins as a player without a character. An existing member opens the character overview directly.
 
-**Character link.** The GM can create multiple single-use links for a character that has no player assigned. After signing in, a user sees the game and character and explicitly accepts. A new player joins the game and receives the character in the same step. An existing player receives it under their current membership. The sheet opens after acceptance. **Make this character active** is selected by default. Clearing it keeps the player's previous active selection.
+**Character link.** The GM can create multiple single-use links for a character that has no player assigned. After signing in, a user sees the game and character and explicitly accepts. A new player joins the game and receives the character in the same step. An existing player receives it under their current membership. **Make this character active** is selected by default, and the active sheet opens after acceptance. Clearing it keeps the player's previous active selection.
 
 **Link controls.** The GM manages each link independently. Disabling or rotating one link affects only that link. A disabled link can be re-enabled, and rotation replaces the previous URL for that link. Existing memberships and character assignments continue. Once redeemed, a character link stays spent. Other unused links for the same character are blocked while it is assigned. If the GM takes the character back, unused links that are still enabled can be accepted again. If two people try to claim the same character, only the first successful acceptance grants control.
 

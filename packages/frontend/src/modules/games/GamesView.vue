@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, nextTick, onMounted, ref } from "vue";
-import InteractiveCard from "../../shared/components/InteractiveCard.vue";
+import InteractiveCard from "../../shared/design-system/InteractiveCard.vue";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
@@ -175,7 +175,7 @@ onMounted(() => {
         <p v-if="listState === 'loading'">{{ t("games.loading") }}</p>
         <div v-else-if="listState === 'error'" class="space-y-medium">
           <p data-testid="games-load-error">{{ t("games.loadError") }}</p>
-          <UButton data-testid="retry-games" variant="outline" @click="loadGames">{{
+          <UButton data-testid="retry-games" color="neutral" variant="outline" @click="loadGames">{{
             t("games.retry")
           }}</UButton>
         </div>
@@ -246,7 +246,7 @@ onMounted(() => {
               <p v-if="systemState === 'loading'">{{ t("games.systemsLoading") }}</p>
               <div v-else-if="systemState === 'error'" class="space-y-small">
                 <p>{{ t("games.systemsError") }}</p>
-                <UButton type="button" variant="outline" @click="loadSystems">{{
+                <UButton type="button" color="neutral" variant="outline" @click="loadSystems">{{
                   t("games.retry")
                 }}</UButton>
               </div>
@@ -262,7 +262,7 @@ onMounted(() => {
               <p>
                 {{ t("games.createUnknown") }}
               </p>
-              <UButton type="button" variant="outline" @click="checkGames">{{
+              <UButton type="button" color="neutral" variant="outline" @click="checkGames">{{
                 t("games.checkGames")
               }}</UButton>
             </div>
@@ -274,7 +274,7 @@ onMounted(() => {
               :disabled="systemState !== 'ready' || !systemId"
               >{{ t("games.create") }}</UButton
             >
-            <UButton type="button" variant="outline" @click="cancel">{{
+            <UButton type="button" color="neutral" variant="outline" @click="cancel">{{
               t("games.cancel")
             }}</UButton>
           </div>
@@ -284,7 +284,7 @@ onMounted(() => {
         <template #body>
           <div class="flex gap-medium">
             <UButton type="button" @click="keepEditing">{{ t("games.keepEditing") }}</UButton>
-            <UButton type="button" variant="outline" @click="discard">{{
+            <UButton type="button" color="neutral" variant="outline" @click="discard">{{
               t("games.discard")
             }}</UButton>
           </div>

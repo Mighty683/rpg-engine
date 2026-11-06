@@ -159,7 +159,7 @@ const defenseDetails = computed(() => {
   <div class="mx-auto max-w-6xl space-y-small">
     <p v-if="query.isPending.value && !draft">Loading character…</p>
     <p v-else-if="query.isError.value && !draft">
-      Could not load character. <UButton variant="outline" @click="query.refetch">Retry</UButton>
+      Could not load character. <UButton color="neutral" variant="outline" @click="query.refetch">Retry</UButton>
     </p>
     <CharacterSheet
       v-else-if="draft"
@@ -173,7 +173,7 @@ const defenseDetails = computed(() => {
     <p v-if="optimistic.saving.value" data-testid="save-status" role="status">Saving…</p>
     <p v-else-if="optimistic.error.value" role="alert">
       {{ optimistic.error.value.message }}
-      <UButton v-if="optimistic.paused.value" variant="outline" @click="optimistic.retry"
+      <UButton v-if="optimistic.paused.value" color="neutral" variant="outline" @click="optimistic.retry"
         >Reload</UButton
       >
     </p>

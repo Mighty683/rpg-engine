@@ -21,6 +21,7 @@
   --value-blue-400: #60a5fa;
 
   --value-s8: 0.5rem;
+  --value-s4: 0.25rem;
   --value-s12: 0.75rem;
   --value-s16: 1rem;
   --value-s20: 1.25rem;
@@ -29,6 +30,7 @@
   --value-s80: 5rem;
   --value-font-sans: ui-sans-serif, system-ui, sans-serif;
   --value-font-16: 1rem;
+  --value-font-12: 0.75rem;
   --value-font-24: 1.5rem;
   --value-font-30: 1.875rem;
   --value-line-32: 2rem;
@@ -59,6 +61,7 @@
 /* Keep semantic variables available to the gallery even without a matching utility. */
 @theme static {
   --spacing-small: var(--value-s8);
+  --spacing-tight: var(--value-s4);
   --spacing-medium: var(--value-s12);
   --spacing-large: var(--value-s16);
   --spacing-field: var(--value-s20);
@@ -67,6 +70,7 @@
   --spacing-page-wide: var(--value-s80);
   --font-sans: var(--value-font-sans);
   --text-body: var(--value-font-16);
+  --text-label: var(--value-font-12);
   --text-section: var(--value-font-24);
   --text-section--line-height: var(--value-line-32);
   --text-heading: var(--value-font-30);

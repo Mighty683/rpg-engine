@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SheetSection from "../SheetSection.vue";
+import SheetSection from "../../../../shared/design-system/SheetSection.vue";
 import DefenseField from "./DefenseField.vue";
 import type { Character } from "../types";
 type Stat = keyof Character["overrides"];

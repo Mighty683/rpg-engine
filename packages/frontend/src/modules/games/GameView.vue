@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useRoute, RouterLink } from "vue-router";
-import ScreenSection from "../../shared/components/ScreenSection.vue";
+import ScreenSection from "../../shared/design-system/ScreenSection.vue";
 import { useGameQuery } from "./hooks";
 import { usePlayersQuery, useCreatePlayerMutation } from "../players/hooks";
 const route = useRoute();
@@ -54,7 +54,7 @@ async function addPlayer() {
   <div data-testid="game-view" class="max-w-3xl space-y-section">
     <p v-if="gameLoading">Loading game…</p>
     <p v-else-if="gameError">
-      Could not load game. <UButton variant="outline" @click="game.refetch">Retry</UButton>
+      Could not load game. <UButton color="neutral" variant="outline" @click="game.refetch">Retry</UButton>
     </p>
     <template v-else-if="gameRecord"
       ><h1 class="text-heading font-semibold" data-testid="game-heading">{{ gameRecord.name }}</h1>
@@ -80,7 +80,7 @@ async function addPlayer() {
         <p v-if="playersLoading">Loading players…</p>
         <p v-else-if="playersError">
           Could not load players.
-          <UButton variant="outline" @click="players.refetch">Retry</UButton>
+          <UButton color="neutral" variant="outline" @click="players.refetch">Retry</UButton>
         </p>
         <p v-else-if="playerRecords.length === 0" class="text-muted">No players yet.</p>
         <UTabs

@@ -47,7 +47,7 @@ function updateMaximum(event: Event) {
               placeholder="Calculated"
               @change="updateMaximum"
             />
-            <UButton size="sm" variant="outline" @click="emit('override', null)"
+            <UButton size="sm" color="neutral" variant="outline" @click="emit('override', null)"
               >Use calculated</UButton
             >
           </div>

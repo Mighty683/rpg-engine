@@ -15,6 +15,7 @@ import type { Character } from "./types";
 
 const props = defineProps<{
   character: Character;
+  readOnly?: boolean;
   maximum: Record<"HP" | "MP" | "IP", number>;
   maximumOverrides: Record<"HP" | "MP" | "IP", number | null>;
   baseDefense: Record<"DEF" | "MAG DEF" | "INIT", number | null>;
@@ -34,7 +35,7 @@ const nameField = ref<InstanceType<typeof CharacterNameField>>();
 const toast = useToast();
 defineExpose({ focus: () => nameField.value?.focus() });
 const identity = computed(() => character.value.identity);
-const editingLocked = computed(() => character.value.editingLocked);
+const editingLocked = computed(() => props.readOnly || character.value.editingLocked);
 const classes = computed(() => character.value.classes);
 const level = computed(() => character.value.level);
 function setLevel(event: Event) {
@@ -59,7 +60,7 @@ const maximum = computed(() => props.maximum);
 const baseDefense = computed(() => props.baseDefense);
 const defenseDetails = computed(() => props.defenseDetails);
 function warnIfEditingLocked(event: PointerEvent) {
-  if (!editingLocked.value || !(event.target instanceof Element)) return;
+  if (props.readOnly || !editingLocked.value || !(event.target instanceof Element)) return;
   if (
     event.target.closest(
       ".sheet-name, .theme-field, .level-mark, .die, .resource, .defense-stat, .detail-card, .entry-add",
@@ -87,7 +88,7 @@ function warnIfEditingLocked(event: PointerEvent) {
         <CharacterThemeField v-model="identity.theme" />
         <CharacterLevelField :level="level" @change="setLevel" />
       </fieldset>
-      <EditingLockButton v-model="character.editingLocked" />
+      <EditingLockButton v-if="!readOnly" v-model="character.editingLocked" />
     </header>
     <fieldset :disabled="editingLocked" class="sheet-sections">
       <section class="sheet-panel sheet-split" aria-label="Attributes and resources">

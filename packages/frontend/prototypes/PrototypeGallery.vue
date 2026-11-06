@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import CharacterSetup from "./character-setup/CharacterSetup.vue";
 import DesignSystem from "./design-system/DesignSystem.vue";
-import ExamplePrototype from "./examples/ExamplePrototype.vue";
+import GameSeparationPrototype from "./gm-player-separation/GameSeparationPrototype.vue";
 
 const prototypes = [
-  { id: "character-setup", name: "Character setup", component: CharacterSetup },
+  {
+    id: "gm-player-separation",
+    name: "GM and player separation",
+    component: GameSeparationPrototype,
+  },
   { id: "design-system", name: "Design system", component: DesignSystem },
-  { id: "example", name: "Example", component: ExamplePrototype },
 ];
 const selectedId = ref(prototypes[0]!.id);
 const selected = computed(() => prototypes.find((prototype) => prototype.id === selectedId.value));

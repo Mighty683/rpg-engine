@@ -63,7 +63,58 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
       <h1 class="text-heading font-semibold">Design system</h1>
       <p class="text-muted">Primitive values feed semantic tokens used by the application.</p>
     </div>
-    <section v-for="palette in palettes" :key="palette.prefix" class="space-y-large">
+    <section class="space-y-large" aria-labelledby="button-examples">
+      <h2 id="button-examples" class="text-section font-semibold">Buttons</h2>
+      <p class="text-muted">Choose emphasis by the action's role in its context.</p>
+      <div class="grid gap-medium sm:grid-cols-2 lg:grid-cols-3">
+        <div class="space-y-small rounded-panel border border-default p-large">
+          <p class="font-semibold">Primary</p>
+          <UButton color="primary" variant="solid">Create character</UButton>
+          <p class="text-muted">Main action in an action group.</p>
+        </div>
+        <div class="space-y-small rounded-panel border border-default p-large">
+          <p class="font-semibold">Secondary</p>
+          <UButton color="neutral" variant="outline">Cancel</UButton>
+          <p class="text-muted">Visible alternative to the main action.</p>
+        </div>
+        <div class="space-y-small rounded-panel border border-default p-large">
+          <p class="font-semibold">Tertiary</p>
+          <UButton color="neutral" variant="subtle">View sheet</UButton>
+          <p class="text-muted">Contextual action with a visible background.</p>
+        </div>
+        <div class="space-y-small rounded-panel border border-default p-large">
+          <p class="font-semibold">Destructive</p>
+          <div class="flex flex-wrap gap-small">
+            <UButton color="error" variant="outline">Remove access</UButton>
+            <UButton color="error" variant="solid">Confirm removal</UButton>
+          </div>
+          <p class="text-muted">Use a solid button for the confirmation.</p>
+        </div>
+        <div class="space-y-small rounded-panel border border-default p-large">
+          <p class="font-semibold">Navigation link</p>
+          <a
+            href="#semantic-colors"
+            class="text-primary underline hover:text-highlighted focus-visible:outline-2 focus-visible:outline-primary"
+            >View color tokens</a
+          >
+          <p class="text-muted">An underlined accent link opens a destination.</p>
+        </div>
+        <div class="space-y-small rounded-panel border border-default p-large">
+          <p class="font-semibold">Unavailable and saving</p>
+          <div class="flex flex-wrap gap-small">
+            <UButton disabled>Unavailable</UButton>
+            <UButton loading disabled>Saving</UButton>
+          </div>
+          <p class="text-muted">Show why an action is unavailable in its context.</p>
+        </div>
+      </div>
+    </section>
+    <section
+      v-for="palette in palettes"
+      :id="palette.title === 'Semantic colors' ? 'semantic-colors' : undefined"
+      :key="palette.prefix"
+      class="space-y-large"
+    >
       <h2 class="text-section font-semibold">{{ palette.title }}</h2>
       <div class="grid grid-cols-2 gap-large sm:grid-cols-3 lg:grid-cols-5">
         <div v-for="color in palette.colors" :key="color" class="space-y-small">
@@ -78,12 +129,35 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
     <section class="space-y-large">
       <h2 class="text-section font-semibold">Icons</h2>
       <p class="text-muted">Dice used for attribute tiers.</p>
-      <div class="flex flex-wrap gap-section"><div v-for="sides in [6, 8, 10, 12]" :key="sides" class="flex items-center gap-small"><DieIcon :sides="sides" /><span>d{{ sides }}</span></div><div class="flex items-center gap-small"><ZenitIcon /><span>Zenit</span></div><div class="flex items-center gap-small"><WeaponIcon /><span>Weapon</span></div><div v-for="kind in (['armor', 'other', 'equipped'] as const)" :key="kind" class="flex items-center gap-small"><EquipmentIcon :kind="kind" /><span>{{ kind }}</span></div></div>
+      <div class="flex flex-wrap gap-section">
+        <div v-for="sides in [6, 8, 10, 12]" :key="sides" class="flex items-center gap-small">
+          <DieIcon :sides="sides" /><span>d{{ sides }}</span>
+        </div>
+        <div class="flex items-center gap-small"><ZenitIcon /><span>Zenit</span></div>
+        <div class="flex items-center gap-small"><WeaponIcon /><span>Weapon</span></div>
+        <div
+          v-for="kind in ['armor', 'other', 'equipped'] as const"
+          :key="kind"
+          class="flex items-center gap-small"
+        >
+          <EquipmentIcon :kind="kind" /><span>{{ kind }}</span>
+        </div>
+      </div>
     </section>
     <section class="space-y-large">
       <h2 class="text-section font-semibold">Detail card</h2>
-      <p class="text-muted">Select a card to edit details; click outside or press Escape to close.</p>
-      <div class="max-w-sm"><DetailCard title="Wayfarer" :notes="cardNotes"><label class="block">Notes <input v-model="cardNotes" class="mt-small block w-full rounded-panel border border-default bg-default p-small" /></label></DetailCard></div>
+      <p class="text-muted">
+        Select a card to edit details; click outside or press Escape to close.
+      </p>
+      <div class="max-w-sm">
+        <DetailCard title="Wayfarer" :notes="cardNotes"
+          ><label class="block"
+            >Notes
+            <input
+              v-model="cardNotes"
+              class="mt-small block w-full rounded-panel border border-default bg-default p-small" /></label
+        ></DetailCard>
+      </div>
     </section>
     <section class="space-y-large">
       <h2 class="text-section font-semibold">Spacing</h2>

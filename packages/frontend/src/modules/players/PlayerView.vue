@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { usePlayerQuery } from "./hooks";
-import InteractiveCard from "../../shared/components/InteractiveCard.vue";
+import InteractiveCard from "../../shared/design-system/InteractiveCard.vue";
 import {
   useCharactersQuery,
   useCreateCharacterMutation,
@@ -79,14 +79,14 @@ async function setActive(id: string) {
     >
     <p v-if="playerLoading">Loading player…</p>
     <p v-else-if="playerError">
-      Could not load player. <UButton variant="outline" @click="player.refetch">Retry</UButton>
+      Could not load player. <UButton color="neutral" variant="outline" @click="player.refetch">Retry</UButton>
     </p>
     <template v-else-if="playerRecord"
       ><h1 class="text-heading font-semibold">{{ playerRecord.name }}</h1>
       <p v-if="charactersLoading">Loading characters…</p>
       <p v-else-if="charactersError">
         Could not load characters.
-        <UButton variant="outline" @click="characters.refetch">Retry</UButton>
+        <UButton color="neutral" variant="outline" @click="characters.refetch">Retry</UButton>
       </p>
       <p v-if="activeCharacterError" role="alert" class="text-error">
         Could not update the active character. Try again.
@@ -109,7 +109,7 @@ async function setActive(id: string) {
           </InteractiveCard>
           <UButton
             size="sm"
-            variant="outline"
+            color="neutral" variant="outline"
             class="absolute bottom-4 left-4 z-10"
             :data-testid="
               playerRecord.activeCharacter?.id === character.id ? 'active-character' : 'set-active'

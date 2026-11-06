@@ -30,7 +30,7 @@ const playerLink = computed(() =>
       </aside>
       <div class="min-w-0 flex-1">
         <header class="flex items-center gap-small border-b border-default p-small lg:hidden">
-          <UButton variant="outline" size="sm" aria-label="Open menu" @click="menuOpen = true"
+          <UButton color="neutral" variant="outline" size="sm" aria-label="Open menu" @click="menuOpen = true"
             >Menu</UButton
           ><span class="font-semibold">RPG Engine</span>
         </header>

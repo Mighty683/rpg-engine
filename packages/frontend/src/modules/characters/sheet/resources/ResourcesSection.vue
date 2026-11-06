@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SheetSection from "../SheetSection.vue";
+import SheetSection from "../../../../shared/design-system/SheetSection.vue";
 import ResourceField from "./ResourceField.vue";
 import type { Character } from "../types";
 type Resource = "HP" | "MP" | "IP";
