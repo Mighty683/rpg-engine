@@ -1,13 +1,8 @@
 import { describe, expect, it, beforeAll, afterAll } from "vite-plus/test";
 import pg from "pg";
 import { randomUUID } from "node:crypto";
-import { applyMigrations } from "../src/migrations.ts";
-import {
-  createCharacter,
-  getCharacter,
-  listCharacters,
-  updateCharacter,
-} from "../src/modules/characters/service.ts";
+import { applyMigrations } from "../../migrations.ts";
+import { createCharacter, getCharacter, listCharacters, updateCharacter } from "./service.ts";
 
 const url = process.env.TEST_DATABASE_URL;
 const schema = `character_test_${randomUUID().replaceAll("-", "")}`;

@@ -1,6 +1,7 @@
 # Testing
 
 - We use vitest for both unit and browser e2e tests
+- Place unit, integration, and frontend component tests next to the source file or module they cover.
 - In unit tests we aim for code branch coverage not lines coverage, we test logic not code lines, simple components without logic can skip tests
 - We make test cases by input not by output, so we test for given input all we can, do not split test cases when they can be one test we encourage multi assertions
 - Browser component tests belong to the frontend package and use regular Vitest tests with mocked API responses to exercise components or features without the application stack.

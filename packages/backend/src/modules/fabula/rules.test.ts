@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  defaultSheet,
-  mergeSheet,
-  preview,
-  validateSheet,
-  type EquipmentEntry,
-} from "../src/modules/fabula/rules.ts";
+import { defaultSheet, mergeSheet, preview, validateSheet, type EquipmentEntry } from "./rules.ts";
 
 describe("Fabula manual sheet rules", () => {
   it("creates the documented level-five defaults and partial maxima", () => {
@@ -108,8 +102,21 @@ describe("Fabula manual sheet rules", () => {
       },
     });
     const result = preview(sheet);
-    expect(result.defenses.defense).toMatchObject({ calculated: 13 });
+    expect(result.defenses.defense).toEqual({
+      calculated: 11,
+      contributions: [
+        { source: "armor", entryId: armor.id, value: 10 },
+        { source: "shield", entryId: shield.id, value: 1 },
+      ],
+    });
     expect(result.defenses.magicDefense).toMatchObject({ calculated: 15 });
     expect(result.defenses.initiative).toMatchObject({ calculated: -1 });
+    const dexBased = preview({
+      ...sheet,
+      equipment: [{ ...armor, fixedDefense: null }, shield],
+    });
+    expect(dexBased.defenses.defense).toMatchObject({ calculated: 11 });
+    const fixedTwo = preview({ ...sheet, equipment: [{ ...armor, fixedDefense: 2 }] });
+    expect(fixedTwo.defenses.defense).toMatchObject({ calculated: 2 });
   });
 });

@@ -4,10 +4,10 @@ import { createApp } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { QueryClient, VueQueryPlugin } from "@tanstack/vue-query";
 import ui from "@nuxt/ui/vue-plugin";
-import { createFrontendI18n } from "../../src/shared/i18n";
-import CharacterView from "../../src/modules/characters/CharacterView.vue";
-import App from "../../src/App.vue";
-import "../../src/style.css";
+import { createFrontendI18n } from "../../shared/i18n";
+import CharacterView from "./CharacterView.vue";
+import App from "../../App.vue";
+import "../../style.css";
 
 const sheet = () => ({
   name: "Camilla",
@@ -212,6 +212,82 @@ test("does not persist blank or invalid transient resource input", async () => {
         (call) => (call[1] as RequestInit | undefined)?.method === "PATCH",
       ),
     ).toHaveLength(0);
+  } finally {
+    mounted.app.unmount();
+    mounted.root.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+test("resource maximum overrides remain editable", async () => {
+  const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+    if (init?.method === "PATCH") {
+      return Promise.resolve(response({ overrides: { ...sheet().overrides, maxHp: 50 } }));
+    }
+    return Promise.resolve(response());
+  });
+  const mounted = await mount(fetchMock);
+  try {
+    await page.getByTestId("maximum-button-HP").click();
+    await page.getByTestId("maximum-input-HP").fill("50");
+    page
+      .getByTestId("maximum-input-HP")
+      .element()
+      .dispatchEvent(new Event("change", { bubbles: true }));
+    await expect.element(page.getByTestId("maximum-button-HP")).toHaveTextContent("50");
+    const patch = fetchMock.mock.calls.find((call) => call[1]?.method === "PATCH");
+    expect(JSON.parse(patch?.[1]?.body as string).changes.overrides.maxHp).toBe(50);
+  } finally {
+    mounted.app.unmount();
+    mounted.root.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+test("equipment status appears only on equipable items", async () => {
+  const fetchMock = vi.fn(() =>
+    Promise.resolve(
+      response({
+        classes: [{ id: "class-1", name: "Guardian", notes: "" }],
+        skills: [{ id: "skill-1", name: "Guard", notes: "" }],
+        equipment: [
+          {
+            id: "weapon-1",
+            name: "Sword",
+            notes: "",
+            priceZenit: null,
+            kind: "weapon",
+            equipped: true,
+            accuracyDice: [null, null],
+            accuracyBonus: null,
+          },
+          {
+            id: "armor-1",
+            name: "Armor",
+            notes: "",
+            priceZenit: null,
+            kind: "armor",
+            equipped: false,
+            fixedDefense: null,
+            defenseBonus: 0,
+            magicDefenseBonus: 0,
+            initiativeModifier: 0,
+          },
+          { id: "item-1", name: "Rope", notes: "", priceZenit: null, kind: "other" },
+        ],
+      }),
+    ),
+  );
+  const mounted = await mount(fetchMock);
+  try {
+    await expect.element(page.getByTestId("remove-class-1")).toBeVisible();
+    const cardText = (id: string) =>
+      page.getByTestId(`remove-${id}`).element().closest("article")?.textContent ?? "";
+    expect(cardText("class-1")).not.toContain("equipped");
+    expect(cardText("skill-1")).not.toContain("equipped");
+    expect(cardText("item-1")).not.toContain("equipped");
+    expect(cardText("weapon-1")).toContain("Equipped");
+    expect(cardText("armor-1")).toContain("Not equipped");
   } finally {
     mounted.app.unmount();
     mounted.root.remove();

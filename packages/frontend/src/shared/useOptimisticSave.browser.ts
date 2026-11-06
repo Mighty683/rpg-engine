@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vite-plus/test";
 import { ref } from "vue";
-import { useOptimisticSave } from "../../src/shared/useOptimisticSave";
+import { useOptimisticSave } from "./useOptimisticSave";
 
 type Snapshot = { value: number; revision: number };
 

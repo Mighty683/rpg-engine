@@ -323,18 +323,20 @@ export function preview(sheet: FabulaSheet): FabulaPreview {
     armor.length > 1 || shields.length > 1
       ? { calculated: null, reason: "ambiguous_equipment" }
       : calculated(
-          (armor[0]?.fixedDefense ?? sheet.baseDice.DEX) +
-            armor.reduce((sum, entry) => sum + entry.defenseBonus, 0) +
+          (armor[0]?.fixedDefense ??
+            sheet.baseDice.DEX + armor.reduce((sum, entry) => sum + entry.defenseBonus, 0)) +
             shields.reduce((sum, entry) => sum + entry.defenseBonus, 0),
           [
             ...(armor[0]?.fixedDefense === null || !armor[0]
               ? [{ source: "DEX" as const, value: sheet.baseDice.DEX }]
               : [{ source: "armor" as const, entryId: armor[0].id, value: armor[0].fixedDefense }]),
-            ...armor.map((entry) => ({
-              source: "armor" as const,
-              entryId: entry.id,
-              value: entry.defenseBonus,
-            })),
+            ...armor
+              .filter((entry) => entry.fixedDefense === null)
+              .map((entry) => ({
+                source: "armor" as const,
+                entryId: entry.id,
+                value: entry.defenseBonus,
+              })),
             ...shields.map((entry) => ({
               source: "shield" as const,
               entryId: entry.id,

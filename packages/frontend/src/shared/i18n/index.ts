@@ -21,6 +21,7 @@ export function createFrontendI18n() {
           nameRequired: "Enter a game name",
           nameTooLong: "Use 20 characters or fewer",
           system: "RPG system",
+          rowSystem: "System: {name}",
           systemDescription: "The RPG system cannot be changed after the game is created.",
           systemPlaceholder: "Select a system",
           systemRequired: "Select an RPG system",

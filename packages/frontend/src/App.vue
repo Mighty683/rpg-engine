@@ -29,11 +29,10 @@ const playerLink = computed(() =>
         </nav>
       </aside>
       <div class="min-w-0 flex-1">
-        <header class="flex items-center justify-between border-b border-default p-small lg:hidden">
-          <span class="font-semibold">RPG Engine</span
-          ><UButton variant="outline" size="sm" aria-label="Open menu" @click="menuOpen = true"
+        <header class="flex items-center gap-small border-b border-default p-small lg:hidden">
+          <UButton variant="outline" size="sm" aria-label="Open menu" @click="menuOpen = true"
             >Menu</UButton
-          >
+          ><span class="font-semibold">RPG Engine</span>
         </header>
         <USlideover v-model:open="menuOpen" title="Navigation"
           ><template #body
@@ -55,7 +54,7 @@ const playerLink = computed(() =>
               >
             </nav></template
           ></USlideover
-        ><UContainer class="py-page sm:py-page-wide"
+        ><UContainer :class="route.params.characterId ? 'py-small' : 'py-page sm:py-page-wide'"
           ><RouterView :key="$route.fullPath"
         /></UContainer>
       </div>

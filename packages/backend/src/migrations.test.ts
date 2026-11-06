@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { applyMigrations } from "../src/migrations.ts";
+import { applyMigrations } from "./migrations.ts";
 
 describe("migration runner", () => {
   it("releases the connection if the schema lookup fails", async () => {

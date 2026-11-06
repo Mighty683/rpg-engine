@@ -31,6 +31,6 @@ Then(
   async function (this: BrowserWorld, name: string, system: string) {
     const locator = this.games.gameSystem(name);
     const text = await locator.textContent();
-    expect(text).toBe(system);
+    expect(text).toBe(`System: ${system}`);
   },
 );

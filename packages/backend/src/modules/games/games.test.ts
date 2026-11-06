@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { createApp } from "../src/app.ts";
-import { validateGame } from "../src/modules/games/service.ts";
+import { createApp } from "../../app.ts";
+import { validateGame } from "./service.ts";
 import type { Pool } from "pg";
 
 describe("game input", () => {

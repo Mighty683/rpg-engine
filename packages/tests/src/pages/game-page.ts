@@ -10,7 +10,17 @@ export class GamePage {
   }
 
   player(name: string) {
-    return this.page.getByTestId("player-row-link").filter({ hasText: name });
+    return this.page.getByTestId("player-tab").filter({ hasText: name });
+  }
+
+  async openPlayer(name: string) {
+    await this.player(name).click();
+    await this.page.getByTestId("player-row-link").click();
+  }
+
+  async activeCharacter(name: string) {
+    await this.player(name).click();
+    return this.page.getByTestId("player-active-character");
   }
 
   async addPlayer(name: string) {

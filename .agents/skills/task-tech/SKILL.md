@@ -7,6 +7,8 @@ description: Research affected modules and document technical decisions for a ta
 
 Inspect relevant implementation, tests, and architecture guidance. Include contracts, data flow, compatibility constraints, and blockers where they affect the design. Prefer module references; specify exact APIs only to settle a boundary. Keep sequencing in the plan.
 
+Specify which approved prototype components to reuse and how to connect them to production data and APIs. Preserve the approved visuals.
+
 ## Example: `docs/tasks/<task>/tech.md`
 
 ```markdown

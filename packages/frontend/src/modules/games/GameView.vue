@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, RouterLink } from "vue-router";
+import ScreenSection from "../../shared/components/ScreenSection.vue";
 import { useGameQuery } from "./hooks";
 import { usePlayersQuery, useCreatePlayerMutation } from "../players/hooks";
 const route = useRoute();
@@ -14,6 +15,18 @@ const players = usePlayersQuery(gameId);
 const createPlayer = useCreatePlayerMutation(gameId);
 const gameRecord = computed(() => game.data.value?.game);
 const playerRecords = computed(() => players.data.value?.players ?? []);
+const selectedPlayerId = ref<string | undefined>();
+const playerTabs = computed(() =>
+  playerRecords.value.map((player) => ({ label: player.name, value: player.id, player })),
+);
+watch(
+  playerRecords,
+  (records) => {
+    if (!records.some((player) => player.id === selectedPlayerId.value))
+      selectedPlayerId.value = records[0]?.id;
+  },
+  { immediate: true },
+);
 const gameLoading = computed(() => game.isLoading.value);
 const gameError = computed(() => game.isError.value);
 const playersLoading = computed(() => players.isLoading.value);
@@ -26,7 +39,8 @@ async function addPlayer() {
   pendingPlayerName.value = value;
   pendingPlayerId.value ??= crypto.randomUUID();
   try {
-    await createPlayer.mutateAsync({ id: pendingPlayerId.value, name: value });
+    const created = await createPlayer.mutateAsync({ id: pendingPlayerId.value, name: value });
+    selectedPlayerId.value = created.player.id;
     pendingPlayerId.value = null;
     pendingPlayerName.value = "";
     name.value = "";
@@ -38,7 +52,6 @@ async function addPlayer() {
 </script>
 <template>
   <div data-testid="game-view" class="max-w-3xl space-y-section">
-    <RouterLink to="/" class="text-muted">← Games</RouterLink>
     <p v-if="gameLoading">Loading game…</p>
     <p v-else-if="gameError">
       Could not load game. <UButton variant="outline" @click="game.refetch">Retry</UButton>
@@ -46,34 +59,58 @@ async function addPlayer() {
     <template v-else-if="gameRecord"
       ><h1 class="text-heading font-semibold" data-testid="game-heading">{{ gameRecord.name }}</h1>
       <p class="text-muted">{{ gameRecord.system.name }}</p>
-      <form class="flex gap-small" @submit.prevent="addPlayer">
-        <UInput
-          v-model="name"
-          placeholder="Player name"
-          aria-label="Player name"
-          data-testid="player-name"
-        /><UButton type="submit" data-testid="add-player">Add player</UButton>
-      </form>
-      <p v-if="playerCreateError" role="alert" data-testid="player-create-error" class="text-error">
-        Could not confirm player creation. Submit again to safely retry.
-      </p>
-      <p v-if="playersLoading">Loading players…</p>
-      <p v-else-if="playersError">
-        Could not load players. <UButton variant="outline" @click="players.refetch">Retry</UButton>
-      </p>
-      <ul v-else class="divide-y divide-default rounded-panel border border-default">
-        <li v-for="player in playerRecords" :key="player.id" class="p-large">
-          <RouterLink
-            :to="`/games/${gameId}/players/${player.id}`"
-            class="flex justify-between"
-            data-testid="player-row-link"
-            ><span>{{ player.name }}</span
-            ><span v-if="player.activeCharacter" class="text-muted">{{
-              player.activeCharacter.name
-            }}</span></RouterLink
+      <ScreenSection aria-labelledby="players-heading" class="space-y-large">
+        <h2 id="players-heading" class="text-section font-semibold">Players</h2>
+        <form class="flex gap-small" @submit.prevent="addPlayer">
+          <UInput
+            v-model="name"
+            placeholder="Player name"
+            aria-label="Player name"
+            data-testid="player-name"
+          /><UButton type="submit" data-testid="add-player">Add player</UButton>
+        </form>
+        <p
+          v-if="playerCreateError"
+          role="alert"
+          data-testid="player-create-error"
+          class="text-error"
+        >
+          Could not confirm player creation. Submit again to safely retry.
+        </p>
+        <p v-if="playersLoading">Loading players…</p>
+        <p v-else-if="playersError">
+          Could not load players.
+          <UButton variant="outline" @click="players.refetch">Retry</UButton>
+        </p>
+        <p v-else-if="playerRecords.length === 0" class="text-muted">No players yet.</p>
+        <UTabs
+          v-else
+          v-model="selectedPlayerId"
+          :items="playerTabs"
+          :ui="{ list: 'overflow-x-auto' }"
+        >
+          <template #default="{ item }"
+            ><span data-testid="player-tab">{{ item.label }}</span></template
           >
-        </li>
-      </ul></template
+          <template #content="{ item }">
+            <div class="space-y-small p-small">
+              <p class="text-muted" data-testid="player-active-character">
+                {{
+                  item.player.activeCharacter
+                    ? `Active character: ${item.player.activeCharacter.name}`
+                    : "No active character"
+                }}
+              </p>
+              <RouterLink
+                :to="`/games/${gameId}/players/${item.value}`"
+                data-testid="player-row-link"
+                class="text-primary underline"
+                >Manage {{ item.label }}</RouterLink
+              >
+            </div>
+          </template>
+        </UTabs>
+      </ScreenSection></template
     >
   </div>
 </template>

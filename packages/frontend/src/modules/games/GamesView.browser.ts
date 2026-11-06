@@ -3,11 +3,11 @@ import { page } from "vite-plus/test/browser";
 import { createApp, nextTick } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import ui from "@nuxt/ui/vue-plugin";
-import { createFrontendI18n } from "../../src/shared/i18n";
+import { createFrontendI18n } from "../../shared/i18n";
 import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query";
-import App from "../../src/App.vue";
-import GamesView from "../../src/modules/games/GamesView.vue";
-import "../../src/style.css";
+import App from "../../App.vue";
+import GamesView from "./GamesView.vue";
+import "../../style.css";
 
 test("a GM can retry a failed game list without a backend", async () => {
   const fetchMock = vi
@@ -127,7 +127,7 @@ test("player creation retry reuses the same client id", async () => {
     routes: [
       {
         path: "/games/:gameId",
-        component: (await import("../../src/modules/games/GameView.vue")).default,
+        component: (await import("./GameView.vue")).default,
       },
     ],
   });

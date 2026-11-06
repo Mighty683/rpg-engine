@@ -13,7 +13,7 @@ When("I add player {string}", async function (this: BrowserWorld, name: string) 
 });
 
 When("I open player {string}", async function (this: BrowserWorld, name: string) {
-  await this.game.player(name).click();
+  await this.game.openPlayer(name);
   expect(this.page.url()).toMatch(/\/players\//);
 });
 
@@ -68,7 +68,8 @@ Then("character {string} is active", async function (this: BrowserWorld, name: s
 });
 
 When("I clear the active character", async function (this: BrowserWorld) {
-  await this.page.getByTestId("clear-active").click();
+  await this.page.getByTestId("active-character").click();
+  await expect.poll(() => this.page.getByTestId("active-character").count()).toBe(0);
   await this.page.reload();
 });
 
@@ -80,14 +81,12 @@ When("I open the game overview", async function (this: BrowserWorld) {
 Then(
   "player {string} shows active character {string}",
   async function (this: BrowserWorld, player: string, character: string) {
-    const row = this.page
-      .getByTestId("player-row-link")
-      .filter({ hasText: `${player}${character}` });
-    await expect.poll(() => row.isVisible()).toBe(true);
+    const activeCharacter = await this.game.activeCharacter(player);
+    await expect.poll(() => activeCharacter.textContent()).toContain(character);
   },
 );
 
 Then("no character is active", async function (this: BrowserWorld) {
-  const clear = this.page.getByTestId("clear-active");
-  expect(await clear.count()).toBe(0);
+  const active = this.page.getByTestId("active-character");
+  expect(await active.count()).toBe(0);
 });

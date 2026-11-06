@@ -4,7 +4,7 @@ import viteConfig from "./vite.config.ts";
 
 export default mergeConfig(viteConfig, {
   test: {
-    include: ["tests/browser/**/*.browser.ts"],
+    include: ["src/**/*.browser.ts"],
     browser: {
       enabled: true,
       headless: true,

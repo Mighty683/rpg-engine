@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, nextTick, onMounted, ref } from "vue";
-import { RouterLink } from "vue-router";
+import InteractiveCard from "../../shared/components/InteractiveCard.vue";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
@@ -183,15 +183,15 @@ onMounted(() => {
           {{ t("games.empty") }}
         </p>
         <ul v-else class="divide-y divide-default rounded-panel border border-default">
-          <li
-            v-for="game in games"
-            :key="game.id"
-            data-testid="game-row"
-            class="flex flex-wrap justify-between gap-small p-large"
-          >
-            <RouterLink :to="`/games/${game.id}`" data-testid="game-row-link" class="font-medium"
-              ><span data-testid="game-row-name">{{ game.name }}</span></RouterLink
-            ><span data-testid="game-row-system" class="text-muted">{{ game.system.name }}</span>
+          <li v-for="game in games" :key="game.id" data-testid="game-row">
+            <InteractiveCard :to="`/games/${game.id}`" data-testid="game-row-link">
+              <span class="flex min-w-0 flex-col">
+                <span data-testid="game-row-name" class="font-medium">{{ game.name }}</span>
+                <span data-testid="game-row-system" class="text-sm text-muted">{{
+                  t("games.rowSystem", { name: game.system.name })
+                }}</span>
+              </span>
+            </InteractiveCard>
           </li>
         </ul>
       </div>

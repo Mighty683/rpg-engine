@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { describe, expect, it } from "vite-plus/test";
-import { createApp } from "../src/app.ts";
-import { applyMigrations } from "../src/migrations.ts";
+import { createApp } from "../../app.ts";
+import { applyMigrations } from "../../migrations.ts";
 
 describe("character setup scoped API", () => {
   it("creates Fabula games and rejects player access through another game", async () => {
