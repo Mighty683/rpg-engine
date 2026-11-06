@@ -5,14 +5,13 @@ import { account } from "../auth/session";
 import { useGameCharactersQuery } from "../characters/hooks";
 import { useGameMembersQuery } from "../games/hooks";
 import CharacterView from "../characters/CharacterView.vue";
-import type { Attribute, PartyCharacter, ThrowRecord, ThrowSetup } from "../../shared/api";
+import type { Attribute, PartyCharacter, ThrowRecord, ThrowSetup } from "./contract";
 import { useCreateThrowMutation, useGamePartyQuery, useRemoveThrowMutation, useThrowHistory } from "./hooks";
 import PartyPanel from "./PartyPanel.vue";
 import HistoryPanel from "./HistoryPanel.vue";
 import RollDialog, { type RollDraft } from "./RollDialog.vue";
 import FreeRollDialog, { type FreeDraft } from "./FreeRollDialog.vue";
 import type { OpponentDraft } from "./OpposedSetup.vue";
-import { newUuid } from "../../shared/uuid";
 
 const props = defineProps<{ gameId: string; role: "GM" | "Player"; throwsHint: number }>();
 const toast = useToast();
@@ -43,13 +42,11 @@ const weaponHint = ref<{ character: PartyCharacter; weaponName: string } | null>
 const rollDraft = ref<RollDraft | null>(null);
 const rollOpponent = ref<OpponentDraft>({ dice: [], modifier: "0" });
 const rollError = ref("");
-const rollRequestId = ref<string | null>(null);
 const rollSourceId = ref<string | null>(null);
 
 const freeDraft = ref<FreeDraft | null>(null);
 const freeOpponent = ref<OpponentDraft>({ dice: [], modifier: "0" });
 const freeError = ref("");
-const freeRequestId = ref<string | null>(null);
 const freeSourceId = ref<string | null>(null);
 
 const highlightId = ref("");
@@ -83,7 +80,6 @@ const rollAsOptions = computed(() => [
 function openAttributeRoll(character: PartyCharacter, attribute: Attribute) {
   weaponHint.value = null;
   rollSourceId.value = null;
-  rollRequestId.value = null;
   rollError.value = "";
   rollOpponent.value = { dice: [], modifier: "0" };
   rollDraft.value = {
@@ -105,7 +101,6 @@ function openWeaponRoll(character: PartyCharacter, weaponId: string) {
   if (!weapon || !weapon.ready) return;
   weaponHint.value = null;
   rollSourceId.value = null;
-  rollRequestId.value = null;
   rollError.value = "";
   rollOpponent.value = { dice: [], modifier: "0" };
   rollDraft.value = {
@@ -137,7 +132,6 @@ function openReroll(entry: ThrowRecord) {
       return;
     }
     rollSourceId.value = entry.id;
-    rollRequestId.value = null;
     rollOpponent.value = { dice: [], modifier: "0" };
     rollDraft.value = {
       mode: "weapon",
@@ -159,7 +153,6 @@ function openReroll(entry: ThrowRecord) {
       return;
     }
     rollSourceId.value = entry.id;
-    rollRequestId.value = null;
     rollOpponent.value = { dice: entry.setup.redDice.map((die) => die.size), modifier: String(entry.setup.redModifier) };
     const first = entry.setup.dice[0]?.label as Attribute | undefined;
     const second = entry.setup.dice[1]?.label as Attribute | undefined;
@@ -179,7 +172,6 @@ function openReroll(entry: ThrowRecord) {
     return;
   }
   freeSourceId.value = entry.id;
-  freeRequestId.value = null;
   freeOpponent.value = { dice: entry.setup.redDice.map((die) => die.size), modifier: String(entry.setup.redModifier) };
   const attributed = props.role === "GM" ? entry.characterId ?? "gm" : playerActiveCharacter.value?.id ?? "";
   freeDraft.value = {
@@ -193,7 +185,6 @@ function openReroll(entry: ThrowRecord) {
 function openFreeRoll() {
   weaponHint.value = null;
   freeSourceId.value = null;
-  freeRequestId.value = null;
   freeError.value = "";
   freeOpponent.value = { dice: [], modifier: "0" };
   freeDraft.value = {
@@ -225,14 +216,6 @@ function rollSetup(draft: RollDraft): ThrowSetup | null {
     };
   }
   const redDice = rollOpponent.value.dice;
-  if (redDice.length !== 0 && redDice.length !== 2) {
-    rollError.value = "Choose two opposing dice, or remove them for an unopposed check.";
-    return null;
-  }
-  if (draft.second && redDice.length === 2 && (redDice[0] !== draft.dice[draft.first] || redDice[1] !== draft.dice[draft.second])) {
-    rollError.value = "Opposing dice follow the friendly attribute order and sizes.";
-    return null;
-  }
   return {
     type: "attribute",
     characterId: draft.character.id,
@@ -251,17 +234,22 @@ async function submitRoll() {
   if (!draft) return;
   const setup = rollSetup(draft);
   if (!setup) return;
-  rollRequestId.value ??= newUuid();
   rollError.value = "";
   try {
-    const result = await createThrow.mutateAsync({ requestId: rollRequestId.value, sourceThrowId: rollSourceId.value, setup });
+    const result = await createThrow.mutateAsync({ sourceThrowId: rollSourceId.value, setup });
     pendingHighlight.value = result.throw.id;
     rollDraft.value = null;
-    rollRequestId.value = null;
   } catch (error) {
     const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload?.error;
-    rollError.value = payload?.message ?? "The roll could not be submitted. Submit again to retry safely.";
-    if (payload?.code === "stale_revision" || payload?.code === "inactive_character") void partyQuery.refetch();
+    const status = (error as { status?: number }).status;
+    if (!status || status >= 500) {
+      rollDraft.value = null;
+      toast.add({ title: "Could not confirm the roll. Check history before rolling again.", color: "error" });
+    } else if (payload?.code === "stale_revision" || payload?.code === "inactive_character") {
+      rollDraft.value = null;
+      void partyQuery.refetch();
+      toast.add({ title: "The character changed. Open the roll again to use the latest sheet.", color: "error" });
+    } else rollError.value = payload?.message ?? "The roll could not be submitted.";
   }
 }
 
@@ -277,14 +265,6 @@ function freeSetup(draft: FreeDraft): ThrowSetup | null {
     return null;
   }
   const redDice = freeOpponent.value.dice;
-  if (redDice.length === 1 && draft.dice.length !== 1) {
-    freeError.value = "A one-die opposed roll needs one friendly die.";
-    return null;
-  }
-  if (redDice.length === 2 && draft.dice.length !== 2) {
-    freeError.value = "A two-die opposed roll requires two dice on each side.";
-    return null;
-  }
   return { type: "free", characterId: draft.characterId, dice: [...draft.dice], modifier, redDice, redModifier, note: draft.note };
 }
 
@@ -293,17 +273,21 @@ async function submitFreeRoll() {
   if (!draft) return;
   const setup = freeSetup(draft);
   if (!setup) return;
-  freeRequestId.value ??= newUuid();
   freeError.value = "";
   try {
-    const result = await createThrow.mutateAsync({ requestId: freeRequestId.value, sourceThrowId: freeSourceId.value, setup });
+    const result = await createThrow.mutateAsync({ sourceThrowId: freeSourceId.value, setup });
     pendingHighlight.value = result.throw.id;
     freeDraft.value = null;
-    freeRequestId.value = null;
   } catch (error) {
     const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload?.error;
-    freeError.value = payload?.message ?? "The roll could not be submitted. Submit again to retry safely.";
-    if (payload?.code === "no_active_character" || payload?.code === "inactive_character") void partyQuery.refetch();
+    const status = (error as { status?: number }).status;
+    if (!status || status >= 500) {
+      freeDraft.value = null;
+      toast.add({ title: "Could not confirm the roll. Check history before rolling again.", color: "error" });
+    } else {
+      freeError.value = payload?.message ?? "The roll could not be submitted.";
+      if (payload?.code === "no_active_character" || payload?.code === "inactive_character") void partyQuery.refetch();
+    }
   }
 }
 

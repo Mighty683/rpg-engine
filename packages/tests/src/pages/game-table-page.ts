@@ -17,13 +17,27 @@ export class GameTablePage {
     await this.page.goto(url);
     await this.page.getByTestId("auth-username").fill(username);
     await this.page.getByTestId("auth-password").fill(password);
-    await this.page.getByTestId("auth-submit").click();
+    const [response] = await Promise.all([
+      this.page.waitForResponse((response) => response.url().endsWith("/api/auth/login")),
+      this.page.getByTestId("auth-submit").click(),
+    ]);
+    if (!response.ok()) throw new Error(`Sign-in failed with HTTP ${response.status()}: ${await response.text()}`);
     await this.page.getByTestId("open-game-creation").waitFor({ state: "visible" });
   }
 
   async openGame(url: string, gameId: string) {
     await this.page.goto(`${url}/games/${gameId}`);
     await this.table.waitFor({ state: "visible" });
+  }
+
+  async selectCharacter(name: string) {
+    await this.page.getByTestId("character-control-tile").filter({ hasText: name }).getByTestId("set-active").click();
+  }
+
+  async configureWeapon() {
+    await this.page.getByTestId("open-entry-details").first().click();
+    await this.page.getByTestId("weapon-attribute-2").selectOption("INS");
+    await this.page.getByTestId("weapon-accuracy-bonus").fill("1");
   }
 
   partyCard(name: string) {

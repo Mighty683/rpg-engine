@@ -17,11 +17,3 @@ CREATE TABLE IF NOT EXISTS throws (
 );
 CREATE INDEX IF NOT EXISTS throws_game_seq_idx ON throws (game_id, seq) WHERE NOT deleted;
 CREATE INDEX IF NOT EXISTS throws_game_seq_all_idx ON throws (game_id, seq);
-CREATE TABLE IF NOT EXISTS throw_create_requests (
-  account_id uuid NOT NULL REFERENCES accounts(id),
-  request_id uuid NOT NULL,
-  game_id uuid NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-  throw_id uuid NOT NULL,
-  intent text NOT NULL,
-  PRIMARY KEY (account_id, request_id)
-);

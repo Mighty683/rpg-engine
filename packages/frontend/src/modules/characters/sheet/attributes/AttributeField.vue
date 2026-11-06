@@ -3,6 +3,7 @@ import InfoTooltip from "../../../../shared/design-system/InfoTooltip.vue";
 import DieIcon from "../../../../shared/design-system/DieIcon.vue";
 defineProps<{ label: string; help: string }>();
 const value = defineModel<string>({ required: true });
+const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: size }));
 </script>
 
 <template>
@@ -12,12 +13,9 @@ const value = defineModel<string>({ required: true });
       ><InfoTooltip :label="`About ${label}`" :text="help" />
     </div>
     <div class="die-value">
-      <DieIcon :sides="value" /><select v-model="value" :aria-label="label">
-        <option value="6">d6</option>
-        <option value="8">d8</option>
-        <option value="10">d10</option>
-        <option value="12">d12</option>
-      </select>
+      <DieIcon :sides="value" /><USelect v-model="value" :items="dice" value-key="value" :aria-label="label" :data-testid="`attribute-die-${label}`" variant="ghost" class="die-select">
+        <template #item-label="{ item }"><span :data-testid="`attribute-die-option-${item.value}`">{{ item.label }}</span></template>
+      </USelect>
     </div>
   </div>
 </template>
@@ -52,18 +50,8 @@ const value = defineModel<string>({ required: true });
   width: 1rem;
   height: 1rem;
 }
-.die-value::after {
-  content: "⌄";
-  color: var(--ui-text-muted);
-}
-select {
-  appearance: none;
-  width: 100%;
+.die-select {
   min-width: 0;
-  text-align: center;
-  cursor: pointer;
-  color: var(--ui-text-highlighted);
   font-weight: 700;
-  background: transparent;
 }
 </style>

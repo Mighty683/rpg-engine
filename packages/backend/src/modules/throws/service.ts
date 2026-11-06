@@ -1,5 +1,5 @@
 // Game Table throw history: immutable roll snapshots with server-assigned per-game
-// sequence, idempotent create receipts, and authorship-based removal. Every write
+// sequence and authorship-based removal. Every write
 // takes the per-game transaction lock before resolving access, so stale selections
 // and revoked memberships are re-checked against current state.
 import { randomUUID } from "node:crypto";
@@ -8,7 +8,7 @@ import { serverDieSource, type DieSource } from "../fabula/rolls.ts";
 import { gameAccess, lockGame, type GameActor, type GameAccess } from "../games/service.ts";
 import { publishGameEvent } from "../events/streams.ts";
 import { sheetSequential, type Row } from "../characters/service.ts";
-import { canonicalIntent, fail, gmActorId, type CreateThrowInput, type ThrowRecord, type ResolvedSetup, type OutcomeJson, type ThrowKind } from "./contract.ts";
+import { fail, gmActorId, type CreateThrowInput, type ThrowRecord, type ResolvedSetup, type OutcomeJson, type ThrowKind } from "./contract.ts";
 import { resolveThrow, type ResolutionContext, type RollCharacter, type SourceThrow } from "./resolve.ts";
 
 type ThrowRow = {
@@ -125,18 +125,6 @@ async function lockGameRead(client: PoolClient, actor: GameActor, gameId: string
 export async function createThrow(pool: Pool, actor: GameActor, gameId: string, input: CreateThrowInput, dieSource: DieSource = serverDieSource) {
   const result = await writeTransaction(pool, async (client) => {
     const access = await lockGame(client, actor, gameId);
-    const receipt = await client.query<{ game_id: string; throw_id: string; intent: string }>(
-      "SELECT game_id,throw_id,intent FROM throw_create_requests WHERE account_id=$1 AND request_id=$2",
-      [actor.accountId, input.requestId],
-    );
-    if (receipt.rows[0]) {
-      const existing = receipt.rows[0];
-      if (existing.game_id !== gameId || existing.intent !== canonicalIntent(input)) throw fail("id_conflict");
-      const row = await client.query<ThrowRow>("SELECT * FROM throws WHERE id=$1 AND game_id=$2", [existing.throw_id, gameId]);
-      if (!row.rows[0]) throw fail("not_found");
-      if (row.rows[0].deleted) throw fail("removed", "This throw was removed");
-      return { record: present(row.rows[0], actor, access), created: false };
-    }
     const context = await buildContext(client, gameId, access, input);
     const resolved = resolveThrow(input, context, dieSource);
     const sequence = await client.query<{ next: string | number }>(
@@ -162,11 +150,7 @@ export async function createThrow(pool: Pool, actor: GameActor, gameId: string, 
         JSON.stringify(resolved.outcome),
       ],
     );
-    await client.query(
-      "INSERT INTO throw_create_requests (account_id,request_id,game_id,throw_id,intent) VALUES ($1,$2,$3,$4,$5)",
-      [actor.accountId, input.requestId, gameId, id, canonicalIntent(input)],
-    );
-    return { record: present(inserted.rows[0]!, actor, access), created: true };
+    return { record: present(inserted.rows[0]!, actor, access) };
   });
   publishGameEvent(gameId, { type: "throws" });
   return result;

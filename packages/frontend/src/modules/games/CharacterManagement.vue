@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { GameCharacterSummary, GameMember } from "../../shared/api";
+import type { GameCharacterSummary } from "../characters/api";
+import type { GameMember } from "./api";
 import CharacterControlTile from "./CharacterControlTile.vue";
 
 const props = defineProps<{ characters: GameCharacterSummary[]; members: GameMember[]; role: "GM" | "Player"; pending: boolean }>();

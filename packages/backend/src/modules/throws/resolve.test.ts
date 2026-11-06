@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import { defaultSheet, type FabulaSheet } from "../fabula/rules.ts";
 import type { DieSource } from "../fabula/rolls.ts";
 import type { CreateThrowInput, ResolvedSetup, ThrowKind } from "./contract.ts";
@@ -48,7 +48,6 @@ const playerContext = (overrides: Partial<ResolutionContext> = {}): ResolutionCo
 });
 
 const attributeInput = (overrides: Partial<Extract<CreateThrowInput["setup"], { type: "attribute" }>> = {}): CreateThrowInput => ({
-  requestId: "req-1",
   sourceThrowId: null,
   setup: {
     type: "attribute",
@@ -65,13 +64,11 @@ const attributeInput = (overrides: Partial<Extract<CreateThrowInput["setup"], { 
 });
 
 const freeInput = (overrides: Partial<Extract<CreateThrowInput["setup"], { type: "free" }>> = {}): CreateThrowInput => ({
-  requestId: "req-1",
   sourceThrowId: null,
   setup: { type: "free", characterId: "gm", dice: [8], modifier: 0, redDice: [], redModifier: 0, note: "", ...overrides },
 });
 
 const weaponInput = (overrides: Partial<Extract<CreateThrowInput["setup"], { type: "weapon" }>> = {}): CreateThrowInput => ({
-  requestId: "req-1",
   sourceThrowId: null,
   setup: { type: "weapon", characterId: "char-1", equipmentId: "weapon-1", expectedRevision: 3, dice: [8, 10], modifier: 1, note: "", ...overrides },
 });
@@ -115,16 +112,16 @@ describe("attribute throws", () => {
     expect(resolved.outcome.first).toMatchObject({ total: 6, result: "none" });
   });
 
-  it("resolves an opposed attribute check with matching opposing dice and a winner", () => {
-    const input = attributeInput({ redDice: [8, 6], redModifier: 1 });
+  it("resolves an opposed attribute check with independently selected opposing dice", () => {
+    const input = attributeInput({ redDice: [12, 10], redModifier: 1 });
     const resolved = resolveThrow(input, gmContext(), scripted([6, 6, 1, 1]));
     expect(resolved.kind).toBe("opposed-check");
     expect(resolved.outcome.winner).toBe("first");
     expect(resolved.outcome.first).toMatchObject({ total: 14, result: "critical" });
     expect(resolved.outcome.second).toMatchObject({ total: 3, result: "fumble", modifier: 1 });
     expect(resolved.setup.redDice).toEqual([
-      { label: "DEX", size: 8 },
-      { label: "MIG", size: 6 },
+      { label: "DEX", size: 12 },
+      { label: "MIG", size: 10 },
     ]);
   });
 
@@ -137,8 +134,12 @@ describe("attribute throws", () => {
     expect(resolved.outcome.winner).toBe("second");
   });
 
-  it("rejects opposing dice that do not follow the attribute order and sizes", () => {
-    expectFailure(() => resolveThrow(attributeInput({ redDice: [10, 6] }), gmContext(), scripted([])), "validation");
+  it.each([{ attributes: ["DEX"] as ["DEX"], faces: [4, 9] }, { attributes: ["DEX", "MIG"] as ["DEX", "MIG"], faces: [4, 3, 9] }])("compares totals when $attributes faces one opposing die", ({ attributes, faces }) => {
+    const resolved = resolveThrow(attributeInput({ attributes, redDice: [12] }), gmContext(), scripted(faces));
+    expect(resolved.kind).toBe("opposed-roll");
+    expect(resolved.setup.redDice).toEqual([{ label: "d12", size: 12 }]);
+    expect(resolved.outcome.second).toMatchObject({ total: 9, result: "none" });
+    expect(resolved.outcome.first.result).toBe("none");
   });
 });
 
@@ -201,12 +202,12 @@ describe("free throws", () => {
     expect(opposed.outcome.winner).toBe("second");
   });
 
-  it("allows d4 and d20 only for unopposed free rolls", () => {
+  it("compares mixed or nonstandard dice as generic opposed rolls", () => {
     expect(resolveThrow(freeInput({ dice: [4, 20] }), gmContext(), scripted([4, 20])).kind).toBe("free");
-    expectFailure(
-      () => parseCreateRequest({ requestId: crypto.randomUUID(), sourceThrowId: null, setup: { type: "free", characterId: "gm", dice: [4, 20], modifier: 0, redDice: [6, 8], redModifier: 0, note: "" } }),
-      "validation",
-    );
+    const input = parseCreateRequest({ sourceThrowId: null, setup: { type: "free", characterId: "gm", dice: [4, 20], modifier: 0, redDice: [6, 8], redModifier: 0, note: "" } });
+    expect(resolveThrow(input, gmContext(), scripted([4, 20, 6, 8])).outcome).toMatchObject({ first: { total: 24, result: "none" }, second: { total: 14, result: "none" }, winner: "first" });
+    expect(resolveThrow(freeInput({ dice: [8], redDice: [6, 12] }), gmContext(), scripted([7, 4, 8])).outcome).toMatchObject({ first: { total: 7, result: "none" }, second: { total: 12, result: "none" }, winner: "second" });
+    expect(resolveThrow(freeInput({ dice: [6, 8], redDice: [20] }), gmContext(), scripted([3, 4, 10])).outcome).toMatchObject({ first: { total: 7, result: "none" }, second: { total: 10, result: "none" }, winner: "second" });
   });
 
   it("rolls a player free roll as their active character and rejects missing or foreign attribution", () => {
@@ -226,6 +227,15 @@ describe("roll permissions", () => {
     expectFailure(() => resolveThrow(attributeInput(), playerContext({ membershipId: "member-2" }), scripted([])), "forbidden");
     expectFailure(() => resolveThrow(attributeInput({ characterId: "other" }), gmContext({ character: character({ id: "other", playerId: null }) }), scripted([])), "inactive_character");
     expectFailure(() => resolveThrow(attributeInput({ characterId: "gone" }), gmContext({ character: null }), scripted([])), "not_found");
+  });
+
+  it("does not roll dice when character access, revision, or weapon validation fails", () => {
+    const die = vi.fn(() => 1);
+    expectFailure(() => resolveThrow(attributeInput({ expectedRevision: 2 }), gmContext(), die), "stale_revision");
+    expectFailure(() => resolveThrow(attributeInput(), gmContext({ activeCharacterIds: [] }), die), "inactive_character");
+    expectFailure(() => resolveThrow(weaponInput(), gmContext({ weapon: null }), die), "not_found");
+    expectFailure(() => resolveThrow(freeInput({ characterId: "gm" }), playerContext(), die), "forbidden");
+    expect(die).not.toHaveBeenCalled();
   });
 
   it("requires reroll setups to match the source kind and keep its character", () => {

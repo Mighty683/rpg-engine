@@ -20,6 +20,7 @@ setDefaultTimeout(15_000);
 Before(async function (this: BrowserWorld) {
   this.browser = await chromium.launch({ headless: true });
   this.page = await this.browser.newPage();
+  this.page.setDefaultTimeout(8_000);
   this.games = new GamesPage(this.page);
   this.game = new GamePage(this.page);
   this.player = new PlayerPage(this.page);

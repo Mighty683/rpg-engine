@@ -95,26 +95,3 @@ export async function setPlayerActiveCharacter(game: SeededGame, characterId: st
     await pool.end();
   }
 }
-
-export async function saveWeaponAccuracy(game: SeededGame, characterId: string, weaponId: string, accuracyDice: ["DEX", "INS"], accuracyBonus: number) {
-  const pool = await seedPool();
-  try {
-    const actor = { accountId: game.gm.accountId, sessionId: randomUUID() };
-    const revision = Number((await pool.query("SELECT revision FROM characters WHERE id=$1", [characterId])).rows[0]!.revision);
-    const equipment = (await pool.query("SELECT id,name,notes,price_zenit,kind,equipped FROM character_equipment WHERE character_id=$1 ORDER BY position", [characterId])).rows;
-    await updateWorkspaceCharacter(pool, game.gameId, actor, characterId, revision, {
-      equipment: equipment.map((row) => ({
-        id: row.id,
-        name: row.name,
-        notes: row.notes,
-        priceZenit: row.price_zenit,
-        kind: "weapon" as const,
-        equipped: Boolean(row.equipped),
-        accuracyDice: row.id === weaponId ? accuracyDice : (["DEX", "INS"] as ["DEX", "INS"]),
-        accuracyBonus: row.id === weaponId ? accuracyBonus : 1,
-      })),
-    });
-  } finally {
-    await pool.end();
-  }
-}

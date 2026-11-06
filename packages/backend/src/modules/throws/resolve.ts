@@ -106,9 +106,7 @@ function resolveAttribute(input: CreateThrowInput, context: ResolutionContext, s
     accuracyDice: null,
   };
   if (setup.redDice.length === 2 && second && secondSize) {
-    if (setup.redDice[0] !== firstSize || setup.redDice[1] !== secondSize)
-      throw fail("validation", "Opposing dice follow the friendly attribute order and sizes", "redDice");
-    const opponent: RolledDie[] = [rollDie(first, firstSize, source), rollDie(second, secondSize, source)];
+    const opponent: RolledDie[] = [rollDie(first, setup.redDice[0]!, source), rollDie(second, setup.redDice[1]!, source)];
     const outcome = opposedOutcome(checkSide(friendly as [RolledDie, RolledDie], setup.modifier), checkSide(opponent as [RolledDie, RolledDie], setup.redModifier));
     return finish(context, { ...base, redDice: opponent.map((die) => ({ label: die.label, size: die.size })) }, "opposed-check", character, null, {
       first: outcome.first,
@@ -116,7 +114,7 @@ function resolveAttribute(input: CreateThrowInput, context: ResolutionContext, s
       winner: outcome.winner,
     });
   }
-  if (setup.redDice.length === 2) {
+  if (setup.redDice.length > 0) {
     const opponent = setup.redDice.map((size) => rollDie(`d${size}`, size, source));
     const outcome = opposedOutcome(genericSide(friendly, setup.modifier), genericSide(opponent, setup.redModifier));
     return finish(context, { ...base, redDice: opponent.map((die) => ({ label: die.label, size: die.size })) }, "opposed-roll", character, null, {
@@ -188,7 +186,7 @@ function resolveFree(input: CreateThrowInput, context: ResolutionContext, source
     weaponBonus: null,
     accuracyDice: null,
   };
-  if (setup.redDice.length === 2) {
+  if (setup.redDice.length === 2 && friendly.length === 2 && [...setup.dice, ...setup.redDice].every((size) => standardDice.includes(size as Die))) {
     const opponent = setup.redDice.map((size) => rollDie(null, size, source));
     const outcome = opposedOutcome(
       checkSide(friendly as [RolledDie, RolledDie], setup.modifier),
@@ -200,8 +198,8 @@ function resolveFree(input: CreateThrowInput, context: ResolutionContext, source
       winner: outcome.winner,
     });
   }
-  if (setup.redDice.length === 1) {
-    const opponent = [rollDie(null, setup.redDice[0]!, source)];
+  if (setup.redDice.length > 0) {
+    const opponent = setup.redDice.map((size) => rollDie(null, size, source));
     const outcome = opposedOutcome(genericSide(friendly, setup.modifier), genericSide(opponent, setup.redModifier));
     return finish(context, { ...base, redDice: opponent.map((die) => ({ label: die.label, size: die.size })) }, "opposed-roll", character, null, {
       first: outcome.first,

@@ -3,7 +3,7 @@ defineProps<{ label: string; text: string }>();
 </script>
 
 <template>
-  <UTooltip :text="text" :delay-duration="0">
+  <UTooltip :text="text" :delay-duration="0" :content="{ side: 'top' }">
     <span class="info" tabindex="0" role="img" :aria-label="label" data-testid="info-tooltip">
       <svg viewBox="0 0 16 16" aria-hidden="true">
         <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" />

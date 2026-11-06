@@ -12,6 +12,7 @@ const props = withDefaults(
     removeLabel?: string;
     removeBelow?: boolean;
     weapon?: boolean;
+    armor?: boolean;
     badge?: string;
     equipped?: boolean;
     locked?: boolean;
@@ -48,12 +49,13 @@ function confirmRemove() {
         <button
           type="button"
           class="card-trigger"
+          data-testid="open-entry-details"
           :aria-label="weapon ? `Edit ${title}, weapon` : `Edit ${title}`"
         >
           <span class="card-copy"
             ><span class="card-title"
               ><strong>{{ title }}</strong
-              ><WeaponIcon v-if="weapon" /></span
+              ><WeaponIcon v-if="weapon" /><EquipmentIcon v-else-if="armor" kind="armor" class="armor-icon" /></span
             ><span v-if="notes" class="card-notes">{{ notes }}</span
             ><span v-if="equipped !== undefined" class="card-badge" :class="{ active: equipped }"
               ><EquipmentIcon kind="equipped" />{{ equipped ? "Equipped" : "Not equipped" }}</span
@@ -69,38 +71,36 @@ function confirmRemove() {
               <slot name="title"
                 ><strong>{{ title }}</strong></slot
               >
+              <UButton color="neutral" variant="outline" class="shrink-0" type="button" aria-label="Close details" @click="open = false">×</UButton>
             </div>
-            <slot /><button
-              class="editor-close"
-              type="button"
-              aria-label="Close details"
-              @click="open = false"
-            >
-              ×
-            </button>
+            <slot />
           </div>
         </template>
       </UPopover>
-      <button
+      <UButton
         v-if="!removeBelow && removeLabel"
+        color="error"
+        variant="outline"
         type="button"
-        class="card-remove"
+        class="shrink-0"
         :data-testid="removeTestId"
         :aria-label="removeLabel"
         @click="confirming = true"
       >
         ×
-      </button>
+      </UButton>
     </div>
     <div v-if="removeBelow && removeLabel" class="card-footer">
-      <button
+      <UButton
+        color="error"
+        variant="outline"
         type="button"
         :data-testid="removeTestId"
         :aria-label="removeLabel"
         @click="confirming = true"
       >
         Remove
-      </button>
+      </UButton>
     </div>
     <UModal
       v-model:open="confirming"
@@ -157,6 +157,9 @@ function confirmRemove() {
   gap: var(--spacing-small);
   min-width: 0;
 }
+.armor-icon {
+  color: var(--ui-primary);
+}
 .card-copy strong,
 .card-notes {
   overflow-wrap: anywhere;
@@ -186,10 +189,6 @@ function confirmRemove() {
   font-size: 0.875rem;
   white-space: nowrap;
 }
-.card-remove {
-  flex: none;
-  padding: var(--spacing-small);
-}
 .detail-card-compact .card-trigger {
   font-size: 0.875rem;
 }
@@ -204,9 +203,9 @@ function confirmRemove() {
 }
 .card-editor {
   position: relative;
-  max-height: calc(100dvh - 2rem);
+  max-height: min(calc(100dvh - 2rem), var(--reka-popover-content-available-height, 100dvh));
   overflow-y: auto;
-  width: min(20rem, 85vw);
+  width: min(20rem, 85vw, var(--reka-popover-content-available-width, 100vw));
   padding: var(--spacing-large);
 }
 .editor-title {
@@ -215,11 +214,5 @@ function confirmRemove() {
   align-items: center;
   gap: var(--spacing-small);
   margin-bottom: var(--spacing-medium);
-}
-.editor-close {
-  position: absolute;
-  top: var(--spacing-small);
-  right: var(--spacing-small);
-  padding: var(--spacing-small);
 }
 </style>

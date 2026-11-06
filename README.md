@@ -54,7 +54,7 @@ podman run -d --name rpg-engine-postgres \
   rpg-engine-postgres
 ```
 
-The local connection URL is `postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine`. Stop and restart the existing container with `podman stop rpg-engine-postgres` and `podman start rpg-engine-postgres`. The named volume preserves data across container recreation; PostgreSQL initialization variables only apply to an empty volume.
+The local connection URL is `postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine`. Create a separate database for tests with `podman exec rpg-engine-postgres createdb -U rpg_engine -O rpg_engine rpg_engine_test`, then copy `packages/tests/.env.example` to `packages/tests/.env` and adjust its connection URL if needed. The API and end-to-end test commands load that file automatically; an existing `TEST_DATABASE_URL` environment variable takes precedence. Tests create and remove isolated schemas inside the test database. Stop and restart the existing container with `podman stop rpg-engine-postgres` and `podman start rpg-engine-postgres`. The named volume preserves data across container recreation; PostgreSQL initialization variables only apply to an empty volume.
 
 ## AI skills and agents
 

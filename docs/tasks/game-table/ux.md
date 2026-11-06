@@ -21,7 +21,7 @@ The [simulated GM review](../../research/interviews/game-master-application-revi
 | **Make a roll** in Throw history | Start with an empty pool. Click a die to add it and click a pooled die to remove it. A free roll accepts one or two friendly dice. The GM can roll as GM or choose any active character in the game, including one controlled by a player. The player rolls as their active character, which is recorded at submission. |
 | **Reroll** in Throw history | Reopen the appropriate setup with the previous dice, modifiers, opposing dice and note. Review or edit the draft before submitting a new roll. For a free reroll, the GM can keep the original character if still active, choose another active character, or roll as GM. |
 
-For an opposed check, add two red opposing dice and, if applicable, an opposing modifier. The free roller shows both colors in a single removable pool. Each side uses two attribute dice for a Fabula opposed check. When starting from a character’s attributes, the opposing dice follow the friendly attribute order. The prototype also permits a single friendly attribute die against two opposing dice and records that as a generic opposed roll compared by total. That is outside Fabula’s check rules.
+For an opposed roll, add one or two red opposing dice and, if applicable, an opposing modifier. Choose their sizes independently of the friendly dice. The free roller shows both colors in a single removable pool. Two standard dice on each side use Fabula opposed-check ranking; other combinations are generic opposed rolls compared by total. Generic rolls are outside Fabula’s check rules.
 
 Click **Roll** to confirm. Canceling leaves history intact. Temporary choices apply to the throw and do not change the character sheet.
 

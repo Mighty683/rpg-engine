@@ -8,13 +8,15 @@ import { charactersController } from "./modules/characters/controller.ts";
 import { gameEventsController } from "./modules/events/controller.ts";
 import { membershipsController, activeSelectionController } from "./modules/players/membership-controller.ts";
 import { gameInvitationsController, invitationController } from "./modules/invitations/controller.ts";
+import { partyController } from "./modules/characters/party-controller.ts";
+import { throwsController } from "./modules/throws/controller.ts";
 
 export function createApp(pool: Pool) {
   const app = express();
   app.use(express.json({ limit: "96kb" }));
   const routes = Application()
     .prefix("api")
-    .registerControllers(authController(pool), gamesController(pool), charactersController(pool), membershipsController(pool), activeSelectionController(pool), gameInvitationsController(pool), invitationController(pool), gameEventsController(pool), rpgSystemsController());
+    .registerControllers(authController(pool), gamesController(pool), charactersController(pool), partyController(pool), throwsController(pool), membershipsController(pool), activeSelectionController(pool), gameInvitationsController(pool), invitationController(pool), gameEventsController(pool), rpgSystemsController());
   ExpressAdapter(app, routes).configure(false);
   app.use(
     (

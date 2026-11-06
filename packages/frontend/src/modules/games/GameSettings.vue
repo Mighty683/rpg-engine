@@ -4,7 +4,9 @@ import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { account } from "../auth/session";
-import { api, type GameCharacterSummary, type GameInvitation, type GameMember } from "../../shared/api";
+import type { GameCharacterSummary } from "../characters/api";
+import { invitationApi, type GameInvitation } from "../invitations/api";
+import { api, type GameMember } from "./api";
 import ScreenSection from "../../shared/design-system/ScreenSection.vue";
 
 const props = defineProps<{ gameId: string; members: GameMember[]; characters: GameCharacterSummary[] }>();
@@ -12,7 +14,7 @@ const emit = defineEmits<{ changed: [] }>();
 const client = useQueryClient();
 const toast = useToast();
 const key = computed(() => ["accounts", account.value?.id, "games", props.gameId, "invitations"]);
-const invitations = useQuery({ queryKey: key, queryFn: () => api.listGameInvitations(props.gameId) });
+const invitations = useQuery({ queryKey: key, queryFn: () => invitationApi.listGameInvitations(props.gameId) });
 useQueryErrorToast(invitations, "Could not load invitations. Try again.");
 const rows = computed(() => invitations.data.value?.invitations ?? []);
 const availableCharacters = computed(() => props.characters.filter((character) => character.controllerMembershipId === null).map((character) => ({ label: character.name, value: character.id })));
@@ -41,13 +43,13 @@ async function perform(action: () => Promise<unknown>, success: string) {
 }
 function create(kind: "game" | "character") {
   if (kind === "character" && !selectedCharacterId.value) return;
-  void perform(() => api.createGameInvitation(props.gameId, { kind, ...(kind === "character" ? { characterId: selectedCharacterId.value } : {}) }), "Invitation created.");
+  void perform(() => invitationApi.createGameInvitation(props.gameId, { kind, ...(kind === "character" ? { characterId: selectedCharacterId.value } : {}) }), "Invitation created.");
 }
 function toggle(invitation: GameInvitation) {
-  void perform(() => api.updateGameInvitation(props.gameId, invitation.id, !invitation.enabled), "Invitation updated.");
+  void perform(() => invitationApi.updateGameInvitation(props.gameId, invitation.id, !invitation.enabled), "Invitation updated.");
 }
 function rotate(invitation: GameInvitation) {
-  void perform(() => api.rotateGameInvitation(props.gameId, invitation.id), "Invitation link replaced.");
+  void perform(() => invitationApi.rotateGameInvitation(props.gameId, invitation.id), "Invitation link replaced.");
 }
 async function copy(invitation: GameInvitation) {
   try {

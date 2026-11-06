@@ -1,7 +1,8 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed, ref, watch } from "vue";
 import { account } from "../auth/session";
-import { api, type CreateThrowInput, type PartyCharacter, type ThrowRecord } from "../../shared/api";
+import { api } from "./api";
+import type { CreateThrowInput, PartyCharacter, ThrowRecord } from "./contract";
 import { hasWindowGap, historyPageSize, mergeThrowPages, olderCursor } from "./history.ts";
 
 const gameKey = (gameId: string) => ["accounts", account.value?.id, "games", gameId];
@@ -67,8 +68,7 @@ export function useCreateThrowMutation(gameId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateThrowInput) => api.createGameThrow(gameId, input),
-    onSuccess: () => client.invalidateQueries({ queryKey: throwsKey(gameId) }),
-    onError: () => client.invalidateQueries({ queryKey: throwsKey(gameId) }),
+    onSettled: () => client.invalidateQueries({ queryKey: throwsKey(gameId) }),
   });
 }
 
@@ -76,8 +76,7 @@ export function useRemoveThrowMutation(gameId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (throwId: string) => api.deleteGameThrow(gameId, throwId),
-    onSuccess: () => client.invalidateQueries({ queryKey: throwsKey(gameId) }),
-    onError: () => client.invalidateQueries({ queryKey: throwsKey(gameId) }),
+    onSettled: () => client.invalidateQueries({ queryKey: throwsKey(gameId) }),
   });
 }
 

@@ -51,13 +51,15 @@ export default async function setup(project: TestProject) {
       server: {
         host: "127.0.0.1",
         port: 0,
-        proxy: { "/api": `http://127.0.0.1:${backendAddress.port}` },
+        proxy: { "/api": { target: `http://127.0.0.1:${backendAddress.port}`, changeOrigin: false } },
       },
     });
     await frontend.listen();
     const address = frontend.httpServer?.address();
     if (!address || typeof address === "string") throw new Error("Frontend has no TCP address");
     project.provide("frontendUrl", `http://127.0.0.1:${address.port}`);
+    project.provide("databaseUrl", connectionString);
+    project.provide("databaseSchema", schema);
     return cleanup;
   } catch (error) {
     await cleanup();

@@ -25,10 +25,8 @@ function requestError(error: unknown): never {
     not_found: 404,
     forbidden: 403,
     stale_revision: 409,
-    id_conflict: 409,
     no_active_character: 409,
     inactive_character: 409,
-    removed: 410,
     weapon_incomplete: 422,
     validation: 422,
     bad_request: 400,
@@ -43,10 +41,8 @@ function requestError(error: unknown): never {
     not_found: "Throw not found.",
     forbidden: "Action not permitted.",
     stale_revision: "The sheet changed since this roll was prepared.",
-    id_conflict: "The request ID was reused with a different roll.",
     no_active_character: "Select an active character before rolling.",
     inactive_character: "That character is no longer active.",
-    removed: "This throw was removed.",
   };
   throw new RequestError(status, { error: { code: e.code!, message: messages[e.code!] ?? "Request failed." } });
 }
@@ -75,7 +71,7 @@ export function throwsController(pool: Pool) {
         catch (error) { requestError(error); }
         try {
           const result = await createThrow(pool, context.actor, context.gameId, input);
-          response.status(result.created ? 201 : 200);
+          response.status(201);
           return { throw: result.record };
         } catch (error) { requestError(error); }
       }),

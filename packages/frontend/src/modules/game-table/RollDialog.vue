@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { Attribute, PartyCharacter } from "../../shared/api";
+import type { Attribute, PartyCharacter } from "./contract";
 import DieIcon from "../../shared/design-system/DieIcon.vue";
 import OpposedSetup, { type OpponentDraft } from "./OpposedSetup.vue";
 
@@ -46,11 +46,11 @@ function toggleSecond(attribute: Attribute) {
         <div class="space-y-small">
           <template v-for="(attribute, index) in usedAttributes" :key="`${attribute}-${index}`">
             <div class="flex flex-wrap items-end gap-medium">
-              <fieldset v-if="index === 0 || attribute !== draft.first">
-                <legend class="mb-small text-sm font-medium">{{ attribute }} die</legend>
+              <fieldset>
+                <legend class="mb-small text-sm font-medium">{{ attribute }} die<span v-if="index === 1 && attribute === draft.first"> (same size as first)</span></legend>
                 <div class="flex flex-wrap gap-small">
                   <label v-for="size in dieSizes" :key="size" class="die-choice">
-                    <input v-model="draft.dice[attribute]" class="sr-only" type="radio" :name="`die-${attribute}`" :value="size" :data-testid="`die-size-${attribute}-${size}`" />
+                    <input v-model="draft.dice[attribute]" class="sr-only" type="radio" :name="`die-${index}-${attribute}`" :value="size" :data-testid="index === 1 && attribute === draft.first ? `second-die-size-${attribute}-${size}` : `die-size-${attribute}-${size}`" />
                     <span class="die-choice-content"><DieIcon :sides="size" /><span>d{{ size }}</span></span>
                   </label>
                 </div>

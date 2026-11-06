@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { GameCharacterSummary, GameMember } from "../../shared/api";
+import type { GameCharacterSummary } from "../characters/api";
+import type { GameMember } from "./api";
 import ScreenSection from "../../shared/design-system/ScreenSection.vue";
 
 const props = defineProps<{ character: GameCharacterSummary; role: "GM" | "Player"; members: GameMember[]; pending: boolean }>();
@@ -36,7 +37,7 @@ watch(() => props.character.controllerMembershipId, (value) => { controller.valu
     </form>
     <div class="flex flex-wrap gap-small">
       <UButton color="neutral" variant="outline" @click="emit('open')">Open sheet</UButton>
-      <UButton v-if="canActivate" color="neutral" variant="outline" :disabled="pending" @click="emit('setActive', !character.active)">{{ character.active ? "Make inactive" : "Make active" }}</UButton>
+      <UButton v-if="canActivate" data-testid="set-active" color="neutral" variant="outline" :disabled="pending" @click="emit('setActive', !character.active)">{{ character.active ? "Make inactive" : "Make active" }}</UButton>
       <UButton v-if="role === 'GM' || character.canEdit" color="error" variant="outline" :disabled="pending" @click="emit('remove')">Remove</UButton>
     </div>
   </ScreenSection>

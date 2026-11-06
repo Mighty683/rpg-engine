@@ -1,3 +1,13 @@
+import { request as apiRequest } from "../../shared/api";
+
+export type GameInvitation = {
+  id: string;
+  kind: "game" | "character";
+  characterId: string | null;
+  enabled: boolean;
+  url: string;
+};
+
 export type InvitationPreview = {
   kind: "game" | "character";
   gameId: string;
@@ -18,6 +28,14 @@ async function request<T>(token: string, accept?: { makeActive: boolean }): Prom
   return response.json() as Promise<T>;
 }
 export const invitationApi = {
+  listGameInvitations: (gameId: string) => apiRequest<{ invitations: GameInvitation[] }>(`/api/games/${gameId}/invitations`),
+  createGameInvitation: (gameId: string, input: { kind: "game" | "character"; characterId?: string }) =>
+    apiRequest<{ invitation: GameInvitation }>(`/api/games/${gameId}/invitations`, { method: "POST", body: JSON.stringify(input) }),
+  updateGameInvitation: (gameId: string, invitationId: string, enabled: boolean) =>
+    apiRequest<{ invitation: GameInvitation }>(`/api/games/${gameId}/invitations/${invitationId}`, { method: "PATCH", body: JSON.stringify({ enabled }) }),
+  rotateGameInvitation: (gameId: string, invitationId: string) =>
+    apiRequest<{ invitation: GameInvitation }>(`/api/games/${gameId}/invitations/${invitationId}/rotate`, { method: "POST", body: "{}" }),
+
   preview: (token: string) => request<{ invitation: InvitationPreview }>(token),
   accept: (token: string, makeActive: boolean) => request<{ gameId: string; characterId?: string }>(token, { makeActive }),
 };

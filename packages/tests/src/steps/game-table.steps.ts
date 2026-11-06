@@ -4,7 +4,7 @@ import type { BrowserContext, Page } from "playwright";
 import { randomUUID } from "node:crypto";
 import type { BrowserWorld } from "../support/world.ts";
 import { GameTablePage } from "../pages/game-table-page.ts";
-import { saveWeaponAccuracy, seedGame, seedPool, setPlayerActiveCharacter, type SeededGame } from "../support/seed.ts";
+import { seedGame, seedPool, setPlayerActiveCharacter, type SeededGame } from "../support/seed.ts";
 import { createThrow } from "../../../backend/src/modules/throws/service.ts";
 
 const frontendUrl = () => inject("frontendUrl") as string;
@@ -17,7 +17,7 @@ async function postThrow(game: SeededGame, setup: Record<string, unknown>) {
   const pool = await seedPool();
   try {
     const actor = { accountId: game.gm.accountId, sessionId: randomUUID() };
-    const result = await createThrow(pool, actor, game.gameId, { requestId: randomUUID(), sourceThrowId: null, setup } as never);
+    const result = await createThrow(pool, actor, game.gameId, { sourceThrowId: null, setup } as never);
     return result.record;
   } finally {
     await pool.end();
@@ -337,7 +337,7 @@ When("the player selects their first character and makes a free roll", async fun
   const firstName = (await pool.query("SELECT name FROM characters WHERE id=$1", [names[0]])).rows[0]!.name;
   await pool.end();
   await this.page.getByTestId("manage-characters").click();
-  await this.page.getByTestId("character-control-tile").filter({ hasText: firstName }).getByTestId("set-active").click();
+  await new GameTablePage(this.page).selectCharacter(firstName);
   await this.page.getByTestId("return-to-game").click();
   await this.page.getByTestId("game-table").waitFor({ state: "visible" });
   await this.page.getByTestId("make-roll").click();
@@ -352,7 +352,7 @@ When("the player switches to their second character and makes another free roll"
   const secondName = (await pool.query("SELECT name FROM characters WHERE id=$1", [w.seed!.playerCharacterIds[1]])).rows[0]!.name;
   await pool.end();
   await this.page.getByTestId("manage-characters").click();
-  await this.page.getByTestId("character-control-tile").filter({ hasText: secondName }).getByTestId("set-active").click();
+  await new GameTablePage(this.page).selectCharacter(secondName);
   await this.page.getByTestId("return-to-game").click();
   await this.page.getByTestId("game-table").waitFor({ state: "visible" });
   await this.page.getByTestId("make-roll").click();
@@ -395,14 +395,10 @@ Then("the card directs the GM to the character sheet", async function (this: Bro
 });
 
 When("the GM saves the weapon's accuracy settings and returns to the table", async function (this: BrowserWorld) {
-  const w = world.call(this);
   await this.page.getByTestId("open-sheet-for-weapon").click();
   await this.page.getByTestId("character-controller").waitFor({ state: "visible" });
-  await this.page.getByTestId("open-entry-details").first().click();
-  await this.page.getByLabel("Weapon attribute 2 for Rapier").selectOption("INS");
-  await this.page.getByLabel("Accuracy bonus for Rapier").fill("1");
+  await new GameTablePage(this.page).configureWeapon();
   await expect.poll(() => this.page.getByTestId("save-status").textContent()).toContain("Saved automatically");
-  await saveWeaponAccuracy(w.seed!, w.seed!.gmCharacterId, w.seed!.weaponId!, ["DEX", "INS"], 1);
   await this.page.getByTestId("close-character-sheets").click();
   await this.page.getByTestId("game-table").waitFor({ state: "visible" });
 });

@@ -24,6 +24,7 @@ const draft = useEditableEntry(
     :locked="locked"
     :open="open"
     :weapon="draft.itemType === 'weapon'"
+    :armor="draft.itemType === 'armor'"
     :equipped="
       draft.itemType === 'weapon'
         ? !!draft.weapon?.equipped
@@ -75,7 +76,6 @@ const draft = useEditableEntry(
   display: block;
   flex: 1;
   min-width: 0;
-  margin-right: var(--spacing-large);
 }
 .editor-name input,
 .entry-details input {

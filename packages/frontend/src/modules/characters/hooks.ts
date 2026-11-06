@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed } from "vue";
 import { account } from "../auth/session";
 import { api } from "./api";
+import { api as playersApi } from "../players/api";
 const gameCharactersKey = (gameId: string) => ["accounts", account.value?.id, "games", gameId, "characters"];
 export function useGameCharactersQuery(gameId: string) {
   return useQuery({
@@ -90,7 +91,7 @@ export function useActiveCharacterMutation(gameId: string, playerId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { expectedRevision: number; characterId: string | null }) =>
-      api.setActive(gameId, playerId, input.expectedRevision, input.characterId),
+      playersApi.setActive(gameId, playerId, input.expectedRevision, input.characterId),
     onSuccess: () => client.invalidateQueries({ queryKey: ["games", gameId, "players", playerId] }),
   });
 }

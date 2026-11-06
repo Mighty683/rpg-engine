@@ -49,7 +49,6 @@ export type FreeSetup = {
 export type ThrowSetup = AttributeSetup | WeaponSetup | FreeSetup;
 
 export type CreateThrowInput = {
-  requestId: string;
   sourceThrowId: string | null;
   setup: ThrowSetup;
 };
@@ -184,10 +183,6 @@ function parseFreeSetup(value: Record<string, unknown>): FreeSetup {
     throw fail("validation", "Invalid roll attribution", "characterId");
   const dice = readDice(value.dice, freeDice, "dice", 1, 2);
   const redDice = readDice(value.redDice, freeDice, "redDice", 0, 2);
-  if (redDice.length === 2 && (dice.length !== 2 || dice.some((size) => !standardDice.includes(size as Die)) || redDice.some((size) => !standardDice.includes(size as Die))))
-    throw fail("validation", "A two-die opposed roll requires two standard dice on each side", "dice");
-  if (redDice.length === 1 && dice.length !== 1)
-    throw fail("validation", "A one-die opposed roll needs one friendly die", "dice");
   return {
     type: "free",
     characterId: value.characterId,
@@ -203,30 +198,14 @@ function parseFreeSetup(value: Record<string, unknown>): FreeSetup {
 export function parseCreateRequest(body: unknown): CreateThrowInput {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw fail("bad_request", "Expected a JSON object");
   const value = body as Record<string, unknown>;
-  exactKeys(value, ["requestId", "sourceThrowId", "setup"], "");
-  if (!isUuid(value.requestId)) throw fail("validation", "Invalid request ID", "requestId");
+  exactKeys(value, ["sourceThrowId", "setup"], "");
   if (value.sourceThrowId !== null && value.sourceThrowId !== undefined && !isUuid(value.sourceThrowId))
     throw fail("validation", "Invalid source throw", "sourceThrowId");
   const setup = value.setup;
   if (!setup || typeof setup !== "object" || Array.isArray(setup)) throw fail("validation", "Invalid setup", "setup");
   const record = setup as Record<string, unknown>;
-  if (record.type === "attribute") return { requestId: value.requestId, sourceThrowId: (value.sourceThrowId as string) ?? null, setup: parseAttributeSetup(record) };
-  if (record.type === "weapon") return { requestId: value.requestId, sourceThrowId: (value.sourceThrowId as string) ?? null, setup: parseWeaponSetup(record) };
-  if (record.type === "free") return { requestId: value.requestId, sourceThrowId: (value.sourceThrowId as string) ?? null, setup: parseFreeSetup(record) };
+  if (record.type === "attribute") return { sourceThrowId: (value.sourceThrowId as string) ?? null, setup: parseAttributeSetup(record) };
+  if (record.type === "weapon") return { sourceThrowId: (value.sourceThrowId as string) ?? null, setup: parseWeaponSetup(record) };
+  if (record.type === "free") return { sourceThrowId: (value.sourceThrowId as string) ?? null, setup: parseFreeSetup(record) };
   throw fail("validation", "Unknown setup type", "setup.type");
-}
-
-/** Deterministic JSON for idempotency intent comparison, independent of key order. */
-export function canonicalIntent(input: CreateThrowInput): string {
-  const sort = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(sort);
-    if (value && typeof value === "object")
-      return Object.fromEntries(
-        Object.entries(value as Record<string, unknown>)
-          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-          .map(([key, entry]) => [key, sort(entry)]),
-      );
-    return value;
-  };
-  return JSON.stringify(sort({ sourceThrowId: input.sourceThrowId, setup: input.setup }));
 }

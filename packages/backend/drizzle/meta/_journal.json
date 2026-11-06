@@ -31,6 +31,13 @@
       "when": 1700000005000,
       "tag": "006_invitations",
       "breakpoints": false
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1700000006000,
+      "tag": "007_throws",
+      "breakpoints": false
     }
   ]
 }

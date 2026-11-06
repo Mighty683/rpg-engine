@@ -1,6 +1,6 @@
 // Game Table API integration suite (handover API-02..API-05): active-party projection, throw
 // access and attribution, roll validation with persisted-state checks, history pagination and
-// idempotent retries, rerolls, removal, and outcome structure. Dice faces are scripted through
+// rerolls, removal, and outcome structure. Dice faces are scripted through
 // a mocked die source so fumble/critical/opposed outcomes are deterministic.
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
@@ -56,7 +56,6 @@ describe.skipIf(!url)("API game table throws", () => {
     await pool.query("UPDATE players SET removed=false,active_character_id=$2,revision=1 WHERE id=$1", [ids.member, ids.playerCharacter]);
     await pool.query("DELETE FROM character_equipment WHERE character_id IN ($1,$2,$3)", [ids.gmCharacter, ids.playerCharacter, ids.foreignCharacter]);
     await pool.query("DELETE FROM throws WHERE game_id IN ($1,$2)", [ids.game, ids.otherGame]);
-    await pool.query("DELETE FROM throw_create_requests WHERE game_id IN ($1,$2)", [ids.game, ids.otherGame]);
     dieScript.faces = null;
   });
 
@@ -104,10 +103,9 @@ describe.skipIf(!url)("API game table throws", () => {
     actor: string | null,
     gameId: string,
     setup: Record<string, unknown>,
-    extra: { requestId?: string; sourceThrowId?: string | null } = {},
+    extra: { sourceThrowId?: string | null } = {},
   ) =>
     postThrow(actor, gameId, {
-      requestId: extra.requestId ?? randomUUID(),
       sourceThrowId: extra.sourceThrowId ?? null,
       setup,
     });
@@ -115,7 +113,7 @@ describe.skipIf(!url)("API game table throws", () => {
     actor: string | null,
     gameId: string,
     setup: Record<string, unknown>,
-    extra: { requestId?: string; sourceThrowId?: string | null } = {},
+    extra: { sourceThrowId?: string | null } = {},
   ) => {
     const response = await submit(actor, gameId, setup, extra);
     expect(response.status).toBe(201);
@@ -193,7 +191,7 @@ describe.skipIf(!url)("API game table throws", () => {
     const anonymous: [string, string, unknown?][] = [
       ["GET", `/games/${ids.game}/party`],
       ["GET", `/games/${ids.game}/throws`],
-      ["POST", `/games/${ids.game}/throws`, { requestId: randomUUID(), sourceThrowId: null, setup: freeSetup("gm") }],
+      ["POST", `/games/${ids.game}/throws`, { sourceThrowId: null, setup: freeSetup("gm") }],
       ["DELETE", `/games/${ids.game}/throws/${randomUUID()}`],
     ];
     for (const [method, path, body] of anonymous)
@@ -202,12 +200,12 @@ describe.skipIf(!url)("API game table throws", () => {
     for (const [method, path, body] of [
       ["GET", `/games/${ids.game}/party`],
       ["GET", `/games/${ids.game}/throws`],
-      ["POST", `/games/${ids.game}/throws`, { requestId: randomUUID(), sourceThrowId: null, setup: freeSetup("gm") }],
+      ["POST", `/games/${ids.game}/throws`, { sourceThrowId: null, setup: freeSetup("gm") }],
       ["DELETE", `/games/${ids.game}/throws/${randomUUID()}`],
     ] as [string, string, unknown?][])
       expect((await request(path, "outsider", method, body)).status, `${method} ${path}`).toBe(404);
     expect((await getThrows("gm", ids.otherGame)).status).toBe(404);
-    expect((await postThrow("gm", ids.otherGame, { requestId: randomUUID(), sourceThrowId: null, setup: freeSetup("gm") })).status).toBe(404);
+    expect((await postThrow("gm", ids.otherGame, { sourceThrowId: null, setup: freeSetup("gm") })).status).toBe(404);
 
     const readyWeapon = await addWeapon(ids.playerCharacter);
     const dullWeapon = await addWeapon(ids.playerCharacter, { name: "Dull", a2: null, bonus: null });
@@ -354,11 +352,8 @@ describe.skipIf(!url)("API game table throws", () => {
 
     const rejected: [Promise<Response>, number][] = [
       [submit("gm", ids.game, freeSetup("gm", { redDice: [6, 8, 10] })), 422],
-      [submit("gm", ids.game, freeSetup("gm", { dice: [4, 6], redDice: [6, 8] })), 422],
-      [submit("gm", ids.game, freeSetup("gm", { dice: [4, 20], redDice: [6, 8] })), 422],
-      [submit("gm", ids.game, freeSetup("gm", { dice: [8], redDice: [6, 8] })), 422],
-      [submit("gm", ids.game, freeSetup("gm", { dice: [6, 6], redDice: [4, 4] })), 422],
-      [submit("gm", ids.game, attributeSetup(ids.gmCharacter, 0, { redDice: [6, 6] })), 422],
+      [submit("gm", ids.game, freeSetup("gm", { dice: [6, 8, 10] })), 422],
+      [submit("gm", ids.game, attributeSetup(ids.gmCharacter, 0, { redDice: [4, 6] })), 422],
       [submit("gm", ids.game, freeSetup("gm", { modifier: 2147483648 })), 422],
       [submit("gm", ids.game, freeSetup("gm", { redModifier: -2147483649 })), 422],
       [submit("gm", ids.game, weaponSetup(ids.gmCharacter, weaponId, 0, { dice: [4, 6] })), 422],
@@ -367,8 +362,7 @@ describe.skipIf(!url)("API game table throws", () => {
       [submit("gm", ids.game, freeSetup("gm", { totals: 99 })), 422],
       [submit("gm", ids.game, weaponSetup(ids.gmCharacter, weaponId, 0, { weaponBonus: 9 })), 422],
       [submit("gm", ids.game, attributeSetup(ids.gmCharacter, 0, { role: "GM", characterName: "forged" })), 422],
-      [postThrow("gm", ids.game, { requestId: randomUUID(), sourceThrowId: null, setup: freeSetup("gm"), outcome: { first: {} } }), 422],
-      [postThrow("gm", ids.game, { requestId: "not-a-uuid", sourceThrowId: null, setup: freeSetup("gm") }), 422],
+      [postThrow("gm", ids.game, { sourceThrowId: null, setup: freeSetup("gm"), outcome: { first: {} } }), 422],
       [postThrow("gm", ids.game, "nope"), 400],
       [submit("gm", ids.game, weaponSetup(ids.gmCharacter, randomUUID(), 0)), 404],
       [submit("gm", ids.game, weaponSetup(ids.gmCharacter, foreignWeapon, 0)), 404],
@@ -395,11 +389,10 @@ describe.skipIf(!url)("API game table throws", () => {
     expect(await readPersistedState(fixture)).toEqual(stateBefore);
   });
 
-  it("API-04: pages history with a stable cursor and replays retries idempotently", async () => {
-    const { ids, request } = fixture;
-    const firstRequestId = randomUUID();
+  it("API-04: pages history with a stable cursor", async () => {
+    const { ids } = fixture;
     const firstSetup = freeSetup("gm", { note: "roll 0" });
-    const first = await createThrow("gm", ids.game, firstSetup, { requestId: firstRequestId });
+    const first = await createThrow("gm", ids.game, firstSetup);
     const rest: ThrowRecord[] = [];
     for (let index = 1; index < 5; index++)
       rest.push(await createThrow("gm", ids.game, freeSetup("gm", { note: `roll ${index}` })));
@@ -421,39 +414,11 @@ describe.skipIf(!url)("API game table throws", () => {
     expect(new Set(paged.map((entry) => entry.id)).size).toBe(5);
     expect(paged.map((entry) => entry.id).sort()).toEqual(all.map((entry) => entry.id).sort());
 
-    const retry = await submit("gm", ids.game, firstSetup, { requestId: firstRequestId });
-    expect(retry.status).toBe(200);
-    const replayed = (await retry.json()).throw as ThrowRecord;
-    expect(replayed.id).toBe(first.id);
-    expect(replayed.seq).toBe(1);
-    expect(await throwCount(ids.game)).toBe(5);
-
-    const conflict = await submit("gm", ids.game, freeSetup("gm", { note: "roll 0", modifier: 5 }), { requestId: firstRequestId });
-    expect(conflict.status).toBe(409);
-    expect((await conflict.json()).error.code).toBe("id_conflict");
-    expect(await throwCount(ids.game)).toBe(5);
-
-    const attrRequestId = randomUUID();
-    const attrSetupBody = attributeSetup(ids.gmCharacter, 0);
-    const attrThrow = await createThrow("gm", ids.game, attrSetupBody, { requestId: attrRequestId });
-    expect(
-      (await request(`/games/${ids.game}/characters/${ids.gmCharacter}`, "gm", "PATCH", { expectedRevision: 0, changes: { theme: "wind" } })).status,
-    ).toBe(200);
-    const retryAfterChange = await submit("gm", ids.game, attrSetupBody, { requestId: attrRequestId });
-    expect(retryAfterChange.status).toBe(200);
-    expect(((await retryAfterChange.json()).throw as ThrowRecord).id).toBe(attrThrow.id);
-    expect(await throwCount(ids.game)).toBe(6);
-
-    const removedRequestId = randomUUID();
-    const removedSetup = freeSetup("gm", { note: "doomed" });
-    const removed = await createThrow("gm", ids.game, removedSetup, { requestId: removedRequestId });
-    expect((await deleteThrow("gm", ids.game, removed.id)).status).toBe(200);
-    const repost = await submit("gm", ids.game, removedSetup, { requestId: removedRequestId });
-    expect(repost.status).toBe(410);
-    expect((await repost.json()).error.code).toBe("removed");
-    expect(await throwCount(ids.game)).toBe(6);
-    expect(await throwCount(ids.game, true)).toBe(7);
-    expect((await listThrows("gm", ids.game)).find((entry) => entry.id === removed.id)).toBeUndefined();
+    expect((await deleteThrow("gm", ids.game, rest[3]!.id)).status).toBe(200);
+    const repeated = await createThrow("gm", ids.game, firstSetup);
+    expect(repeated.id).not.toBe(first.id);
+    expect(repeated.seq).toBe(6);
+    expect((await listThrows("gm", ids.game)).map((entry) => entry.seq)).toEqual([1, 2, 3, 4, 6]);
   });
 
   it("API-04: keeps historical attribution and setup intact after character and weapon renames", async () => {
@@ -614,6 +579,17 @@ describe.skipIf(!url)("API game table throws", () => {
     expect(opposed.outcome.first.result).toBe("critical");
     expect(opposed.outcome.second!.result).toBe("fumble");
     expect(opposed.outcome.winner).toBe("first");
+
+    dieScript.faces = [5, 4, 9];
+    const uneven = await createThrow("gm", ids.game, attributeSetup(ids.gmCharacter, 0, { redDice: [12] }));
+    expect(uneven.kind).toBe("opposed-roll");
+    expect(uneven.setup.redDice).toEqual([{ label: "d12", size: 12 }]);
+    expect(uneven.outcome.second).toMatchObject({ total: 9, result: "none" });
+
+    dieScript.faces = [5, 4, 10, 11];
+    const different = await createThrow("gm", ids.game, attributeSetup(ids.gmCharacter, 0, { redDice: [10, 12] }));
+    expect(different.kind).toBe("opposed-check");
+    expect(different.setup.redDice.map((die) => die.size)).toEqual([10, 12]);
 
     dieScript.faces = [4, 3, 5, 2];
     const tie = await createThrow("gm", ids.game, freeSetup("gm", { dice: [6, 6], redDice: [6, 6] }));

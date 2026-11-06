@@ -28,8 +28,6 @@ const emit = defineEmits<{
 }>();
 
 const freeDice = [4, 6, 8, 10, 12, 20] as const;
-const standardDice = [6, 8, 10, 12] as const;
-const fabulaOpposed = computed(() => props.opponent.dice.length >= 2);
 const poolFull = computed(() => props.draft.dice.length >= 2);
 
 function addDie(size: number) {
@@ -66,17 +64,17 @@ function removeDie(index: number) {
           <UTooltip
             v-for="size in freeDice"
             :key="size"
-            :disabled="poolFull && !(fabulaOpposed && !standardDice.includes(size as (typeof standardDice)[number]))"
-            :text="poolFull ? 'Maximum 2 dice' : 'Two-die opposed checks use d6, d8, d10 or d12'"
+            :disabled="!poolFull"
+            text="Maximum 2 dice"
             :content="{ side: 'top' }"
           >
-            <span class="dice-trigger" :tabindex="poolFull || (fabulaOpposed && !standardDice.includes(size as (typeof standardDice)[number])) ? 0 : undefined">
+            <span class="dice-trigger" :tabindex="poolFull ? 0 : undefined">
               <button
                 type="button"
                 class="free-die-button"
                 :data-testid="`add-die-d${size}`"
                 :aria-label="`Add d${size} to dice pool`"
-                :disabled="poolFull || (fabulaOpposed && !standardDice.includes(size as (typeof standardDice)[number]))"
+                :disabled="poolFull"
                 @click="addDie(size)"
               >
                 <DieIcon :sides="size" /><span>d{{ size }}</span>

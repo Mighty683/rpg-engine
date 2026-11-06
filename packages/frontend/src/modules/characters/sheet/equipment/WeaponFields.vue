@@ -27,6 +27,7 @@ defineEmits<{
           $emit('attribute', index, ($event.target as HTMLSelectElement).value as Attribute | '')
         "
         :aria-label="`Weapon attribute ${index + 1} for ${entry.name}`"
+        :data-testid="`weapon-attribute-${index + 1}`"
       >
         <option value="">Select</option>
         <option value="DEX">DEX</option>
@@ -40,6 +41,7 @@ defineEmits<{
         :value="entry.weapon.accuracyBonus"
         type="number"
         :aria-label="`Accuracy bonus for ${entry.name}`"
+        data-testid="weapon-accuracy-bonus"
         placeholder="—"
         @input="
           $emit(

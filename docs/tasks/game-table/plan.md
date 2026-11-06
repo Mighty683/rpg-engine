@@ -22,7 +22,7 @@ Authorized clients can create and read throws, use a historical recipe for rerol
 | Owner | Edit boundary | Work | Depends on | Handover checks |
 | --- | --- | --- | --- | --- |
 | Fabula backend | Roll resolution | Implement server dice generation and pure outcome calculation. Decide unit coverage alongside the code using the repository testing conventions. | Roll setup and outcome contract | — |
-| Throw backend | Throw service and route handlers | Persist immutable snapshots and removal markers. Resolve current access and stable attribution under the game lock. Add ordered history reads, retry handling, and source validation for rerolls. | Wave 1 party rules, roll resolver, persistence contract | — |
+| Throw backend | Throw service and route handlers | Persist immutable snapshots and removal markers. Resolve current access and stable attribution under the game lock. Add ordered history reads and source validation for rerolls. | Wave 1 party rules, roll resolver, persistence contract | — |
 | Integration | Migration, route registration and game events | Wire the migration and guarded routes. Publish history invalidation after commit through the existing game stream. | Throw service and shared contracts | — |
 | API test owner | Game Table API suite | Implement and run the required API cases against the mounted routes with PostgreSQL. Reuse the fixtures from Wave 1. | Integrated throw API and fixtures | API-02, API-03, API-04, API-05 |
 
@@ -32,7 +32,7 @@ GM and player sessions can roll, reroll, and follow shared history through the G
 
 | Owner | Edit boundary | Work | Depends on | Handover checks |
 | --- | --- | --- | --- | --- |
-| Workspace frontend | Roll dialogs, history presentation, and game workspace queries | Reuse prototype controls and wire attribute, weapon, and free roll entry points to the API. Use current session permissions and all active characters in the GM picker. Restore reroll drafts by ID. Connect pagination, submission retries, removal, and live refresh. Apply the reviewed desktop and narrow layouts, scroll behavior, highlight, and recovery states. | Waves 1 and 2 | — |
+| Workspace frontend | Roll dialogs, history presentation, and game workspace queries | Reuse prototype controls and wire attribute, weapon, and free roll entry points to the API. Use current session permissions and all active characters in the GM picker. Restore reroll drafts by ID. Connect pagination, submission, removal, and live refresh. Apply the reviewed desktop and narrow layouts, scroll behavior, highlight, and recovery states. | Waves 1 and 2 | — |
 | Browser test owner | Game Table browser journeys | Implement and run the rolling, shared history, active character switching, weapon setup, older history, and opposed reroll journeys. | Integrated live rolling | E2E-02, E2E-03, E2E-04, E2E-05, E2E-06, E2E-07, E2E-08 |
 | Integration | Full-stack verification and evidence | Run repository checks and both acceptance suites. Record the API integration and browser E2E results in the handover. Review the production UI against the approved design. | Integrated Game Table and all planned tests | All handover checks |
 
