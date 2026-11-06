@@ -1,7 +1,7 @@
 # GM and player separation
 
 **Created:** 2026-11-06  
-**Status:** Implementation plan drafted
+**Status:** Ready for implementation
 
 ## Task documents
 

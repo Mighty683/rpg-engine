@@ -2,7 +2,7 @@
 
 **Created:** 2026-11-06
 
-**Status:** Draft for review
+**Status:** Ready for implementation
 
 ## Current situation
 
@@ -18,6 +18,7 @@ The [UX journey](ux.md) defines accounts, game roles, invitations and game owner
 | --- | --- |
 | Use local username and password accounts. | Registration and sign-in need no identity provider or email service. |
 | Resolve account identity on the server and role separately in each game. | The same account can GM one game and play in another. A route ID, form value or visible control cannot grant access. |
+| Use Arrow Express controller handlers as HTTP guards and share the authorization rules with services. | Requests are rejected before route handlers run. Services check current ownership and membership before accessing data or changing state. |
 | A game owns each sheet. A player membership can control it. | Reassignment, removal and restoration preserve the sheet in its game. A GM can create and use sheets with no player accounts. |
 | Active status controls workspace tabs. | Every current member can read every full sheet. Sheet editing depends on control and role. |
 | Notify open game views with server-sent events (SSE). | Roster changes and saved sheet edits should appear promptly for everyone viewing them. The browser uses HTTP for writes. |
@@ -33,9 +34,9 @@ Introduce an auth module at the [Express application boundary](../../../packages
 
 Store only salted password hashes produced by a dedicated password-hashing library. Rate-limit failed sign-in attempts and return the same error for an unknown username and a wrong password. See [NIST password guidance](https://pages.nist.gov/800-63-4/sp800-63b/authenticators/) for storage and throttling. Resolve the current account for the frontend without returning credentials.
 
-Issue an opaque session token in an HTTP-only cookie after successful registration or sign-in. Store its digest and expiry on the server and invalidate the session on sign-out. In production use HTTPS and secure cookies, and verify same-origin requests for cookie-authenticated writes. Keep the existing same-origin frontend and `/api` proxy; serve SPA deep links through the frontend fallback.
+Issue an opaque session token in an `HttpOnly` cookie after successful registration or sign-in. Set `SameSite=Lax` so a signed-in user can open an invitation from another site, and set `Secure` in production over HTTPS. The cookie is the browser's only storage for the session token. Same-origin API requests and SSE use it automatically. Store the token digest and session expiry on the server. On sign-out, invalidate the session and clear the cookie. Verify the configured origin on writes. Keep the existing same-origin frontend and `/api` proxy and serve SPA deep links through the frontend fallback.
 
-Each game has exactly one GM account, set by the server from the session when the game is created. Player membership is unique by game and account. Keep removed memberships as inactive records so neither invite type can restore them. The GM does not need a player membership in their own game. Keep game lists scoped to GM ownership or current player membership and return the caller's role.
+Store one required `gm_account_id` foreign key on each game. Set it from the authenticated account on creation and keep it fixed for this release. Store player memberships with a unique `(game_id, account_id)` and an explicit current or removed state. Resolve the GM role from the game row and the player role from a current membership in that game. The GM does not need a player membership in their own game. Keep removed records so invitations cannot restore them. List only games where the account is GM or a current player and return its role for each game.
 
 | Operation | Authorization |
 | --- | --- |
@@ -47,11 +48,29 @@ Each game has exactly one GM account, set by the server from the session when th
 | Assign or take back a sheet; remove or restore a player; manage links | GM of that game only. Assignment targets must be current players in the same game. |
 | Preview or accept an invitation | Signed-in account with a valid token for that operation. Preview exposes only the game and, for a character link, the character name. Removed accounts cannot join or claim. |
 
-Apply this policy to service operations as well as HTTP entry points. Direct URLs and future AI actions use the same rules. Use the existing error envelope: `401` for no valid session, `404` for resources the caller cannot see, `403` for disallowed actions on visible resources, `409` for revision or state conflicts, and `422` for field validation.
+### Arrow Express guards
+
+Use the pinned Arrow Express 4.0.0 [controller handler API](https://www.npmjs.com/package/arrow-express/v/4.0.0). Register each guard with `Controller().handler(guard)`. Arrow Express awaits it before invoking `Route().handler((request, response, context) => …)` and passes along the context it returned. Throw `RequestError` with the existing `{ error: { code, message } }` envelope to stop the chain. Register protected groups directly on `Application().prefix("api")` with explicit relative prefixes such as `games/:gameId/characters`. In the pinned version, nesting controllers can drop the application and ancestor prefixes. Compose checks inside each group's single controller handler and verify the final method and path in the assembled app.
+
+| Controller group | Checks before the route handler |
+| --- | --- |
+| Registration and sign-in | Require the configured application origin on POSTs. The auth service handles credentials and sign-in throttling. The read-only system catalog stays public. |
+| Current account, sign-out and game list or creation | Resolve the session cookie into an authenticated actor. Require the configured origin on writes. The game list service filters by that actor, and creation sets the GM to that actor. |
+| Game details, roster, sheet reads and creation, and SSE | Resolve the actor, validate the game ID and require the GM or a current player of that game. On writes check the origin before game lookup. Scope sheet lookup to that game. Sheet creation derives its controller from the caller's role and membership. |
+| Sheet edits and permanent removal | Apply the game member checks, resolve the sheet within the game and require its assigned current player or the GM. |
+| Player active selection | Apply the game member checks and derive the target membership from the caller. Require the player role. The service checks that any selected sheet is assigned to that membership. |
+| GM settings, assignment, takeback, membership removal and restoration, link management and GM sheet activation | Apply the game member checks, then require the GM role. The service checks action-specific targets in the game. GM activation applies only to GM-controlled sheets. |
+| Invitation preview and acceptance | Resolve the actor and check the origin on acceptance. The invite service resolves the game from the token and checks eligibility. These endpoints allow eligible signed-in accounts before they have game membership. |
+
+The session guard returns a typed actor with `accountId` and the server-side `sessionId` for sign-out and SSE revocation. Game guards add `gameId` and the resolved role, including `membershipId` for players. A sheet guard may add the verified `characterId`. Treat client-supplied IDs as selectors. Derive the actor, role and self-service membership from server state. Reject writes with a missing or mismatched `Origin` on the browser endpoints above. Use `401` for missing, expired or revoked sessions, `400` for malformed route IDs, `404` for resources outside the caller's visible scope, `403` for a forbidden action on a visible resource or an invalid write origin, `409` for revision or state conflicts, and `422` for field validation.
+
+The auth module owns session resolution and the origin check. The games module owns the game-access query, shared role policy and game lock. The characters module owns sheet control checks and the players module owns membership state and the active slot. Invitation services own token validation and admission. Feature controllers attach these checks to their routes. The integration owner reviews the assembled route map and legacy cutover against the table above. [Implementation ownership](plan.md)
+
+Services take the authenticated actor and scoped resource IDs. They share the guard policy and use current database state. Scope protected reads by actor and game in the same query or read snapshot used to retrieve the resource. For existing-game writes, lock the game row first, then reload the membership, target and controller or invitation state using the same transaction. Apply the policy before modifying data or returning an idempotent replay. Keep role and control snapshots from the HTTP guard out of write authorization. Future non-HTTP callers use the same service entry points with a server-resolved actor.
 
 ### Character data and transactions
 
-- Replace the required player parent with a required game reference and nullable controller membership. Null means GM control. Use a composite foreign key to keep controller and character in the same game. Replace the active pointer constraint so it can only reference a character controlled by that membership in the same game.
+- Replace the required player parent with a required game reference and nullable controller membership. Null means GM control. Use a composite foreign key from the sheet's game and controller membership IDs to the membership in that game. Use a composite active pointer foreign key from the membership's game ID, membership ID and active character ID to the sheet's game ID, controller membership ID and sheet ID. The database then rejects cross-game assignments and active selections for sheets controlled by someone else. The transaction checks that assignment targets are current members.
 - Derive player-controlled sheets' active status from the membership's single nullable active character pointer. **None** clears it. Store an explicit active flag for each GM-controlled sheet so several can appear in the workspace at once. New GM-controlled sheets start inactive. Creating a player sheet selects it only if that player's active slot is empty. Claim uses the explicit **Make this character active** choice. When unchecked, keep the player's previous selection, including an empty slot.
 - Move sheet reads and writes to a stable game and character boundary such as `/api/games/:gameId/characters/:characterId`. When control changes, clear the former controller's active pointer or GM active flag for that sheet in the same transaction. The sheet is inactive under its new controller. A claim with **Make this character active** checked can select it in the same transaction. Removing a membership clears its active slot and returns its sheets to GM control as inactive. Restoration restores membership access only.
 - Permanent removal applies to active and inactive sheets. From Characters management, show a confirmation that names the character and states that removal is permanent. The server checks current control after locking the game. It clears any active pointer to the sheet and deletes the sheet, its dependent data and its character invitations in the same transaction. Notify open game views after commit so they update the tab strip and roster together. Subsequent reads and saves for the deleted sheet return `404`.
@@ -72,7 +91,7 @@ Open one same-origin SSE subscription per open game view, shared by the main scr
 
 After a sheet save commits, send a hint with the sheet ID so clients viewing it refetch the saved revision. Refresh the roster summary when a displayed field, such as the character name, changes. On initial connection and reconnect, refetch the open sheet as well as the roster. When a local draft exists, retain its original base revision and keep the latest saved version separate. Use the existing revision check on save and let the editor review any conflict before retrying.
 
-Use the existing cookie session and keep authorization checks on every HTTP read and write. Close affected streams on membership removal, sign-out or session expiry. Revalidate the roster when the stream fails so an expired session or lost membership sends the user to an allowed screen. Send heartbeats, verify that the deployment proxy streams responses without buffering, and release subscriptions when the view closes. A single backend process can deliver events in memory. Multiple backend instances require shared delivery.
+Use the game member guard before opening the stream and keep authorization checks on every HTTP read and write. Track subscriptions by game, account and session. Register a pending subscription so revocation can cancel it during setup. Start streaming only if the subscription is still pending after a fresh session and game-access check. Close affected streams on membership removal, sign-out or session expiry. Keep the Arrow Express route handler pending until stream cleanup and response end so the adapter does not try to send a second response. Revalidate the roster when the stream fails so an expired session or lost membership sends the user to an allowed screen. Send heartbeats, verify that the deployment proxy streams responses without buffering, and release subscriptions when the view closes. A single backend process can deliver events in memory. Multiple backend instances require shared delivery.
 
 ### Frontend integration
 
@@ -98,6 +117,8 @@ Use account-scoped query keys and discard protected cache entries and stale resp
 ### Verification targets
 
 Cover local registration, duplicate usernames, failed sign-in throttling, and expired or signed-out sessions at the API boundary. Extend the [game API tests](../../../packages/backend/src/modules/games/games.test.ts) and [character API and persistence tests](../../../packages/backend/src/modules/characters/) to verify different roles for the same account across games, cross-game ID tampering, full read access regardless of active status, and writes scoped by control. Test inactive GM creation, multiple active GM sheets, player selection and clearing, rejection of GM overrides, and activation clearing when control changes. Use PostgreSQL integration tests with competing transactions for claims, rotation versus acceptance, and removal or reassignment versus save and active selection. Verify that all prior character links stay invalid after a controller change and that permanent removal clears the sheet, its dependent data, active pointer and links.
+
+Verify the assembled app mounts each route group under its expected `/api` path and that guard denials short-circuit the route handler. Exercise invalid session, cross-origin write, hidden resource, visible resource with insufficient authority, forged actor or role fields, and an eligible nonmember accepting an invite. Test service calls directly as well, including a write that passed its HTTP guard before membership or control changed. Assert that database constraints reject cross-game controllers and active pointers to another controller's sheet.
 
 Extend [sheet browser tests](../../../packages/frontend/src/modules/characters/CharacterView.browser.ts) for read-only rendering, opening an inactive sheet in Characters management without changing the active selection, access changes during save, and account changes with cached data. Update the [end-to-end journeys](../../../packages/tests/src/features/) to use signed-in accounts: a GM creates and runs a game without players, and another account signs in from an invite, joins or claims, and sees the correct sheet permissions.
 
