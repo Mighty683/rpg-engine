@@ -28,6 +28,9 @@ What important decision were made by the way of analysis and implementation
 
 Description of changes
 
+### Database schema
 
+### API schema
 
+### UI Screens updates
 ```
