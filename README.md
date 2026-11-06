@@ -19,6 +19,8 @@ The backend loads `packages/backend/.env` when present; environment variables al
 
 The backend listens on `127.0.0.1:3000` by default; set `PORT` to change it. The frontend development server proxies `/api` to port 3000. Run `pnpm --filter @rpg-engine/backend migrate` against the target database before starting the backend. The migration is safe to rerun for this initial schema. Run `pnpm --filter @rpg-engine/backend build` for backend type checking and `pnpm exec vp test` for unit/API tests. Browser tests use Chromium (`pnpm --filter @rpg-engine/tests exec playwright install chromium`). Run frontend component browser tests with `pnpm --filter @rpg-engine/frontend test:browser`; they mock the API and require no backend. Full end-to-end tests use Gherkin feature files and Cucumber.js through Vitest in `packages/tests`: set `TEST_DATABASE_URL` to a dedicated PostgreSQL database with permission to create schemas, then run `pnpm --filter @rpg-engine/tests test`. The end-to-end setup starts the real frontend and backend on temporary ports and creates and removes an isolated database schema; it does not use `DATABASE_URL`. For deployment, serve the frontend and proxy `/api` to the backend.
 
+The migration command uses Drizzle's PostgreSQL migrator and the SQL files and journal in `packages/backend/drizzle`. The schema is maintained in SQL, not generated from a Drizzle TypeScript schema; add new SQL migrations to the journal in order. Drizzle records applied migrations in the current PostgreSQL schema; the browser test stack uses its isolated schema for the same migration history. This migration setup starts from a fresh database and does not import the former `schema_migrations` history.
+
 
 ### Local PostgreSQL with Podman
 

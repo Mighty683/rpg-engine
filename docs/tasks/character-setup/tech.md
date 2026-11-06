@@ -160,7 +160,7 @@ Equipment variant checks require `equipped` for weapons, armor and shields and u
 
 - Use one transaction per sheet mutation. Lock the scoped character row, check its revision, read current inputs, merge and validate, then write changed scalar fields and replace only the supplied child lists. Preserve their entry IDs and assign positions from request order. Update the revision and timestamp together. Read a consistent aggregate for the response. Use a single statement or a consistent transaction snapshot for standalone aggregate reads.
 - Lock the player row when changing or clearing active selection. Check the player revision and rely on the composite FK to prevent cross-player assignment. Join the selected name into the roster and player summaries.
-- Run the same ordered migration function in the CLI and isolated browser test stack. Record applied versions under a schema-scoped migration lock and apply each script and ledger record in the same transaction. The original `001_games.sql` can run once under the ledger on an existing database.
+- Run the same Drizzle migrator in the CLI and isolated browser test stack. Serialize migration runs per schema and keep Drizzle's migration history in that schema. Drizzle applies pending migrations and their history entries in a transaction. The migration history starts on a fresh database; it does not import the former custom ledger.
 - Before adding rules validation, define the catalog version and explicit mapping from manual entries to sourced rules data.
 
 ## Frontend interfaces and optimistic saves
