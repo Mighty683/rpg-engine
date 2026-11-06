@@ -1,45 +1,40 @@
 ---
 name: task-handover
-description: Create or update a task handover with implementation acceptance criteria and verification evidence.
+description: Define task acceptance criteria and required tests before implementation planning, then record verification evidence.
 ---
 
 # Task Handover
 
-Write `docs/tasks/<task>/handover.md` This file will be used as final check if application is working. You plan tests for E2E and API integration in `packages/tests`. You can separate tests by each wave of implementation in task plan.
+Write `docs/tasks/<task>/handover.md` before the implementation plan. Use the story, UX, UI, and technical design as sources. The handover must stand on its own. Group tests by test level and product behavior.
 
-## Example: `docs/tasks/<task>/handover.md`
+Limit the handover's test scope to browser E2E and API integration in `packages/tests`. Describe complete browser journeys as Gherkin scenarios and API integration cases with expected outcomes and persisted effects. Follow the package guidance and give each test a stable ID. Decide unit coverage alongside the code during implementation.
+
+Use the handover for final acceptance. Record checks as pending until they run, then add evidence, failures, and open items.
+
+## Example
 
 ```markdown
 # Game creation — handover
 
 **Updated:** 2026-11-06
-**Sources:** [Story](story.md) · [UI](ui.md) · [Tech](tech.md) · [Plan](plan.md)
-
-Reuse the approved game form and list components; replace their mock data with production hooks.
+**Sources:** [Story](story.md) · [UI](ui.md) · [Tech](tech.md)
 
 ## Goals
 
-<list of most important goals which should be fulfilled>
+- A signed-in GM can create and reopen a game.
 
 ## E2E tests
 
-### Wave 1
-
-<gherkin scenarios to implement>
-
-### Wave 2
+Scenario: E2E-01 — Create and reopen a game
+  Given a signed-in GM
+  When the GM creates a game and reloads the game list
+  Then the new game is available to open
 
 ## API tests
 
-### Wave 1
+- API-01 — A signed-out create request returns 401 and creates no game.
 
-<list of APi scenarios to test in integration with test database>
+## Verification evidence
 
-### Wave 2
-
-...
-
-## Open items
-
-None identified. Complete the checks above before marking the task Implemented.
+Pending implementation and test execution.
 ```
