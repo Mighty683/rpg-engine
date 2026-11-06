@@ -4,7 +4,10 @@ import ScreenSection from "../../src/shared/design-system/ScreenSection.vue";
 import { gmControl, type CharacterView, type Option, type Role } from "./model";
 
 const props = defineProps<{ character: CharacterView; role: Role; controllers: Option[] }>();
-const emit = defineEmits<{ assign: [userId: string | null]; setActive: [] }>();
+const emit = defineEmits<{ assign: [userId: string | null]; setActive: [active: boolean]; open: [] }>();
+const canSetActive = computed(() =>
+  props.role === "GM" ? props.character.controllerId === null : props.character.editable,
+);
 const controller = ref(props.character.controllerId ?? gmControl);
 const changed = computed(() => controller.value !== (props.character.controllerId ?? gmControl));
 watch(
@@ -20,10 +23,10 @@ watch(
     <div class="flex flex-wrap items-center justify-between gap-small">
       <h3 class="font-semibold">{{ character.sheet.identity.name || "Unnamed character" }}</h3>
       <UBadge
-        :color="character.active || !character.controllerId ? 'success' : 'neutral'"
+        :color="character.active ? 'success' : 'neutral'"
         variant="subtle"
       >
-        {{ character.active || !character.controllerId ? "Active" : "Inactive" }}
+        {{ character.active ? "Active" : "Inactive" }}
       </UBadge>
     </div>
     <p class="text-muted">
@@ -47,12 +50,16 @@ watch(
         >Update control</UButton
       >
     </form>
-    <UButton
-      v-else-if="character.editable && !character.active"
-      color="neutral"
-      variant="outline"
-      @click="emit('setActive')"
-      >Make active</UButton
-    >
+    <div class="flex flex-wrap gap-small">
+      <UButton color="neutral" variant="outline" @click="emit('open')">Open sheet</UButton>
+      <UButton
+        v-if="canSetActive"
+        color="neutral"
+        variant="outline"
+        @click="emit('setActive', !character.active)"
+      >
+        {{ character.active ? "Make inactive" : "Make active" }}
+      </UButton>
+    </div>
   </ScreenSection>
 </template>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, toRaw } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import CreateGameScreen from "./CreateGameScreen.vue";
+import CharacterPreview from "./CharacterPreview.vue";
 import CharacterSettings from "./CharacterSettings.vue";
 import GamePicker from "./GamePicker.vue";
 import GameRoster from "./GameRoster.vue";
@@ -30,6 +31,7 @@ const userId = ref("gm");
 const screen = ref<Screen>("roster");
 const view = ref<HTMLElement>();
 const selectedCharacterId = ref("");
+const managedCharacterId = ref<string | null>(null);
 const inviteId = ref("");
 const signedIn = ref(true);
 const gameName = ref("");
@@ -70,23 +72,13 @@ const characterViews = computed(() =>
     ...character,
     controller: character.controllerId ? accountName(character.controllerId) : "GM controlled",
     editable: role.value === "GM" || character.controllerId === userId.value,
-    active: game.value.members.some(({ activeCharacterId }) => activeCharacterId === character.id),
+    active: character.controllerId
+      ? game.value.members.some(({ activeCharacterId }) => activeCharacterId === character.id)
+      : character.gmActive,
   })),
 );
-const copySources = computed(() =>
-  games.value
-    .filter(
-      (source) =>
-        source.id !== game.value.id && source.system === game.value.system && roleIn(source),
-    )
-    .flatMap((source) =>
-      source.characters
-        .filter(({ controllerId }) => controllerId === userId.value)
-        .map((character) => ({
-          ...character,
-          label: `${character.sheet.identity.name} · ${source.name}`,
-        })),
-    ),
+const managedCharacter = computed(() =>
+  characterViews.value.find(({ id }) => id === managedCharacterId.value),
 );
 const members = computed(() =>
   game.value.members.map(({ userId, removed }) => ({
@@ -123,6 +115,7 @@ const linkOptions = computed(() =>
 );
 
 async function show(next: Screen) {
+  if (next !== "management") managedCharacterId.value = null;
   screen.value = next;
   await nextTick();
   view.value?.querySelector("h1")?.focus();
@@ -162,8 +155,17 @@ function addGame() {
 }
 
 function openCharacter(id: string) {
+  if (!characterViews.value.find((character) => character.id === id)?.active) {
+    openManagedCharacter(id);
+    return;
+  }
   selectedCharacterId.value = id;
   void show("roster");
+}
+
+function openManagedCharacter(id: string | null) {
+  managedCharacterId.value = id;
+  void show("management");
 }
 
 function addCharacter(name: string) {
@@ -173,41 +175,7 @@ function addCharacter(name: string) {
     member.value.activeCharacterId = character.id;
   }
   openCharacter(character.id);
-  toast.add({
-    title: "Character created",
-    description:
-      characterViews.value.find((entry) => entry.id === character.id)?.active ||
-      !character.controllerId
-        ? undefined
-        : "Select it as active in Characters management to open its sheet.",
-    color: "success",
-  });
-}
-
-function copyCharacter(id: string) {
-  const source = copySources.value.find((entry) => entry.id === id);
-  if (!source) return;
-  const idCopy = crypto.randomUUID();
-  const sheet = structuredClone(toRaw(source.sheet));
-  sheet.id = idCopy;
-  sheet.editingLocked = false;
-  const copy = {
-    id: idCopy,
-    controllerId: userId.value,
-    sheet,
-    maximumOverrides: { ...source.maximumOverrides },
-  };
-  game.value.characters.push(copy);
-  if (member.value && !member.value.activeCharacterId) member.value.activeCharacterId = copy.id;
-  openCharacter(copy.id);
-  toast.add({
-    title: "Character copied",
-    description:
-      member.value?.activeCharacterId === copy.id
-        ? undefined
-        : "Select it as active in Characters management to open its sheet.",
-    color: "success",
-  });
+  toast.add({ title: "Character created", color: "success" });
 }
 
 function overrideMaximum(id: string, resource: Resource, value: number | null) {
@@ -217,19 +185,31 @@ function overrideMaximum(id: string, resource: Resource, value: number | null) {
   character.maximumOverrides[resource] = value;
 }
 
+function overrideManagedMaximum(resource: Resource, value: number | null) {
+  if (managedCharacterId.value) overrideMaximum(managedCharacterId.value, resource, value);
+}
+
 function assignCharacter(id: string, controllerId: string | null) {
   const character = game.value.characters.find((entry) => entry.id === id);
   if (!character || role.value !== "GM" || character.controllerId === controllerId) return;
   const former = game.value.members.find(({ userId }) => userId === character.controllerId);
   if (former?.activeCharacterId === character.id) former.activeCharacterId = null;
   character.controllerId = controllerId;
+  character.gmActive = false;
   toast.add({ title: "Character control updated", color: "success" });
 }
 
-function setActive(id: string) {
+function setActive(id: string, active: boolean) {
   const character = game.value.characters.find((entry) => entry.id === id);
-  if (!member.value || character?.controllerId !== userId.value) return;
-  member.value.activeCharacterId = id;
+  if (!character) return;
+  if (role.value === "GM" && character.controllerId === null) {
+    character.gmActive = active;
+  } else if (role.value === "Player" && member.value && character.controllerId === userId.value) {
+    if (!active && member.value.activeCharacterId !== id) return;
+    member.value.activeCharacterId = active ? id : null;
+  } else {
+    return;
+  }
   toast.add({ title: "Active character updated", color: "success" });
 }
 
@@ -309,16 +289,11 @@ function acceptInvitation(makeActive: boolean) {
   const character = claimCharacter.value;
   if (character && member.value) {
     character.controllerId = userId.value;
+    character.gmActive = false;
     link.spent = true;
     if (makeActive) member.value.activeCharacterId = character.id;
     openCharacter(character.id);
-    toast.add({
-      title: "Character assigned",
-      description: makeActive
-        ? undefined
-        : "Select it as active in Characters management to open its sheet.",
-      color: "success",
-    });
+    toast.add({ title: "Character assigned", color: "success" });
     return;
   }
   void show("roster");
@@ -401,9 +376,7 @@ function acceptInvitation(makeActive: boolean) {
           v-model="selectedCharacterId"
           :role="role"
           :characters="characterViews"
-          :copy-sources="copySources"
           @create="addCharacter"
-          @copy="copyCharacter"
           @manage="show('management')"
           @override-maximum="overrideMaximum"
         />
@@ -415,13 +388,27 @@ function acceptInvitation(makeActive: boolean) {
           aria-labelledby="character-settings"
           class="space-y-medium"
         >
-          <h2 id="character-settings" class="text-section font-semibold">Characters</h2>
+          <h2 id="character-settings" class="text-section font-semibold">
+            {{ managedCharacter?.sheet.identity.name || "Characters" }}
+          </h2>
+          <template v-if="managedCharacter">
+            <UButton color="neutral" variant="outline" @click="openManagedCharacter(null)">
+              Back to characters
+            </UButton>
+            <CharacterPreview
+              :key="managedCharacter.id"
+              :character="managedCharacter"
+              @override-maximum="overrideManagedMaximum"
+            />
+          </template>
           <CharacterSettings
+            v-else
             :role="role"
             :characters="characterViews"
             :controllers="controllerOptions"
             @assign="assignCharacter"
             @set-active="setActive"
+            @open="openManagedCharacter"
           />
         </section>
         <div v-if="screen === 'settings'" class="space-y-page">

@@ -36,7 +36,7 @@ const makeActive = ref(true);
         Accept control of <strong>{{ characterName }}</strong
         >{{ member ? "." : " and join as a player." }}
       </p>
-      <p v-else>Join as a player. You can create or copy a character after joining.</p>
+      <p v-else>Join as a player. You can create a character after joining.</p>
       <UCheckbox v-if="characterName" v-model="makeActive" label="Make this character active" />
       <div class="flex flex-wrap gap-small">
         <UButton @click="emit('accept', makeActive)">

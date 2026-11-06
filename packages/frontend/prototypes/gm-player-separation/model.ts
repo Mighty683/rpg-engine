@@ -9,6 +9,7 @@ export type Character = {
   sheet: FabulaSheet;
   maximumOverrides: Record<Resource, number | null>;
   controllerId: string | null;
+  gmActive: boolean;
 };
 
 export type Member = {

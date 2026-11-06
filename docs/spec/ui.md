@@ -16,7 +16,7 @@ Use Nuxt UI `UButton` with the application's semantic color tokens. Choose empha
 | Role | Nuxt UI props | Use |
 | --- | --- | --- |
 | Primary | `color="primary" variant="solid"` | The main action in a screen, form, or dialog, such as creating a character. Limit to one primary action per action group. |
-| Secondary | `color="neutral" variant="outline"` | A visible alternative such as Cancel, Copy character, or Settings. |
+| Secondary | `color="neutral" variant="outline"` | A visible alternative such as Cancel or Settings. |
 | Tertiary | `color="neutral" variant="subtle"` | A contextual action such as viewing details or rotating a link. Its background makes it visibly interactive. |
 | Destructive | `color="error" variant="outline"` or `variant="solid"` | Use outline for the initial removal action and solid for a destructive confirmation. Give the action a specific label. |
 | Navigation link | `text-primary underline` | Navigation to a destination. Use a semantic link with an underlined accent label and a visible keyboard focus state. |

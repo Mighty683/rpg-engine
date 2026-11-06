@@ -40,6 +40,7 @@ export function createCharacter(
   return {
     id,
     controllerId,
+    gmActive: false,
     sheet: {
       id,
       identity: { name, theme: "" },
@@ -83,6 +84,7 @@ export function makeDemoGames(): Game[] {
     },
   ];
   const rowan = createCharacter("Rowan Ash", null, "rowan");
+  rowan.gmActive = true;
   rowan.sheet.identity.theme = "Curiosity";
   rowan.sheet.level = 6;
   const iona = createCharacter("Captain Iona", null, "captain");
@@ -97,11 +99,5 @@ export function makeDemoGames(): Game[] {
   sable.sheet.identity.theme = "Hope";
   emberCoast.characters = [sable];
 
-  const skyHarbor = createGame("Sky Harbor", "Fabula Ultima", "gm");
-  skyHarbor.members = [createMember("mira")];
-  const lio = createCharacter("Lio Finch", "mira");
-  lio.sheet.identity.theme = "Ambition";
-  skyHarbor.characters = [lio];
-
-  return [lanternRoad, emberCoast, skyHarbor];
+  return [lanternRoad, emberCoast];
 }
