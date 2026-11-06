@@ -24,9 +24,17 @@ function presentGame(row: GameRow) {
 
 export async function listGames(pool: Pool) {
   const result = await pool.query<GameRow>(
-    "SELECT id, name, system_id, created_at FROM games ORDER BY created_at DESC, id DESC",
+    "SELECT id, name, system_id, created_at FROM games WHERE system_id = 'fabula-ultima' ORDER BY created_at DESC, id DESC",
   );
   return result.rows.map(presentGame);
+}
+
+export async function getGame(pool: Pool, id: string) {
+  const result = await pool.query<GameRow>(
+    "SELECT id, name, system_id, created_at FROM games WHERE id = $1 AND system_id = 'fabula-ultima'",
+    [id],
+  );
+  return result.rows[0] ? presentGame(result.rows[0]) : null;
 }
 
 export async function createGame(pool: Pool, name: string, systemId: string) {

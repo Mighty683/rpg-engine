@@ -29,6 +29,8 @@ Then("{string} is in the games list", async function (this: BrowserWorld, name: 
 Then(
   "game {string} uses system {string}",
   async function (this: BrowserWorld, name: string, system: string) {
-    expect(await this.games.gameSystem(name).textContent()).toBe(system);
+    const locator = this.games.gameSystem(name);
+    const text = await locator.textContent();
+    expect(text).toBe(system);
   },
 );

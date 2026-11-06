@@ -4,11 +4,28 @@ import ui from "@nuxt/ui/vue-plugin";
 import "./style.css";
 import App from "./App.vue";
 import { createFrontendI18n } from "./shared/i18n";
+import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query";
 import GamesView from "./modules/games/GamesView.vue";
+import GameView from "./modules/games/GameView.vue";
+import PlayerView from "./modules/players/PlayerView.vue";
+import CharacterView from "./modules/characters/CharacterView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [{ path: "/", component: GamesView }],
+  routes: [
+    { path: "/", component: GamesView },
+    { path: "/games/:gameId", component: GameView },
+    { path: "/games/:gameId/players/:playerId", component: PlayerView },
+    { path: "/games/:gameId/players/:playerId/characters/:characterId", component: CharacterView },
+  ],
 });
 
-createApp(App).use(router).use(ui).use(createFrontendI18n()).mount("#app");
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 5_000 } },
+});
+createApp(App)
+  .use(router)
+  .use(ui)
+  .use(createFrontendI18n())
+  .use(VueQueryPlugin, { queryClient })
+  .mount("#app");

@@ -5,14 +5,14 @@ import type { Pool } from "pg";
 
 describe("game input", () => {
   it.each([
-    [{ name: "  Adventure  ", systemId: "dnd-5e" }, "Adventure", {}],
+    [{ name: "  Adventure  ", systemId: "fabula-ultima" }, "Adventure", {}],
     [
       { name: "   ", systemId: "unknown" },
       "",
       { name: "Enter a game name", systemId: "Select an RPG system" },
     ],
     [
-      { name: "a".repeat(21), systemId: "dnd-5e" },
+      { name: "a".repeat(21), systemId: "fabula-ultima" },
       "a".repeat(21),
       { name: "Use 20 characters or fewer" },
     ],
@@ -47,7 +47,7 @@ describe("game API", () => {
       expect(await (await fetch(url)).json()).toEqual({ games: [] });
       const systems = await fetch(`http://127.0.0.1:${address.port}/api/rpg-systems`);
       expect(await systems.json()).toEqual({
-        systems: [{ id: "dnd-5e", name: "Dungeons & Dragons 5e" }],
+        systems: [{ id: "fabula-ultima", name: "Fabula Ultima" }],
       });
       const malformed = await fetch(url, {
         method: "POST",
@@ -69,10 +69,13 @@ describe("game API", () => {
       const created = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: " Test ", systemId: "dnd-5e" }),
+        body: JSON.stringify({ name: " Test ", systemId: "fabula-ultima" }),
       });
       expect(created.status).toBe(201);
-      expect((await created.json()).game).toMatchObject({ name: "Test", system: { id: "dnd-5e" } });
+      expect((await created.json()).game).toMatchObject({
+        name: "Test",
+        system: { id: "fabula-ultima" },
+      });
       fail = true;
       const failed = await fetch(url);
       expect(failed.status).toBe(500);
@@ -80,7 +83,7 @@ describe("game API", () => {
       const failedSave = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Test", systemId: "dnd-5e" }),
+        body: JSON.stringify({ name: "Test", systemId: "fabula-ultima" }),
       });
       expect(failedSave.status).toBe(500);
       expect((await failedSave.json()).error.code).toBe("save_failed");

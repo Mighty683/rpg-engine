@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { h, nextTick, onMounted, ref } from "vue";
+import { RouterLink } from "vue-router";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
-
-type System = { id: string; name: string };
-type Game = { id: string; name: string; system: System; createdAt: string };
-type ApiError = { error?: { fields?: Record<string, string>; message?: string } };
+import type { Game, System } from "../../shared/api";
+import { useGamesQuery, useSystemsQuery, useCreateGameMutation } from "./hooks";
+type ApiError = { fields?: Record<string, string>; message?: string };
 
 const toast = useToast();
+const gamesQuery = useGamesQuery();
+const systemsQuery = useSystemsQuery();
+const createGameMutation = useCreateGameMutation();
 const { t } = useI18n();
 const {
   handleSubmit,
@@ -48,9 +51,9 @@ const listHeading = ref<HTMLElement>();
 async function loadGames() {
   listState.value = "loading";
   try {
-    const response = await fetch("/api/games");
-    if (!response.ok) throw new Error();
-    games.value = (await response.json()).games;
+    const result = await gamesQuery.refetch();
+    if (result.error) throw result.error;
+    games.value = result.data?.games ?? [];
     listState.value = "ready";
   } catch {
     listState.value = "error";
@@ -59,9 +62,9 @@ async function loadGames() {
 async function loadSystems() {
   systemState.value = "loading";
   try {
-    const response = await fetch("/api/rpg-systems");
-    if (!response.ok) throw new Error();
-    systems.value = (await response.json()).systems;
+    const result = await systemsQuery.refetch();
+    if (result.error) throw result.error;
+    systems.value = result.data?.systems ?? [];
     systemState.value = "ready";
   } catch {
     systemState.value = "error";
@@ -108,39 +111,31 @@ const submit = handleSubmit(
     saving.value = true;
     outcome.value = "";
     try {
-      const response = await fetch("/api/games", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimmed, systemId: values.systemId }),
-      });
-      if (response.status === 400 || response.status === 422) {
-        const data: ApiError = await response.json();
-        setErrors(data.error?.fields ?? {});
-        outcome.value = "failed";
-        await nextTick();
-        (fields.value.name
-          ? nameInput.value?.inputRef
-          : fields.value.systemId
-            ? systemInput.value?.triggerRef
-            : undefined
-        )?.focus();
+      try {
+        const data = await createGameMutation.mutateAsync({
+          name: trimmed,
+          systemId: values.systemId,
+        });
+        toast.add({
+          title: h(
+            "span",
+            { "data-testid": "game-created-toast" },
+            t("games.created", { name: data.game.name }),
+          ),
+          color: "success",
+        });
+        clearDraft();
+        await showList();
         return;
-      }
-      if (!response.ok) {
+      } catch (cause) {
+        const failure = cause as Error & { status?: number; payload?: { error?: ApiError } };
+        if (failure.status === 400 || failure.status === 422) {
+          setErrors(failure.payload?.error?.fields ?? {});
+          outcome.value = "failed";
+          return;
+        }
         outcome.value = "unknown";
-        return;
       }
-      const data: { game: Game } = await response.json();
-      toast.add({
-        title: h(
-          "span",
-          { "data-testid": "game-created-toast" },
-          t("games.created", { name: data.game.name }),
-        ),
-        color: "success",
-      });
-      clearDraft();
-      await showList();
     } catch {
       outcome.value = "unknown";
     } finally {
@@ -194,7 +189,8 @@ onMounted(() => {
             data-testid="game-row"
             class="flex flex-wrap justify-between gap-small p-large"
           >
-            <span data-testid="game-row-name" class="font-medium">{{ game.name }}</span
+            <RouterLink :to="`/games/${game.id}`" data-testid="game-row-link" class="font-medium"
+              ><span data-testid="game-row-name">{{ game.name }}</span></RouterLink
             ><span data-testid="game-row-system" class="text-muted">{{ game.system.name }}</span>
           </li>
         </ul>

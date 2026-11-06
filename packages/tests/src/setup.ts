@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { Server } from "node:http";
 import pg from "pg";
 import { createServer, type ViteDevServer } from "vite-plus";
 import type { TestProject } from "vite-plus/test/node";
 import { createApp } from "../../backend/src/app.ts";
+import { applyMigrations } from "../../backend/src/migrations.ts";
 
 // Each run uses its own schema and ephemeral ports, independent of development servers.
 export default async function setup(project: TestProject) {
@@ -35,11 +35,7 @@ export default async function setup(project: TestProject) {
     await admin.query(`CREATE SCHEMA "${schema}"`);
     schemaCreated = true;
     pool = new pg.Pool({ connectionString, options: `-c search_path=${schema}` });
-    const migration = await readFile(
-      new URL("../../backend/migrations/001_games.sql", import.meta.url),
-      "utf8",
-    );
-    await pool.query(migration);
+    await applyMigrations(pool);
     backend = createApp(pool).listen(0, "127.0.0.1");
     await new Promise<void>((resolve, reject) => {
       backend!.once("listening", resolve);

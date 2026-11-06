@@ -18,9 +18,7 @@ export class GamesPage {
   }
 
   gameRow(name: string) {
-    return this.page
-      .getByTestId("game-row")
-      .filter({ has: this.page.getByTestId("game-row-name").filter({ hasText: name }) });
+    return this.page.getByTestId("game-row").filter({ hasText: name });
   }
 
   gameSystem(name: string) {
@@ -37,5 +35,9 @@ export class GamesPage {
     await this.systemSelect.click();
     await this.systemOption(systemId).click();
     await this.submitButton.click();
+  }
+
+  async openGame(name: string) {
+    await this.gameRow(name).getByTestId("game-row-link").click();
   }
 }

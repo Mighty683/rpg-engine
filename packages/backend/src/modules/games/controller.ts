@@ -1,6 +1,19 @@
 import { Controller, RequestError, Route } from "arrow-express";
 import type { Pool } from "pg";
-import { createGame, listGames, validateGame } from "./service.ts";
+import { createGame, getGame, listGames, validateGame } from "./service.ts";
+const uuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+const gameDetailHandler = (pool: Pool) => async (request: any) => {
+  const id = Array.isArray(request.params.gameId)
+    ? request.params.gameId[0]!
+    : request.params.gameId;
+  if (!uuid(id))
+    throw new RequestError(400, { error: { code: "bad_request", message: "Invalid identifier." } });
+  const game = await getGame(pool, id);
+  if (!game)
+    throw new RequestError(404, { error: { code: "not_found", message: "Game not found." } });
+  return { game };
+};
 
 export function gamesController(pool: Pool) {
   return Controller()
@@ -43,5 +56,6 @@ export function gamesController(pool: Pool) {
             });
           }
         }),
+      Route().method("get").path(":gameId").handler(gameDetailHandler(pool)),
     );
 }
