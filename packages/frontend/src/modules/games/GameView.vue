@@ -13,10 +13,12 @@ import {
   useGameCharacterActiveMutation,
   useGameCharactersQuery,
 } from "../characters/hooks";
-import ScreenSection from "../../shared/design-system/ScreenSection.vue";
 import CharacterManagement from "./CharacterManagement.vue";
 import GameSettings from "./GameSettings.vue";
+import GameTable from "../game-table/GameTable.vue";
+import { partyKey, throwsKey } from "../game-table/hooks";
 import { useGameMembersQuery, useGameQuery, useSelectGameCharacterMutation } from "./hooks";
+import { newUuid } from "../../shared/uuid";
 
 const toast = useToast();
 const route = useRoute();
@@ -55,6 +57,7 @@ const managedCharacter = computed(() => characters.value.find((character) => cha
 const pendingId = ref<string | null>(null);
 const pendingName = ref("");
 const heading = ref<HTMLElement>();
+const throwsHint = ref(0);
 let events: EventSource | undefined;
 let eventConnectionFailed = false;
 
@@ -63,6 +66,8 @@ function refreshGameQueries(characterId?: string) {
   void queryClient.invalidateQueries({ queryKey: [...prefix, "characters"], exact: !characterId });
   if (characterId) void queryClient.invalidateQueries({ queryKey: [...prefix, "characters", characterId] });
   void queryClient.invalidateQueries({ queryKey: [...prefix, "members"] });
+  void queryClient.invalidateQueries({ queryKey: partyKey(gameId) });
+  throwsHint.value += 1;
 }
 onMounted(() => {
   events = new EventSource(`/api/games/${gameId}/events`);
@@ -75,6 +80,10 @@ onMounted(() => {
       const hint = JSON.parse(event.data) as { type?: string; characterId?: string };
       if (hint.type === "roster") refreshGameQueries();
       if (hint.type === "sheet" && hint.characterId) refreshGameQueries(hint.characterId);
+      if (hint.type === "throws") {
+        throwsHint.value += 1;
+        void queryClient.invalidateQueries({ queryKey: throwsKey(gameId) });
+      }
     } catch {
       // Ignore malformed invalidation hints; HTTP responses remain authoritative.
     }
@@ -86,6 +95,7 @@ onMounted(() => {
     }
     void game.refetch();
     void roster.refetch();
+    refreshGameQueries();
   };
 });
 onUnmounted(() => events?.close());
@@ -136,7 +146,7 @@ async function submitCharacter() {
   }
   if (pendingName.value !== name) pendingId.value = null;
   pendingName.value = name;
-  pendingId.value ??= crypto.randomUUID();
+  pendingId.value ??= newUuid();
   createError.value = "";
   try {
     const result = await createCharacter.mutateAsync({ id: pendingId.value, name });
@@ -202,8 +212,9 @@ async function removeCharacter() {
           <p class="text-muted">{{ gameRecord.name }} · {{ gameRecord.system.name }} · {{ gameRecord.role }}</p>
         </div>
         <div class="flex gap-small">
-          <UButton v-if="management || settings" color="neutral" variant="outline" @click="returnToGame">Return to game</UButton>
-          <UButton v-else-if="gameRecord.role === 'GM'" color="neutral" variant="outline" @click="openSettings">Settings</UButton>
+          <UButton v-if="management && managedCharacterId" color="neutral" variant="outline" @click="managedCharacterId = ''; focusHeading()">Back to characters</UButton>
+          <UButton v-if="management || settings" color="neutral" variant="outline" data-testid="return-to-game" @click="returnToGame">Return to game</UButton>
+          <UButton v-else-if="gameRecord.role === 'GM'" color="neutral" variant="outline" data-testid="open-settings" @click="openSettings">Settings</UButton>
         </div>
       </header>
       <p v-if="roster.isLoading.value">Loading characters…</p>
@@ -211,7 +222,6 @@ async function removeCharacter() {
       <template v-else>
         <GameSettings v-if="settings" :game-id="gameId" :members="members" :characters="characters" @changed="refreshSettings" />
         <template v-else-if="management && managedCharacterId">
-          <UButton color="neutral" variant="outline" @click="managedCharacterId = ''; focusHeading()">Back to characters</UButton>
           <CharacterView :key="managedCharacterId" :game-id="gameId" :character-id="managedCharacterId" :read-only="gameRecord.role !== 'GM' && !managedCharacter?.canEdit" />
         </template>
         <template v-else-if="management">
@@ -223,10 +233,7 @@ async function removeCharacter() {
             <UButton data-testid="create-character" @click="openCreate">Create character</UButton>
             <UButton data-testid="manage-characters" color="neutral" variant="outline" @click="openManagement">Characters management</UButton>
           </div>
-          <ScreenSection v-if="!activeTabs.length"><p class="p-small text-muted">No active characters yet. Create a character or select one in character management.</p></ScreenSection>
-          <UTabs v-else v-model="selectedId" :items="activeTabs" activation-mode="automatic" :ui="{ list: 'max-w-full overflow-x-auto overflow-y-hidden', trigger: 'flex-none', content: 'min-w-0' }">
-            <template #content="{ item }"><CharacterView :key="item.value" :game-id="gameId" :character-id="item.value" :read-only="gameRecord.role !== 'GM' && !characters.find((character) => character.id === item.value)?.canEdit" /></template>
-          </UTabs>
+          <GameTable :game-id="gameId" :role="gameRecord.role" :throws-hint="throwsHint" />
         </template>
       </template>
     </template>

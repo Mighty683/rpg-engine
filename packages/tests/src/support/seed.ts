@@ -1,0 +1,120 @@
+import { randomUUID } from "node:crypto";
+import pg from "pg";
+import { inject } from "vite-plus/test";
+import { registerAccount } from "../../../backend/src/modules/auth/service.ts";
+import { createActorGame } from "../../../backend/src/modules/games/service.ts";
+import {
+  createWorkspaceCharacter,
+  setGmCharacterActive,
+  updateWorkspaceCharacter,
+} from "../../../backend/src/modules/characters/workspace-service.ts";
+
+export type SeededAccount = { username: string; password: string; accountId: string };
+export type SeededGame = {
+  gameId: string;
+  gm: SeededAccount;
+  player: SeededAccount;
+  membershipId: string;
+  gmCharacterId: string;
+  playerCharacterId: string;
+  playerCharacterIds: string[];
+  weaponId: string | null;
+};
+
+let counter = 0;
+const unique = (label: string) => `${label}${++counter}${randomUUID().slice(0, 6)}`;
+
+export async function seedPool() {
+  const schema = inject("databaseSchema") as string;
+  return new pg.Pool({
+    connectionString: inject("databaseUrl") as string,
+    options: `-c search_path=${schema}`,
+  });
+}
+
+/** Seeds a Fabula Ultima game with a GM account, a player membership, and active characters. */
+export async function seedGame(options: { gmWeapon?: "complete" | "incomplete" | "none"; playerCharacters?: number } = {}) {
+  const pool = await seedPool();
+  try {
+    const gm: SeededAccount = { username: unique("gm"), password: "password-123", accountId: "" };
+    const player: SeededAccount = { username: unique("player"), password: "password-123", accountId: "" };
+    gm.accountId = (await registerAccount(pool, gm.username, gm.password)).id;
+    player.accountId = (await registerAccount(pool, player.username, player.password)).id;
+    const gmActor = { accountId: gm.accountId, sessionId: randomUUID() };
+    const playerActor = { accountId: player.accountId, sessionId: randomUUID() };
+    const game = await createActorGame(pool, gmActor, unique("Table"), "fabula-ultima");
+    const gameId = game.id;
+    const membershipId = randomUUID();
+    await pool.query("INSERT INTO players(id,game_id,account_id,name) VALUES ($1,$2,$3,$4)", [
+      membershipId,
+      gameId,
+      player.accountId,
+      unique("member"),
+    ]);
+    const gmCharacterId = randomUUID();
+    await createWorkspaceCharacter(pool, gmActor, gameId, gmCharacterId, unique("GM Hero"));
+    await setGmCharacterActive(pool, gmActor, gameId, gmCharacterId, true);
+    const playerCharacterIds: string[] = [];
+    const playerCharacters = options.playerCharacters ?? 1;
+    for (let index = 0; index < playerCharacters; index++) {
+      const id = randomUUID();
+      await createWorkspaceCharacter(pool, playerActor, gameId, id, unique(`Player Hero ${index + 1}`));
+      playerCharacterIds.push(id);
+    }
+    const playerCharacterId = playerCharacterIds[0]!;
+    await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [playerCharacterId, membershipId]);
+    let weaponId: string | null = null;
+    if (options.gmWeapon && options.gmWeapon !== "none") {
+      const weapon = {
+        id: randomUUID(),
+        name: "Rapier",
+        notes: "",
+        priceZenit: null,
+        kind: "weapon" as const,
+        equipped: true,
+        accuracyDice: options.gmWeapon === "complete" ? (["DEX", "INS"] as ["DEX", "INS"]) : (["DEX", null] as ["DEX", null]),
+        accuracyBonus: options.gmWeapon === "complete" ? 1 : null,
+      };
+      const revision = Number(
+        (await pool.query("SELECT revision FROM characters WHERE id=$1", [gmCharacterId])).rows[0]!.revision,
+      );
+      await updateWorkspaceCharacter(pool, gameId, gmActor, gmCharacterId, revision, { equipment: [weapon] });
+      weaponId = weapon.id;
+    }
+    return { gameId, gm, player, membershipId, gmCharacterId, playerCharacterId, playerCharacterIds, weaponId };
+  } finally {
+    await pool.end();
+  }
+}
+
+export async function setPlayerActiveCharacter(game: SeededGame, characterId: string | null) {
+  const pool = await seedPool();
+  try {
+    await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [characterId, game.membershipId]);
+  } finally {
+    await pool.end();
+  }
+}
+
+export async function saveWeaponAccuracy(game: SeededGame, characterId: string, weaponId: string, accuracyDice: ["DEX", "INS"], accuracyBonus: number) {
+  const pool = await seedPool();
+  try {
+    const actor = { accountId: game.gm.accountId, sessionId: randomUUID() };
+    const revision = Number((await pool.query("SELECT revision FROM characters WHERE id=$1", [characterId])).rows[0]!.revision);
+    const equipment = (await pool.query("SELECT id,name,notes,price_zenit,kind,equipped FROM character_equipment WHERE character_id=$1 ORDER BY position", [characterId])).rows;
+    await updateWorkspaceCharacter(pool, game.gameId, actor, characterId, revision, {
+      equipment: equipment.map((row) => ({
+        id: row.id,
+        name: row.name,
+        notes: row.notes,
+        priceZenit: row.price_zenit,
+        kind: "weapon" as const,
+        equipped: Boolean(row.equipped),
+        accuracyDice: row.id === weaponId ? accuracyDice : (["DEX", "INS"] as ["DEX", "INS"]),
+        accuracyBonus: row.id === weaponId ? accuracyBonus : 1,
+      })),
+    });
+  } finally {
+    await pool.end();
+  }
+}

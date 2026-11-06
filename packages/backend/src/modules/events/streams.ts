@@ -1,6 +1,6 @@
 import type { Response } from "express";
 
-export type GameEvent = { type: "roster" } | { type: "sheet"; characterId: string };
+export type GameEvent = { type: "roster" } | { type: "sheet"; characterId: string } | { type: "throws" };
 type Subscription = {
   gameId: string;
   accountId: string;
