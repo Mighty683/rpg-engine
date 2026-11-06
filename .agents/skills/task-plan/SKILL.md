@@ -10,6 +10,8 @@ Tests are created at end of wave when whole part is integrated.
 
 Plan to reuse the approved prototype components and wire them to production. Check that the result matches the prototype across relevant screen sizes and states.
 
+After planning, use [Task Handover](../task-handover/SKILL.md) to capture acceptance criteria. Keep that document current with evidence as each wave is integrated.
+
 ## Example: `docs/tasks/<task>/plan.md`
 
 ```markdown

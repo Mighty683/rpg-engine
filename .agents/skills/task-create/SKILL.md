@@ -5,7 +5,7 @@ description: Create or update a task navigation page linking its phase documents
 
 # Task Create
 
-Use the existing task directory or a descriptive kebab-case name. Link only existing documents. Preserve creation metadata; when reducing an existing summary, move unique detail to its owning phase and update references.
+Use the existing task directory or a descriptive kebab-case name. Link only existing documents, including the handover once created. Preserve creation metadata; when reducing an existing summary, move unique detail to its owning phase and update references.
 
 ## Example: `docs/tasks/<task>/summary.md`
 
@@ -13,7 +13,7 @@ Use the existing task directory or a descriptive kebab-case name. Link only exis
 # <task title>
 
 **Created:** 2026-11-04
-**Status:** <Created/Story/UX/UI/Tech/Plan/Implemented/Dropped>
+**Status:** <Created/Story/UX/UI/Tech/Plan/Handover/Implemented/Dropped>
 
 ## Task documents
 
@@ -22,4 +22,5 @@ Use the existing task directory or a descriptive kebab-case name. Link only exis
 3. [UI solution](ui.md)
 4. [Technical design](tech.md)
 5. [Implementation plan](plan.md)
+6. [Handover](handover.md)
 ```
