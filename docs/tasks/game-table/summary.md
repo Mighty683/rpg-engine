@@ -2,7 +2,7 @@
 
 **Created:** 2026-11-06
 
-**Status:** Ready for implementation
+**Status:** Implemented
 
 ## Task documents
 
