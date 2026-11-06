@@ -10,6 +10,27 @@
       "when": 1700000002000,
       "tag": "003_characters",
       "breakpoints": false
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1700000003000,
+      "tag": "004_accounts_sessions",
+      "breakpoints": false
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1700000004000,
+      "tag": "005_game_ownership",
+      "breakpoints": false
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1700000005000,
+      "tag": "006_invitations",
+      "breakpoints": false
     }
   ]
 }

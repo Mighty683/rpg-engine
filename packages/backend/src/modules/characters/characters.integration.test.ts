@@ -1,105 +1,56 @@
-import { describe, expect, it, beforeAll, afterAll } from "vite-plus/test";
-import pg from "pg";
 import { randomUUID } from "node:crypto";
+import pg from "pg";
+import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 import { applyMigrations } from "../../migrations.ts";
-import { createCharacter, getCharacter, listCharacters, updateCharacter } from "./service.ts";
+import { createWorkspaceCharacter, getWorkspaceCharacter, listWorkspaceCharacters, updateWorkspaceCharacter } from "./workspace-service.ts";
 
 const url = process.env.TEST_DATABASE_URL;
 const schema = `character_test_${randomUUID().replaceAll("-", "")}`;
-const base = url ? new pg.Pool({ connectionString: url }) : null;
-const pool = url
-  ? new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` })
-  : null;
+const admin = url ? new pg.Pool({ connectionString: url }) : null;
+const pool = url ? new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` }) : null;
 const gameId = randomUUID();
-const playerId = randomUUID();
+const actor = { accountId: randomUUID(), sessionId: randomUUID() };
 
-describe.skipIf(!url)("characters persistence", () => {
+describe.skipIf(!url)("character workspace persistence", () => {
   beforeAll(async () => {
-    await base!.query(`CREATE SCHEMA ${schema}`);
+    await admin!.query(`CREATE SCHEMA ${schema}`);
     await applyMigrations(pool!);
-    await pool!.query("INSERT INTO games(id,name,system_id) VALUES($1,$2,$3)", [
-      gameId,
-      "Test",
-      "fabula-ultima",
-    ]);
-    await pool!.query("INSERT INTO players(id,game_id,name) VALUES($1,$2,$3)", [
-      playerId,
-      gameId,
-      "Player",
-    ]);
+    await pool!.query("INSERT INTO accounts(id,username,password_hash) VALUES($1,$2,$3)", [actor.accountId, "gm", "hash"]);
+    await pool!.query("INSERT INTO games(id,name,system_id,gm_account_id) VALUES($1,$2,$3,$4)", [gameId, "Test", "fabula-ultima", actor.accountId]);
   });
-
   afterAll(async () => {
     await pool?.end();
-    await base?.query(`DROP SCHEMA ${schema} CASCADE`);
-    await base?.end();
+    await admin?.query(`DROP SCHEMA ${schema} CASCADE`);
+    await admin?.end();
   });
 
-  it("creates, replays, lists, scopes, and persists every child list", async () => {
+  it("creates an inactive sheet, replays creation, and persists child lists", async () => {
     const id = randomUUID();
-    const created = await createCharacter(pool!, gameId, playerId, id, "  Camilla  ");
+    const created = await createWorkspaceCharacter(pool!, actor, gameId, id, "Camilla");
     expect(created.created).toBe(true);
-    expect(created.record.sheet).toMatchObject({
-      name: "Camilla",
-      level: 5,
-      resources: { hp: 35, mp: 45, ip: 6, fabula: 3 },
-    });
-    const replay = await createCharacter(pool!, gameId, playerId, id, "Ignored");
-    expect(replay.created).toBe(false);
-    expect(replay.record.name).toBe("Camilla");
-
-    const equipmentId = randomUUID();
-    const saved = await updateCharacter(pool!, gameId, playerId, id, 0, {
+    expect((await createWorkspaceCharacter(pool!, actor, gameId, id, "Camilla")).created).toBe(false);
+    const saved = await updateWorkspaceCharacter(pool!, gameId, actor, id, 0, {
       classes: [{ id: randomUUID(), name: "Guardian", notes: "shield" }],
       skills: [{ id: randomUUID(), name: "Guard", notes: "" }],
-      equipment: [
-        {
-          id: equipmentId,
-          name: "Buckler",
-          notes: "",
-          priceZenit: 10,
-          kind: "shield",
-          equipped: true,
-          defenseBonus: 2,
-          magicDefenseBonus: 1,
-          initiativeModifier: -1,
-        },
-      ],
+      equipment: [{ id: randomUUID(), name: "Buckler", notes: "", priceZenit: 10, kind: "shield", equipped: true, defenseBonus: 2, magicDefenseBonus: 1, initiativeModifier: -1 }],
     });
     expect(saved.revision).toBe(1);
-    expect(saved.sheet.classes).toHaveLength(1);
-    expect(saved.sheet.skills).toHaveLength(1);
-    expect(saved.sheet.equipment[0]).toMatchObject({ id: equipmentId, kind: "shield" });
-    expect((await listCharacters(pool!, gameId, playerId))[0]).toMatchObject({
-      id,
-      name: "Camilla",
-    });
-    expect((await getCharacter(pool!, gameId, playerId, id))?.sheet.equipment).toHaveLength(1);
+    expect((await getWorkspaceCharacter(pool!, actor, gameId, id)).sheet.equipment).toHaveLength(1);
+    expect((await listWorkspaceCharacters(pool!, actor, gameId)).find((row) => row.id === id)).toMatchObject({ name: "Camilla", active: false });
   });
 
-  it("rejects cross-player access, preserves no-op revisions, and rejects stale races", async () => {
-    const otherPlayer = randomUUID();
-    await pool!.query("INSERT INTO players(id,game_id,name) VALUES($1,$2,$3)", [
-      otherPlayer,
-      gameId,
-      "Other",
-    ]);
+  it("rejects hidden games and stale saves", async () => {
     const id = randomUUID();
-    await createCharacter(pool!, gameId, playerId, id, "Race");
-    expect(await getCharacter(pool!, gameId, otherPlayer, id)).toBeNull();
-    const unchanged = await updateCharacter(pool!, gameId, playerId, id, 0, { name: "Race" });
-    expect(unchanged.revision).toBe(0);
+    await createWorkspaceCharacter(pool!, actor, gameId, id, "Race");
+    const stranger = { accountId: randomUUID(), sessionId: randomUUID() };
+    await expect(getWorkspaceCharacter(pool!, stranger, gameId, id)).rejects.toMatchObject({ code: "not_found" });
+    await expect(createWorkspaceCharacter(pool!, stranger, gameId, randomUUID(), "Intruder")).rejects.toMatchObject({ code: "not_found" });
+    await expect(updateWorkspaceCharacter(pool!, gameId, stranger, id, 0, { theme: "Intrusion" })).rejects.toMatchObject({ code: "not_found" });
     const results = await Promise.allSettled([
-      updateCharacter(pool!, gameId, playerId, id, 0, { theme: "A" }),
-      updateCharacter(pool!, gameId, playerId, id, 0, { theme: "B" }),
+      updateWorkspaceCharacter(pool!, gameId, actor, id, 0, { theme: "A" }),
+      updateWorkspaceCharacter(pool!, gameId, actor, id, 0, { theme: "B" }),
     ]);
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-    expect(
-      results.filter(
-        (result) =>
-          result.status === "rejected" &&
-          (result.reason as { code?: string }).code === "stale_revision",
-      ),
-    ).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected" && result.reason.code === "stale_revision")).toHaveLength(1);
   });
 });

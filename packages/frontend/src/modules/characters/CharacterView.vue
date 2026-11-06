@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useToast } from "@nuxt/ui/composables";
+import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { useCharacterQuery, useSaveCharacterMutation } from "./hooks";
+import { useGameCharacterQuery, useGameCharactersQuery, useSaveGameCharacterMutation } from "./hooks";
 import CharacterSheet from "./sheet/CharacterSheet.vue";
 import { toCharacter, toSheet, type Sheet } from "./sheet/model";
 import type { Character as SheetCharacter } from "./sheet/types";
@@ -9,12 +11,16 @@ import { useOptimisticSave } from "../../shared/useOptimisticSave";
 
 type Snapshot = { character: { revision: number; sheet: Sheet; derived: Record<string, any> } };
 
+const toast = useToast();
 const route = useRoute();
-const gameId = computed(() => String(route.params.gameId));
-const playerId = computed(() => String(route.params.playerId));
-const characterId = computed(() => String(route.params.characterId));
-const query = useCharacterQuery(gameId.value, playerId.value, characterId.value);
-const mutation = useSaveCharacterMutation(gameId.value, playerId.value, characterId.value);
+const props = defineProps<{ gameId?: string; characterId?: string; readOnly?: boolean }>();
+const gameId = computed(() => props.gameId ?? String(route.params.gameId));
+const characterId = computed(() => props.characterId ?? String(route.params.characterId));
+const query = useGameCharacterQuery(gameId.value, characterId.value);
+useQueryErrorToast(query, "Could not load character. Try again or return to your games.");
+const roster = useGameCharactersQuery(gameId.value);
+if (!props.gameId) useQueryErrorToast(roster, "Could not load character access. Try again.");
+const mutation = useSaveGameCharacterMutation(gameId.value, characterId.value);
 const snapshot = ref<Snapshot | null>(null);
 const locked = ref(localStorage.getItem(`character-lock:${characterId.value}`) === "1");
 function mergeSheet(base: Sheet, changes: Record<string, unknown>) {
@@ -50,12 +56,18 @@ const optimistic = useOptimisticSave<Snapshot, Record<string, unknown>>({
   }),
   isKnownRejection: (error) => error.status === 400 || error.status === 422,
 });
+watch(optimistic.error, (error) => {
+  if (!error) return;
+  const message = error.status === 403
+    ? "Your edit access changed. Your local draft is preserved."
+    : "Your changes could not be saved. Your local draft is preserved.";
+  toast.add({ title: message, color: "error" });
+});
 watch(
   () => query.data.value,
   (value) => {
-    if (value && !optimistic.saving.value && !optimistic.pending.value) {
+    if (value) {
       const next = value as unknown as Snapshot;
-      snapshot.value = next;
       optimistic.setSnapshot(next);
     }
   },
@@ -69,6 +81,15 @@ watch(
   { deep: true },
 );
 const sheet = computed(() => snapshot.value?.character.sheet);
+const readAccessLost = computed(() => {
+  const queryStatus = (query.error.value as { status?: number } | null)?.status;
+  const saveStatus = optimistic.error.value?.status;
+  return queryStatus === 401 || queryStatus === 404 || saveStatus === 401 || saveStatus === 404;
+});
+const effectiveReadOnly = computed(() => {
+  const canEdit = roster.data.value?.characters.find((character) => character.id === characterId.value)?.canEdit;
+  return (props.readOnly ?? !canEdit) || optimistic.error.value?.status === 403;
+});
 const draft = ref<SheetCharacter | null>(null);
 let syncedDraft = "";
 watch(
@@ -93,7 +114,7 @@ watch(
       locked.value = value.editingLocked;
       localStorage.setItem(`character-lock:${characterId.value}`, locked.value ? "1" : "0");
     }
-    if (locked.value) return;
+    if (locked.value || effectiveReadOnly.value) return;
     const updated = toSheet(value, current);
     const changes: Record<string, unknown> = {};
     for (const key of Object.keys(updated) as (keyof Sheet)[]) {
@@ -117,7 +138,7 @@ const maximumOverrides = computed(() => ({
 }));
 function overrideMaximum(resource: "HP" | "MP" | "IP", value: number | null) {
   const keys = { HP: "maxHp", MP: "maxMp", IP: "maxIp" } as const;
-  if (!locked.value) optimistic.submit({ overrides: { [keys[resource]]: value } });
+  if (!locked.value && !effectiveReadOnly.value) optimistic.submit({ overrides: { [keys[resource]]: value } });
 }
 const defenseKeys = { DEF: "defense", "MAG DEF": "magicDefense", INIT: "initiative" } as const;
 const baseDefense = computed(
@@ -153,17 +174,34 @@ const defenseDetails = computed(() => {
     }),
   ) as Record<keyof typeof defenseKeys, { name: string; value: number; modifier?: boolean }[]>;
 });
+const savedSheet = computed(() => optimistic.latestSaved.value?.character.sheet);
+const savedDraft = computed(() => savedSheet.value ? toCharacter(savedSheet.value, characterId.value, true) : null);
+const savedDerived = computed(() => optimistic.latestSaved.value?.character.derived ?? {});
+const savedMaximum = computed(() => ({
+  HP: savedSheet.value?.overrides.maxHp ?? savedDerived.value.maxima?.hp ?? 0,
+  MP: savedSheet.value?.overrides.maxMp ?? savedDerived.value.maxima?.mp ?? 0,
+  IP: savedSheet.value?.overrides.maxIp ?? savedDerived.value.maxima?.ip ?? 0,
+}));
+const savedOverrides = computed(() => ({
+  HP: savedSheet.value?.overrides.maxHp ?? null,
+  MP: savedSheet.value?.overrides.maxMp ?? null,
+  IP: savedSheet.value?.overrides.maxIp ?? null,
+}));
+const savedDefense = computed(() => Object.fromEntries(Object.entries(defenseKeys).map(([label, key]) => [label, savedDerived.value.defenses?.[key]?.calculated ?? null])) as Record<keyof typeof defenseKeys, number | null>);
+const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
 </script>
 
 <template>
   <div class="mx-auto max-w-6xl space-y-small">
-    <p v-if="query.isPending.value && !draft">Loading character…</p>
+    <UButton v-if="readAccessLost" to="/" color="neutral" variant="outline">My games</UButton>
+    <p v-else-if="query.isPending.value && !draft">Loading character…</p>
     <p v-else-if="query.isError.value && !draft">
-      Could not load character. <UButton color="neutral" variant="outline" @click="query.refetch">Retry</UButton>
+      <UButton color="neutral" variant="outline" @click="query.refetch">Retry</UButton>
     </p>
     <CharacterSheet
       v-else-if="draft"
       :character="draft"
+      :read-only="effectiveReadOnly"
       :maximum="maximum"
       :maximum-overrides="maximumOverrides"
       @override-maximum="overrideMaximum"
@@ -172,11 +210,14 @@ const defenseDetails = computed(() => {
     />
     <p v-if="optimistic.saving.value" data-testid="save-status" role="status">Saving…</p>
     <p v-else-if="optimistic.error.value" role="alert">
-      {{ optimistic.error.value.message }}
       <UButton v-if="optimistic.paused.value" color="neutral" variant="outline" @click="optimistic.retry"
-        >Reload</UButton
+        >Discard draft and reload</UButton
       >
     </p>
     <p v-else-if="draft" class="sr-only" data-testid="save-status" role="status">Saved</p>
+    <details v-if="optimistic.paused.value && savedDraft && !readAccessLost" class="space-y-small">
+      <summary class="cursor-pointer font-semibold">Review latest saved version</summary>
+      <CharacterSheet :character="savedDraft" read-only :maximum="savedMaximum" :maximum-overrides="savedOverrides" :base-defense="savedDefense" :defense-details="emptyDefenseDetails" />
+    </details>
   </div>
 </template>

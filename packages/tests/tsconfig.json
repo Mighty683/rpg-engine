@@ -8,5 +8,10 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "vitest.config.ts", "../backend/src/arrow-express.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "vitest.config.ts",
+    "vitest.api.config.ts",
+    "../backend/src/arrow-express.d.ts"
+  ]
 }

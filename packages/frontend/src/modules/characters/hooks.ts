@@ -1,5 +1,58 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { computed } from "vue";
+import { account } from "../auth/session";
 import { api } from "./api";
+const gameCharactersKey = (gameId: string) => ["accounts", account.value?.id, "games", gameId, "characters"];
+export function useGameCharactersQuery(gameId: string) {
+  return useQuery({
+    queryKey: computed(() => gameCharactersKey(gameId)),
+    queryFn: () => api.listGameCharacters(gameId),
+  });
+}
+export function useCreateGameCharacterMutation(gameId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; name: string }) => api.createGameCharacter(gameId, input),
+    onSuccess: () => client.invalidateQueries({ queryKey: gameCharactersKey(gameId) }),
+  });
+}
+export function useGameCharacterQuery(gameId: string, characterId: string) {
+  return useQuery({
+    queryKey: computed(() => [...gameCharactersKey(gameId), characterId]),
+    queryFn: () => api.getGameCharacter(gameId, characterId),
+  });
+}
+export function useSaveGameCharacterMutation(gameId: string, characterId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { expectedRevision: number; changes: Record<string, unknown> }) =>
+      api.saveGameCharacter(gameId, characterId, input.expectedRevision, input.changes),
+    onSuccess: () => client.invalidateQueries({ queryKey: gameCharactersKey(gameId), exact: true }),
+  });
+}
+export function useGameCharacterActiveMutation(gameId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { characterId: string; active: boolean }) =>
+      api.setGameCharacterActive(gameId, input.characterId, input.active),
+    onSuccess: () => client.invalidateQueries({ queryKey: gameCharactersKey(gameId) }),
+  });
+}
+export function useAssignGameCharacterMutation(gameId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { characterId: string; membershipId: string | null }) =>
+      api.assignGameCharacter(gameId, input.characterId, input.membershipId),
+    onSuccess: () => client.invalidateQueries({ queryKey: gameCharactersKey(gameId) }),
+  });
+}
+export function useDeleteGameCharacterMutation(gameId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (characterId: string) => api.deleteGameCharacter(gameId, characterId),
+    onSuccess: () => client.invalidateQueries({ queryKey: gameCharactersKey(gameId) }),
+  });
+}
 export function useCharactersQuery(gameId: string, playerId: string) {
   return useQuery({
     queryKey: ["games", gameId, "players", playerId, "characters"],

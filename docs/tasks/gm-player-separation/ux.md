@@ -16,7 +16,7 @@ Users create an account and sign in with a username and password. A signed-in us
 
 The game opens to a character overview with tabs for active characters. Show the game name, the user's role, and whether the sheet is editable. The GM can assign or reassign characters to a player, and take one back under GM control. A GM can run the whole game this way with no player accounts.
 
-Every member can read all full sheets from **Characters management**, including inactive sheets and their notes. Players can edit only the sheets assigned to them. The main game screen shows active characters in tabs. Each player chooses one of their assigned characters or **None**. The GM can make each GM-controlled character active or inactive independently. Opening a sheet in **Characters management** leaves its active status unchanged.
+Every member can read all full sheets from **Characters management**, including inactive sheets and their notes. Players can edit only the sheets assigned to them. The main game screen shows active characters in tabs. Each player or the GM can choose one of that player's assigned characters or **None**. The GM can make each GM-controlled character active or inactive independently. Opening a sheet in **Characters management** leaves its active status unchanged.
 
 The roster and active tabs update automatically while the game is open, including when another member changes their active character. An open sheet also shows changes saved by someone else. If you are editing the same sheet, keep your local input and let you review the latest saved version if the edits conflict.
 
@@ -89,7 +89,7 @@ flowchart TD
 | --- | --- |
 | Create a character | From the overview, a player creates a sheet assigned to them. It becomes active if their slot is empty. A new GM-controlled sheet starts inactive. Open newly created inactive sheets in **Characters management**. |
 | Assign or take back a character | From **Characters management**, the GM can assign a character to a current player, reassign it, or return it to GM control. The same sheet stays in the game and becomes inactive. A character invitation can activate it as part of acceptance when the player selects that option. |
-| Select an active character | The player alone chooses which of their assigned characters is active. Choosing **None** removes their tab from the main screen. The GM can make GM-controlled sheets active or inactive individually. |
+| Select an active character | The player or the GM chooses which of the player's assigned characters is active. Choosing **None** removes their tab from the main screen. The GM can make GM-controlled sheets active or inactive individually. |
 | Permanently remove a character | In **Characters management**, the GM can remove any sheet and a player can remove a sheet assigned to them. The confirmation names the character and states that removal is permanent. An active sheet can be removed directly. After confirmation succeeds, the sheet disappears from the roster and its tab disappears for everyone. Its invitation links become unavailable. |
 | Remove a player | The GM removes the player's game access. Their sheets stay in the game under GM control and become inactive. Invitations cannot bypass removal. The GM can restore the account's access, and character assignment remains a separate action. |
 

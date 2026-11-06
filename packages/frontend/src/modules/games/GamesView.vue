@@ -4,11 +4,13 @@ import InteractiveCard from "../../shared/design-system/InteractiveCard.vue";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
+import { useRouter } from "vue-router";
 import type { Game, System } from "../../shared/api";
 import { useGamesQuery, useSystemsQuery, useCreateGameMutation } from "./hooks";
 type ApiError = { fields?: Record<string, string>; message?: string };
 
 const toast = useToast();
+const router = useRouter();
 const gamesQuery = useGamesQuery();
 const systemsQuery = useSystemsQuery();
 const createGameMutation = useCreateGameMutation();
@@ -57,6 +59,7 @@ async function loadGames() {
     listState.value = "ready";
   } catch {
     listState.value = "error";
+    toast.add({ title: h("span", { "data-testid": "games-load-error-toast" }, t("games.loadError")), description: t("games.retry"), color: "error" });
   }
 }
 async function loadSystems() {
@@ -68,6 +71,7 @@ async function loadSystems() {
     systemState.value = "ready";
   } catch {
     systemState.value = "error";
+    toast.add({ title: t("games.systemsError"), description: t("games.retry"), color: "error" });
   }
 }
 async function showForm() {
@@ -125,19 +129,22 @@ const submit = handleSubmit(
           color: "success",
         });
         clearDraft();
-        await showList();
+        await router.push(`/games/${data.game.id}`);
         return;
       } catch (cause) {
         const failure = cause as Error & { status?: number; payload?: { error?: ApiError } };
         if (failure.status === 400 || failure.status === 422) {
-          setErrors(failure.payload?.error?.fields ?? {});
+          const messages = Object.values(failure.payload?.error?.fields ?? {});
+          toast.add({ title: h("span", { "data-testid": "game-create-error-toast" }, t("games.createFailed")), description: messages.join(" ") || failure.payload?.error?.message, color: "error" });
           outcome.value = "failed";
           return;
         }
         outcome.value = "unknown";
+        toast.add({ title: t("games.createUnknown"), color: "error" });
       }
     } catch {
       outcome.value = "unknown";
+      toast.add({ title: t("games.createUnknown"), color: "error" });
     } finally {
       saving.value = false;
     }
@@ -174,7 +181,6 @@ onMounted(() => {
       <div aria-live="polite">
         <p v-if="listState === 'loading'">{{ t("games.loading") }}</p>
         <div v-else-if="listState === 'error'" class="space-y-medium">
-          <p data-testid="games-load-error">{{ t("games.loadError") }}</p>
           <UButton data-testid="retry-games" color="neutral" variant="outline" @click="loadGames">{{
             t("games.retry")
           }}</UButton>
@@ -189,7 +195,7 @@ onMounted(() => {
                 <span data-testid="game-row-name" class="font-medium">{{ game.name }}</span>
                 <span data-testid="game-row-system" class="text-sm text-muted">{{
                   t("games.rowSystem", { name: game.system.name })
-                }}</span>
+                }} · {{ game.role }}</span>
               </span>
             </InteractiveCard>
           </li>
@@ -245,7 +251,6 @@ onMounted(() => {
             <div aria-live="polite" class="mt-small">
               <p v-if="systemState === 'loading'">{{ t("games.systemsLoading") }}</p>
               <div v-else-if="systemState === 'error'" class="space-y-small">
-                <p>{{ t("games.systemsError") }}</p>
                 <UButton type="button" color="neutral" variant="outline" @click="loadSystems">{{
                   t("games.retry")
                 }}</UButton>
@@ -255,13 +260,7 @@ onMounted(() => {
           </UFormField>
           <div role="status" aria-live="polite">
             <p v-if="saving">{{ t("games.creating") }}</p>
-            <p v-else-if="outcome === 'failed'">
-              {{ t("games.createFailed") }}
-            </p>
             <div v-else-if="outcome === 'unknown'" class="space-y-small">
-              <p>
-                {{ t("games.createUnknown") }}
-              </p>
               <UButton type="button" color="neutral" variant="outline" @click="checkGames">{{
                 t("games.checkGames")
               }}</UButton>

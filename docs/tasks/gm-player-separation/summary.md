@@ -10,3 +10,4 @@
 3. [UI solution](ui.md)
 4. [Technical design](tech.md)
 5. [Implementation plan](plan.md)
+6. [Proposed end-to-end scenarios](scenarios/README.md)

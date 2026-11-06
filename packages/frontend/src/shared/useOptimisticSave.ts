@@ -26,6 +26,7 @@ export function useOptimisticSave<TSnapshot, TInput>(
     options.initial?.value ?? null,
   ) as Ref<TSnapshot | null>;
   const displayed = ref<TSnapshot | null>(options.initial?.value ?? null) as Ref<TSnapshot | null>;
+  const latestSaved = ref<TSnapshot | null>(options.initial?.value ?? null) as Ref<TSnapshot | null>;
   const pending = ref<TInput | null>(null) as Ref<TInput | null>;
   const saving = ref(false);
   const paused = ref(false);
@@ -33,6 +34,8 @@ export function useOptimisticSave<TSnapshot, TInput>(
   let inFlight: TInput | null = null;
 
   function setSnapshot(snapshot: TSnapshot) {
+    latestSaved.value = snapshot;
+    if (paused.value || saving.value || pending.value || inFlight) return;
     acknowledged.value = snapshot;
     displayed.value = snapshot;
     if (options.initial) options.initial.value = snapshot;
@@ -63,6 +66,7 @@ export function useOptimisticSave<TSnapshot, TInput>(
     error.value = null;
     try {
       const result = await options.save(base, input);
+      latestSaved.value = result as TSnapshot;
       acknowledged.value = result as TSnapshot;
       if (options.initial) options.initial.value = result;
       inFlight = null;
@@ -78,17 +82,16 @@ export function useOptimisticSave<TSnapshot, TInput>(
       error.value = failure;
       const known =
         options.isKnownRejection?.(failure) ?? (failure.status === 400 || failure.status === 422);
-      inFlight = null;
       if (known) {
+        inFlight = null;
         // Keep newer input, but remove the rejected batch from the optimistic view.
         applyPending();
         saving.value = false;
         await dispatch();
       } else {
-        pending.value = null;
         paused.value = true;
         try {
-          setSnapshot(await options.refresh());
+          latestSaved.value = await options.refresh();
           error.value = failure;
         } catch (refreshCause) {
           error.value = (refreshCause instanceof Error ? refreshCause : failure) as SaveError;
@@ -100,17 +103,20 @@ export function useOptimisticSave<TSnapshot, TInput>(
   }
 
   function submit(input: TInput) {
-    if (paused.value || !acknowledged.value) return;
+    if (!acknowledged.value) return;
     queue(input);
     applyPending();
-    void dispatch();
+    if (!paused.value) void dispatch();
   }
 
   async function retry() {
-    paused.value = false;
     error.value = null;
     try {
-      setSnapshot(await options.refresh());
+      const refreshed = await options.refresh();
+      pending.value = null;
+      inFlight = null;
+      paused.value = false;
+      setSnapshot(refreshed);
     } catch (cause) {
       paused.value = true;
       error.value = (cause instanceof Error ? cause : new Error("Refresh failed")) as SaveError;
@@ -122,6 +128,7 @@ export function useOptimisticSave<TSnapshot, TInput>(
   return {
     acknowledged,
     displayed,
+    latestSaved,
     pending: computed(() => pending.value),
     saving: computed(() => saving.value),
     paused: computed(() => paused.value),

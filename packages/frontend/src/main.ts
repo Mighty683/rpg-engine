@@ -7,16 +7,16 @@ import { createFrontendI18n } from "./shared/i18n";
 import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query";
 import GamesView from "./modules/games/GamesView.vue";
 import GameView from "./modules/games/GameView.vue";
-import PlayerView from "./modules/players/PlayerView.vue";
 import CharacterView from "./modules/characters/CharacterView.vue";
+import InvitationView from "./modules/invitations/InvitationView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/", component: GamesView },
     { path: "/games/:gameId", component: GameView },
-    { path: "/games/:gameId/players/:playerId", component: PlayerView },
-    { path: "/games/:gameId/players/:playerId/characters/:characterId", component: CharacterView },
+    { path: "/games/:gameId/characters/:characterId", component: CharacterView },
+    { path: "/invite/:token", component: InvitationView },
   ],
 });
 

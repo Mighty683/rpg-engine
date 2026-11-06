@@ -7,6 +7,7 @@
     "dev": "pnpm --parallel --filter @rpg-engine/frontend --filter @rpg-engine/backend dev",
     "build": "pnpm --filter @rpg-engine/frontend build",
     "preview": "pnpm --filter @rpg-engine/frontend preview",
+    "seed:demo": "pnpm --filter @rpg-engine/backend seed:demo",
     "lint": "vp lint",
     "check": "vp check packages vite.config.ts package.json"
   },

@@ -27,3 +27,8 @@ dist-ssr
 .nuxt-ui
 auto-imports.d.ts
 components.d.ts
+
+# Mutation testing artifacts
+.stryker-tmp/
+**/reports/mutation/
+packages/frontend/.vitest/attachments/

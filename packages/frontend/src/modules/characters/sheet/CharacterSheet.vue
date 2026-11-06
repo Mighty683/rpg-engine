@@ -84,7 +84,7 @@ function warnIfEditingLocked(event: PointerEvent) {
   >
     <header class="sheet-header border-b border-default pb-small">
       <fieldset :disabled="editingLocked" class="contents">
-        <CharacterNameField ref="nameField" v-model="identity.name" />
+        <CharacterNameField ref="nameField" v-model="identity.name" :read-only="readOnly" />
         <CharacterThemeField v-model="identity.theme" />
         <CharacterLevelField :level="level" @change="setLevel" />
       </fieldset>

@@ -3,6 +3,10 @@ import ui from "@nuxt/ui/vite";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
 export default defineConfig({
-  server: { proxy: { "/api": process.env.API_PROXY_TARGET ?? "http://127.0.0.1:3000" } },
+  server: {
+    proxy: {
+      "/api": { target: process.env.API_PROXY_TARGET ?? "http://127.0.0.1:3000", changeOrigin: false },
+    },
+  },
   plugins: lazyPlugins(() => [vue(), ui()]),
 });

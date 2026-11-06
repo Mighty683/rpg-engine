@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 import { findSystem } from "../rpg-systems/catalog.ts";
 
 export function validateGame(input: unknown) {
@@ -22,25 +22,97 @@ function presentGame(row: GameRow) {
   return { id: row.id, name: row.name, system, createdAt: row.created_at.toISOString() };
 }
 
-export async function listGames(pool: Pool) {
-  const result = await pool.query<GameRow>(
-    "SELECT id, name, system_id, created_at FROM games WHERE system_id = 'fabula-ultima' ORDER BY created_at DESC, id DESC",
-  );
-  return result.rows.map(presentGame);
+export type GameActor = { accountId: string; sessionId: string };
+export type GameAccess =
+  | { role: "GM"; membershipId: null }
+  | { role: "Player"; membershipId: string };
+type Database = Pool | PoolClient;
+
+export type GameAccessRecord = { gmAccountId: string; membershipId: string | null };
+
+/** Reads membership for an account; callers make the authorization decision. */
+export interface GameAccessRepository {
+  findGameAccess(gameId: string, accountId: string): Promise<GameAccessRecord | null>;
 }
 
-export async function getGame(pool: Pool, id: string) {
-  const result = await pool.query<GameRow>(
-    "SELECT id, name, system_id, created_at FROM games WHERE id = $1 AND system_id = 'fabula-ultima'",
-    [id],
-  );
-  return result.rows[0] ? presentGame(result.rows[0]) : null;
+export async function resolveGameAccess(
+  repository: GameAccessRepository,
+  actor: GameActor,
+  gameId: string,
+): Promise<GameAccess | null> {
+  const entry = await repository.findGameAccess(gameId, actor.accountId);
+  if (!entry) return null;
+  if (entry.gmAccountId === actor.accountId) return { role: "GM", membershipId: null };
+  return entry.membershipId ? { role: "Player", membershipId: entry.membershipId } : null;
 }
 
-export async function createGame(pool: Pool, name: string, systemId: string) {
-  const result = await pool.query<GameRow>(
-    "INSERT INTO games (id, name, system_id) VALUES ($1, $2, $3) RETURNING id, name, system_id, created_at",
-    [randomUUID(), name, systemId],
+/** Resolves game authority from current database state, never from request fields. */
+export async function gameAccess(
+  db: Database,
+  actor: GameActor,
+  gameId: string,
+): Promise<GameAccess | null> {
+  return resolveGameAccess(
+    {
+      async findGameAccess(id, accountId) {
+        const result = await db.query<{ gm_account_id: string; membership_id: string | null }>(
+          `SELECT g.gm_account_id, p.id AS membership_id FROM games g
+         LEFT JOIN players p ON p.game_id=g.id AND p.account_id=$2 AND NOT p.removed
+         WHERE g.id=$1 AND g.system_id='fabula-ultima'`,
+          [id, accountId],
+        );
+        const entry = result.rows[0];
+        return entry
+          ? { gmAccountId: entry.gm_account_id, membershipId: entry.membership_id }
+          : null;
+      },
+    },
+    actor,
+    gameId,
   );
-  return presentGame(result.rows[0]!);
+}
+
+/** Serializes mutations and reloads access after acquiring the game lock. */
+export async function lockGame(db: PoolClient, actor: GameActor, gameId: string) {
+  await db.query("SELECT id FROM games WHERE id=$1 FOR UPDATE", [gameId]);
+  const access = await gameAccess(db, actor, gameId);
+  if (!access) throw Object.assign(new Error("not_found"), { code: "not_found" });
+  return access;
+}
+
+export async function listActorGames(pool: Pool, actor: GameActor) {
+  const result = await pool.query<GameRow & { role: "GM" | "Player" }>(
+    `SELECT g.id,g.name,g.system_id,g.created_at,
+      CASE WHEN g.gm_account_id=$1 THEN 'GM' ELSE 'Player' END AS role
+     FROM games g LEFT JOIN players p ON p.game_id=g.id AND p.account_id=$1 AND NOT p.removed
+     WHERE g.system_id='fabula-ultima' AND (g.gm_account_id=$1 OR p.id IS NOT NULL)
+     ORDER BY g.created_at DESC,g.id DESC`,
+    [actor.accountId],
+  );
+  return result.rows.map((entry) => ({ ...presentGame(entry), role: entry.role }));
+}
+
+export async function getActorGame(pool: Pool, actor: GameActor, gameId: string) {
+  const games = await pool.query<GameRow & { role: "GM" | "Player" }>(
+    `SELECT g.id,g.name,g.system_id,g.created_at,
+      CASE WHEN g.gm_account_id=$2 THEN 'GM' ELSE 'Player' END AS role
+     FROM games g LEFT JOIN players p ON p.game_id=g.id AND p.account_id=$2 AND NOT p.removed
+     WHERE g.id=$1 AND g.system_id='fabula-ultima' AND (g.gm_account_id=$2 OR p.id IS NOT NULL)`,
+    [gameId, actor.accountId],
+  );
+  const entry = games.rows[0];
+  return entry ? { ...presentGame(entry), role: entry.role } : null;
+}
+
+export async function createActorGame(
+  pool: Pool,
+  actor: GameActor,
+  name: string,
+  systemId: string,
+) {
+  const result = await pool.query<GameRow>(
+    "INSERT INTO games (id,name,system_id,gm_account_id) VALUES ($1,$2,$3,$4) RETURNING id,name,system_id,created_at",
+    [randomUUID(), name, systemId, actor.accountId],
+  );
+  return { ...presentGame(result.rows[0]!), role: "GM" as const };
 }

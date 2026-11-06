@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vp test --config vitest.config.ts"
+    "test": "vp test --config vitest.config.ts",
+    "test:api": "vp test --config vitest.api.config.ts"
   },
   "devDependencies": {
     "@cucumber/cucumber": "13.3.0",

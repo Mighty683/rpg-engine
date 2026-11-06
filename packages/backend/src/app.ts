@@ -3,14 +3,18 @@ import { Application, ExpressAdapter } from "arrow-express";
 import type { Pool } from "pg";
 import { gamesController } from "./modules/games/controller.ts";
 import { rpgSystemsController } from "./modules/rpg-systems/controller.ts";
-import { playersController } from "./modules/players/controller.ts";
+import { authController } from "./modules/auth/controller.ts";
+import { charactersController } from "./modules/characters/controller.ts";
+import { gameEventsController } from "./modules/events/controller.ts";
+import { membershipsController, activeSelectionController } from "./modules/players/membership-controller.ts";
+import { gameInvitationsController, invitationController } from "./modules/invitations/controller.ts";
 
 export function createApp(pool: Pool) {
   const app = express();
   app.use(express.json({ limit: "96kb" }));
   const routes = Application()
     .prefix("api")
-    .registerControllers(gamesController(pool), rpgSystemsController(), playersController(pool));
+    .registerControllers(authController(pool), gamesController(pool), charactersController(pool), membershipsController(pool), activeSelectionController(pool), gameInvitationsController(pool), invitationController(pool), gameEventsController(pool), rpgSystemsController());
   ExpressAdapter(app, routes).configure(false);
   app.use(
     (

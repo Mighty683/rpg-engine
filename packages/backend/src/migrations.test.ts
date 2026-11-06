@@ -28,7 +28,7 @@ describe("migration runner", () => {
       const result = await first.query(
         `SELECT hash, created_at FROM "${schema}"."__drizzle_migrations" ORDER BY created_at`,
       );
-      expect(result.rows).toHaveLength(3);
+      expect(result.rows).toHaveLength(4);
       expect(result.rows.every((row) => row.hash && row.created_at)).toBe(true);
     } finally {
       await first.end();

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+defineProps<{ readOnly?: boolean }>();
 const value = defineModel<string>({ required: true });
 const heading = ref<HTMLElement>();
 defineExpose({ focus: () => heading.value?.focus() });
@@ -9,10 +10,13 @@ defineExpose({ focus: () => heading.value?.focus() });
   <div class="name-field min-w-0">
     <p class="sheet-kicker">FABULA ULTIMA <span> / CHARACTER SHEET</span></p>
     <h1 ref="heading" tabindex="-1" class="sr-only">Character sheet</h1>
-    <label class="sheet-name"
-      ><span class="sr-only">Character name</span
-      ><input data-testid="character-name" v-model="value" placeholder="Character name"
-    /></label>
+    <div class="flex min-w-0 items-center gap-small">
+      <label class="sheet-name min-w-0 flex-1"
+        ><span class="sr-only">Character name</span
+        ><input data-testid="character-name" v-model="value" placeholder="Character name"
+      /></label>
+      <UBadge v-if="readOnly" color="neutral" variant="subtle">Read-only</UBadge>
+    </div>
   </div>
 </template>
 

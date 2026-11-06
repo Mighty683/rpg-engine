@@ -5,6 +5,7 @@
 - We allow user to submit forms when form contains errors, submit is not disabled
 - We only disable actions when they are hard blocked from user
 - Display success messages as toast notifications, not as plain text in the page.
+- Display every API error as a toast notification, including validation and request failures. Do not render API error messages as red text in the page or beside fields. Use clear, actionable wording and preserve the user's input when possible.
 - While a form is saving, disable its fields and submit action until the save finishes.
 
 - Use the dark application palette; theme switching is not currently supported.
