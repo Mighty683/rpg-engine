@@ -1,7 +1,9 @@
 # GM and player separation
 
 **Created:** 2026-11-06  
-**Status:** Ready for implementation
+**Status:** Implemented; release verification not recorded.
+
+Production code covers accounts and sessions, game membership, character control and invitations, and live game updates. The implementation plan lists the remaining release checks; their results have not been recorded in this task. The linked scenarios describe intended behavior and are not evidence that those checks passed.
 
 ## Task documents
 

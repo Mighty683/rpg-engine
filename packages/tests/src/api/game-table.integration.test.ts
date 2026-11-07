@@ -20,8 +20,6 @@ vi.mock("../../../backend/src/modules/fabula/rolls.ts", async (importOriginal) =
   };
 });
 
-const url = process.env.TEST_DATABASE_URL;
-
 type PartyWeaponJson = {
   id: string;
   name: string;
@@ -38,7 +36,7 @@ type PartyCharacterJson = {
   weapons: PartyWeaponJson[];
 };
 
-describe.skipIf(!url)("API game table throws", () => {
+describe("API game table throws", () => {
   let fixture: ApiFixture;
 
   beforeAll(async () => {
@@ -46,7 +44,7 @@ describe.skipIf(!url)("API game table throws", () => {
   });
 
   afterAll(async () => {
-    await fixture.cleanup();
+    await fixture?.cleanup();
   });
 
   beforeEach(async () => {

@@ -2,7 +2,9 @@
 
 **Created:** 2026-11-06
 
-**Status:** Ready for implementation
+**Status:** Implemented; release verification not recorded
+
+The production modules implement the planned capabilities. The wave and release checks below remain the acceptance checklist; this document does not record their execution or results.
 
 Use the agreed behavior in the [UX journey](ux.md) and the contracts in the [technical design](tech.md). Reuse the reviewed layout and components from the [UI prototype](ui.md). Each wave ends with a working frontend and backend on a disposable database. Add and run the listed tests after integrating the wave.
 

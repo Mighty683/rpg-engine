@@ -105,6 +105,6 @@ Implement in `packages/tests/src/api` against PostgreSQL. For rejected writes, a
 
 ## Verification evidence
 
-Both suites are pending implementation. Record the test commands, results, and any unresolved failures here before marking the task Implemented.
+On 2026-11-07, `pnpm --filter @rpg-engine/tests test:api` passed all 27 tests across six API suites against the configured local test database, including the 10 Game Table tests. `pnpm --filter @rpg-engine/tests test` passed all eight Game Table browser scenarios, but the overall run failed: the game creation and character setup scenarios timed out waiting for the empty games list. Those two failures remain unresolved. The visual review and other release checks in the implementation plan have not been recorded here.
 
-Run the API suites with `pnpm --filter @rpg-engine/tests test:api` and the browser suites with `pnpm --filter @rpg-engine/tests test`. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database for both. Confirm the API suites ran with the database configured, since they can be skipped without it.
+Run the API suites with `pnpm --filter @rpg-engine/tests test:api` and the browser suites with `pnpm --filter @rpg-engine/tests test`. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database for both; the commands load `packages/tests/.env` automatically. The API command and the Game Table API suite fail when the database URL is missing.
