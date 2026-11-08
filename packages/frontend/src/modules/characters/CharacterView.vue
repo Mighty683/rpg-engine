@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Snapshot } from "./types";
 import type { Sheet } from "./sheet/types";
-
+import ContentState from "../../shared/design-system/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, ref, watch } from "vue";
@@ -202,10 +202,8 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
       <span v-if="effectiveReadOnly">You can view this sheet but cannot edit it.</span>
     </p>
     <UButton v-if="readAccessLost" to="/" color="neutral" variant="outline">My games</UButton>
-    <p v-else-if="query.isPending.value && !draft">Loading character…</p>
-    <p v-else-if="query.isError.value && !draft">
-      <UButton color="neutral" variant="outline" @click="query.refetch">Retry</UButton>
-    </p>
+    <ContentState v-else-if="query.isPending.value && !draft" kind="loading">Loading character…</ContentState>
+    <ContentState v-else-if="query.isError.value && !draft" kind="error" @retry="query.refetch" />
     <CharacterSheet
       v-else-if="draft"
       :character="draft"

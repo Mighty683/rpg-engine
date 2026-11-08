@@ -2,6 +2,7 @@
 import type { ThrowResult, Attribute, PartyMember, OpponentDraft, OpposedSide } from "./types";
 
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import CharacterSheetsDrawer from "../../src/modules/game-table/CharacterSheetsDrawer.vue";
 import CharacterSheet from "../../src/modules/characters/sheet/CharacterSheet.vue";
 import { toCharacter } from "../../src/modules/characters/sheet/model";
 import PartyOverview from "./PartyOverview.vue";
@@ -370,24 +371,23 @@ function makeFreeRoll() {
         </form>
       </template>
     </UModal>
-    <USlideover v-model:open="sheetOpen" title="Character sheets" :ui="{ content: 'w-full sm:max-w-4xl' }">
-      <UButton v-show="!showSettings" class="sheet-bookmark" color="primary" data-testid="open-character-sheets">Character sheets</UButton>
-      <template #body>
-        <UButton class="sheet-bookmark sheet-bookmark-close" color="primary" data-testid="close-character-sheets" aria-label="Close character sheets" @click="sheetOpen = false">Character sheets</UButton>
-        <UTabs v-model="selectedSheetId" :items="tabs" :ui="{ list: 'max-w-full overflow-x-auto', trigger: 'flex-none', content: 'min-w-0' }">
-          <template #content>
-              <CharacterSheet
-                :character="sheets[selectedSheet.id]!"
-                :controller="selectedSheet.controller === 'GM' ? 'the GM' : selectedSheet.controller"
-                :maximum="{ HP: selectedSheet.hp.max, MP: selectedSheet.mp.max, IP: selectedSheet.ip.max }"
-                :maximum-overrides="{ HP: null, MP: null, IP: null }"
-                :base-defense="{ DEF: null, 'MAG DEF': null, INIT: null }"
-                :defense-details="{ DEF: [], 'MAG DEF': [], INIT: [] }"
-              />
-          </template>
-        </UTabs>
+    <CharacterSheetsDrawer
+      v-model:open="sheetOpen"
+      v-model:selected-id="selectedSheetId"
+      :tabs="tabs"
+      :show-bookmark="!showSettings"
+    >
+      <template #sheet>
+        <CharacterSheet
+          :character="sheets[selectedSheet.id]!"
+          :controller="selectedSheet.controller === 'GM' ? 'the GM' : selectedSheet.controller"
+          :maximum="{ HP: selectedSheet.hp.max, MP: selectedSheet.mp.max, IP: selectedSheet.ip.max }"
+          :maximum-overrides="{ HP: null, MP: null, IP: null }"
+          :base-defense="{ DEF: null, 'MAG DEF': null, INIT: null }"
+          :defense-details="{ DEF: [], 'MAG DEF': [], INIT: [] }"
+        />
       </template>
-    </USlideover>
+    </CharacterSheetsDrawer>
   </main>
 </template>
 
@@ -433,14 +433,4 @@ function makeFreeRoll() {
 .throw-die-symbol { display: grid; justify-items: center; gap: 0.125rem; }
 .throw-die-label { color: var(--ui-text-muted); font-size: 0.625rem; font-weight: 600; line-height: 1; }
 .die-face { display: grid; place-items: center; width: 1.75rem; height: 1.6rem; color: var(--ui-text-highlighted); background: var(--ui-bg-elevated); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); font-weight: 700; font-size: 0.875rem; }
-.sheet-bookmark {
-  position: fixed;
-  right: 0;
-  top: 45%;
-  z-index: 20;
-  writing-mode: vertical-rl;
-  border-radius: var(--radius-panel) 0 0 var(--radius-panel);
-  padding: var(--spacing-medium) var(--spacing-small);
-}
-.sheet-bookmark-close { z-index: 60; }
 </style>

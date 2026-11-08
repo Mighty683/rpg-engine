@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import EquipmentIcon from "../../../../shared/design-system/EquipmentIcon.vue";
+import WeaponIcon from "../../../../shared/design-system/WeaponIcon.vue";
+import ZenitIcon from "../../../../shared/design-system/ZenitIcon.vue";
 import DetailCard from "../../../../shared/design-system/DetailCard.vue";
 import EntryNotesField from "../entries/EntryNotesField.vue";
 import EquipmentEditor from "./EquipmentEditor.vue";
@@ -14,6 +18,11 @@ const draft = useEditableEntry(
   () => props.entry,
   (entry) => emit("update:entry", entry),
 );
+const equipped = computed(() => {
+  if (draft.value.itemType === "weapon") return Boolean(draft.value.weapon?.equipped);
+  if (draft.value.itemType === "armor" && draft.value.defenseKind) return Boolean(draft.value.equipped);
+  return undefined;
+});
 </script>
 <template>
   <DetailCard
@@ -23,19 +32,24 @@ const draft = useEditableEntry(
     :remove-label="`Remove item ${draft.name}`"
     :locked="locked"
     :open="open"
-    :weapon="draft.itemType === 'weapon'"
-    :armor="draft.itemType === 'armor'"
-    :equipped="
-      draft.itemType === 'weapon'
-        ? !!draft.weapon?.equipped
-        : draft.itemType === 'armor' && draft.defenseKind
-          ? !!draft.equipped
-          : undefined
-    "
-    :price="draft.price"
+    :edit-label="draft.itemType === 'weapon' ? `Edit ${draft.name}, weapon` : undefined"
+    :remove-description="`Remove ${draft.name} from this character?`"
     @update:open="emit('update:open', $event)"
     @remove="emit('remove')"
-    ><template #title
+  >
+    <template #icon>
+      <WeaponIcon v-if="draft.itemType === 'weapon'" />
+      <EquipmentIcon v-else-if="draft.itemType === 'armor'" kind="armor" class="text-primary" />
+    </template>
+    <template #status>
+      <span v-if="equipped !== undefined" class="equipment-status" :class="equipped ? 'text-primary' : 'text-muted'">
+        <EquipmentIcon kind="equipped" />{{ equipped ? "Equipped" : "Not equipped" }}
+      </span>
+    </template>
+    <template v-if="draft.price !== null" #trailing>
+      <ZenitIcon /> {{ draft.price }} <span class="sr-only">zenits</span>
+    </template>
+    <template #title
       ><label class="editor-name"
         ><span class="sr-only">Item name</span
         ><input v-model="draft.name" aria-label="Item name" /></label
@@ -60,6 +74,13 @@ const draft = useEditableEntry(
   /></DetailCard>
 </template>
 <style scoped>
+.equipment-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-tight);
+  font-size: var(--text-label);
+}
+
 .entry-details {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(6rem, 0.4fr);

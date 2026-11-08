@@ -9,6 +9,7 @@ import { useGameMembersQuery } from "../games/hooks";
 import CharacterView from "../characters/CharacterView.vue";
 
 import { useCreateThrowMutation, useGamePartyQuery, useRemoveThrowMutation, useThrowHistory } from "./hooks";
+import CharacterSheetsDrawer from "./CharacterSheetsDrawer.vue";
 import PartyPanel from "./PartyPanel.vue";
 import HistoryPanel from "./HistoryPanel.vue";
 import RollDialog from "./RollDialog.vue";
@@ -303,24 +304,17 @@ async function removeEntry(entry: ThrowRecord) {
 
 <template>
   <div class="grid gap-section lg:grid-cols-2" data-testid="game-table">
-    <section aria-labelledby="party-heading" class="rounded-panel border border-default p-large">
-      <h2 id="party-heading" class="text-section font-semibold">Active party</h2>
-      <p v-if="partyQuery.isLoading.value" class="text-muted">Loading party…</p>
-      <p v-else-if="partyQuery.isError.value" role="alert">
-        <UButton variant="outline" color="neutral" data-testid="retry-party" @click="partyQuery.refetch">Retry</UButton>
-      </p>
-      <PartyPanel
-        v-else
-        :party="party"
-        @roll-attribute="openAttributeRoll"
-        @roll-weapon="openWeaponRoll"
-        @needs-weapon-setup="needsWeaponSetup"
-      />
-      <p v-if="weaponHint" role="alert" class="text-error pt-medium" data-testid="weapon-setup-hint">
-        Set both attributes and the accuracy bonus for {{ weaponHint.weaponName }} on the character sheet.
-        <UButton variant="link" data-testid="open-sheet-for-weapon" @click="openSheet(weaponHint.character.id)">Open character sheet</UButton>
-      </p>
-    </section>
+    <PartyPanel
+      :party="party"
+      :is-loading="partyQuery.isLoading.value"
+      :is-error="partyQuery.isError.value"
+      :weapon-hint="weaponHint"
+      @retry="partyQuery.refetch"
+      @roll-attribute="openAttributeRoll"
+      @roll-weapon="openWeaponRoll"
+      @needs-weapon-setup="needsWeaponSetup"
+      @open-sheet="openSheet"
+    />
     <HistoryPanel
       :throws="history.throws.value"
       :is-loading="history.isLoading.value"
@@ -358,35 +352,15 @@ async function removeEntry(entry: ThrowRecord) {
       @submit="submitFreeRoll"
       @cancel="freeDraft = null"
     />
-    <USlideover v-model:open="sheetOpen" title="Character sheets" :ui="{ content: 'w-full sm:max-w-4xl' }">
-      <UButton v-show="!sheetOpen" class="sheet-bookmark" color="primary" data-testid="open-character-sheets" @click="sheetOpen = true">Character sheets</UButton>
-      <template #body>
-        <UButton class="sheet-bookmark sheet-bookmark-close" color="primary" data-testid="close-character-sheets" aria-label="Close character sheets" @click="sheetOpen = false">Character sheets</UButton>
-        <UTabs v-model="selectedSheetId" :items="sheetTabs" :ui="{ list: 'max-w-full overflow-x-auto', trigger: 'flex-none', content: 'min-w-0' }">
-          <template #default="{ item }"><span data-testid="sheet-tab">{{ item.label }}</span></template>
-          <template #content="{ item }">
-            <CharacterView
-              :key="item.value"
-              :game-id="gameId"
-              :character-id="item.value"
-              :read-only="role !== 'GM' && !rosterById.get(item.value)?.canEdit"
-            />
-          </template>
-        </UTabs>
+    <CharacterSheetsDrawer v-model:open="sheetOpen" v-model:selected-id="selectedSheetId" :tabs="sheetTabs">
+      <template #sheet="{ characterId }">
+        <CharacterView
+          :key="characterId"
+          :game-id="gameId"
+          :character-id="characterId"
+          :read-only="role !== 'GM' && !rosterById.get(characterId)?.canEdit"
+        />
       </template>
-    </USlideover>
+    </CharacterSheetsDrawer>
   </div>
 </template>
-
-<style scoped>
-.sheet-bookmark {
-  position: fixed;
-  right: 0;
-  top: 45%;
-  z-index: 20;
-  writing-mode: vertical-rl;
-  border-radius: var(--radius-panel) 0 0 var(--radius-panel);
-  padding: var(--spacing-medium) var(--spacing-small);
-}
-.sheet-bookmark-close { z-index: 60; }
-</style>

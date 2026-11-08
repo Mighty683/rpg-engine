@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import type { FreeDraft, OpponentDraft } from "./types";
-
-import { computed } from "vue";
-import DieIcon from "../../shared/design-system/DieIcon.vue";
+import DicePoolEditor from "./DicePoolEditor.vue";
 import OpposedSetup from "./OpposedSetup.vue";
 
-const props = defineProps<{
+defineProps<{
   draft: FreeDraft;
   opponent: OpponentDraft;
   role: "GM" | "Player";
@@ -23,14 +21,6 @@ const emit = defineEmits<{
 }>();
 
 const freeDice = [4, 6, 8, 10, 12, 20] as const;
-const poolFull = computed(() => props.draft.dice.length >= 2);
-
-function addDie(size: number) {
-  if (props.draft.dice.length < 2) props.draft.dice.push(size);
-}
-function removeDie(index: number) {
-  props.draft.dice.splice(index, 1);
-}
 </script>
 
 <template>
@@ -54,59 +44,15 @@ function removeDie(index: number) {
           <template v-if="playerHasActive">Rolling as {{ playerActiveName }}.</template>
           <template v-else>Select an active character in character management before rolling.</template>
         </p>
-        <p class="text-sm font-medium">Friendly dice</p>
-        <div class="flex flex-wrap items-center gap-small" aria-label="Add dice and modifier">
-          <UTooltip
-            v-for="size in freeDice"
-            :key="size"
-            :disabled="!poolFull"
-            text="Maximum 2 dice"
-            :content="{ side: 'top' }"
-          >
-            <span class="dice-trigger" :tabindex="poolFull ? 0 : undefined">
-              <button
-                type="button"
-                class="free-die-button"
-                :data-testid="`add-die-d${size}`"
-                :aria-label="`Add d${size} to dice pool`"
-                :disabled="poolFull"
-                @click="addDie(size)"
-              >
-                <DieIcon :sides="size" /><span>d{{ size }}</span>
-              </button>
-            </span>
-          </UTooltip>
-          <label class="modifier-card"><span>Modifier</span><input v-model="draft.modifier" type="number" step="1" data-testid="free-modifier" /></label>
-        </div>
-        <OpposedSetup :model-value="opponent" :sizes="freeDice" :show-pool="false" @update:model-value="emit('update:opponent', $event)" />
-        <div>
-          <p class="mb-small text-sm font-medium">Dice pool</p>
-          <div v-if="draft.dice.length || opponent.dice.length" class="flex flex-wrap gap-small">
-            <button
-              v-for="(size, index) in draft.dice"
-              :key="`friendly-${index}`"
-              type="button"
-              class="free-die-button"
-              :data-testid="`pool-die-d${size}`"
-              :aria-label="`Remove d${size} from dice pool`"
-              @click="removeDie(index)"
-            >
-              <DieIcon :sides="size" /><span>d{{ size }}</span>
-            </button>
-            <button
-              v-for="(size, index) in opponent.dice"
-              :key="`opponent-${index}`"
-              type="button"
-              class="free-die-button opposing-pool-die"
-              :data-testid="`opponent-pool-d${size}`"
-              :aria-label="`Remove opposing d${size} from dice pool`"
-              @click="opponent.dice.splice(index, 1)"
-            >
-              <DieIcon :sides="size" /><span>d{{ size }}</span>
-            </button>
-          </div>
-          <p v-else class="text-sm text-muted" data-testid="pool-empty">Select dice to add them to the pool.</p>
-        </div>
+        <DicePoolEditor
+          v-model:dice="draft.dice"
+          v-model:modifier="draft.modifier"
+          :sizes="freeDice"
+          :opposing-dice="opponent.dice"
+          @remove-opposing="emit('update:opponent', { ...opponent, dice: opponent.dice.filter((_, index) => index !== $event) })"
+        >
+          <OpposedSetup :model-value="opponent" :sizes="freeDice" :show-pool="false" @update:model-value="emit('update:opponent', $event)" />
+        </DicePoolEditor>
         <UFormField label="Note" hint="Optional"><UInput v-model="draft.note" class="w-full" data-testid="free-note" /></UFormField>
         <p v-if="error" role="alert" class="text-error" data-testid="free-error">{{ error }}</p>
         <div class="flex justify-end gap-small">
@@ -117,18 +63,3 @@ function removeDie(index: number) {
     </template>
   </UModal>
 </template>
-
-<style scoped>
-.free-die-button { min-width: 2.75rem; display: grid; justify-items: center; gap: 0.125rem; padding: 0.25rem 0.375rem; border: 1px solid var(--ui-border); border-radius: var(--radius-panel); background: var(--ui-bg-muted); font-size: 0.65rem; font-weight: 700; cursor: pointer; }
-.free-die-button :deep(.die-icon) { width: 1.25rem; height: 1.25rem; }
-.opposing-pool-die :deep(.die-icon) { color: var(--ui-error); }
-.free-die-button:hover:not(:disabled) { border-color: var(--ui-primary); }
-.free-die-button:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 2px; }
-.free-die-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.dice-trigger { display: inline-flex; }
-.dice-trigger button:disabled { pointer-events: none; }
-.dice-trigger:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 2px; border-radius: var(--radius-panel); }
-.modifier-card { min-height: 2.75rem; display: grid; align-content: center; justify-items: center; gap: 0.125rem; padding: 0.25rem 0.375rem; border: 1px solid var(--ui-border); border-radius: var(--radius-panel); background: var(--ui-bg-muted); font-size: 0.65rem; font-weight: 700; }
-.modifier-card input { width: 3rem; min-width: 0; appearance: textfield; text-align: center; color: var(--ui-text-highlighted); border: 1px solid var(--ui-border-accented); border-radius: var(--radius-panel); background: var(--ui-bg); }
-.modifier-card input::-webkit-inner-spin-button, .modifier-card input::-webkit-outer-spin-button { appearance: none; margin: 0; }
-</style>

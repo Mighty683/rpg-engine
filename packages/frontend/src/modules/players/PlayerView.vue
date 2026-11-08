@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ContentState from "../../shared/design-system/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, ref } from "vue";
@@ -78,16 +79,12 @@ async function setActive(id: string) {
     <RouterLink :to="`/games/${gameId}`" class="text-muted" data-testid="game-link"
       >← Game</RouterLink
     >
-    <p v-if="playerLoading">Loading player…</p>
-    <p v-else-if="playerError">
-      <UButton color="neutral" variant="outline" @click="player.refetch">Retry</UButton>
-    </p>
+    <ContentState v-if="playerLoading" kind="loading">Loading player…</ContentState>
+    <ContentState v-else-if="playerError" kind="error" @retry="player.refetch" />
     <template v-else-if="playerRecord"
       ><h1 class="text-heading font-semibold">{{ playerRecord.name }}</h1>
-      <p v-if="charactersLoading">Loading characters…</p>
-      <p v-else-if="charactersError">
-        <UButton color="neutral" variant="outline" @click="characters.refetch">Retry</UButton>
-      </p>
+      <ContentState v-if="charactersLoading" kind="loading">Loading characters…</ContentState>
+      <ContentState v-else-if="charactersError" kind="error" @retry="characters.refetch" />
       <ul class="grid gap-medium sm:grid-cols-2">
         <li
           v-for="character in characterRecords"

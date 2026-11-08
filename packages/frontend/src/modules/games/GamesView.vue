@@ -2,7 +2,8 @@
 import type { ApiError, Game, System } from "./types";
 
 import { h, nextTick, onMounted, ref } from "vue";
-import InteractiveCard from "../../shared/design-system/InteractiveCard.vue";
+import ContentState from "../../shared/design-system/ContentState.vue";
+import GameListEntry from "./GameListEntry.vue";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
@@ -181,26 +182,16 @@ onMounted(() => {
       </p>
       <p class="text-sm text-muted">{{ t("games.joinHint") }}</p>
       <div aria-live="polite">
-        <p v-if="listState === 'loading'">{{ t("games.loading") }}</p>
-        <div v-else-if="listState === 'error'" class="space-y-medium">
-          <UButton data-testid="retry-games" color="neutral" variant="outline" @click="loadGames">{{
-            t("games.retry")
-          }}</UButton>
-        </div>
-        <p v-else-if="games.length === 0" data-testid="games-empty" class="text-muted">
-          {{ t("games.empty") }}
-        </p>
+        <ContentState v-if="listState === 'loading'" kind="loading">{{ t("games.loading") }}</ContentState>
+        <ContentState v-else-if="listState === 'error'" kind="error" retry-test-id="retry-games" :retry-label="t('games.retry')" @retry="loadGames" />
+        <ContentState v-else-if="games.length === 0" kind="empty" data-testid="games-empty">{{ t("games.empty") }}</ContentState>
         <ul v-else class="divide-y divide-default rounded-panel border border-default">
-          <li v-for="game in games" :key="game.id" data-testid="game-row">
-            <InteractiveCard :to="`/games/${game.id}`" data-testid="game-row-link">
-              <span class="flex min-w-0 flex-col">
-                <span data-testid="game-row-name" class="font-medium">{{ game.name }}</span>
-                <span data-testid="game-row-system" class="text-sm text-muted">{{
-                  t("games.rowSystem", { name: game.system.name })
-                }} · {{ game.role }}</span>
-              </span>
-            </InteractiveCard>
-          </li>
+          <GameListEntry
+            v-for="game in games"
+            :key="game.id"
+            :game="game"
+            :system-label="t('games.rowSystem', { name: game.system.name })"
+          />
         </ul>
       </div>
     </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { InvitationPreview } from "./types";
-
+import ContentState from "../../shared/design-system/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -47,7 +47,7 @@ async function accept() {
 <template>
   <div class="mx-auto max-w-xl space-y-section">
     <h1 class="text-heading font-semibold">Game invitation</h1>
-    <p v-if="loading">Loading invitation…</p>
+    <ContentState v-if="loading" kind="loading">Loading invitation…</ContentState>
     <template v-else-if="unavailable">
       <UButton to="/" color="neutral" variant="outline">My games</UButton>
     </template>

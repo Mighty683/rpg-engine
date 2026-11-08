@@ -1,7 +1,13 @@
-# UI prototypes
+# UI prototypes and design system
 
-Run `pnpm --filter @rpg-engine/frontend prototypes:dev` for the gallery, or `pnpm --filter @rpg-engine/frontend prototypes:build` to type-check and build it into `packages/frontend/prototypes/dist`. The prototype build is separate from the production application.
+Run `pnpm --filter @rpg-engine/frontend prototypes:dev` to open Histoire. Browse **Prototypes** and **Design system** in its sidebar; select **Game Table** and use the Controls panel to switch the preview role. Prototype data and interactions are local and reset on reload.
 
-Create a folder named after the task here, add Vue components for its proposed screens and states, and register the entry component in `PrototypeGallery.vue`. Use local sample data and interactions so prototypes can be reviewed without the backend. Reuse the application's components, styles, and design tokens where appropriate; prototype code is exploratory and does not imply production behavior. Link the prototype from the task's UI document and explain how to reach important states.
+Run `pnpm --filter @rpg-engine/frontend prototypes:build` to type-check and build the book into `packages/frontend/prototypes/dist`, and `pnpm --filter @rpg-engine/frontend prototypes:preview` to serve the build. This is separate from the production application.
 
-The Design system entry previews the shared tokens in `../src/tokens.css`. Tailwind theme tokens and Nuxt UI color roles reference `--value-*` primitives directly. Use semantic utilities such as `gap-small`, `text-heading`, `rounded-panel`, and `bg-default` in components.
+For a new prototype, create a task folder and a `*.story.vue` file with a `Prototypes/...` title. Add Histoire controls for review settings and use local sample data so it works without the backend. Reuse application components, styles, and design tokens where appropriate. Link the story from the task's UI document and explain how to reach important states.
+
+The design-system stories document the tokens in `../src/tokens.css` and examples of shared components. Tailwind theme tokens and Nuxt UI color roles reference `--value-*` primitives directly. Use semantic utilities such as `gap-small`, `text-heading`, `rounded-panel`, and `bg-default` in components.
+
+Design-system stories are organized under **Primitives**, **Basic components**, and **Components**. Each component or pattern has its own story; use its controls to inspect the available states.
+
+**Domain** has individual stories for **Characters**, **Rolls**, and **Game management**. These stories render components from the application modules with local fixtures.
