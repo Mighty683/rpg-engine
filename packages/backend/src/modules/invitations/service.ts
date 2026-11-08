@@ -1,16 +1,20 @@
+import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
-import type { Pool, PoolClient } from "pg";
+import type { Database, DatabaseTransaction } from "../../database/client.ts";
+import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { accounts, characters, games, invitations, players } from "../../database/schema.ts";
 import type { Actor } from "../auth/guards.ts";
 import { lockGame } from "../games/service.ts";
 import { publishGameEvent } from "../events/streams.ts";
 
-type InvitationRow = { id: string; game_id: string; kind: "game" | "character"; character_id: string | null; token_encrypted: Buffer; enabled: boolean };
+type InvitationRow = typeof invitations.$inferSelect;
 const failure = (code: string) => Object.assign(new Error(code), { code });
 const digest = (token: string) => createHash("sha256").update(token).digest();
 
 function encryptionKey() {
   const secret = process.env.INVITATION_SECRET;
-  if (!secret || Buffer.byteLength(secret) < 32) throw new Error("INVITATION_SECRET must contain at least 32 bytes");
+  if (!secret || Buffer.byteLength(secret) < 32)
+    throw new Error("INVITATION_SECRET must contain at least 32 bytes");
   return createHash("sha256").update(secret).digest();
 }
 
@@ -30,126 +34,256 @@ function decrypt(data: Buffer) {
 function present(row: InvitationRow) {
   const origin = process.env.APP_ORIGIN ?? (process.env.NODE_ENV === "production" ? undefined : "");
   if (origin === undefined) throw new Error("APP_ORIGIN is required");
-  return { id: row.id, kind: row.kind, characterId: row.character_id, enabled: row.enabled, url: `${origin}/invite/${decrypt(row.token_encrypted)}` };
+  return {
+    id: row.id,
+    kind: row.kind,
+    characterId: row.characterId,
+    enabled: row.enabled,
+    url: `${origin}/invite/${decrypt(row.tokenEncrypted)}`,
+  };
 }
 
-async function transaction<T>(pool: Pool, operation: (client: PoolClient) => Promise<T>) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const value = await operation(client);
-    await client.query("COMMIT");
-    return value;
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-async function requireGm(client: PoolClient, actor: Actor, gameId: string) {
-  const access = await lockGame(client, actor, gameId);
+async function requireGm(tx: DatabaseTransaction, actor: Actor, gameId: string) {
+  const access = await lockGame(tx, actor, gameId);
   if (access.role !== "GM") throw failure("forbidden");
 }
 
-export async function listInvitations(pool: Pool, actor: Actor, gameId: string) {
-  const result = await pool.query<InvitationRow>(
-    `SELECT i.id,i.game_id,i.kind,i.character_id,i.token_encrypted,i.enabled FROM invitations i
-     JOIN games g ON g.id=i.game_id WHERE i.game_id=$1 AND g.gm_account_id=$2 ORDER BY i.created_at,i.id`, [gameId, actor.accountId],
-  );
-  return result.rows.map(present);
+export async function listInvitations(database: Database, actor: Actor, gameId: string) {
+  const result = await database
+    .select({ invitation: invitations })
+    .from(invitations)
+    .innerJoin(games, eq(games.id, invitations.gameId))
+    .where(and(eq(invitations.gameId, gameId), eq(games.gmAccountId, actor.accountId)))
+    .orderBy(invitations.createdAt, invitations.id);
+  return result.map((row) => present(row.invitation));
 }
 
-export async function ensureGameInvitation(pool: Pool, actor: Actor, gameId: string) {
-  return transaction(pool, async (client) => {
-    await requireGm(client, actor, gameId);
-    const existing = await client.query<InvitationRow>("SELECT id,game_id,kind,character_id,token_encrypted,enabled FROM invitations WHERE game_id=$1 AND kind='game'", [gameId]);
-    if (existing.rows[0]) return present(existing.rows[0]);
+export async function ensureGameInvitation(database: Database, actor: Actor, gameId: string) {
+  return transaction(database, async (tx) => {
+    await requireGm(tx, actor, gameId);
+    const db = tx;
+    const [existing] = await db
+      .select()
+      .from(invitations)
+      .where(and(eq(invitations.gameId, gameId), eq(invitations.kind, "game")));
+    if (existing) return present(existing);
     const token = randomBytes(32).toString("base64url");
-    const result = await client.query<InvitationRow>(
-      "INSERT INTO invitations (id,game_id,kind,token_digest,token_encrypted) VALUES ($1,$2,'game',$3,$4) RETURNING id,game_id,kind,character_id,token_encrypted,enabled",
-      [randomUUID(), gameId, digest(token), encrypt(token)],
-    );
-    return present(result.rows[0]!);
+    const [created] = await db
+      .insert(invitations)
+      .values({
+        id: randomUUID(),
+        gameId,
+        kind: "game",
+        tokenDigest: digest(token),
+        tokenEncrypted: encrypt(token),
+      })
+      .returning();
+    return present(created!);
   });
 }
 
-export async function createCharacterInvitation(pool: Pool, actor: Actor, gameId: string, characterId: string) {
-  return transaction(pool, async (client) => {
-    await requireGm(client, actor, gameId);
-    const character = await client.query("SELECT id FROM characters WHERE game_id=$1 AND id=$2 AND player_id IS NULL", [gameId, characterId]);
-    if (!character.rowCount) throw failure("not_found");
+export async function createCharacterInvitation(
+  database: Database,
+  actor: Actor,
+  gameId: string,
+  characterId: string,
+) {
+  return transaction(database, async (tx) => {
+    await requireGm(tx, actor, gameId);
+    const db = tx;
+    const [character] = await db
+      .select({ id: characters.id })
+      .from(characters)
+      .where(
+        and(
+          eq(characters.gameId, gameId),
+          eq(characters.id, characterId),
+          isNull(characters.playerId),
+        ),
+      );
+    if (!character) throw failure("not_found");
     const token = randomBytes(32).toString("base64url");
-    const result = await client.query<InvitationRow>(
-      "INSERT INTO invitations (id,game_id,kind,character_id,token_digest,token_encrypted) VALUES ($1,$2,'character',$3,$4,$5) RETURNING id,game_id,kind,character_id,token_encrypted,enabled",
-      [randomUUID(), gameId, characterId, digest(token), encrypt(token)],
-    );
-    return present(result.rows[0]!);
+    const [created] = await db
+      .insert(invitations)
+      .values({
+        id: randomUUID(),
+        gameId,
+        kind: "character",
+        characterId,
+        tokenDigest: digest(token),
+        tokenEncrypted: encrypt(token),
+      })
+      .returning();
+    return present(created!);
   });
 }
 
-export async function updateInvitation(pool: Pool, actor: Actor, gameId: string, invitationId: string, change: { enabled: boolean } | { rotate: true }) {
-  return transaction(pool, async (client) => {
-    await requireGm(client, actor, gameId);
+export async function updateInvitation(
+  database: Database,
+  actor: Actor,
+  gameId: string,
+  invitationId: string,
+  change: { enabled: boolean } | { rotate: true },
+) {
+  return transaction(database, async (tx) => {
+    await requireGm(tx, actor, gameId);
     const token = "rotate" in change ? randomBytes(32).toString("base64url") : null;
-    const result = token
-      ? await client.query<InvitationRow>("UPDATE invitations SET token_digest=$3,token_encrypted=$4 WHERE id=$1 AND game_id=$2 RETURNING id,game_id,kind,character_id,token_encrypted,enabled", [invitationId, gameId, digest(token), encrypt(token)])
-      : await client.query<InvitationRow>("UPDATE invitations SET enabled=$3 WHERE id=$1 AND game_id=$2 RETURNING id,game_id,kind,character_id,token_encrypted,enabled", [invitationId, gameId, (change as {enabled: boolean}).enabled]);
-    if (!result.rows[0]) throw failure("not_found");
-    return present(result.rows[0]);
+    const updates = token
+      ? { tokenDigest: digest(token), tokenEncrypted: encrypt(token) }
+      : { enabled: (change as { enabled: boolean }).enabled };
+    const [updated] = await tx
+      .update(invitations)
+      .set(updates)
+      .where(and(eq(invitations.id, invitationId), eq(invitations.gameId, gameId)))
+      .returning();
+    if (!updated) throw failure("not_found");
+    return present(updated);
   });
 }
 
-type PreviewRow = { kind: "game" | "character"; game_id: string; game_name: string; gm_account_id: string; member_id: string | null; removed: boolean | null; character_id: string | null; character_name: string | null };
-export async function previewInvitation(pool: Pool, actor: Actor, token: string) {
+export async function previewInvitation(database: Database, actor: Actor, token: string) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw failure("not_found");
-  const result = await pool.query<PreviewRow>(
-    `SELECT i.kind,g.id AS game_id,g.name AS game_name,g.gm_account_id,p.id AS member_id,p.removed,c.id AS character_id,c.name AS character_name
-     FROM invitations i JOIN games g ON g.id=i.game_id LEFT JOIN players p ON p.game_id=g.id AND p.account_id=$2
-     LEFT JOIN characters c ON c.id=i.character_id AND c.game_id=g.id AND c.player_id IS NULL
-     WHERE i.token_digest=$1 AND i.enabled AND (i.kind='game' OR c.id IS NOT NULL)`, [digest(token), actor.accountId],
-  );
-  const row = result.rows[0];
+  const [row] = await database
+    .select({
+      kind: invitations.kind,
+      gameId: games.id,
+      gameName: games.name,
+      gmAccountId: games.gmAccountId,
+      memberId: players.id,
+      removed: players.removed,
+      characterId: characters.id,
+      characterName: characters.name,
+    })
+    .from(invitations)
+    .innerJoin(games, eq(games.id, invitations.gameId))
+    .leftJoin(players, and(eq(players.gameId, games.id), eq(players.accountId, actor.accountId)))
+    .leftJoin(
+      characters,
+      and(
+        eq(characters.id, invitations.characterId),
+        eq(characters.gameId, games.id),
+        isNull(characters.playerId),
+      ),
+    )
+    .where(
+      and(
+        eq(invitations.tokenDigest, digest(token)),
+        eq(invitations.enabled, true),
+        or(eq(invitations.kind, "game"), isNotNull(characters.id)),
+      ),
+    );
   if (!row || row.removed) throw failure("not_found");
-  const common = { gameId: row.game_id, gameName: row.game_name, alreadyMember: row.gm_account_id === actor.accountId || !!row.member_id };
+  const common = {
+    gameId: row.gameId,
+    gameName: row.gameName,
+    alreadyMember: row.gmAccountId === actor.accountId || !!row.memberId,
+  };
   return row.kind === "game"
     ? { kind: "game" as const, ...common }
-    : { kind: "character" as const, ...common, characterId: row.character_id!, characterName: row.character_name! };
+    : {
+        kind: "character" as const,
+        ...common,
+        characterId: row.characterId!,
+        characterName: row.characterName!,
+      };
 }
 
-export async function acceptInvitation(pool: Pool, actor: Actor, token: string, makeActive = true) {
+export async function acceptInvitation(
+  database: Database,
+  actor: Actor,
+  token: string,
+  makeActive = true,
+) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw failure("not_found");
-  const outcome = await transaction(pool, async (client) => {
-    const found = await client.query<{game_id: string}>("SELECT game_id FROM invitations WHERE token_digest=$1", [digest(token)]);
-    if (!found.rows[0]) throw failure("not_found");
-    const gameId = found.rows[0].game_id;
-    const game = await client.query<{gm_account_id: string}>("SELECT gm_account_id FROM games WHERE id=$1 FOR UPDATE", [gameId]);
-    const invitation = await client.query<{kind: "game" | "character"; character_id: string | null}>("SELECT kind,character_id FROM invitations WHERE game_id=$1 AND token_digest=$2 AND enabled", [gameId, digest(token)]);
-    if (!game.rows[0] || !invitation.rowCount) throw failure("not_found");
-    const link = invitation.rows[0]!;
-    if (game.rows[0].gm_account_id === actor.accountId) {
+  const outcome = await transaction(database, async (tx) => {
+    const db = tx;
+    const [found] = await db
+      .select({ gameId: invitations.gameId })
+      .from(invitations)
+      .where(eq(invitations.tokenDigest, digest(token)));
+    if (!found) throw failure("not_found");
+    const gameId = found.gameId;
+    const [game] = await db
+      .select({ gmAccountId: games.gmAccountId })
+      .from(games)
+      .where(eq(games.id, gameId))
+      .for("update");
+    const [link] = await db
+      .select({ kind: invitations.kind, characterId: invitations.characterId })
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.gameId, gameId),
+          eq(invitations.tokenDigest, digest(token)),
+          eq(invitations.enabled, true),
+        ),
+      );
+    if (!game || !link) throw failure("not_found");
+    if (game.gmAccountId === actor.accountId) {
       if (link.kind === "character") throw failure("forbidden");
       return { gameId, changed: false };
     }
-    const membership = await client.query<{id: string; removed: boolean}>("SELECT id,removed FROM players WHERE game_id=$1 AND account_id=$2", [gameId, actor.accountId]);
-    if (membership.rows[0]?.removed) throw failure("not_found");
+    const [membership] = await db
+      .select({ id: players.id, removed: players.removed })
+      .from(players)
+      .where(and(eq(players.gameId, gameId), eq(players.accountId, actor.accountId)));
+    if (membership?.removed) throw failure("not_found");
     if (link.kind === "character") {
-      const target = await client.query("SELECT id FROM characters WHERE game_id=$1 AND id=$2 AND player_id IS NULL", [gameId, link.character_id]);
-      if (!target.rowCount) throw failure("not_found");
+      if (!link.characterId) throw failure("not_found");
+      const [target] = await db
+        .select({ id: characters.id })
+        .from(characters)
+        .where(
+          and(
+            eq(characters.gameId, gameId),
+            eq(characters.id, link.characterId),
+            isNull(characters.playerId),
+          ),
+        );
+      if (!target) throw failure("not_found");
     }
-    let membershipId = membership.rows[0]?.id;
+    let membershipId = membership?.id;
     if (!membershipId) {
       membershipId = randomUUID();
-      await client.query("INSERT INTO players (id,game_id,account_id,name) SELECT $1,$2,id,left(username,20) FROM accounts WHERE id=$3", [membershipId, gameId, actor.accountId]);
+      const [account] = await db
+        .select({ name: sql<string>`left(${accounts.username},20)` })
+        .from(accounts)
+        .where(eq(accounts.id, actor.accountId));
+      if (!account) throw failure("not_found");
+      await db
+        .insert(players)
+        .values({ id: membershipId, gameId, accountId: actor.accountId, name: account.name });
     }
-    if (link.kind === "game") return { gameId, changed: !membership.rows[0] };
-    await client.query("UPDATE characters SET player_id=$3,gm_active=false WHERE game_id=$1 AND id=$2", [gameId, link.character_id, membershipId]);
-    if (makeActive) await client.query("UPDATE players SET active_character_id=$2,revision=revision+1 WHERE id=$1 AND active_character_id IS DISTINCT FROM $2", [membershipId, link.character_id]);
-    await client.query("DELETE FROM invitations WHERE game_id=$1 AND character_id=$2 AND kind='character'", [gameId, link.character_id]);
-    return { gameId, changed: true, characterId: link.character_id!, active: makeActive };
+    if (link.kind === "game") return { gameId, changed: !membership };
+    if (!link.characterId) throw failure("not_found");
+    await db
+      .update(characters)
+      .set({ playerId: membershipId, gmActive: false })
+      .where(and(eq(characters.gameId, gameId), eq(characters.id, link.characterId)));
+    if (makeActive)
+      await db
+        .update(players)
+        .set({ activeCharacterId: link.characterId, revision: sql`${players.revision}+1` })
+        .where(
+          and(
+            eq(players.id, membershipId),
+            sql`${players.activeCharacterId} IS DISTINCT FROM ${link.characterId}`,
+          ),
+        );
+    await db
+      .delete(invitations)
+      .where(
+        and(
+          eq(invitations.gameId, gameId),
+          eq(invitations.characterId, link.characterId),
+          eq(invitations.kind, "character"),
+        ),
+      );
+    return { gameId, changed: true, characterId: link.characterId, active: makeActive };
   });
-  if (outcome.changed) publishGameEvent(outcome.gameId, { type: "roster" });
-  if (outcome.characterId) return { gameId: outcome.gameId, characterId: outcome.characterId, active: outcome.active! };
+  if (outcome.changed)
+    await notifyAfterCommit(() => publishGameEvent(outcome.gameId, { type: "roster" }));
+  if (outcome.characterId)
+    return { gameId: outcome.gameId, characterId: outcome.characterId, active: outcome.active! };
   return { gameId: outcome.gameId };
 }

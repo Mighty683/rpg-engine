@@ -29,8 +29,10 @@ const sheet = () => ({
 });
 async function mount(fetchMock: ReturnType<typeof vi.fn>, canEdit = true) {
   vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) => {
-    if (String(input).endsWith("/auth/me")) return Promise.resolve(new Response(JSON.stringify({ account: { id: "p1", username: "Player" } })));
-    if (String(input).endsWith("/characters") && !init?.method) return Promise.resolve(new Response(JSON.stringify({ characters: [{ id: "c1", controllerMembershipId: null, controllerName: null, canEdit }] })));
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    if (url.endsWith("/auth/csrf")) return Promise.resolve(Response.json({ csrfToken: "test-token" }));
+    if (url.endsWith("/auth/me")) return Promise.resolve(new Response(JSON.stringify({ account: { id: "p1", username: "Player" } })));
+    if (url.endsWith("/characters") && !init?.method) return Promise.resolve(new Response(JSON.stringify({ characters: [{ id: "c1", controllerMembershipId: null, controllerName: null, canEdit }] })));
     return (fetchMock as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>)(input, init);
   });
   const root = document.createElement("div");
@@ -257,8 +259,9 @@ test("resource maximum overrides remain editable", async () => {
       .element()
       .dispatchEvent(new Event("change", { bubbles: true }));
     await expect.element(page.getByTestId("maximum-button-HP")).toHaveTextContent("50");
-    const patch = fetchMock.mock.calls.find((call) => call[1]?.method === "PATCH");
-    expect(JSON.parse(patch?.[1]?.body as string).changes.overrides.maxHp).toBe(50);
+    await expect.poll(() => fetchMock.mock.calls.some(([, init]) =>
+      init?.method === "PATCH" && JSON.parse(init.body as string).changes.overrides.maxHp === 50,
+    )).toBe(true);
   } finally {
     mounted.app.unmount();
     mounted.root.remove();

@@ -1,9 +1,12 @@
-import type { PoolClient } from "pg";
+import { eq } from "drizzle-orm";
 import {
-  preview,
-  validateSheet,
-  type FabulaSheet,
-} from "../fabula/rules.ts";
+  characterClasses,
+  characterSkills,
+  characterEquipment,
+  equipmentFields,
+} from "../../database/schema.ts";
+import type { DatabaseTransaction } from "../../database/client.ts";
+import { preview, validateSheet, type FabulaSheet } from "../fabula/rules.ts";
 export type Sheet = FabulaSheet;
 export type Row = {
   id: string;
@@ -29,33 +32,34 @@ export type Row = {
   created_at: Date;
   updated_at: Date;
 };
-type NamedRow = { id: string; name: string; notes: string; position: number };
-type EquipmentRow = NamedRow & {
-  kind: string;
-  price_zenit: number | null;
-  equipped: boolean | null;
-  accuracy_attribute_1: string | null;
-  accuracy_attribute_2: string | null;
-  accuracy_bonus: number | null;
-  fixed_defense: number | null;
-  defense_bonus: number | null;
-  magic_defense_bonus: number | null;
-  initiative_modifier: number | null;
-};
-export async function sheetSequential(client: PoolClient, r: Row): Promise<FabulaSheet> {
-  const a = await client.query<NamedRow>(
-    "SELECT id,name,notes,position FROM character_classes WHERE character_id=$1 ORDER BY position",
-    [r.id],
-  );
-  const b = await client.query<NamedRow>(
-    "SELECT id,name,notes,position FROM character_skills WHERE character_id=$1 ORDER BY position",
-    [r.id],
-  );
-  const e = await client.query<EquipmentRow>(
-    "SELECT * FROM character_equipment WHERE character_id=$1 ORDER BY position",
-    [r.id],
-  );
-  const equipment = e.rows.map((x): any => {
+export async function sheetSequential(tx: DatabaseTransaction, r: Row): Promise<FabulaSheet> {
+  const db = tx;
+  const a = await db
+    .select({
+      id: characterClasses.id,
+      name: characterClasses.name,
+      notes: characterClasses.notes,
+      position: characterClasses.position,
+    })
+    .from(characterClasses)
+    .where(eq(characterClasses.characterId, r.id))
+    .orderBy(characterClasses.position);
+  const b = await db
+    .select({
+      id: characterSkills.id,
+      name: characterSkills.name,
+      notes: characterSkills.notes,
+      position: characterSkills.position,
+    })
+    .from(characterSkills)
+    .where(eq(characterSkills.characterId, r.id))
+    .orderBy(characterSkills.position);
+  const e = await db
+    .select(equipmentFields)
+    .from(characterEquipment)
+    .where(eq(characterEquipment.characterId, r.id))
+    .orderBy(characterEquipment.position);
+  const equipment = e.map((x): any => {
     const base = { id: x.id, name: x.name, notes: x.notes, priceZenit: x.price_zenit };
     if (x.kind === "other") return { ...base, kind: "other" };
     if (x.kind === "weapon")
@@ -90,8 +94,8 @@ export async function sheetSequential(client: PoolClient, r: Row): Promise<Fabul
     theme: r.theme,
     level: r.level,
     baseDice: { DEX: r.dex_die, INS: r.ins_die, MIG: r.mig_die, WLP: r.wlp_die },
-    classes: a.rows.map(({ id, name, notes }) => ({ id, name, notes })),
-    skills: b.rows.map(({ id, name, notes }) => ({ id, name, notes })),
+    classes: a.map(({ id, name, notes }) => ({ id, name, notes })),
+    skills: b.map(({ id, name, notes }) => ({ id, name, notes })),
     equipment,
     resources: { hp: r.current_hp, mp: r.current_mp, ip: r.current_ip, fabula: r.fabula_points },
     overrides: {
@@ -110,8 +114,8 @@ export const present = (r: Row, s: FabulaSheet) => ({
   playerId: r.player_id,
   name: s.name,
   level: s.level,
-  createdAt: r.created_at.toISOString(),
-  updatedAt: r.updated_at.toISOString(),
+  createdAt: new Date(r.created_at).toISOString(),
+  updatedAt: new Date(r.updated_at).toISOString(),
   revision: r.revision,
   systemId: "fabula-ultima" as const,
   sheet: s,

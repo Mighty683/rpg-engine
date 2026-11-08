@@ -1,10 +1,9 @@
 import { Controller, RequestError, Route } from "arrow-express";
-import type { Pool } from "pg";
-import { requireActor, requireWriteOrigin } from "../auth/guards.ts";
+import type { Services } from "../../services.ts";
+import { requireWriteOrigin } from "../auth/guards.ts";
 import { routeId } from "../games/controller.ts";
-import { gameAccess, type GameActor } from "../games/service.ts";
+import { type GameActor } from "../games/service.ts";
 import { fail, parseCreateRequest, type CreateThrowInput } from "./contract.ts";
-import { createThrow, listThrows, removeThrow } from "./service.ts";
 
 type ThrowContext = { actor: GameActor; gameId: string };
 
@@ -47,14 +46,14 @@ function requestError(error: unknown): never {
   throw new RequestError(status, { error: { code: e.code!, message: messages[e.code!] ?? "Request failed." } });
 }
 
-export function throwsController(pool: Pool) {
+export function throwsController(services: Pick<Services, "auth" | "games" | "throws">) {
   return Controller()
     .prefix("games/:gameId/throws")
     .handler(async (request) => {
       if (request.method !== "GET") requireWriteOrigin(request);
-      const actor = await requireActor(pool, request);
+      const actor = await services.auth.requireActor(request);
       const gameId = routeId(request.params.gameId);
-      const access = await gameAccess(pool, actor, gameId);
+      const access = await services.games.gameAccess(actor, gameId);
       if (!access) throw new RequestError(404, { error: { code: "not_found", message: "Game not found." } });
       return { actor, gameId };
     })
@@ -62,7 +61,7 @@ export function throwsController(pool: Pool) {
       Route<ThrowContext>().method("get").path("").handler(async (request, _response, context) => {
         const query = request.query as Record<string, unknown>;
         try {
-          return await listThrows(pool, context.actor, context.gameId, cursor(query.before), pageLimit(query.limit));
+          return await services.throws.listThrows(context.actor, context.gameId, cursor(query.before), pageLimit(query.limit));
         } catch (error) { requestError(error); }
       }),
       Route<ThrowContext>().method("post").path("").handler(async (request, response, context) => {
@@ -70,14 +69,14 @@ export function throwsController(pool: Pool) {
         try { input = parseCreateRequest(request.body); }
         catch (error) { requestError(error); }
         try {
-          const result = await createThrow(pool, context.actor, context.gameId, input);
+          const result = await services.throws.createThrow(context.actor, context.gameId, input);
           response.status(201);
           return { throw: result.record };
         } catch (error) { requestError(error); }
       }),
       Route<ThrowContext>().method("delete").path(":throwId").handler(async (request, _response, context) => {
         try {
-          const result = await removeThrow(pool, context.actor, context.gameId, routeId(request.params.throwId));
+          const result = await services.throws.removeThrow(context.actor, context.gameId, routeId(request.params.throwId));
           return { deleted: result.deleted };
         } catch (error) { requestError(error); }
       }),

@@ -1,6 +1,6 @@
 import { RequestError } from "arrow-express";
 import type { Request } from "express";
-import type { Pool } from "pg";
+import type { Database } from "../../database/client.ts";
 import { resolveSession } from "./sessions.ts";
 
 export type Actor = { accountId: string; sessionId: string };
@@ -16,9 +16,9 @@ export function requireWriteOrigin(request: Request) {
   }
 }
 
-export async function requireActor(pool: Pool, request: Request): Promise<Actor> {
+export async function requireActor(database: Database, request: Request): Promise<Actor> {
   const cookie = request.headers.cookie?.split(";").map((part) => part.trim()).find((part) => part.startsWith("rpg_session="));
-  const actor = cookie ? await resolveSession(pool, cookie.slice("rpg_session=".length)) : null;
+  const actor = cookie ? await resolveSession(database, cookie.slice("rpg_session=".length)) : null;
   if (!actor) {
     throw new RequestError(401, { error: { code: "unauthorized", message: "Sign in to continue." } });
   }

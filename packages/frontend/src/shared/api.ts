@@ -1,7 +1,8 @@
+import { secureFetch } from "./secure-fetch.ts";
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set("Content-Type", "application/json");
-  const response = await fetch(path, {
+  const response = await secureFetch(path, {
     headers,
     ...init,
   });

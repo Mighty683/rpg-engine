@@ -1,10 +1,8 @@
 import { Controller, RequestError, Route } from "arrow-express";
 import type { Response } from "express";
-import type { Pool } from "pg";
-import { requireActor, requireWriteOrigin, type Actor } from "./guards.ts";
-import { authenticateAccount, getAccount, registerAccount, validateCredentials } from "./service.ts";
-import { createSession, revokeSession } from "./sessions.ts";
-import { closeSessionStreams } from "../events/streams.ts";
+import type { Services } from "../../services.ts";
+import { requireWriteOrigin, type Actor } from "./guards.ts";
+import { validateCredentials } from "./service.ts";
 
 const sessionDuration = 30 * 24 * 60 * 60 * 1000;
 
@@ -27,18 +25,28 @@ function clearSessionCookie(response: Response) {
   });
 }
 
-async function issueSession(pool: Pool, response: Response, accountId: string) {
-  const session = await createSession(pool, accountId, new Date(Date.now() + sessionDuration));
+async function issueSession(auth: Services["auth"], response: Response, accountId: string) {
+  const session = await auth.createSession(accountId, new Date(Date.now() + sessionDuration));
   setSessionCookie(response, session.token);
 }
 
-export function authController(pool: Pool) {
+async function withAvailabilityResponse<T>(operation: () => Promise<T>) {
+  try { return await operation(); }
+  catch (error) {
+    if ((error as { code?: string }).code === "auth_busy") {
+      throw new RequestError(503, { error: { code: "auth_busy", message: "Sign-in service busy. Try again." } });
+    }
+    throw error;
+  }
+}
+
+export function authController(services: Pick<Services, "auth">) {
   return Controller()
     .prefix("auth")
     .handler(async (request) => {
       if (request.method !== "GET") requireWriteOrigin(request);
       if (request.path.endsWith("/me") || request.path.endsWith("/logout")) {
-        return requireActor(pool, request);
+        return services.auth.requireActor(request);
       }
       return null;
     })
@@ -48,14 +56,15 @@ export function authController(pool: Pool) {
         if (Object.keys(fields).length) throw new RequestError(422, { error: { code: "validation", message: "Check the fields.", fields } });
         let account;
         try {
-          account = await registerAccount(pool, username, password);
+          account = await withAvailabilityResponse(() => services.auth.registerAccount(username, password));
         } catch (error) {
-          if ((error as { code?: string }).code === "23505") {
+          const databaseError = (error as { cause?: unknown }).cause ?? error;
+          if ((databaseError as { code?: string }).code === "23505") {
             throw new RequestError(409, { error: { code: "username_taken", message: "Username is already in use." } });
           }
           throw error;
         }
-        await issueSession(pool, response, account.id);
+        await issueSession(services.auth, response, account.id);
         response.status(201);
         return { account };
       }),
@@ -63,22 +72,20 @@ export function authController(pool: Pool) {
         const body = request.body && typeof request.body === "object" ? request.body : {};
         const username = typeof body.username === "string" ? body.username.trim().slice(0, 128) : "";
         const password = typeof body.password === "string" && Buffer.byteLength(body.password, "utf8") <= 1024 ? body.password : "";
-        const result = await authenticateAccount(pool, username, password, request.ip ?? "unknown");
-        if (result.status === "throttled") throw new RequestError(429, { error: { code: "rate_limited", message: "Too many sign-in attempts. Try again later." } });
+        const result = await withAvailabilityResponse(() => services.auth.authenticateAccount(username, password));
         if (result.status === "invalid") throw new RequestError(401, { error: { code: "invalid_credentials", message: "Invalid username or password." } });
-        await issueSession(pool, response, result.account.id);
+        await issueSession(services.auth, response, result.account.id);
         return { account: result.account };
       }),
       Route<Actor | null>().method("get").path("me").handler(async (request) => {
-        const actor = await requireActor(pool, request);
-        const account = await getAccount(pool, actor.accountId);
+        const actor = await services.auth.requireActor(request);
+        const account = await services.auth.getAccount(actor.accountId);
         if (!account) throw new RequestError(401, { error: { code: "unauthorized", message: "Sign in to continue." } });
         return { account };
       }),
       Route<Actor | null>().method("post").path("logout").handler(async (request, response) => {
-        const actor = await requireActor(pool, request);
-        await revokeSession(pool, actor.sessionId);
-        closeSessionStreams(actor.sessionId);
+        const actor = await services.auth.requireActor(request);
+        await services.auth.logout(actor.sessionId);
         clearSessionCookie(response);
         return { ok: true };
       }),

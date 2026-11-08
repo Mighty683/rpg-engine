@@ -1,3 +1,4 @@
+import { databaseFromPool } from "../../../backend/src/database/client.ts";
 // Game Table API integration suite (handover API-02..API-05): active-party projection, throw
 // access and attribution, roll validation with persisted-state checks, history pagination and
 // rerolls, removal, and outcome structure. Dice faces are scripted through
@@ -149,7 +150,7 @@ describe("API game table throws", () => {
       accountId,
       name,
     ]);
-    const session = await createSession(fixture.pool, accountId, new Date(Date.now() + 60_000));
+    const session = await createSession(databaseFromPool(fixture.pool), accountId, new Date(Date.now() + 60_000));
     return { accountId, membershipId, sessionId: session.sessionId, token: session.token };
   };
 
@@ -517,7 +518,7 @@ describe("API game table throws", () => {
     const { ids } = fixture;
     const second = await addGameMember("player2");
     const secondCharacter = randomUUID();
-    await createWorkspaceCharacter(fixture.pool, { accountId: second.accountId, sessionId: second.sessionId }, ids.game, secondCharacter, "Second sheet");
+    await createWorkspaceCharacter(databaseFromPool(fixture.pool), { accountId: second.accountId, sessionId: second.sessionId }, ids.game, secondCharacter, "Second sheet");
 
     const own = await createThrow("player", ids.game, freeSetup(ids.playerCharacter));
     const other = await createThrow(second.token, ids.game, freeSetup(secondCharacter));

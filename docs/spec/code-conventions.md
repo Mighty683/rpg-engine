@@ -18,3 +18,14 @@
 - Keep component-specific styles with the component they style.
 
 - Add stable `data-testid` attributes to UI elements targeted by browser tests.
+
+## Backend dependencies
+
+- Assemble database-backed services in the application composition layer and inject them into controllers. Controllers must not receive the database or pass it to service calls.
+- Inject the service dependencies required by authorization and event handlers through the same composition path.
+
+## Database query security
+
+- Pass all data values to PostgreSQL as query parameters. Never concatenate or interpolate request data into SQL, including values that were validated earlier.
+- Prefer Drizzle query builders and typed column objects. Build dynamic SQL options from explicit allow-lists; PostgreSQL parameters cannot represent identifiers. Use parameterized Drizzle `sql` templates for database-specific or complex queries.
+- Avoid `sql.raw()`. Oxlint flags direct uses and rejects nonliteral query text in direct `.query(...)` calls in backend production TypeScript. These guardrails are not taint analysis: review indirect calls, migrations and generated SQL separately.

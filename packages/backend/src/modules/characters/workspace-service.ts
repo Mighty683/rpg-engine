@@ -1,129 +1,236 @@
-import type { Pool, PoolClient } from "pg";
+import { transaction } from "../../database/transaction.ts";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import {
+  characters,
+  accounts,
+  characterCreateRequests,
+  players,
+  invitations,
+  characterClasses,
+  characterSkills,
+  characterEquipment,
+  characterFields,
+} from "../../database/schema.ts";
+import type { Database, DatabaseTransaction } from "../../database/client.ts";
 import { defaultSheet, mergeSheet, type FabulaSheet } from "../fabula/rules.ts";
 import { gameAccess, lockGame, type GameActor, type GameAccess } from "../games/service.ts";
 import { publishGameEvent } from "../events/streams.ts";
-import { present, sheetSequential, type Row } from "./service.ts";
+import { present, sheetSequential } from "./service.ts";
 import { canEditCharacter } from "./access.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
-type SummaryRow = { id: string; name: string; level: number; player_id: string | null; controller_name: string | null; active: boolean; created_at: Date };
+type SummaryRow = {
+  id: string;
+  name: string;
+  level: number;
+  player_id: string | null;
+  controller_name: string | null;
+  active: boolean;
+  created_at: Date;
+};
 const summary = (row: SummaryRow, access: GameAccess) => ({
-  id: row.id, name: row.name, level: row.level, controllerMembershipId: row.player_id,
-  controllerName: row.controller_name, canEdit: canEditCharacter(access, row.player_id),
-  active: row.active, createdAt: row.created_at.toISOString(),
+  id: row.id,
+  name: row.name,
+  level: row.level,
+  controllerMembershipId: row.player_id,
+  controllerName: row.controller_name,
+  canEdit: canEditCharacter(access, row.player_id),
+  active: row.active,
+  createdAt: new Date(row.created_at).toISOString(),
 });
-const summarySql = `SELECT c.id,c.name,c.level,c.player_id,c.created_at,a.username AS controller_name,
-  CASE WHEN c.player_id IS NULL THEN c.gm_active ELSE COALESCE(p.active_character_id=c.id, false) END AS active
-  FROM characters c LEFT JOIN players p ON p.id=c.player_id AND p.game_id=c.game_id
-  LEFT JOIN accounts a ON a.id=p.account_id`;
 
-async function requireReadAccess(client: PoolClient, actor: GameActor, gameId: string) {
-  const access = await gameAccess(client, actor, gameId);
+function characterSummaries(tx: DatabaseTransaction, gameId: string, id?: string) {
+  return tx
+    .select({
+      id: characters.id,
+      name: characters.name,
+      level: characters.level,
+      player_id: characters.playerId,
+      created_at: characters.createdAt,
+      controller_name: accounts.username,
+      active: sql<boolean>`CASE WHEN ${characters.playerId} IS NULL THEN ${characters.gmActive} ELSE COALESCE(${players.activeCharacterId}=${characters.id}, false) END`,
+    })
+    .from(characters)
+    .leftJoin(
+      players,
+      and(eq(players.id, characters.playerId), eq(players.gameId, characters.gameId)),
+    )
+    .leftJoin(accounts, eq(accounts.id, players.accountId))
+    .where(and(eq(characters.gameId, gameId), id ? eq(characters.id, id) : undefined))
+    .orderBy(characters.createdAt, characters.id);
+}
+
+async function requireReadAccess(tx: DatabaseTransaction, actor: GameActor, gameId: string) {
+  const access = await gameAccess(tx, actor, gameId);
   if (!access) throw fail("not_found");
   return access;
 }
 
-export async function listWorkspaceCharacters(pool: Pool, actor: GameActor, gameId: string) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
-    const access = await requireReadAccess(client, actor, gameId);
-    const result = await client.query<SummaryRow>(`${summarySql} WHERE c.game_id=$1 ORDER BY c.created_at,c.id`, [gameId]);
-    await client.query("COMMIT");
-    return result.rows.map((item) => summary(item, access));
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally { client.release(); }
+export async function listWorkspaceCharacters(database: Database, actor: GameActor, gameId: string) {
+  return transaction(
+    database,
+    async (tx) => {
+      const access = await requireReadAccess(tx, actor, gameId);
+      const result = await characterSummaries(tx, gameId);
+      return result.map((item) => summary(item, access));
+    },
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
 }
 
-export async function getWorkspaceCharacter(pool: Pool, actor: GameActor, gameId: string, id: string) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
-    const access = await requireReadAccess(client, actor, gameId);
-    const result = await client.query<Row>("SELECT * FROM characters WHERE game_id=$1 AND id=$2", [gameId, id]);
-    const character = result.rows[0];
-    if (!character) throw fail("not_found");
-    const record = { ...present(character, await sheetSequential(client, character)), canEdit: canEditCharacter(access, character.player_id) };
-    await client.query("COMMIT");
-    return record;
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally { client.release(); }
+export async function getWorkspaceCharacter(
+  database: Database,
+  actor: GameActor,
+  gameId: string,
+  id: string,
+) {
+  return transaction(
+    database,
+    async (tx) => {
+      const access = await requireReadAccess(tx, actor, gameId);
+      const result = {
+        rows: await tx
+          .select(characterFields)
+          .from(characters)
+          .where(and(eq(characters.gameId, gameId), eq(characters.id, id))),
+      };
+      const character = result.rows[0];
+      if (!character) throw fail("not_found");
+      const record = {
+        ...present(character, await sheetSequential(tx, character)),
+        canEdit: canEditCharacter(access, character.player_id),
+      };
+      return record;
+    },
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
 }
 
-export async function createWorkspaceCharacter(pool: Pool, actor: GameActor, gameId: string, id: string, name: string) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const access = await lockGame(client, actor, gameId);
+export async function createWorkspaceCharacter(
+  database: Database,
+  actor: GameActor,
+  gameId: string,
+  id: string,
+  name: string,
+) {
+  return transaction(database, async (tx, afterCommit) => {
+    const access = await lockGame(tx, actor, gameId);
     const sheet = defaultSheet(name);
-    const receipt = await client.query<{ game_id: string; character_id: string; name: string }>(
-      "SELECT game_id,character_id,name FROM character_create_requests WHERE account_id=$1 AND request_id=$2", [actor.accountId, id],
-    );
-    if (receipt.rows[0]) {
-      const prior = receipt.rows[0];
+    const receipt = await tx
+      .select({
+        game_id: characterCreateRequests.gameId,
+        character_id: characterCreateRequests.characterId,
+        name: characterCreateRequests.name,
+      })
+      .from(characterCreateRequests)
+      .where(
+        and(
+          eq(characterCreateRequests.accountId, actor.accountId),
+          eq(characterCreateRequests.requestId, id),
+        ),
+      );
+    if (receipt[0]) {
+      const prior = receipt[0];
       if (prior.game_id !== gameId || prior.name !== sheet.name) throw fail("id_conflict");
-      const existing = await client.query<Row>("SELECT * FROM characters WHERE game_id=$1 AND id=$2", [gameId, prior.character_id]);
+      const existing = {
+        rows: await tx
+          .select(characterFields)
+          .from(characters)
+          .where(and(eq(characters.gameId, gameId), eq(characters.id, prior.character_id))),
+      };
       if (!existing.rows[0]) throw fail("not_found");
       if (!canEditCharacter(access, existing.rows[0].player_id)) throw fail("forbidden");
-      const record = { ...present(existing.rows[0], await sheetSequential(client, existing.rows[0])), canEdit: canEditCharacter(access, existing.rows[0].player_id) };
-      await client.query("COMMIT");
+      const record = {
+        ...present(existing.rows[0], await sheetSequential(tx, existing.rows[0])),
+        canEdit: canEditCharacter(access, existing.rows[0].player_id),
+      };
       return { record, created: false };
     }
-    const inserted = await client.query<Row>(
-      `INSERT INTO characters(id,game_id,player_id,name,theme,level,dex_die,ins_die,mig_die,wlp_die,current_hp,current_mp,current_ip,fabula_points)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT(id) DO NOTHING RETURNING *`,
-      [id,gameId,access.membershipId,sheet.name,sheet.theme,sheet.level,sheet.baseDice.DEX,sheet.baseDice.INS,sheet.baseDice.MIG,sheet.baseDice.WLP,sheet.resources.hp,sheet.resources.mp,sheet.resources.ip,sheet.resources.fabula],
-    );
-    if (!inserted.rows[0]) throw fail("id_conflict");
-    await client.query("INSERT INTO character_create_requests(account_id,request_id,game_id,character_id,name) VALUES($1,$2,$3,$4,$5)", [actor.accountId,id,gameId,id,sheet.name]);
-    if (access.role === "Player") await client.query("UPDATE players SET active_character_id=$2,revision=revision+1 WHERE id=$1 AND active_character_id IS NULL", [access.membershipId,id]);
-    await client.query("COMMIT");
-    publishGameEvent(gameId, { type: "roster" });
-    return { record: { ...present(inserted.rows[0], sheet), canEdit: true }, created: true };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally { client.release(); }
+    const inserted = await tx
+      .insert(characters)
+      .values({
+        id,
+        gameId,
+        playerId: access.membershipId,
+        name: sheet.name,
+        theme: sheet.theme,
+        level: sheet.level,
+        dexDie: sheet.baseDice.DEX,
+        insDie: sheet.baseDice.INS,
+        migDie: sheet.baseDice.MIG,
+        wlpDie: sheet.baseDice.WLP,
+        currentHp: sheet.resources.hp,
+        currentMp: sheet.resources.mp,
+        currentIp: sheet.resources.ip,
+        fabulaPoints: sheet.resources.fabula,
+      })
+      .onConflictDoNothing({ target: characters.id })
+      .returning(characterFields);
+    if (!inserted[0]) throw fail("id_conflict");
+    await tx
+      .insert(characterCreateRequests)
+      .values({
+        accountId: actor.accountId,
+        requestId: id,
+        gameId,
+        characterId: id,
+        name: sheet.name,
+      });
+    if (access.role === "Player")
+      await tx
+        .update(players)
+        .set({ activeCharacterId: id, revision: sql`${players.revision}+1` })
+        .where(and(eq(players.id, access.membershipId), isNull(players.activeCharacterId)));
+    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    return { record: { ...present(inserted[0], sheet), canEdit: true }, created: true };
+  });
 }
 
-export async function setGmCharacterActive(pool: Pool, actor: GameActor, gameId: string, id: string, active: boolean) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const access = await lockGame(client, actor, gameId);
+export async function setGmCharacterActive(
+  database: Database,
+  actor: GameActor,
+  gameId: string,
+  id: string,
+  active: boolean,
+) {
+  return transaction(database, async (tx, afterCommit) => {
+    const access = await lockGame(tx, actor, gameId);
     if (access.role !== "GM") throw fail("forbidden");
-    const changed = await client.query("UPDATE characters SET gm_active=$3 WHERE game_id=$1 AND id=$2 AND player_id IS NULL RETURNING id", [gameId,id,active]);
-    if (!changed.rowCount) {
-      const existing = await client.query("SELECT id FROM characters WHERE game_id=$1 AND id=$2", [gameId,id]);
-      throw fail(existing.rowCount ? "forbidden" : "not_found");
+    const changed = await tx
+      .update(characters)
+      .set({ gmActive: active })
+      .where(and(eq(characters.gameId, gameId), eq(characters.id, id), isNull(characters.playerId)))
+      .returning({ id: characters.id });
+    if (!changed.length) {
+      const existing = await tx
+        .select({ id: characters.id })
+        .from(characters)
+        .where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
+      throw fail(existing.length ? "forbidden" : "not_found");
     }
-    const result = await client.query<SummaryRow>(`${summarySql} WHERE c.game_id=$1 AND c.id=$2`, [gameId,id]);
-    await client.query("COMMIT");
-    publishGameEvent(gameId, { type: "roster" });
-    return summary(result.rows[0]!, access);
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally { client.release(); }
+    const result = await characterSummaries(tx, gameId, id);
+    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    return summary(result[0]!, access);
+  });
 }
 
 export async function updateWorkspaceCharacter(
-  pool: Pool,
+  database: Database,
   gameId: string,
   actor: GameActor,
   id: string,
   expected: number,
   changes: Partial<FabulaSheet>,
 ) {
-  const c = await pool.connect();
-  try {
-    await c.query("BEGIN");
+  return transaction(database, async (c, afterCommit) => {
     const access = await lockGame(c, actor, gameId);
-    const found = await c.query<Row>("SELECT * FROM characters WHERE game_id=$1 AND id=$2 FOR UPDATE", [gameId, id]);
+    const found = {
+      rows: await c
+        .select(characterFields)
+        .from(characters)
+        .where(and(eq(characters.gameId, gameId), eq(characters.id, id)))
+        .for("update"),
+    };
     const r = found.rows[0];
     if (!r) throw fail("not_found");
     if (!canEditCharacter(access, r.player_id)) throw fail("forbidden");
@@ -131,51 +238,58 @@ export async function updateWorkspaceCharacter(
     const current = await sheetSequential(c, r);
     const s = mergeSheet(current, changes as any);
     if (JSON.stringify(s) === JSON.stringify(current)) {
-      await c.query("COMMIT");
       return { ...present(r, current), canEdit: true };
     }
-    await c.query(
-      "UPDATE characters SET name=$4,theme=$5,level=$6,dex_die=$7,ins_die=$8,mig_die=$9,wlp_die=$10,current_hp=$11,current_mp=$12,current_ip=$13,fabula_points=$14,max_hp_override=$15,max_mp_override=$16,max_ip_override=$17,defense_override=$18,magic_defense_override=$19,initiative_override=$20,revision=revision+1,updated_at=now() WHERE id=$1 AND game_id=$2 AND revision=$3",
-      [
-        id,
-        gameId,
-        expected,
-        s.name,
-        s.theme,
-        s.level,
-        s.baseDice.DEX,
-        s.baseDice.INS,
-        s.baseDice.MIG,
-        s.baseDice.WLP,
-        s.resources.hp,
-        s.resources.mp,
-        s.resources.ip,
-        s.resources.fabula,
-        s.overrides.maxHp,
-        s.overrides.maxMp,
-        s.overrides.maxIp,
-        s.overrides.defense,
-        s.overrides.magicDefense,
-        s.overrides.initiative,
-      ],
-    );
-    const lists: [string, any[]][] = [];
+    await c
+      .update(characters)
+      .set({
+        name: s.name,
+        theme: s.theme,
+        level: s.level,
+        dexDie: s.baseDice.DEX,
+        insDie: s.baseDice.INS,
+        migDie: s.baseDice.MIG,
+        wlpDie: s.baseDice.WLP,
+        currentHp: s.resources.hp,
+        currentMp: s.resources.mp,
+        currentIp: s.resources.ip,
+        fabulaPoints: s.resources.fabula,
+        maxHpOverride: s.overrides.maxHp,
+        maxMpOverride: s.overrides.maxMp,
+        maxIpOverride: s.overrides.maxIp,
+        defenseOverride: s.overrides.defense,
+        magicDefenseOverride: s.overrides.magicDefense,
+        initiativeOverride: s.overrides.initiative,
+        revision: sql`${characters.revision}+1`,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(characters.id, id),
+          eq(characters.gameId, gameId),
+          eq(characters.revision, expected),
+        ),
+      );
+    const lists: ["character_classes" | "character_skills" | "character_equipment", any[]][] = [];
     if ("classes" in changes) lists.push(["character_classes", s.classes]);
     if ("skills" in changes) lists.push(["character_skills", s.skills]);
     if ("equipment" in changes) lists.push(["character_equipment", s.equipment]);
     for (const [table, entries] of lists) {
-      await c.query(`DELETE FROM ${table} WHERE character_id=$1`, [id]);
+      if (table === "character_classes")
+        await c.delete(characterClasses).where(eq(characterClasses.characterId, id));
+      else if (table === "character_skills")
+        await c.delete(characterSkills).where(eq(characterSkills.characterId, id));
+      else
+        await c.delete(characterEquipment).where(eq(characterEquipment.characterId, id));
       for (const [i, x] of entries.entries()) {
         if (table === "character_classes")
-          await c.query(
-            "INSERT INTO character_classes(id,character_id,name,notes,position) VALUES($1,$2,$3,$4,$5)",
-            [x.id, id, x.name, x.notes, i + 1],
-          );
+          await c
+            .insert(characterClasses)
+            .values({ id: x.id, characterId: id, name: x.name, notes: x.notes, position: i + 1 });
         else if (table === "character_skills")
-          await c.query(
-            "INSERT INTO character_skills(id,character_id,name,notes,position) VALUES($1,$2,$3,$4,$5)",
-            [x.id, id, x.name, x.notes, i + 1],
-          );
+          await c
+            .insert(characterSkills)
+            .values({ id: x.id, characterId: id, name: x.name, notes: x.notes, position: i + 1 });
         else {
           const z =
             x.kind === "weapon"
@@ -212,78 +326,117 @@ export async function updateWorkspaceCharacter(
                       x.initiativeModifier,
                     ]
                   : [null, null, null, null, null, null, null, null];
-          await c.query(
-            "INSERT INTO character_equipment(id,character_id,name,notes,position,kind,price_zenit,equipped,accuracy_attribute_1,accuracy_attribute_2,accuracy_bonus,fixed_defense,defense_bonus,magic_defense_bonus,initiative_modifier) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",
-            [x.id, id, x.name, x.notes, i + 1, x.kind, x.priceZenit, ...z],
-          );
+          await c
+            .insert(characterEquipment)
+            .values({
+              id: x.id,
+              characterId: id,
+              name: x.name,
+              notes: x.notes,
+              position: i + 1,
+              kind: x.kind,
+              priceZenit: x.priceZenit,
+              equipped: z[0],
+              accuracyAttribute1: z[1],
+              accuracyAttribute2: z[2],
+              accuracyBonus: z[3],
+              fixedDefense: z[4],
+              defenseBonus: z[5],
+              magicDefenseBonus: z[6],
+              initiativeModifier: z[7],
+            });
         }
       }
     }
     const out = present({ ...r, revision: r.revision + 1, updated_at: new Date() }, s);
-    await c.query("COMMIT");
-    publishGameEvent(gameId, { type: "sheet", characterId: id });
-    publishGameEvent(gameId, { type: "roster" });
+    afterCommit(() => publishGameEvent(gameId, { type: "sheet", characterId: id }));
+    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
     return { ...out, canEdit: true };
-  } catch (e) {
-    await c.query("ROLLBACK");
-    throw e;
-  } finally {
-    c.release();
-  }
+  });
 }
 
-async function clearActiveCharacter(client: PoolClient, gameId: string, id: string) {
-  await client.query(
-    "UPDATE players SET active_character_id=NULL,revision=revision+1 WHERE game_id=$1 AND active_character_id=$2",
-    [gameId, id],
-  );
+async function clearActiveCharacter(tx: DatabaseTransaction, gameId: string, id: string) {
+  await tx
+    .update(players)
+    .set({ activeCharacterId: null, revision: sql`${players.revision}+1` })
+    .where(and(eq(players.gameId, gameId), eq(players.activeCharacterId, id)));
 }
 
 /** Changes control under the game lock and invalidates all outstanding character links. */
-export async function assignCharacter(pool: Pool, actor: GameActor, gameId: string, id: string, membershipId: string | null) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const access = await lockGame(client, actor, gameId);
+export async function assignCharacter(
+  database: Database,
+  actor: GameActor,
+  gameId: string,
+  id: string,
+  membershipId: string | null,
+) {
+  return transaction(database, async (tx, afterCommit) => {
+    const access = await lockGame(tx, actor, gameId);
     if (access.role !== "GM") throw fail("forbidden");
-    const existing = await client.query<Row>("SELECT * FROM characters WHERE game_id=$1 AND id=$2 FOR UPDATE", [gameId, id]);
+    const existing = {
+      rows: await tx
+        .select(characterFields)
+        .from(characters)
+        .where(and(eq(characters.gameId, gameId), eq(characters.id, id)))
+        .for("update"),
+    };
     const character = existing.rows[0];
     if (!character) throw fail("not_found");
     if (membershipId) {
-      const target = await client.query("SELECT id FROM players WHERE id=$1 AND game_id=$2 AND NOT removed", [membershipId, gameId]);
-      if (!target.rowCount) throw fail("not_found");
+      const target = await tx
+        .select({ id: players.id })
+        .from(players)
+        .where(
+          and(eq(players.id, membershipId), eq(players.gameId, gameId), eq(players.removed, false)),
+        );
+      if (!target.length) throw fail("not_found");
     }
     if (character.player_id !== membershipId) {
-      await clearActiveCharacter(client, gameId, id);
-      await client.query("DELETE FROM invitations WHERE game_id=$1 AND character_id=$2 AND kind='character'", [gameId, id]);
-      await client.query("UPDATE characters SET player_id=$3,gm_active=false WHERE game_id=$1 AND id=$2", [gameId, id, membershipId]);
+      await clearActiveCharacter(tx, gameId, id);
+      await tx
+        .delete(invitations)
+        .where(
+          and(
+            eq(invitations.gameId, gameId),
+            eq(invitations.characterId, id),
+            eq(invitations.kind, "character"),
+          ),
+        );
+      await tx
+        .update(characters)
+        .set({ playerId: membershipId, gmActive: false })
+        .where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
     }
-    const result = await client.query<SummaryRow>(`${summarySql} WHERE c.game_id=$1 AND c.id=$2`, [gameId, id]);
-    await client.query("COMMIT");
-    if (character.player_id !== membershipId) publishGameEvent(gameId, { type: "roster" });
-    return summary(result.rows[0]!, access);
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally { client.release(); }
+    const result = await characterSummaries(tx, gameId, id);
+    if (character.player_id !== membershipId)
+      afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    return summary(result[0]!, access);
+  });
 }
 
 /** Permanently deletes a sheet while preserving its create-request receipt. */
-export async function deleteWorkspaceCharacter(pool: Pool, actor: GameActor, gameId: string, id: string) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const access = await lockGame(client, actor, gameId);
-    const existing = await client.query<Row>("SELECT * FROM characters WHERE game_id=$1 AND id=$2 FOR UPDATE", [gameId, id]);
+export async function deleteWorkspaceCharacter(
+  database: Database,
+  actor: GameActor,
+  gameId: string,
+  id: string,
+) {
+  return transaction(database, async (tx, afterCommit) => {
+    const access = await lockGame(tx, actor, gameId);
+    const existing = {
+      rows: await tx
+        .select(characterFields)
+        .from(characters)
+        .where(and(eq(characters.gameId, gameId), eq(characters.id, id)))
+        .for("update"),
+    };
     const character = existing.rows[0];
     if (!character) throw fail("not_found");
     if (!canEditCharacter(access, character.player_id)) throw fail("forbidden");
-    await clearActiveCharacter(client, gameId, id);
-    await client.query("DELETE FROM characters WHERE game_id=$1 AND id=$2", [gameId, id]);
-    await client.query("COMMIT");
-    publishGameEvent(gameId, { type: "roster" });
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally { client.release(); }
+    await clearActiveCharacter(tx, gameId, id);
+    await tx
+      .delete(characters)
+      .where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
+    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+  });
 }

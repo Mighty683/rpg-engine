@@ -1,3 +1,4 @@
+import { databaseFromPool } from "../../backend/src/database/client.ts";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import type { Server } from "node:http";
@@ -36,7 +37,7 @@ export default async function setup(project: TestProject) {
     schemaCreated = true;
     pool = new pg.Pool({ connectionString, options: `-c search_path=${schema}` });
     await applyMigrations(pool);
-    backend = createApp(pool).listen(0, "127.0.0.1");
+    backend = createApp(databaseFromPool(pool)).listen(0, "127.0.0.1");
     await new Promise<void>((resolve, reject) => {
       backend!.once("listening", resolve);
       backend!.once("error", reject);

@@ -1,42 +1,31 @@
-import type { Locator, Page } from "playwright";
+import type { Page } from "playwright";
 
 export class GamePage {
-  readonly playerName: Locator;
-  readonly addPlayerButton: Locator;
+  constructor(private readonly page: Page) {}
 
-  constructor(private readonly page: Page) {
-    this.playerName = page.getByTestId("player-name");
-    this.addPlayerButton = page.getByTestId("add-player");
+  character(name: string) {
+    return this.page.getByTestId("character-control-tile").filter({ hasText: name });
   }
 
-  player(name: string) {
-    return this.page.getByTestId("player-tab").filter({ hasText: name });
+  async createCharacter(name: string) {
+    await this.page.getByTestId("create-character").click();
+    await this.page.getByTestId("character-name").fill(name);
+    await this.page.getByRole("dialog").getByRole("button", { name: "Create character" }).click();
   }
 
-  async openPlayer(name: string) {
-    await this.player(name).click();
-    await this.page.getByTestId("player-row-link").click();
+  async returnToGame() {
+    await this.page.getByTestId("return-to-game").click();
   }
 
-  async activeCharacter(name: string) {
-    await this.player(name).click();
-    return this.page.getByTestId("player-active-character");
+  async openManagement() {
+    await this.page.getByTestId("manage-characters").click();
   }
 
-  async addPlayer(name: string) {
-    await this.playerName.fill(name);
-    const responsePromise = this.page
-      .waitForResponse(
-        (candidate) =>
-          candidate.url().includes("/api/games/") &&
-          candidate.url().endsWith("/players") &&
-          candidate.request().method() === "POST",
-        { timeout: 5000 },
-      )
-      .catch(() => undefined);
-    await this.addPlayerButton.click();
-    const response = await responsePromise;
-    if (response && !response.ok())
-      throw new Error(`Create player failed: ${response.status()} ${await response.text()}`);
+  async openCharacter(name: string) {
+    await this.character(name).getByRole("button", { name: "Open sheet" }).click();
+  }
+
+  async toggleCharacter(name: string) {
+    await this.character(name).getByTestId("set-active").click();
   }
 }

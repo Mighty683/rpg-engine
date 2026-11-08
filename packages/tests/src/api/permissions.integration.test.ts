@@ -1,7 +1,9 @@
+import { databaseFromPool } from "../../../backend/src/database/client.ts";
 import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
 import pg from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { csrfHeaders } from "./fixtures.ts";
 import { createApp } from "../../../backend/src/app.ts";
 import { applyMigrations } from "../../../backend/src/migrations.ts";
 import { createSession } from "../../../backend/src/modules/auth/sessions.ts";
@@ -34,6 +36,7 @@ async function request(
   const headers: Record<string, string> = {};
   if (actor) headers.cookie = `rpg_session=${tokens[actor] ?? actor}`;
   if (requestOrigin) headers.origin = requestOrigin;
+  if (method !== "GET" && method !== "HEAD") Object.assign(headers, await csrfHeaders(origin, headers.cookie));
   if (body !== undefined) headers["content-type"] = "application/json";
   return fetch(`${origin}/api${path}`, {
     method,
@@ -60,7 +63,7 @@ async function waitForBlockedGameLock(blockerPid: number) {
     const result = await admin!.query<{ blocked: boolean }>(
       `SELECT EXISTS (
         SELECT 1 FROM pg_stat_activity
-        WHERE $1 = ANY(pg_blocking_pids(pid)) AND query LIKE '%FOR UPDATE%'
+        WHERE $1 = ANY(pg_blocking_pids(pid)) AND query ILIKE '%FOR UPDATE%'
       ) AS blocked`,
       [blockerPid],
     );
@@ -75,7 +78,7 @@ describe.skipIf(!url)("API permission boundaries", () => {
     vi.stubEnv("APP_ORIGIN", "");
     await admin!.query(`CREATE SCHEMA "${schema}"`);
     await applyMigrations(pool!);
-    server = createApp(pool!).listen(0, "127.0.0.1");
+    server = createApp(databaseFromPool(pool!)).listen(0, "127.0.0.1");
     await new Promise<void>((resolve) => server.once("listening", resolve));
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("No server address");
@@ -110,10 +113,10 @@ describe.skipIf(!url)("API permission boundaries", () => {
       player: { accountId: player, sessionId: randomUUID() },
       outsider: { accountId: outsider, sessionId: randomUUID() },
     };
-    await createWorkspaceCharacter(pool!, actors.gm, game, gmCharacter, "GM sheet");
-    await createWorkspaceCharacter(pool!, actors.player, game, playerCharacter, "Player sheet");
+    await createWorkspaceCharacter(databaseFromPool(pool!), actors.gm, game, gmCharacter, "GM sheet");
+    await createWorkspaceCharacter(databaseFromPool(pool!), actors.player, game, playerCharacter, "Player sheet");
     await createWorkspaceCharacter(
-      pool!,
+      databaseFromPool(pool!),
       actors.outsider,
       otherGame,
       foreignCharacter,
@@ -122,7 +125,7 @@ describe.skipIf(!url)("API permission boundaries", () => {
     tokens = {};
     for (const [name, actor] of Object.entries(actors))
       tokens[name] = (
-        await createSession(pool!, actor.accountId, new Date(Date.now() + 60_000))
+        await createSession(databaseFromPool(pool!), actor.accountId, new Date(Date.now() + 60_000))
       ).token;
   });
 

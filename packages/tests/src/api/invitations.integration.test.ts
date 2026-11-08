@@ -57,4 +57,42 @@ describe.skipIf(!url)("API invitations", () => {
       ).rowCount,
     ).toBe(0);
   });
+
+  it("creates membership and assigns a character when an outsider accepts a character invitation", async () => {
+    const { ids, request, pool } = fixture;
+    const created = await request(`/games/${ids.game}/invitations`, "gm", "POST", {
+      kind: "character",
+      characterId: ids.gmCharacter,
+    });
+    expect(created.status).toBe(200);
+    const token = (await created.json()).invitation.url.split("/").at(-1);
+    const preview = await request(`/invitations/${token}`, "outsider");
+    expect(preview.status).toBe(200);
+    expect((await preview.json()).invitation).toMatchObject({
+      kind: "character",
+      characterId: ids.gmCharacter,
+      alreadyMember: false,
+    });
+    const accepted = await request(`/invitations/${token}/accept`, "outsider", "POST", {
+      makeActive: true,
+    });
+    expect(accepted.status).toBe(200);
+    expect(await accepted.json()).toMatchObject({
+      gameId: ids.game,
+      characterId: ids.gmCharacter,
+      active: true,
+    });
+    const saved = await pool.query(
+      "SELECT p.id, p.active_character_id, c.player_id FROM players p JOIN characters c ON c.player_id=p.id WHERE p.game_id=$1 AND p.account_id=$2 AND c.id=$3",
+      [ids.game, ids.outsider, ids.gmCharacter],
+    );
+    expect(saved.rows).toHaveLength(1);
+    expect(saved.rows[0]).toMatchObject({
+      active_character_id: ids.gmCharacter,
+      player_id: saved.rows[0].id,
+    });
+    expect((await request(`/invitations/${token}/accept`, "outsider", "POST", {})).status).toBe(
+      404,
+    );
+  });
 });

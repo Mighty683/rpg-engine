@@ -37,6 +37,11 @@ export class GamesPage {
     await this.submitButton.click();
   }
 
+  async returnToGames() {
+    await this.page.getByTestId("open-navigation").click();
+    await this.page.getByTestId("nav-games").click();
+  }
+
   async openGame(name: string) {
     await this.gameRow(name).getByTestId("game-row-link").click();
   }

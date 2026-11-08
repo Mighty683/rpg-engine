@@ -1,79 +1,141 @@
-import type { Pool, PoolClient } from "pg";
+import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
+import type { Database } from "../../database/client.ts";
+import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+import { characters, games, invitations, players } from "../../database/schema.ts";
 import type { Actor } from "../auth/guards.ts";
 import { lockGame } from "../games/service.ts";
 import { closeMemberStreams, publishGameEvent } from "../events/streams.ts";
 
-type MemberRow = { id: string; account_id: string; name: string; removed: boolean; active_character_id: string | null; revision: number };
-const presentMember = (row: MemberRow) => ({ id: row.id, accountId: row.account_id, name: row.name, removed: row.removed, activeCharacterId: row.active_character_id, revision: row.revision });
+const memberFields = {
+  id: players.id,
+  accountId: players.accountId,
+  name: players.name,
+  removed: players.removed,
+  activeCharacterId: players.activeCharacterId,
+  revision: players.revision,
+};
 const failure = (code: string) => Object.assign(new Error(code), { code });
 
-async function transaction<T>(pool: Pool, operation: (client: PoolClient) => Promise<T>) {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const result = await operation(client);
-    await client.query("COMMIT");
-    return result;
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-export async function listMembers(pool: Pool, actor: Actor, gameId: string) {
-  const result = await pool.query<MemberRow>(
-    `SELECT p.id,p.account_id,p.name,p.removed,p.active_character_id,p.revision
-     FROM players p JOIN games g ON g.id=p.game_id
-     WHERE p.game_id=$1 AND (g.gm_account_id=$2 OR (NOT p.removed AND EXISTS
-       (SELECT 1 FROM players viewer WHERE viewer.game_id=g.id AND viewer.account_id=$2 AND NOT viewer.removed)))
-     ORDER BY p.name,p.id`, [gameId, actor.accountId],
+export async function listMembers(database: Database, actor: Actor, gameId: string) {
+  const db = database;
+  const viewer = alias(players, "viewer");
+  const viewerMembership = db
+    .select({ id: viewer.id })
+    .from(viewer)
+    .where(
+      and(
+        eq(viewer.gameId, games.id),
+        eq(viewer.accountId, actor.accountId),
+        eq(viewer.removed, false),
+      ),
+    );
+  const permitted = or(
+    eq(games.gmAccountId, actor.accountId),
+    and(eq(players.removed, false), exists(viewerMembership)),
   );
-  return result.rows.map(presentMember);
+  return db
+    .select(memberFields)
+    .from(players)
+    .innerJoin(games, eq(games.id, players.gameId))
+    .where(and(eq(players.gameId, gameId), permitted))
+    .orderBy(players.name, players.id);
 }
 
-export async function setMemberRemoved(pool: Pool, actor: Actor, gameId: string, membershipId: string, removed: boolean) {
-  const result = await transaction(pool, async (client) => {
-    const access = await lockGame(client, actor, gameId);
+export async function setMemberRemoved(
+  database: Database,
+  actor: Actor,
+  gameId: string,
+  membershipId: string,
+  removed: boolean,
+) {
+  const result = await transaction(database, async (tx) => {
+    const db = tx;
+    const access = await lockGame(tx, actor, gameId);
     if (access.role !== "GM") throw failure("forbidden");
-    const selected = await client.query<MemberRow>("SELECT id,account_id,name,removed,active_character_id,revision FROM players WHERE id=$1 AND game_id=$2", [membershipId, gameId]);
-    const member = selected.rows[0];
+    const [member] = await db
+      .select(memberFields)
+      .from(players)
+      .where(and(eq(players.id, membershipId), eq(players.gameId, gameId)));
     if (!member) throw failure("not_found");
-    if (member.removed === removed) return { member: presentMember(member), changed: false };
+    if (member.removed === removed) return { member, changed: false };
     if (removed) {
-      await client.query("DELETE FROM invitations WHERE character_id IN (SELECT id FROM characters WHERE game_id=$1 AND player_id=$2)", [gameId, membershipId]);
-      await client.query("UPDATE players SET active_character_id=NULL, revision=revision + CASE WHEN active_character_id IS NULL THEN 0 ELSE 1 END WHERE id=$1", [membershipId]);
-      await client.query("UPDATE characters SET player_id=NULL,gm_active=false WHERE game_id=$1 AND player_id=$2", [gameId, membershipId]);
+      const owned = db
+        .select({ id: characters.id })
+        .from(characters)
+        .where(and(eq(characters.gameId, gameId), eq(characters.playerId, membershipId)));
+      await db.delete(invitations).where(inArray(invitations.characterId, owned));
+      await db
+        .update(players)
+        .set({
+          activeCharacterId: null,
+          revision: sql`${players.revision} + CASE WHEN ${players.activeCharacterId} IS NULL THEN 0 ELSE 1 END`,
+        })
+        .where(eq(players.id, membershipId));
+      await db
+        .update(characters)
+        .set({ playerId: null, gmActive: false })
+        .where(and(eq(characters.gameId, gameId), eq(characters.playerId, membershipId)));
     }
-    const updated = await client.query<MemberRow>("UPDATE players SET removed=$2 WHERE id=$1 RETURNING id,account_id,name,removed,active_character_id,revision", [membershipId, removed]);
-    return { member: presentMember(updated.rows[0]!), changed: true };
+    const [updated] = await db
+      .update(players)
+      .set({ removed })
+      .where(eq(players.id, membershipId))
+      .returning(memberFields);
+    return { member: updated!, changed: true };
   });
   if (result.changed) {
-    if (removed) closeMemberStreams(gameId, result.member.accountId);
-    publishGameEvent(gameId, { type: "roster" });
+    if (removed) await notifyAfterCommit(() => closeMemberStreams(gameId, result.member.accountId));
+    await notifyAfterCommit(() => publishGameEvent(gameId, { type: "roster" }));
   }
   return result.member;
 }
 
-export async function selectPlayerCharacter(pool: Pool, actor: Actor, gameId: string, expectedRevision: number, characterId: string | null, targetMembershipId?: string) {
-  const result = await transaction(pool, async (client) => {
-    const access = await lockGame(client, actor, gameId);
+export async function selectPlayerCharacter(
+  database: Database,
+  actor: Actor,
+  gameId: string,
+  expectedRevision: number,
+  characterId: string | null,
+  targetMembershipId?: string,
+) {
+  const result = await transaction(database, async (tx) => {
+    const db = tx;
+    const access = await lockGame(tx, actor, gameId);
     if (targetMembershipId && access.role !== "GM") throw failure("forbidden");
     if (!targetMembershipId && access.role !== "Player") throw failure("forbidden");
-    const membershipId = targetMembershipId ?? (access.role === "Player" ? access.membershipId : null);
-    const members = await client.query<MemberRow>("SELECT id,account_id,name,removed,active_character_id,revision FROM players WHERE id=$1 AND game_id=$2 AND NOT removed", [membershipId, gameId]);
-    const member = members.rows[0];
+    const membershipId =
+      targetMembershipId ?? (access.role === "Player" ? access.membershipId : null);
+    if (!membershipId) throw failure("not_found");
+    const [member] = await db
+      .select(memberFields)
+      .from(players)
+      .where(
+        and(eq(players.id, membershipId), eq(players.gameId, gameId), eq(players.removed, false)),
+      );
     if (!member) throw failure("not_found");
     if (member.revision !== expectedRevision) throw failure("stale_revision");
     if (characterId !== null) {
-      const character = await client.query("SELECT id FROM characters WHERE id=$1 AND game_id=$2 AND player_id=$3", [characterId, gameId, membershipId]);
-      if (!character.rowCount) throw failure("not_found");
+      const [character] = await db
+        .select({ id: characters.id })
+        .from(characters)
+        .where(
+          and(
+            eq(characters.id, characterId),
+            eq(characters.gameId, gameId),
+            eq(characters.playerId, membershipId),
+          ),
+        );
+      if (!character) throw failure("not_found");
     }
-    if (member.active_character_id === characterId) return { member: presentMember(member), changed: false };
-    const updated = await client.query<MemberRow>("UPDATE players SET active_character_id=$2,revision=revision+1 WHERE id=$1 RETURNING id,account_id,name,removed,active_character_id,revision", [membershipId, characterId]);
-    return { member: presentMember(updated.rows[0]!), changed: true };
+    if (member.activeCharacterId === characterId) return { member, changed: false };
+    const [updated] = await db
+      .update(players)
+      .set({ activeCharacterId: characterId, revision: sql`${players.revision}+1` })
+      .where(eq(players.id, membershipId))
+      .returning(memberFields);
+    return { member: updated!, changed: true };
   });
-  if (result.changed) publishGameEvent(gameId, { type: "roster" });
+  if (result.changed) await notifyAfterCommit(() => publishGameEvent(gameId, { type: "roster" }));
   return result.member;
 }

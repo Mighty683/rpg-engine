@@ -1,18 +1,18 @@
 import { Controller, RequestError, Route } from "arrow-express";
-import type { Pool } from "pg";
-import { requireActor, requireWriteOrigin } from "../auth/guards.ts";
-import { createActorGame, getActorGame, listActorGames, validateGame, type GameActor } from "./service.ts";
+import type { Services } from "../../services.ts";
+import { requireWriteOrigin } from "../auth/guards.ts";
+import { validateGame, type GameActor } from "./service.ts";
 
-export function gamesController(pool: Pool) {
+export function gamesController(services: Pick<Services, "auth" | "games">) {
   return Controller()
     .prefix("games")
     .handler(async (request) => {
       if (request.method !== "GET") requireWriteOrigin(request);
-      return requireActor(pool, request);
+      return services.auth.requireActor(request);
     })
     .registerRoutes(
       Route<GameActor>().method("get").path("").handler(async (_request, _response, actor) => ({
-        games: await listActorGames(pool, actor),
+        games: await services.games.listActorGames(actor),
       })),
       Route<GameActor>().method("post").path("").handler(async (request, response, actor) => {
         if (!request.body || typeof request.body !== "object" || Array.isArray(request.body)) {
@@ -22,13 +22,13 @@ export function gamesController(pool: Pool) {
         if (Object.keys(fields).length) {
           throw new RequestError(422, { error: { code: "validation", message: "Check the fields.", fields } });
         }
-        const game = await createActorGame(pool, actor, name, systemId);
+        const game = await services.games.createActorGame(actor, name, systemId);
         response.status(201);
         return { game };
       }),
       Route<GameActor>().method("get").path(":gameId").handler(async (request, _response, actor) => {
         const gameId = routeId(request.params.gameId);
-        const game = await getActorGame(pool, actor, gameId);
+        const game = await services.games.getActorGame(actor, gameId);
         if (!game) throw new RequestError(404, { error: { code: "not_found", message: "Game not found." } });
         return { game };
       }),

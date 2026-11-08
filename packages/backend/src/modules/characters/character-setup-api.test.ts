@@ -1,3 +1,4 @@
+import { databaseFromPool } from "../../database/client.ts";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { describe, expect, it } from "vite-plus/test";
@@ -13,7 +14,7 @@ describe("character setup scoped API", () => {
     await admin.query(`CREATE SCHEMA "${schema}"`);
     const pool = new pg.Pool({ connectionString, options: `-c search_path=${schema}` });
     await applyMigrations(pool);
-    const server = createApp(pool).listen(0, "127.0.0.1");
+    const server = createApp(databaseFromPool(pool)).listen(0, "127.0.0.1");
     await new Promise<void>((resolve) => server.once("listening", resolve));
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("No server address");

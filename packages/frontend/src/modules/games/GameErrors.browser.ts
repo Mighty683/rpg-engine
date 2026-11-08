@@ -12,7 +12,7 @@ import "../../style.css";
 test("API failures show toasts while retry and form input remain available", async () => {
   let listAttempts = 0;
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input);
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     if (init?.method === "POST") {
       return new Response(JSON.stringify({ error: { fields: { name: "Choose a different name." } } }), { status: 422 });
     }

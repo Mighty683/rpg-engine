@@ -1,3 +1,4 @@
+import { secureFetch } from "../../shared/secure-fetch.ts";
 import { request as apiRequest } from "../../shared/api";
 
 export type GameInvitation = {
@@ -18,7 +19,7 @@ export type InvitationPreview = {
 };
 
 async function request<T>(token: string, accept?: { makeActive: boolean }): Promise<T> {
-  const response = await fetch(`/api/invitations/${encodeURIComponent(token)}${accept ? "/accept" : ""}`, accept ? {
+  const response = await secureFetch(`/api/invitations/${encodeURIComponent(token)}${accept ? "/accept" : ""}`, accept ? {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(accept),

@@ -1,3 +1,4 @@
+import { databaseFromPool } from "../../database/client.ts";
 import { describe, expect, it } from "vite-plus/test";
 import { createApp } from "../../app.ts";
 import { validateGame } from "./service.ts";
@@ -38,7 +39,7 @@ describe("game API", () => {
         ],
       };
     };
-    const server = createApp({ query } as unknown as Pool).listen(0, "127.0.0.1");
+    const server = createApp(databaseFromPool({ query } as unknown as Pool)).listen(0, "127.0.0.1");
     await new Promise<void>((resolve) => server.once("listening", resolve));
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("No server address");

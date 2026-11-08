@@ -22,9 +22,11 @@ async function mountTable(post: (body: unknown) => Promise<Response>) {
   let historyReads = 0;
   const submissions: unknown[] = [];
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input);
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    if (url.endsWith("/auth/csrf")) return Response.json({ csrfToken: "test-token" });
     if (url.includes("/throws") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body));
+      if (typeof init.body !== "string") throw new Error("Expected a JSON request body");
+      const body = JSON.parse(init.body);
       submissions.push(body);
       return post(body);
     }

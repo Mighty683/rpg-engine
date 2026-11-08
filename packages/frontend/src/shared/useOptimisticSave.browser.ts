@@ -68,7 +68,12 @@ test("rolls back known rejection and refreshes after an uncertain outcome", asyn
   await flush();
   expect(refresh).toHaveBeenCalledTimes(1);
   expect(state.paused.value).toBe(true);
-  expect(state.acknowledged.value).toEqual({ value: 5, revision: 4 });
+  expect(state.latestSaved.value).toEqual({ value: 5, revision: 4 });
+  expect(state.acknowledged.value).toEqual({ value: 0, revision: 0 });
+  expect(state.displayed.value).toEqual({ value: 4, revision: 0 });
+  await state.retry();
+  expect(state.displayed.value).toEqual({ value: 5, revision: 4 });
+  expect(state.paused.value).toBe(false);
 });
 
 test("keeps an in-flight edit visible when a later edit targets another field", async () => {

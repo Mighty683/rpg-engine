@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
-import type { Pool } from "pg";
+import type { Database } from "../../database/client.ts";
 import { Application, ExpressAdapter } from "arrow-express";
 import express from "express";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { type GameAccessRepository } from "../games/service.ts";
 import { membershipsController } from "./membership-controller.ts";
+import { createServices } from "../../services.ts";
 
 const state = vi.hoisted(() => ({
   games: new Map<string, string>(),
@@ -13,8 +14,9 @@ const state = vi.hoisted(() => ({
   sessions: new Map<string, string>(),
 }));
 
-vi.mock("../auth/sessions.ts", () => ({
-  resolveSession: async (_pool: Pool, token: string) => {
+vi.mock("../auth/sessions.ts", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../auth/sessions.ts")>(),
+  resolveSession: async (_pool: Database, token: string) => {
     const accountId = state.sessions.get(token);
     return accountId ? { accountId, sessionId: token } : null;
   },
@@ -25,7 +27,7 @@ vi.mock("../games/service.ts", async (importOriginal) => {
   return {
     ...original,
     gameAccess: async (
-      _pool: Pool,
+      _pool: Database,
       actor: { accountId: string; sessionId: string },
       gameId: string,
     ) => original.resolveGameAccess(repository, actor, gameId),
@@ -35,7 +37,7 @@ vi.mock("../games/service.ts", async (importOriginal) => {
 vi.mock("./membership.ts", () => ({
   listMembers: async () => [...state.members.values()],
   setMemberRemoved: async (
-    _pool: Pool,
+    _pool: Database,
     _actor: unknown,
     gameId: string,
     memberId: string,
@@ -82,7 +84,7 @@ describe("membership API permissions with in-memory access repository", () => {
       app,
       Application()
         .prefix("api")
-        .registerControllers(membershipsController({} as Pool)),
+        .registerControllers(membershipsController(createServices({} as Database))),
     ).configure(false);
     server = app.listen(0, "127.0.0.1");
     await new Promise<void>((resolve, reject) => {
