@@ -1,3 +1,5 @@
+import { createGameAccessService } from "../../../backend/src/modules/games/service.ts";
+import { createGameEvents } from "../../../backend/src/modules/events/streams.ts";
 import { databaseFromPool } from "../../../backend/src/database/client.ts";
 import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
@@ -113,10 +115,10 @@ describe.skipIf(!url)("API permission boundaries", () => {
       player: { accountId: player, sessionId: randomUUID() },
       outsider: { accountId: outsider, sessionId: randomUUID() },
     };
-    await createWorkspaceCharacter(databaseFromPool(pool!), actors.gm, game, gmCharacter, "GM sheet");
-    await createWorkspaceCharacter(databaseFromPool(pool!), actors.player, game, playerCharacter, "Player sheet");
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, actors.gm, game, gmCharacter, "GM sheet");
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, actors.player, game, playerCharacter, "Player sheet");
     await createWorkspaceCharacter(
-      databaseFromPool(pool!),
+      { gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) },
       actors.outsider,
       otherGame,
       foreignCharacter,

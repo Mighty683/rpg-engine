@@ -1,11 +1,11 @@
+import type { Actor } from "../auth/types.ts";
+import type { GameAccessFactory } from "../games/types.ts";
+import type { GameEvents } from "../events/types.ts";
 import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
-import type { Database } from "../../database/client.ts";
+import type { Database } from "../../database/types.ts";
 import { and, eq, exists, inArray, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { characters, games, invitations, players } from "../../database/schema.ts";
-import type { Actor } from "../auth/guards.ts";
-import { lockGame } from "../games/service.ts";
-import { closeMemberStreams, publishGameEvent } from "../events/streams.ts";
 
 const memberFields = {
   id: players.id,
@@ -43,7 +43,7 @@ export async function listMembers(database: Database, actor: Actor, gameId: stri
 }
 
 export async function setMemberRemoved(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: Actor,
   gameId: string,
   membershipId: string,
@@ -51,7 +51,7 @@ export async function setMemberRemoved(
 ) {
   const result = await transaction(database, async (tx) => {
     const db = tx;
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     if (access.role !== "GM") throw failure("forbidden");
     const [member] = await db
       .select(memberFields)
@@ -85,14 +85,14 @@ export async function setMemberRemoved(
     return { member: updated!, changed: true };
   });
   if (result.changed) {
-    if (removed) await notifyAfterCommit(() => closeMemberStreams(gameId, result.member.accountId));
-    await notifyAfterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    if (removed) await notifyAfterCommit(() => events.closeMemberStreams(gameId, result.member.accountId));
+    await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
   }
   return result.member;
 }
 
 export async function selectPlayerCharacter(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: Actor,
   gameId: string,
   expectedRevision: number,
@@ -101,7 +101,7 @@ export async function selectPlayerCharacter(
 ) {
   const result = await transaction(database, async (tx) => {
     const db = tx;
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     if (targetMembershipId && access.role !== "GM") throw failure("forbidden");
     if (!targetMembershipId && access.role !== "Player") throw failure("forbidden");
     const membershipId =
@@ -136,6 +136,6 @@ export async function selectPlayerCharacter(
       .returning(memberFields);
     return { member: updated!, changed: true };
   });
-  if (result.changed) await notifyAfterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+  if (result.changed) await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
   return result.member;
 }

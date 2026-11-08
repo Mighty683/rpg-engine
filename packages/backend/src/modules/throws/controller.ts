@@ -1,11 +1,11 @@
+import type { ThrowContext, ThrowsService, CreateThrowInput } from "./types.ts";
+import type { AuthService } from "../auth/types.ts";
+import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
-import type { Services } from "../../services.ts";
-import { requireWriteOrigin } from "../auth/guards.ts";
-import { routeId } from "../games/controller.ts";
-import { type GameActor } from "../games/service.ts";
-import { fail, parseCreateRequest, type CreateThrowInput } from "./contract.ts";
 
-type ThrowContext = { actor: GameActor; gameId: string };
+import { routeId } from "../games/controller.ts";
+
+import { fail, parseCreateRequest } from "./contract.ts";
 
 const pageLimit = (value: unknown) => {
   const limit = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : 20;
@@ -46,11 +46,11 @@ function requestError(error: unknown): never {
   throw new RequestError(status, { error: { code: e.code!, message: messages[e.code!] ?? "Request failed." } });
 }
 
-export function throwsController(services: Pick<Services, "auth" | "games" | "throws">) {
+export function throwsController(services: { auth: AuthService; games: GamesService; throws: ThrowsService }) {
   return Controller()
     .prefix("games/:gameId/throws")
     .handler(async (request) => {
-      if (request.method !== "GET") requireWriteOrigin(request);
+      if (request.method !== "GET") services.auth.requireWriteOrigin(request);
       const actor = await services.auth.requireActor(request);
       const gameId = routeId(request.params.gameId);
       const access = await services.games.gameAccess(actor, gameId);

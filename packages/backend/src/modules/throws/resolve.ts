@@ -1,57 +1,12 @@
+import type { ResolutionContext, BaseSetup, RollCharacter, ResolvedThrow, CreateThrowInput, OutcomeJson, ThrowKind, ThrowSetup } from "./types.ts";
+import type { Attribute, Die, DieSource, RolledDie } from "../fabula/types.ts";
 // Pure throw resolution: turns a validated setup plus current game facts into a
 // persisted snapshot (resolved setup + structured outcome). Dice come from the
 // injected die source so tests can script faces. All permission decisions are made
 // here from resolved context, never from request fields alone.
-import type { Attribute, Die, EquipmentEntry, FabulaSheet } from "../fabula/rules.ts";
-import {
-  checkSide,
-  effectiveDie,
-  genericSide,
-  opposedOutcome,
-  rollDie,
-  standardDice,
-  type DieSource,
-  type RolledDie,
-} from "../fabula/rolls.ts";
-import { fail, gmActorId, type CreateThrowInput, type OutcomeJson, type ResolvedSetup, type ThrowKind, type ThrowSetup } from "./contract.ts";
 
-export type RollCharacter = {
-  id: string;
-  playerId: string | null;
-  revision: number;
-  name: string;
-  sheet: FabulaSheet;
-};
-
-export type SourceThrow = {
-  kind: ThrowKind;
-  setup: ResolvedSetup;
-  characterId: string | null;
-  equipmentId: string | null;
-};
-
-export type ResolutionContext = {
-  role: "GM" | "Player";
-  membershipId: string | null;
-  activeCharacterIds: readonly string[];
-  ownActiveCharacterId: string | null;
-  character: RollCharacter | null;
-  weapon: Extract<EquipmentEntry, { kind: "weapon" }> | null;
-  source: SourceThrow | null;
-};
-
-export type ResolvedThrow = {
-  kind: ThrowKind;
-  role: "GM" | "Player";
-  characterId: string | null;
-  characterName: string;
-  equipmentId: string | null;
-  equipmentName: string | null;
-  setup: ResolvedSetup;
-  outcome: OutcomeJson;
-};
-
-type BaseSetup = Omit<ResolvedSetup, "kind">;
+import { checkSide, effectiveDie, genericSide, opposedOutcome, rollDie, standardDice } from "../fabula/rolls.ts";
+import { fail, gmActorId } from "./contract.ts";
 
 function requireRollableCharacter(context: ResolutionContext, characterId: string) {
   const character = context.character;

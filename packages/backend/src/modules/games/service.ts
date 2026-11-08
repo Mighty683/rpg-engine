@@ -1,5 +1,6 @@
+import type { GameRow, GameAccessRepository, GameActor, GameAccess, DatabaseExecutor } from "./types.ts";
 import { randomUUID } from "node:crypto";
-import type { Database, DatabaseTransaction } from "../../database/client.ts";
+import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { games, players } from "../../database/schema.ts";
 import { findSystem } from "../rpg-systems/catalog.ts";
@@ -16,25 +17,10 @@ export function validateGame(input: unknown) {
   return { name, systemId, fields };
 }
 
-type GameRow = { id: string; name: string; systemId: string; createdAt: Date };
-
 function presentGame(row: GameRow) {
   const system = findSystem(row.systemId);
   if (!system) throw new Error("Saved game references an unknown RPG system");
   return { id: row.id, name: row.name, system, createdAt: row.createdAt.toISOString() };
-}
-
-export type GameActor = { accountId: string; sessionId: string };
-export type GameAccess =
-  | { role: "GM"; membershipId: null }
-  | { role: "Player"; membershipId: string };
-type DatabaseExecutor = Database | DatabaseTransaction;
-
-export type GameAccessRecord = { gmAccountId: string; membershipId: string | null };
-
-/** Reads membership for an account; callers make the authorization decision. */
-export interface GameAccessRepository {
-  findGameAccess(gameId: string, accountId: string): Promise<GameAccessRecord | null>;
 }
 
 export async function resolveGameAccess(
@@ -83,6 +69,14 @@ export async function lockGame(db: DatabaseTransaction, actor: GameActor, gameId
   const access = await gameAccess(db, actor, gameId);
   if (!access) throw Object.assign(new Error("not_found"), { code: "not_found" });
   return access;
+}
+
+/** Binds authorization to the executor for the current transaction. */
+export function createGameAccessService(db: DatabaseTransaction) {
+  return {
+    gameAccess: (actor: GameActor, gameId: string) => gameAccess(db, actor, gameId),
+    lockGame: (actor: GameActor, gameId: string) => lockGame(db, actor, gameId),
+  };
 }
 
 const gameFields = {

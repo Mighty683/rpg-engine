@@ -1,5 +1,6 @@
+import type { EquipmentEntry } from "./types.ts";
 import { describe, expect, it } from "vite-plus/test";
-import { defaultSheet, mergeSheet, preview, validateSheet, type EquipmentEntry } from "./rules.ts";
+import { defaultSheet, mergeSheet, preview, validateSheet } from "./rules.ts";
 
 describe("Fabula manual sheet rules", () => {
   it("creates the documented level-five defaults and partial maxima", () => {

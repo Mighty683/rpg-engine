@@ -1,32 +1,14 @@
+import type { DieSource, RolledDie, CheckResult, SideOutcome, OpposedOutcome, Attribute, Die } from "./types.ts";
 // Fabula Ultima dice resolution: pure outcome calculation over rolled faces with an
 // injectable die source. Production passes the server's uniform random generator;
 // tests pass a seeded or scripted one. See docs/spec/fabula-ultima/checks.md.
 import { randomInt } from "node:crypto";
-import type { Attribute, Die } from "./rules.ts";
 
 export const standardDice: readonly Die[] = [6, 8, 10, 12];
 export const freeDice: readonly number[] = [4, 6, 8, 10, 12, 20];
 
-export type DieSource = (sides: number) => number;
-
 /** Uniform random die roll in production; always returns an integer in [1, sides]. */
 export const serverDieSource: DieSource = (sides) => randomInt(1, sides + 1);
-
-export type RolledDie = { label: string | null; size: number; face: number };
-export type CheckResult = "fumble" | "critical" | "ordinary";
-
-export type SideOutcome = {
-  dice: RolledDie[];
-  modifier: number;
-  total: number;
-  result: CheckResult | "none";
-};
-
-export type OpposedOutcome = {
-  first: SideOutcome;
-  second: SideOutcome;
-  winner: "first" | "second" | "tie";
-};
 
 /** Rolls one die of the given size with the supplied die source. */
 export function rollDie(label: string | null, size: number, source: DieSource): RolledDie {
@@ -74,8 +56,6 @@ export function opposedOutcome(first: SideOutcome, second: SideOutcome): Opposed
     winner: firstRank === secondRank ? "tie" : firstRank > secondRank ? "first" : "second",
   };
 }
-
-export type AttributePair = [Attribute, Attribute?] | [Attribute];
 
 /** Resolves the effective die size for an attribute, defaulting to the sheet's base die. */
 export function effectiveDie(baseDice: Record<Attribute, Die>, attribute: Attribute, requested: number | undefined): Die {

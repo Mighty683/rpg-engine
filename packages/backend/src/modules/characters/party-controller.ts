@@ -1,8 +1,10 @@
+import type { AuthService } from "../auth/types.ts";
+import type { CharactersService } from "./types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
-import type { Services } from "../../services.ts";
+
 import { routeId } from "../games/controller.ts";
 
-export function partyController(services: Pick<Services, "auth" | "characters">) {
+export function partyController(services: { auth: AuthService; characters: CharactersService }) {
   return Controller()
     .prefix("games/:gameId/party")
     .handler(async (request) => {

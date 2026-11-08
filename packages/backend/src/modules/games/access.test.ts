@@ -1,5 +1,6 @@
+import type { GameAccessRepository } from "./types.ts";
 import { describe, expect, it } from "vite-plus/test";
-import { resolveGameAccess, type GameAccessRepository } from "./service.ts";
+import { resolveGameAccess } from "./service.ts";
 
 class MemoryGameAccessRepository implements GameAccessRepository {
   games = new Map<string, string>();

@@ -1,3 +1,7 @@
+import type { SummaryRow } from "./types.ts";
+import type { FabulaSheet } from "../fabula/types.ts";
+import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
+import type { GameEvents } from "../events/types.ts";
 import { transaction } from "../../database/transaction.ts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import {
@@ -11,23 +15,14 @@ import {
   characterEquipment,
   characterFields,
 } from "../../database/schema.ts";
-import type { Database, DatabaseTransaction } from "../../database/client.ts";
-import { defaultSheet, mergeSheet, type FabulaSheet } from "../fabula/rules.ts";
-import { gameAccess, lockGame, type GameActor, type GameAccess } from "../games/service.ts";
-import { publishGameEvent } from "../events/streams.ts";
+import type { Database, DatabaseTransaction } from "../../database/types.ts";
+import { defaultSheet, mergeSheet } from "../fabula/rules.ts";
+
 import { present, sheetSequential } from "./service.ts";
 import { canEditCharacter } from "./access.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
-type SummaryRow = {
-  id: string;
-  name: string;
-  level: number;
-  player_id: string | null;
-  controller_name: string | null;
-  active: boolean;
-  created_at: Date;
-};
+
 const summary = (row: SummaryRow, access: GameAccess) => ({
   id: row.id,
   name: row.name,
@@ -60,17 +55,17 @@ function characterSummaries(tx: DatabaseTransaction, gameId: string, id?: string
     .orderBy(characters.createdAt, characters.id);
 }
 
-async function requireReadAccess(tx: DatabaseTransaction, actor: GameActor, gameId: string) {
-  const access = await gameAccess(tx, actor, gameId);
+async function requireReadAccess(gameAccessFor: GameAccessFactory, tx: DatabaseTransaction, actor: GameActor, gameId: string) {
+  const access = await gameAccessFor(tx).gameAccess(actor, gameId);
   if (!access) throw fail("not_found");
   return access;
 }
 
-export async function listWorkspaceCharacters(database: Database, actor: GameActor, gameId: string) {
+export async function listWorkspaceCharacters({ gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database }, actor: GameActor, gameId: string) {
   return transaction(
     database,
     async (tx) => {
-      const access = await requireReadAccess(tx, actor, gameId);
+      const access = await requireReadAccess(gameAccessFor, tx, actor, gameId);
       const result = await characterSummaries(tx, gameId);
       return result.map((item) => summary(item, access));
     },
@@ -79,7 +74,7 @@ export async function listWorkspaceCharacters(database: Database, actor: GameAct
 }
 
 export async function getWorkspaceCharacter(
-  database: Database,
+  { gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
@@ -87,7 +82,7 @@ export async function getWorkspaceCharacter(
   return transaction(
     database,
     async (tx) => {
-      const access = await requireReadAccess(tx, actor, gameId);
+      const access = await requireReadAccess(gameAccessFor, tx, actor, gameId);
       const result = {
         rows: await tx
           .select(characterFields)
@@ -107,14 +102,14 @@ export async function getWorkspaceCharacter(
 }
 
 export async function createWorkspaceCharacter(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
   name: string,
 ) {
   return transaction(database, async (tx, afterCommit) => {
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     const sheet = defaultSheet(name);
     const receipt = await tx
       .select({
@@ -181,20 +176,20 @@ export async function createWorkspaceCharacter(
         .update(players)
         .set({ activeCharacterId: id, revision: sql`${players.revision}+1` })
         .where(and(eq(players.id, access.membershipId), isNull(players.activeCharacterId)));
-    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
     return { record: { ...present(inserted[0], sheet), canEdit: true }, created: true };
   });
 }
 
 export async function setGmCharacterActive(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
   active: boolean,
 ) {
   return transaction(database, async (tx, afterCommit) => {
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     if (access.role !== "GM") throw fail("forbidden");
     const changed = await tx
       .update(characters)
@@ -209,13 +204,13 @@ export async function setGmCharacterActive(
       throw fail(existing.length ? "forbidden" : "not_found");
     }
     const result = await characterSummaries(tx, gameId, id);
-    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
     return summary(result[0]!, access);
   });
 }
 
 export async function updateWorkspaceCharacter(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   gameId: string,
   actor: GameActor,
   id: string,
@@ -223,7 +218,7 @@ export async function updateWorkspaceCharacter(
   changes: Partial<FabulaSheet>,
 ) {
   return transaction(database, async (c, afterCommit) => {
-    const access = await lockGame(c, actor, gameId);
+    const access = await gameAccessFor(c).lockGame(actor, gameId);
     const found = {
       rows: await c
         .select(characterFields)
@@ -349,8 +344,8 @@ export async function updateWorkspaceCharacter(
       }
     }
     const out = present({ ...r, revision: r.revision + 1, updated_at: new Date() }, s);
-    afterCommit(() => publishGameEvent(gameId, { type: "sheet", characterId: id }));
-    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    afterCommit(() => events.publishGameEvent(gameId, { type: "sheet", characterId: id }));
+    afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
     return { ...out, canEdit: true };
   });
 }
@@ -364,14 +359,14 @@ async function clearActiveCharacter(tx: DatabaseTransaction, gameId: string, id:
 
 /** Changes control under the game lock and invalidates all outstanding character links. */
 export async function assignCharacter(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
   membershipId: string | null,
 ) {
   return transaction(database, async (tx, afterCommit) => {
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     if (access.role !== "GM") throw fail("forbidden");
     const existing = {
       rows: await tx
@@ -409,20 +404,20 @@ export async function assignCharacter(
     }
     const result = await characterSummaries(tx, gameId, id);
     if (character.player_id !== membershipId)
-      afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+      afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
     return summary(result[0]!, access);
   });
 }
 
 /** Permanently deletes a sheet while preserving its create-request receipt. */
 export async function deleteWorkspaceCharacter(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
 ) {
   return transaction(database, async (tx, afterCommit) => {
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     const existing = {
       rows: await tx
         .select(characterFields)
@@ -437,6 +432,6 @@ export async function deleteWorkspaceCharacter(
     await tx
       .delete(characters)
       .where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
-    afterCommit(() => publishGameEvent(gameId, { type: "roster" }));
+    afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
   });
 }

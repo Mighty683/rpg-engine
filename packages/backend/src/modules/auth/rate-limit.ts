@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { eq, lt, sql } from "drizzle-orm";
 import { rateLimit, type Options, type Store } from "express-rate-limit";
-import type { Database } from "../../database/client.ts";
+import type { Database } from "../../database/types.ts";
 import { signInAttempts } from "../../database/schema.ts";
 
 /** PostgreSQL-backed counters stay independent across policies and backend processes. */
-class PostgresRateStore implements Store {
+export class PostgresRateStore implements Store {
   private windowMs = 0;
   private nextCleanup = Date.now() + 60 * 60_000;
   constructor(
@@ -55,7 +55,7 @@ class PostgresRateStore implements Store {
   }
 }
 
-export function authenticationLimiters(database: Database) {
+export function authenticationLimiters(stores: { loginAddress: Store; loginAccount: Store; registration: Store }) {
   const options = {
     windowMs: 15 * 60_000,
     standardHeaders: "draft-8" as const,
@@ -66,12 +66,12 @@ export function authenticationLimiters(database: Database) {
     loginAddress: rateLimit({
       ...options,
       limit: 100,
-      store: new PostgresRateStore(database, "login-address"),
+      store: stores.loginAddress,
     }),
     loginAccount: rateLimit({
       ...options,
       limit: 20,
-      store: new PostgresRateStore(database, "login-account"),
+      store: stores.loginAccount,
       keyGenerator: (request) => {
         const username =
           typeof request.body?.username === "string"
@@ -83,7 +83,7 @@ export function authenticationLimiters(database: Database) {
     registration: rateLimit({
       ...options,
       limit: 10,
-      store: new PostgresRateStore(database, "registration"),
+      store: stores.registration,
     }),
   };
 }

@@ -1,4 +1,4 @@
-import type { GameAccess } from "../games/service.ts";
+import type { GameAccess } from "../games/types.ts";
 
 /** The GM can edit every sheet; a player can edit only their own. */
 export function canEditCharacter(access: GameAccess, controllerMembershipId: string | null) {

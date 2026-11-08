@@ -1,3 +1,5 @@
+import { createGameAccessService } from "../../../backend/src/modules/games/service.ts";
+import { createGameEvents } from "../../../backend/src/modules/events/streams.ts";
 import { databaseFromPool } from "../../../backend/src/database/client.ts";
 import { Given, Then, When } from "@cucumber/cucumber";
 import { expect, inject } from "vite-plus/test";
@@ -18,7 +20,7 @@ async function postThrow(game: SeededGame, setup: Record<string, unknown>) {
   const pool = await seedPool();
   try {
     const actor = { accountId: game.gm.accountId, sessionId: randomUUID() };
-    const result = await createThrow(databaseFromPool(pool), actor, game.gameId, { sourceThrowId: null, setup } as never);
+    const result = await createThrow({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, actor, game.gameId, { sourceThrowId: null, setup } as never);
     return result.record;
   } finally {
     await pool.end();

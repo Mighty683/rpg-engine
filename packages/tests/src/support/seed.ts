@@ -1,3 +1,5 @@
+import { createGameAccessService } from "../../../backend/src/modules/games/service.ts";
+import { createGameEvents } from "../../../backend/src/modules/events/streams.ts";
 import { databaseFromPool } from "../../../backend/src/database/client.ts";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
@@ -66,13 +68,13 @@ export async function seedGame(options: { gmWeapon?: "complete" | "incomplete" |
       unique("member"),
     ]);
     const gmCharacterId = randomUUID();
-    await createWorkspaceCharacter(databaseFromPool(pool), gmActor, gameId, gmCharacterId, unique("GM Hero"));
-    await setGmCharacterActive(databaseFromPool(pool), gmActor, gameId, gmCharacterId, true);
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, gmActor, gameId, gmCharacterId, unique("GM Hero"));
+    await setGmCharacterActive({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, gmActor, gameId, gmCharacterId, true);
     const playerCharacterIds: string[] = [];
     const playerCharacters = options.playerCharacters ?? 1;
     for (let index = 0; index < playerCharacters; index++) {
       const id = randomUUID();
-      await createWorkspaceCharacter(databaseFromPool(pool), playerActor, gameId, id, unique(`Player Hero ${index + 1}`));
+      await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, playerActor, gameId, id, unique(`Player Hero ${index + 1}`));
       playerCharacterIds.push(id);
     }
     const playerCharacterId = playerCharacterIds[0]!;
@@ -92,7 +94,7 @@ export async function seedGame(options: { gmWeapon?: "complete" | "incomplete" |
       const revision = Number(
         (await pool.query("SELECT revision FROM characters WHERE id=$1", [gmCharacterId])).rows[0]!.revision,
       );
-      await updateWorkspaceCharacter(databaseFromPool(pool), gameId, gmActor, gmCharacterId, revision, { equipment: [weapon] });
+      await updateWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, gameId, gmActor, gmCharacterId, revision, { equipment: [weapon] });
       weaponId = weapon.id;
     }
     return { gameId, gm, player, membershipId, gmCharacterId, playerCharacterId, playerCharacterIds, weaponId };

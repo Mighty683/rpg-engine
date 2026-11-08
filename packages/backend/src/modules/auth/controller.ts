@@ -1,33 +1,35 @@
+import type { AuthService, Actor } from "./types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 import type { Response } from "express";
-import type { Services } from "../../services.ts";
-import { requireWriteOrigin, type Actor } from "./guards.ts";
+
+import type { Configuration } from "../../types.ts";
+
 import { validateCredentials } from "./service.ts";
 
 const sessionDuration = 30 * 24 * 60 * 60 * 1000;
 
-function setSessionCookie(response: Response, token: string) {
+function setSessionCookie(response: Response, token: string, production: boolean) {
   response.cookie("rpg_session", token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: production,
     path: "/",
     maxAge: sessionDuration,
   });
 }
 
-function clearSessionCookie(response: Response) {
+function clearSessionCookie(response: Response, production: boolean) {
   response.clearCookie("rpg_session", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: production,
     path: "/",
   });
 }
 
-async function issueSession(auth: Services["auth"], response: Response, accountId: string) {
+async function issueSession(auth: AuthService, response: Response, accountId: string, production: boolean) {
   const session = await auth.createSession(accountId, new Date(Date.now() + sessionDuration));
-  setSessionCookie(response, session.token);
+  setSessionCookie(response, session.token, production);
 }
 
 async function withAvailabilityResponse<T>(operation: () => Promise<T>) {
@@ -40,11 +42,11 @@ async function withAvailabilityResponse<T>(operation: () => Promise<T>) {
   }
 }
 
-export function authController(services: Pick<Services, "auth">) {
+export function authController(services: { auth: AuthService; config: Configuration }) {
   return Controller()
     .prefix("auth")
     .handler(async (request) => {
-      if (request.method !== "GET") requireWriteOrigin(request);
+      if (request.method !== "GET") services.auth.requireWriteOrigin(request);
       if (request.path.endsWith("/me") || request.path.endsWith("/logout")) {
         return services.auth.requireActor(request);
       }
@@ -64,7 +66,7 @@ export function authController(services: Pick<Services, "auth">) {
           }
           throw error;
         }
-        await issueSession(services.auth, response, account.id);
+        await issueSession(services.auth, response, account.id, services.config.production);
         response.status(201);
         return { account };
       }),
@@ -74,7 +76,7 @@ export function authController(services: Pick<Services, "auth">) {
         const password = typeof body.password === "string" && Buffer.byteLength(body.password, "utf8") <= 1024 ? body.password : "";
         const result = await withAvailabilityResponse(() => services.auth.authenticateAccount(username, password));
         if (result.status === "invalid") throw new RequestError(401, { error: { code: "invalid_credentials", message: "Invalid username or password." } });
-        await issueSession(services.auth, response, result.account.id);
+        await issueSession(services.auth, response, result.account.id, services.config.production);
         return { account: result.account };
       }),
       Route<Actor | null>().method("get").path("me").handler(async (request) => {
@@ -86,7 +88,7 @@ export function authController(services: Pick<Services, "auth">) {
       Route<Actor | null>().method("post").path("logout").handler(async (request, response) => {
         const actor = await services.auth.requireActor(request);
         await services.auth.logout(actor.sessionId);
-        clearSessionCookie(response);
+        clearSessionCookie(response, services.config.production);
         return { ok: true };
       }),
     );

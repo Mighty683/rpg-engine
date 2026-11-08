@@ -21,8 +21,11 @@
 
 ## Backend dependencies
 
+- Keep each backend module’s type and interface declarations in its `types.ts`; put shared infrastructure types in the corresponding `types.ts`.
+
 - Assemble database-backed services in the application composition layer and inject them into controllers. Controllers must not receive the database or pass it to service calls.
-- Inject the service dependencies required by authorization and event handlers through the same composition path.
+- Inject configuration, event delivery, and the service dependencies required by authorization and event handlers through the same composition path.
+- Bind transaction-scoped services to the current transaction so authorization and mutations share the same database context.
 
 ## Database query security
 

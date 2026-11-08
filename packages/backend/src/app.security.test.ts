@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { Database } from "./database/client.ts";
+import type { Database } from "./database/types.ts";
 import { createApp } from "./app.ts";
 
 afterEach(() => vi.unstubAllEnvs());

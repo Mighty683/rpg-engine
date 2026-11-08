@@ -1,3 +1,6 @@
+import type { SideOutcomeJson, ThrowRecord } from "../../../backend/src/modules/throws/types.ts";
+import { createGameAccessService } from "../../../backend/src/modules/games/service.ts";
+import { createGameEvents } from "../../../backend/src/modules/events/streams.ts";
 import { databaseFromPool } from "../../../backend/src/database/client.ts";
 // Game Table API integration suite (handover API-02..API-05): active-party projection, throw
 // access and attribution, roll validation with persisted-state checks, history pagination and
@@ -7,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createSession } from "../../../backend/src/modules/auth/sessions.ts";
 import { createWorkspaceCharacter } from "../../../backend/src/modules/characters/workspace-service.ts";
-import type { SideOutcomeJson, ThrowRecord } from "../../../backend/src/modules/throws/contract.ts";
+
 import { createApiFixture, readPersistedState, type ApiFixture } from "./fixtures.ts";
 
 const dieScript = vi.hoisted(() => ({ faces: null as number[] | null }));
@@ -518,7 +521,7 @@ describe("API game table throws", () => {
     const { ids } = fixture;
     const second = await addGameMember("player2");
     const secondCharacter = randomUUID();
-    await createWorkspaceCharacter(databaseFromPool(fixture.pool), { accountId: second.accountId, sessionId: second.sessionId }, ids.game, secondCharacter, "Second sheet");
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(fixture.pool) }, { accountId: second.accountId, sessionId: second.sessionId }, ids.game, secondCharacter, "Second sheet");
 
     const own = await createThrow("player", ids.game, freeSetup(ids.playerCharacter));
     const other = await createThrow(second.token, ids.game, freeSetup(secondCharacter));

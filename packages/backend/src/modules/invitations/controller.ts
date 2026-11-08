@@ -1,15 +1,16 @@
+import type { GameInvitationContext, InvitationContext, InvitationsService } from "./types.ts";
+import type { AuthService } from "../auth/types.ts";
+import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 import type { Request } from "express";
-import type { Services } from "../../services.ts";
-import { requireWriteOrigin, type Actor } from "../auth/guards.ts";
 
 const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 const bad = () => new RequestError(400, { error: { code: "bad_request", message: "Invalid request." } });
 const deny = (code: string) => new RequestError(code === "forbidden" ? 403 : code === "conflict" ? 409 : 404, { error: { code, message: "Invitation unavailable." } });
 const param = (value: string | string[]) => Array.isArray(value) ? value[0]! : value;
 
-async function manageGuard(services: Pick<Services, "auth" | "games" | "invitations">, request: Request) {
-  if (request.method !== "GET") requireWriteOrigin(request);
+async function manageGuard(services: { auth: AuthService; games: GamesService; invitations: InvitationsService }, request: Request) {
+  if (request.method !== "GET") services.auth.requireWriteOrigin(request);
   const actor = await services.auth.requireActor(request);
   const gameId = param(request.params.gameId);
   if (!uuid(gameId)) throw bad();
@@ -18,9 +19,6 @@ async function manageGuard(services: Pick<Services, "auth" | "games" | "invitati
   if (access.role !== "GM") throw deny("forbidden");
   return { actor, gameId };
 }
-
-type GameInvitationContext = Awaited<ReturnType<typeof manageGuard>>;
-type InvitationContext = { actor: Actor; token: string };
 
 async function handle<T>(operation: () => Promise<T>) {
   try { return await operation(); }
@@ -31,7 +29,7 @@ async function handle<T>(operation: () => Promise<T>) {
   }
 }
 
-export function gameInvitationsController(services: Pick<Services, "auth" | "games" | "invitations">) {
+export function gameInvitationsController(services: { auth: AuthService; games: GamesService; invitations: InvitationsService }) {
   return Controller().prefix("games/:gameId/invitations").handler((request) => manageGuard(services, request)).registerRoutes(
     Route<GameInvitationContext>().method("get").path("").handler(async (_request, _response, context) => ({ invitations: await services.invitations.listInvitations(context.actor, context.gameId) })),
     Route<GameInvitationContext>().method("post").path("").handler(async (request, _response, context) => {
@@ -53,9 +51,9 @@ export function gameInvitationsController(services: Pick<Services, "auth" | "gam
   );
 }
 
-export function invitationController(services: Pick<Services, "auth" | "games" | "invitations">) {
+export function invitationController(services: { auth: AuthService; invitations: InvitationsService }) {
   return Controller().prefix("invitations/:token").handler(async (request) => {
-    if (request.method !== "GET") requireWriteOrigin(request);
+    if (request.method !== "GET") services.auth.requireWriteOrigin(request);
     return { actor: await services.auth.requireActor(request), token: param(request.params.token) };
   }).registerRoutes(
     Route<InvitationContext>().method("get").path("").handler(async (_request, response, context) => {

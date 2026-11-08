@@ -1,10 +1,9 @@
+import type { CharacterContext, CharactersService } from "./types.ts";
+import type { AuthService } from "../auth/types.ts";
+import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
-import type { Services } from "../../services.ts";
-import { requireWriteOrigin } from "../auth/guards.ts";
-import { type GameActor, type GameAccess } from "../games/service.ts";
-import { routeId } from "../games/controller.ts";
 
-type CharacterContext = { actor: GameActor; gameId: string; access: GameAccess };
+import { routeId } from "../games/controller.ts";
 
 function requestError(error: unknown): never {
   const e = error as { code?: string; message?: string; field?: string };
@@ -21,11 +20,11 @@ function validId(id: unknown): id is string {
   return typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 }
 
-export function charactersController(services: Pick<Services, "auth" | "games" | "characters">) {
+export function charactersController(services: { auth: AuthService; games: GamesService; characters: CharactersService }) {
   return Controller()
     .prefix("games/:gameId/characters")
     .handler(async (request) => {
-      if (request.method !== "GET") requireWriteOrigin(request);
+      if (request.method !== "GET") services.auth.requireWriteOrigin(request);
       const actor = await services.auth.requireActor(request);
       const gameId = routeId(request.params.gameId);
       const access = await services.games.gameAccess(actor, gameId);

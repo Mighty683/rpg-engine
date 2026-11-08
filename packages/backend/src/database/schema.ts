@@ -1,5 +1,6 @@
+import type { OutcomeJson, ResolvedSetup, ThrowKind } from "../modules/throws/types.ts";
 import { and, eq, isNull, or } from "drizzle-orm";
-import type { OutcomeJson, ResolvedSetup, ThrowKind } from "../modules/throws/contract.ts";
+
 import {
   bigint,
   boolean,

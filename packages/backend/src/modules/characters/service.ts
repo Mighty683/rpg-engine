@@ -1,3 +1,5 @@
+import type { Row } from "./types.ts";
+import type { FabulaSheet } from "../fabula/types.ts";
 import { eq } from "drizzle-orm";
 import {
   characterClasses,
@@ -5,33 +7,9 @@ import {
   characterEquipment,
   equipmentFields,
 } from "../../database/schema.ts";
-import type { DatabaseTransaction } from "../../database/client.ts";
-import { preview, validateSheet, type FabulaSheet } from "../fabula/rules.ts";
-export type Sheet = FabulaSheet;
-export type Row = {
-  id: string;
-  player_id: string | null;
-  name: string;
-  theme: string | null;
-  level: number;
-  dex_die: number;
-  ins_die: number;
-  mig_die: number;
-  wlp_die: number;
-  current_hp: number;
-  current_mp: number;
-  current_ip: number;
-  fabula_points: number;
-  max_hp_override: number | null;
-  max_mp_override: number | null;
-  max_ip_override: number | null;
-  defense_override: number | null;
-  magic_defense_override: number | null;
-  initiative_override: number | null;
-  revision: number;
-  created_at: Date;
-  updated_at: Date;
-};
+import type { DatabaseTransaction } from "../../database/types.ts";
+import { preview, validateSheet } from "../fabula/rules.ts";
+
 export async function sheetSequential(tx: DatabaseTransaction, r: Row): Promise<FabulaSheet> {
   const db = tx;
   const a = await db

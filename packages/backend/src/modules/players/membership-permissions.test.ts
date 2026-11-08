@@ -1,25 +1,23 @@
+import type { GameAccessRepository } from "../games/types.ts";
 import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
-import type { Database } from "../../database/client.ts";
+import type { Database } from "../../database/types.ts";
 import { Application, ExpressAdapter } from "arrow-express";
 import express from "express";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { type GameAccessRepository } from "../games/service.ts";
+import { createGameAccessService } from "../games/service.ts";
 import { membershipsController } from "./membership-controller.ts";
-import { createServices } from "../../services.ts";
+import { createConfiguration } from "../../config.ts";
+import { createGameEvents } from "../events/streams.ts";
+import { createSessionService } from "../auth/sessions.ts";
+import { createAuthService } from "../auth/factory.ts";
+import { createGamesService } from "../games/factory.ts";
+import { createMembershipsService } from "./factory.ts";
 
 const state = vi.hoisted(() => ({
   games: new Map<string, string>(),
   members: new Map<string, { id: string; accountId: string; gameId: string; removed: boolean }>(),
   sessions: new Map<string, string>(),
-}));
-
-vi.mock("../auth/sessions.ts", async (importOriginal) => ({
-  ...await importOriginal<typeof import("../auth/sessions.ts")>(),
-  resolveSession: async (_pool: Database, token: string) => {
-    const accountId = state.sessions.get(token);
-    return accountId ? { accountId, sessionId: token } : null;
-  },
 }));
 
 vi.mock("../games/service.ts", async (importOriginal) => {
@@ -37,7 +35,7 @@ vi.mock("../games/service.ts", async (importOriginal) => {
 vi.mock("./membership.ts", () => ({
   listMembers: async () => [...state.members.values()],
   setMemberRemoved: async (
-    _pool: Database,
+    _dependencies: unknown,
     _actor: unknown,
     gameId: string,
     memberId: string,
@@ -84,7 +82,7 @@ describe("membership API permissions with in-memory access repository", () => {
       app,
       Application()
         .prefix("api")
-        .registerControllers(membershipsController(createServices({} as Database))),
+        .registerControllers(membershipsController({ auth: createAuthService({} as Database, createConfiguration(), createGameEvents(), { ...createSessionService({} as Database), resolve: async (token: string) => { const accountId = state.sessions.get(token); return accountId ? { accountId, sessionId: token } : null; } }), games: createGamesService({} as Database), memberships: createMembershipsService({} as Database, createGameEvents(), createGameAccessService) })),
     ).configure(false);
     server = app.listen(0, "127.0.0.1");
     await new Promise<void>((resolve, reject) => {

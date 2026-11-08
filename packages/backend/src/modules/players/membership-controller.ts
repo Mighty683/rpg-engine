@@ -1,15 +1,16 @@
+import type { GameContext, MembershipsService } from "./types.ts";
+import type { AuthService } from "../auth/types.ts";
+import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 import type { Request } from "express";
-import type { Services } from "../../services.ts";
-import { requireWriteOrigin } from "../auth/guards.ts";
 
 const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 const bad = () => new RequestError(400, { error: { code: "bad_request", message: "Invalid request." } });
 const deny = (code: string) => new RequestError(code === "forbidden" ? 403 : code === "stale_revision" ? 409 : 404, { error: { code, message: code === "stale_revision" ? "Revision is stale." : "Resource unavailable." } });
 const param = (value: string | string[]) => Array.isArray(value) ? value[0]! : value;
 
-async function guard(services: Pick<Services, "auth" | "games" | "memberships">, request: Request) {
-  if (request.method !== "GET") requireWriteOrigin(request);
+async function guard(services: { auth: AuthService; games: GamesService; memberships: MembershipsService }, request: Request) {
+  if (request.method !== "GET") services.auth.requireWriteOrigin(request);
   const actor = await services.auth.requireActor(request);
   const gameId = param(request.params.gameId);
   if (!uuid(gameId)) throw bad();
@@ -17,7 +18,6 @@ async function guard(services: Pick<Services, "auth" | "games" | "memberships">,
   if (!access) throw deny("not_found");
   return { actor, gameId, access };
 }
-type GameContext = Awaited<ReturnType<typeof guard>>;
 
 async function handle<T>(operation: () => Promise<T>) {
   try { return await operation(); }
@@ -28,7 +28,7 @@ async function handle<T>(operation: () => Promise<T>) {
   }
 }
 
-export function membershipsController(services: Pick<Services, "auth" | "games" | "memberships">) {
+export function membershipsController(services: { auth: AuthService; games: GamesService; memberships: MembershipsService }) {
   return Controller().prefix("games/:gameId/members").handler((request) => guard(services, request)).registerRoutes(
     Route<GameContext>().method("get").path("").handler(async (_request, _response, context) => ({ members: await services.memberships.listMembers(context.actor, context.gameId) })),
     Route<GameContext>().method("put").path(":membershipId/active-character").handler(async (request, _response, context) => {
@@ -53,7 +53,7 @@ export function membershipsController(services: Pick<Services, "auth" | "games" 
   );
 }
 
-export function activeSelectionController(services: Pick<Services, "auth" | "games" | "memberships">) {
+export function activeSelectionController(services: { auth: AuthService; games: GamesService; memberships: MembershipsService }) {
   return Controller().prefix("games/:gameId/active-character").handler((request) => guard(services, request)).registerRoutes(
     Route<GameContext>().method("put").path("").handler(async (request, _response, context) => {
       if (context.access.role !== "Player") throw deny("forbidden");

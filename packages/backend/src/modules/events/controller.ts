@@ -1,9 +1,9 @@
+import type { AuthService, Actor } from "../auth/types.ts";
+import type { GameEvents } from "./types.ts";
+import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
-import type { Services } from "../../services.ts";
-import { type Actor } from "../auth/guards.ts";
-import { registerStream } from "./streams.ts";
 
-export function gameEventsController(services: Pick<Services, "auth" | "games">) {
+export function gameEventsController(services: { auth: AuthService; games: GamesService; events: GameEvents }) {
   return Controller().prefix("games/:gameId/events").handler(async (request) => {
     const actor = await services.auth.requireActor(request);
     const gameId = String(request.params.gameId);
@@ -16,7 +16,7 @@ export function gameEventsController(services: Pick<Services, "auth" | "games">)
     return { actor, gameId };
   }).registerRoutes(Route<{ actor: Actor; gameId: string }>().method("get").path("").handler(async (request, response, context) => {
     const { actor, gameId } = context;
-    const stream = registerStream(gameId, actor.accountId, actor.sessionId, response);
+    const stream = services.events.registerStream(gameId, actor.accountId, actor.sessionId, response);
     try {
       const current = await services.auth.requireActor(request);
       if (current.sessionId !== actor.sessionId || !await services.games.gameAccess(current, gameId)) {

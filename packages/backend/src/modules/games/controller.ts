@@ -1,13 +1,14 @@
+import type { AuthService } from "../auth/types.ts";
+import type { GamesService, GameActor } from "./types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
-import type { Services } from "../../services.ts";
-import { requireWriteOrigin } from "../auth/guards.ts";
-import { validateGame, type GameActor } from "./service.ts";
 
-export function gamesController(services: Pick<Services, "auth" | "games">) {
+import { validateGame } from "./service.ts";
+
+export function gamesController(services: { auth: AuthService; games: GamesService }) {
   return Controller()
     .prefix("games")
     .handler(async (request) => {
-      if (request.method !== "GET") requireWriteOrigin(request);
+      if (request.method !== "GET") services.auth.requireWriteOrigin(request);
       return services.auth.requireActor(request);
     })
     .registerRoutes(

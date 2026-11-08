@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
-import type { Database } from "../../database/client.ts";
+import type { Database } from "../../database/types.ts";
 import { sessions } from "../../database/schema.ts";
 
 function tokenDigest(token: string) {
@@ -30,3 +30,13 @@ export async function resolveSession(database: Database, token: string) {
 export async function revokeSession(database: Database, sessionId: string) {
   await database.delete(sessions).where(eq(sessions.id, sessionId));
 }
+
+/** Session persistence bound to the application's database. */
+export function createSessionService(database: Database) {
+  return {
+    create: (accountId: string, expiresAt: Date) => createSession(database, accountId, expiresAt),
+    resolve: (token: string) => resolveSession(database, token),
+    revoke: (sessionId: string) => revokeSession(database, sessionId),
+  };
+}
+

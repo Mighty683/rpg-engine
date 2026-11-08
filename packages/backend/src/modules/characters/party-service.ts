@@ -1,3 +1,6 @@
+import type { EquipmentRow, PartyCharacter, PartyWeapon, Row } from "./types.ts";
+import type { Attribute, FabulaSheet } from "../fabula/types.ts";
+import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
 import { transaction } from "../../database/transaction.ts";
 import { and, eq, inArray } from "drizzle-orm";
 import {
@@ -13,49 +16,10 @@ import {
 // character's sheet fields and derived values for the compact party cards. Active
 // criteria match the roster: GM-controlled characters need gm_active, player-
 // controlled characters must be the member's current active choice.
-import type { Database, DatabaseTransaction } from "../../database/client.ts";
-import { preview, validateSheet, type Attribute, type FabulaSheet } from "../fabula/rules.ts";
-import { gameAccess, type GameActor, type GameAccess } from "../games/service.ts";
-import type { Row } from "./service.ts";
+import type { Database, DatabaseTransaction } from "../../database/types.ts";
+import { preview, validateSheet } from "../fabula/rules.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
-
-type NamedRow = { id: string; character_id: string; name: string; notes: string; position: number };
-type EquipmentRow = NamedRow & {
-  kind: string;
-  price_zenit: number | null;
-  equipped: boolean | null;
-  accuracy_attribute_1: string | null;
-  accuracy_attribute_2: string | null;
-  accuracy_bonus: number | null;
-  fixed_defense: number | null;
-  defense_bonus: number | null;
-  magic_defense_bonus: number | null;
-  initiative_modifier: number | null;
-};
-
-export type PartyWeapon = {
-  id: string;
-  name: string;
-  equipped: boolean;
-  accuracyDice: [Attribute | null, Attribute | null];
-  accuracyBonus: number | null;
-  ready: boolean;
-};
-
-export type PartyCharacter = {
-  id: string;
-  revision: number;
-  name: string;
-  classes: string[];
-  baseDice: Record<Attribute, number>;
-  resources: { hp: number; mp: number; ip: number; fabula: number };
-  maxima: { hp: number; mp: number; ip: number };
-  defense: number | null;
-  magicDefense: number | null;
-  weapons: PartyWeapon[];
-  canRoll: boolean;
-};
 
 function equipmentEntry(row: EquipmentRow) {
   const base = { id: row.id, name: row.name, notes: row.notes, priceZenit: row.price_zenit };
@@ -156,11 +120,11 @@ function canRoll(access: GameAccess, playerId: string | null) {
   return access.role === "GM" || access.membershipId === playerId;
 }
 
-export async function listActiveParty(database: Database, actor: GameActor, gameId: string) {
+export async function listActiveParty({ gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database }, actor: GameActor, gameId: string) {
   return transaction(
     database,
     async (tx) => {
-      const access = await gameAccess(tx, actor, gameId);
+      const access = await gameAccessFor(tx).gameAccess(actor, gameId);
       if (!access) throw fail("not_found");
       const activeRows = await tx
         .select(characterFields)

@@ -1,72 +1,74 @@
+import type { InvitationRow } from "./types.ts";
+import type { Actor } from "../auth/types.ts";
+import type { GameAccessFactory } from "../games/types.ts";
+import type { GameEvents } from "../events/types.ts";
 import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
-import type { Database, DatabaseTransaction } from "../../database/client.ts";
+import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { accounts, characters, games, invitations, players } from "../../database/schema.ts";
-import type { Actor } from "../auth/guards.ts";
-import { lockGame } from "../games/service.ts";
-import { publishGameEvent } from "../events/streams.ts";
 
-type InvitationRow = typeof invitations.$inferSelect;
+import type { Configuration } from "../../types.ts";
+
 const failure = (code: string) => Object.assign(new Error(code), { code });
 const digest = (token: string) => createHash("sha256").update(token).digest();
 
-function encryptionKey() {
-  const secret = process.env.INVITATION_SECRET;
+function encryptionKey(config: Configuration) {
+  const secret = config.invitationSecret;
   if (!secret || Buffer.byteLength(secret) < 32)
     throw new Error("INVITATION_SECRET must contain at least 32 bytes");
   return createHash("sha256").update(secret).digest();
 }
 
-function encrypt(token: string) {
+function encrypt(config: Configuration, token: string) {
   const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", encryptionKey(), iv);
+  const cipher = createCipheriv("aes-256-gcm", encryptionKey(config), iv);
   const ciphertext = Buffer.concat([cipher.update(token, "utf8"), cipher.final()]);
   return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]);
 }
 
-function decrypt(data: Buffer) {
-  const cipher = createDecipheriv("aes-256-gcm", encryptionKey(), data.subarray(0, 12));
+function decrypt(config: Configuration, data: Buffer) {
+  const cipher = createDecipheriv("aes-256-gcm", encryptionKey(config), data.subarray(0, 12));
   cipher.setAuthTag(data.subarray(12, 28));
   return Buffer.concat([cipher.update(data.subarray(28)), cipher.final()]).toString("utf8");
 }
 
-function present(row: InvitationRow) {
-  const origin = process.env.APP_ORIGIN ?? (process.env.NODE_ENV === "production" ? undefined : "");
+function present(config: Configuration, row: InvitationRow) {
+  const origin = config.appOrigin ?? (config.production ? undefined : "");
   if (origin === undefined) throw new Error("APP_ORIGIN is required");
   return {
     id: row.id,
     kind: row.kind,
     characterId: row.characterId,
     enabled: row.enabled,
-    url: `${origin}/invite/${decrypt(row.tokenEncrypted)}`,
+    url: `${origin}/invite/${decrypt(config, row.tokenEncrypted)}`,
   };
 }
 
-async function requireGm(tx: DatabaseTransaction, actor: Actor, gameId: string) {
-  const access = await lockGame(tx, actor, gameId);
+async function requireGm(gameAccessFor: GameAccessFactory, tx: DatabaseTransaction, actor: Actor, gameId: string) {
+  const access = await gameAccessFor(tx).lockGame(actor, gameId);
   if (access.role !== "GM") throw failure("forbidden");
 }
 
-export async function listInvitations(database: Database, actor: Actor, gameId: string) {
+export async function listInvitations({ config, database }: { config: Configuration; database: Database }, actor: Actor, gameId: string) {
   const result = await database
     .select({ invitation: invitations })
     .from(invitations)
     .innerJoin(games, eq(games.id, invitations.gameId))
     .where(and(eq(invitations.gameId, gameId), eq(games.gmAccountId, actor.accountId)))
     .orderBy(invitations.createdAt, invitations.id);
-  return result.map((row) => present(row.invitation));
+  return result.map((row) => present(config, row.invitation));
 }
 
-export async function ensureGameInvitation(database: Database, actor: Actor, gameId: string) {
+export async function ensureGameInvitation({ gameAccessFor, config, database }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database }, actor: Actor, gameId: string) {
   return transaction(database, async (tx) => {
-    await requireGm(tx, actor, gameId);
+    await requireGm(gameAccessFor, tx, actor, gameId);
     const db = tx;
     const [existing] = await db
       .select()
       .from(invitations)
       .where(and(eq(invitations.gameId, gameId), eq(invitations.kind, "game")));
-    if (existing) return present(existing);
+    if (existing) return present(config, existing);
     const token = randomBytes(32).toString("base64url");
     const [created] = await db
       .insert(invitations)
@@ -75,21 +77,21 @@ export async function ensureGameInvitation(database: Database, actor: Actor, gam
         gameId,
         kind: "game",
         tokenDigest: digest(token),
-        tokenEncrypted: encrypt(token),
+        tokenEncrypted: encrypt(config, token),
       })
       .returning();
-    return present(created!);
+    return present(config, created!);
   });
 }
 
 export async function createCharacterInvitation(
-  database: Database,
+  { gameAccessFor, config, database }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database },
   actor: Actor,
   gameId: string,
   characterId: string,
 ) {
   return transaction(database, async (tx) => {
-    await requireGm(tx, actor, gameId);
+    await requireGm(gameAccessFor, tx, actor, gameId);
     const db = tx;
     const [character] = await db
       .select({ id: characters.id })
@@ -111,25 +113,25 @@ export async function createCharacterInvitation(
         kind: "character",
         characterId,
         tokenDigest: digest(token),
-        tokenEncrypted: encrypt(token),
+        tokenEncrypted: encrypt(config, token),
       })
       .returning();
-    return present(created!);
+    return present(config, created!);
   });
 }
 
 export async function updateInvitation(
-  database: Database,
+  { gameAccessFor, config, database }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database },
   actor: Actor,
   gameId: string,
   invitationId: string,
   change: { enabled: boolean } | { rotate: true },
 ) {
   return transaction(database, async (tx) => {
-    await requireGm(tx, actor, gameId);
+    await requireGm(gameAccessFor, tx, actor, gameId);
     const token = "rotate" in change ? randomBytes(32).toString("base64url") : null;
     const updates = token
-      ? { tokenDigest: digest(token), tokenEncrypted: encrypt(token) }
+      ? { tokenDigest: digest(token), tokenEncrypted: encrypt(config, token) }
       : { enabled: (change as { enabled: boolean }).enabled };
     const [updated] = await tx
       .update(invitations)
@@ -137,7 +139,7 @@ export async function updateInvitation(
       .where(and(eq(invitations.id, invitationId), eq(invitations.gameId, gameId)))
       .returning();
     if (!updated) throw failure("not_found");
-    return present(updated);
+    return present(config, updated);
   });
 }
 
@@ -189,7 +191,7 @@ export async function previewInvitation(database: Database, actor: Actor, token:
 }
 
 export async function acceptInvitation(
-  database: Database,
+  { events, database }: { events: GameEvents; database: Database },
   actor: Actor,
   token: string,
   makeActive = true,
@@ -282,7 +284,7 @@ export async function acceptInvitation(
     return { gameId, changed: true, characterId: link.characterId, active: makeActive };
   });
   if (outcome.changed)
-    await notifyAfterCommit(() => publishGameEvent(outcome.gameId, { type: "roster" }));
+    await notifyAfterCommit(() => events.publishGameEvent(outcome.gameId, { type: "roster" }));
   if (outcome.characterId)
     return { gameId: outcome.gameId, characterId: outcome.characterId, active: outcome.active! };
   return { gameId: outcome.gameId };

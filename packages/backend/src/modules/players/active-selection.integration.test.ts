@@ -1,3 +1,5 @@
+import { createGameAccessService } from "../games/service.ts";
+import { createGameEvents } from "../events/streams.ts";
 import { databaseFromPool } from "../../database/client.ts";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
@@ -37,23 +39,23 @@ describe.skipIf(!url)("player active character selection", () => {
     const first = randomUUID();
     const second = randomUUID();
     const otherCharacter = randomUUID();
-    await createWorkspaceCharacter(databaseFromPool(pool!), player, gameId, first, "Nera");
-    await createWorkspaceCharacter(databaseFromPool(pool!), player, gameId, second, "Ellis");
-    await createWorkspaceCharacter(databaseFromPool(pool!), other, gameId, otherCharacter, "Rowan");
-    const changed = await selectPlayerCharacter(databaseFromPool(pool!), gm, gameId, 1, second, membershipId);
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, player, gameId, first, "Nera");
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, player, gameId, second, "Ellis");
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, other, gameId, otherCharacter, "Rowan");
+    const changed = await selectPlayerCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, gm, gameId, 1, second, membershipId);
     expect(changed).toMatchObject({ activeCharacterId: second, revision: 2 });
-    await expect(selectPlayerCharacter(databaseFromPool(pool!), player, gameId, 2, first, membershipId)).rejects.toMatchObject({ code: "forbidden" });
-    await expect(selectPlayerCharacter(databaseFromPool(pool!), gm, gameId, 1, first, membershipId)).rejects.toMatchObject({ code: "stale_revision" });
-    await expect(selectPlayerCharacter(databaseFromPool(pool!), gm, gameId, 2, otherCharacter, membershipId)).rejects.toMatchObject({ code: "not_found" });
-    expect(await selectPlayerCharacter(databaseFromPool(pool!), gm, gameId, 2, null, membershipId)).toMatchObject({ activeCharacterId: null, revision: 3 });
+    await expect(selectPlayerCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, player, gameId, 2, first, membershipId)).rejects.toMatchObject({ code: "forbidden" });
+    await expect(selectPlayerCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, gm, gameId, 1, first, membershipId)).rejects.toMatchObject({ code: "stale_revision" });
+    await expect(selectPlayerCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, gm, gameId, 2, otherCharacter, membershipId)).rejects.toMatchObject({ code: "not_found" });
+    expect(await selectPlayerCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, gm, gameId, 2, null, membershipId)).toMatchObject({ activeCharacterId: null, revision: 3 });
     const ownership = await pool!.query("SELECT player_id FROM characters WHERE id=ANY($1::uuid[]) ORDER BY player_id", [[first, second]]);
     expect(ownership.rows).toEqual([{ player_id: membershipId }, { player_id: membershipId }]);
-    expect(await selectPlayerCharacter(databaseFromPool(pool!), player, gameId, 3, first)).toMatchObject({ activeCharacterId: first, revision: 4 });
+    expect(await selectPlayerCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, player, gameId, 3, first)).toMatchObject({ activeCharacterId: first, revision: 4 });
   });
 
   it("allows the GM endpoint and denies another player before changing the slot", async () => {
     const characterId = randomUUID();
-    await createWorkspaceCharacter(databaseFromPool(pool!), player, gameId, characterId, "Aria");
+    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, player, gameId, characterId, "Aria");
     const result = await pool!.query<{ revision: number }>("SELECT revision FROM players WHERE id=$1", [membershipId]);
     const revision = result.rows[0]!.revision;
     const gmSession = await createSession(databaseFromPool(pool!), gm.accountId, new Date(Date.now() + 60_000));

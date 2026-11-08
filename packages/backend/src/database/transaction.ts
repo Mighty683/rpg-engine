@@ -1,5 +1,5 @@
 import type { PgTransactionConfig } from "drizzle-orm/pg-core";
-import type { Database, DatabaseTransaction } from "./client.ts";
+import type { Database, DatabaseTransaction } from "./types.ts";
 
 /** Dispatches notifications only after commit; notification errors do not undo a committed write. */
 export async function transaction<T>(

@@ -1,3 +1,7 @@
+import type { ThrowRow, CreateThrowInput, ThrowRecord, ResolutionContext, RollCharacter, SourceThrow } from "./types.ts";
+import type { DieSource } from "../fabula/types.ts";
+import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
+import type { GameEvents } from "../events/types.ts";
 import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
 import { and, desc, eq, lt, sql } from "drizzle-orm";
 import {
@@ -13,43 +17,12 @@ import {
 // takes the per-game transaction lock before resolving access, so stale selections
 // and revoked memberships are re-checked against current state.
 import { randomUUID } from "node:crypto";
-import type { Database, DatabaseTransaction } from "../../database/client.ts";
-import { serverDieSource, type DieSource } from "../fabula/rolls.ts";
-import { gameAccess, lockGame, type GameActor, type GameAccess } from "../games/service.ts";
-import { publishGameEvent } from "../events/streams.ts";
-import { sheetSequential } from "../characters/service.ts";
-import {
-  fail,
-  gmActorId,
-  type CreateThrowInput,
-  type ThrowRecord,
-  type ResolvedSetup,
-  type OutcomeJson,
-  type ThrowKind,
-} from "./contract.ts";
-import {
-  resolveThrow,
-  type ResolutionContext,
-  type RollCharacter,
-  type SourceThrow,
-} from "./resolve.ts";
+import type { Database, DatabaseTransaction } from "../../database/types.ts";
+import { serverDieSource } from "../fabula/rolls.ts";
 
-type ThrowRow = {
-  id: string;
-  game_id: string;
-  seq: string | number;
-  created_at: Date;
-  author_account_id: string;
-  role: "GM" | "Player";
-  character_id: string | null;
-  equipment_id: string | null;
-  character_name: string;
-  equipment_name: string | null;
-  kind: ThrowKind;
-  setup: ResolvedSetup;
-  outcome: OutcomeJson;
-  deleted: boolean;
-};
+import { sheetSequential } from "../characters/service.ts";
+import { fail, gmActorId } from "./contract.ts";
+import { resolveThrow } from "./resolve.ts";
 
 const present = (row: ThrowRow, actor: GameActor, access: GameAccess): ThrowRecord => ({
   id: row.id,
@@ -132,14 +105,14 @@ async function loadSource(
 
 /** Ordered history read: exclusive sequence cursor, ascending result, live rows only. */
 export async function listThrows(
-  database: Database,
+  { gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database },
   actor: GameActor,
   gameId: string,
   before: number | null,
   limit: number,
 ) {
   return readTransaction(database, async (tx) => {
-    const access = await lockGameRead(tx, actor, gameId);
+    const access = await lockGameRead(gameAccessFor, tx, actor, gameId);
     const result = await tx
       .select(throwFields)
       .from(throws)
@@ -156,21 +129,21 @@ export async function listThrows(
   });
 }
 
-async function lockGameRead(tx: DatabaseTransaction, actor: GameActor, gameId: string) {
-  const access = await gameAccess(tx, actor, gameId);
+async function lockGameRead(gameAccessFor: GameAccessFactory, tx: DatabaseTransaction, actor: GameActor, gameId: string) {
+  const access = await gameAccessFor(tx).gameAccess(actor, gameId);
   if (!access) throw fail("not_found");
   return access;
 }
 
 export async function createThrow(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   input: CreateThrowInput,
   dieSource: DieSource = serverDieSource,
 ) {
   const result = await transaction(database, async (tx) => {
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     const context = await buildContext(tx, gameId, access, input);
     const resolved = resolveThrow(input, context, dieSource);
     const [sequence] = await tx
@@ -197,7 +170,7 @@ export async function createThrow(
       .returning(throwFields);
     return { record: present(inserted!, actor, access) };
   });
-  await notifyAfterCommit(() => publishGameEvent(gameId, { type: "throws" }));
+  await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "throws" }));
   return result;
 }
 
@@ -237,13 +210,13 @@ async function buildContext(
 
 /** Marks a history entry deleted; authorship follows the account even after reassignment. */
 export async function removeThrow(
-  database: Database,
+  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   throwId: string,
 ) {
   const result = await transaction(database, async (tx) => {
-    const access = await lockGame(tx, actor, gameId);
+    const access = await gameAccessFor(tx).lockGame(actor, gameId);
     const [row] = await tx
       .select(throwFields)
       .from(throws)
@@ -255,6 +228,6 @@ export async function removeThrow(
     await tx.update(throws).set({ deleted: true }).where(eq(throws.id, throwId));
     return { deleted: true, changed: true };
   });
-  if (result.changed) await notifyAfterCommit(() => publishGameEvent(gameId, { type: "throws" }));
+  if (result.changed) await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "throws" }));
   return result;
 }

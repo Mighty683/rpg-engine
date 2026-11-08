@@ -1,12 +1,13 @@
+import type { GameEvents } from "../events/types.ts";
 import { randomBytes, randomUUID } from "node:crypto";
 import argon2 from "argon2";
-import type { Database } from "../../database/client.ts";
+import type { Database } from "../../database/types.ts";
 import { eq, sql } from "drizzle-orm";
 import { withPasswordHashCapacity } from "./hash-capacity.ts";
 import { accounts } from "../../database/schema.ts";
 import { notifyAfterCommit } from "../../database/transaction.ts";
-import { closeSessionStreams } from "../events/streams.ts";
-import { revokeSession } from "./sessions.ts";
+
+import type { revokeSession } from "./sessions.ts";
 
 const dummyHash = argon2.hash(randomBytes(32));
 
@@ -55,7 +56,7 @@ export async function getAccount(database: Database, accountId: string) {
 }
 
 /** Revokes the session before closing any associated live streams. */
-export async function logout(database: Database, sessionId: string) {
-  await revokeSession(database, sessionId);
-  await notifyAfterCommit(() => closeSessionStreams(sessionId));
+export async function logout(events: GameEvents, revoke: (sessionId: string) => ReturnType<typeof revokeSession>, sessionId: string) {
+  await revoke(sessionId);
+  await notifyAfterCommit(() => events.closeSessionStreams(sessionId));
 }

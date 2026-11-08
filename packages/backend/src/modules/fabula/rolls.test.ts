@@ -1,16 +1,6 @@
+import type { DieSource } from "./types.ts";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  checkSide,
-  classifyCheck,
-  effectiveDie,
-  genericSide,
-  opposedOutcome,
-  rankOutcome,
-  rollDie,
-  serverDieSource,
-  sideTotal,
-  type DieSource,
-} from "./rolls.ts";
+import { checkSide, classifyCheck, effectiveDie, genericSide, opposedOutcome, rankOutcome, rollDie, serverDieSource, sideTotal } from "./rolls.ts";
 import { defaultSheet } from "./rules.ts";
 
 const fixed = (faces: number[]): DieSource => {

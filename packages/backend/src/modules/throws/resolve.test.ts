@@ -1,9 +1,11 @@
+import type { FabulaSheet, DieSource } from "../fabula/types.ts";
+import type { CreateThrowInput, ResolvedSetup, ThrowKind, ResolutionContext, RollCharacter } from "./types.ts";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { defaultSheet, type FabulaSheet } from "../fabula/rules.ts";
-import type { DieSource } from "../fabula/rolls.ts";
-import type { CreateThrowInput, ResolvedSetup, ThrowKind } from "./contract.ts";
+import { defaultSheet } from "../fabula/rules.ts";
+
+
 import { parseCreateRequest } from "./contract.ts";
-import { resolveThrow, type ResolutionContext, type RollCharacter } from "./resolve.ts";
+import { resolveThrow } from "./resolve.ts";
 
 const scripted = (faces: number[]): DieSource => {
   let index = 0;
