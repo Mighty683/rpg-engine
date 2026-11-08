@@ -1,15 +1,16 @@
 <script setup lang="ts">
+import type { Snapshot } from "./types";
+import type { Sheet } from "./sheet/types";
+
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useGameCharacterQuery, useGameCharactersQuery, useSaveGameCharacterMutation } from "./hooks";
 import CharacterSheet from "./sheet/CharacterSheet.vue";
-import { toCharacter, toSheet, type Sheet } from "./sheet/model";
+import { toCharacter, toSheet } from "./sheet/model";
 import type { Character as SheetCharacter } from "./sheet/types";
 import { useOptimisticSave } from "../../shared/useOptimisticSave";
-
-type Snapshot = { character: { revision: number; sheet: Sheet; derived: Record<string, any> } };
 
 const toast = useToast();
 const route = useRoute();

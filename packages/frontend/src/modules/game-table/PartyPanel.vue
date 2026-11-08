@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { Attribute, PartyCharacter } from "./types";
+
 import { computed } from "vue";
-import type { Attribute, PartyCharacter } from "./contract";
+
 import DieIcon from "../../shared/design-system/DieIcon.vue";
 
 const props = defineProps<{ party: readonly PartyCharacter[] }>();

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import type { InvitationPreview } from "./types";
+
 import { useToast } from "@nuxt/ui/composables";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { invitationApi, type InvitationPreview } from "./api";
+import { invitationApi } from "./api";
 
 const toast = useToast();
 const route = useRoute();

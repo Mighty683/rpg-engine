@@ -1,5 +1,5 @@
-import type { PartyMember } from "./model";
-import type { Sheet } from "../../src/modules/characters/sheet/model";
+import type { PartyMember } from "./types";
+import type { Sheet } from "../../src/modules/characters/sheet/types";
 
 export const sheetFixtures: Record<string, Pick<Sheet, "classes" | "equipment" | "overrides">> = {
   rowan: {

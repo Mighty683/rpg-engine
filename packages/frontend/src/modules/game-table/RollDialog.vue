@@ -1,21 +1,10 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { Attribute, PartyCharacter } from "./contract";
-import DieIcon from "../../shared/design-system/DieIcon.vue";
-import OpposedSetup, { type OpponentDraft } from "./OpposedSetup.vue";
+import type { RollDraft, Attribute, OpponentDraft } from "./types";
 
-export type RollDraft = {
-  mode: "attribute" | "weapon";
-  character: PartyCharacter;
-  weaponId: string | null;
-  weaponName: string;
-  weaponBonus: number;
-  first: Attribute;
-  second: Attribute | null;
-  dice: Record<Attribute, number>;
-  modifier: string;
-  note: string;
-};
+import { computed } from "vue";
+
+import DieIcon from "../../shared/design-system/DieIcon.vue";
+import OpposedSetup from "./OpposedSetup.vue";
 
 const props = defineProps<{
   draft: RollDraft;

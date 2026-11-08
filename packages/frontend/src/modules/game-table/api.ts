@@ -1,5 +1,5 @@
+import type { CreateThrowInput, PartyCharacter, ThrowRecord } from "./types";
 import { request } from "../../shared/api";
-import type { CreateThrowInput, PartyCharacter, ThrowRecord } from "./contract";
 
 export const api = {
   getGameParty: (gameId: string) => request<{ characters: PartyCharacter[] }>(`/api/games/${gameId}/party`),

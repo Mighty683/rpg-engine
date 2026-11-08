@@ -1,13 +1,5 @@
+import type { Player } from "./types";
 import { request } from "../../shared/api";
-
-export type Player = {
-  id: string;
-  gameId: string;
-  name: string;
-  createdAt: string;
-  revision: number;
-  activeCharacter: { id: string; name: string } | null;
-};
 
 export const api = {
   listPlayers: (gameId: string) => request<{ players: Player[] }>(`/api/games/${gameId}/players`),

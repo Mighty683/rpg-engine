@@ -1,5 +1,6 @@
+import type { ThrowRecord } from "./types";
 import { describe, expect, it } from "vite-plus/test";
-import type { ThrowRecord } from "./contract";
+
 import { hasWindowGap, mergeThrowPages, olderCursor } from "./history.ts";
 
 const entry = (id: string, seq: number): ThrowRecord => ({

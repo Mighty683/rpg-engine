@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import type { Stat } from "../types";
+
 import SheetSection from "../../../../shared/design-system/SheetSection.vue";
 import DefenseField from "./DefenseField.vue";
 import type { Character } from "../types";
-type Stat = keyof Character["overrides"];
+
 defineProps<{
   overrides: Character["overrides"];
   calculated: Record<Stat, number | null>;

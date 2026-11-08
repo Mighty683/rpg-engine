@@ -253,11 +253,9 @@ test("resource maximum overrides remain editable", async () => {
   const mounted = await mount(fetchMock);
   try {
     await page.getByTestId("maximum-button-HP").click();
-    await page.getByTestId("maximum-input-HP").fill("50");
-    page
-      .getByTestId("maximum-input-HP")
-      .element()
-      .dispatchEvent(new Event("change", { bubbles: true }));
+    const maximumInput = page.getByTestId("maximum-input-HP").element() as HTMLInputElement;
+    maximumInput.value = "50";
+    maximumInput.dispatchEvent(new Event("change", { bubbles: true }));
     await expect.element(page.getByTestId("maximum-button-HP")).toHaveTextContent("50");
     await expect.poll(() => fetchMock.mock.calls.some(([, init]) =>
       init?.method === "PATCH" && JSON.parse(init.body as string).changes.overrides.maxHp === 50,

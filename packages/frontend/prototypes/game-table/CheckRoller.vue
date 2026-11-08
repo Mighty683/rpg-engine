@@ -1,13 +1,8 @@
 <script setup lang="ts">
+import type { Attribute, CheckDraft, CheckResult, DieSize } from "./types";
+
 import { useTemplateRef } from "vue";
-import {
-  attributes,
-  dieSizes,
-  type Attribute,
-  type CheckDraft,
-  type CheckResult,
-  type DieSize,
-} from "./model";
+import { attributes, dieSizes } from "./model";
 
 const props = defineProps<{ character?: string; result?: CheckResult; error?: string }>();
 defineEmits<{ roll: []; cancel: [] }>();

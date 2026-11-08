@@ -13,6 +13,8 @@
 
 ## Frontend component boundaries
 
+- Keep type and interface declarations in the owning module’s `types.ts`, including types shared by components.
+
 - View components receive data and callbacks through their interfaces and render the UI. They do not own application or domain logic and do not connect to the backend. Local presentation behavior, such as focus and opening a popover, may remain in a view.
 - Controller components own application state and logic, coordinate domain operations and backend access, and supply data and callbacks to views. Keep backend details behind the appropriate application or API boundary.
 - Keep component-specific styles with the component they style.

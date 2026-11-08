@@ -1,35 +1,4 @@
-import type { Attribute, Character, NamedEntry } from "./types";
-
-type Entry = { id: string; name: string; notes: string };
-type Equipment = Entry & {
-  kind: "other" | "weapon" | "armor" | "shield";
-  priceZenit: number | null;
-  equipped?: boolean;
-  fixedDefense?: number | null;
-  defenseBonus?: number;
-  magicDefenseBonus?: number;
-  initiativeModifier?: number;
-  accuracyDice?: [Attribute | null, Attribute | null];
-  accuracyBonus?: number | null;
-};
-export type Sheet = {
-  name: string;
-  theme: string | null;
-  level: number;
-  baseDice: Record<Attribute, number>;
-  classes: Entry[];
-  skills: Entry[];
-  equipment: Equipment[];
-  resources: { hp: number; mp: number; ip: number; fabula: number };
-  overrides: {
-    maxHp: number | null;
-    maxMp: number | null;
-    maxIp: number | null;
-    defense: number | null;
-    magicDefense: number | null;
-    initiative: number | null;
-  };
-};
+import type { Equipment, Sheet, Character, NamedEntry } from "./types";
 
 function toEntry(entry: Equipment): NamedEntry {
   const base: NamedEntry = {

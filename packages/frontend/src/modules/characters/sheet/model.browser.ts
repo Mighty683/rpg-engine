@@ -1,5 +1,6 @@
+import type { Sheet } from "./types";
 import { expect, test } from "vite-plus/test";
-import { toCharacter, toSheet, type Sheet } from "./model";
+import { toCharacter, toSheet } from "./model";
 
 test("maps existing character data and every equipment type without losing API fields", () => {
   const sheet: Sheet = {

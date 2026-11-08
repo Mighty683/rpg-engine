@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { GameCharacterSummary } from "../characters/types";
+import type { GameMember } from "./types";
+
 import { computed, ref, watch } from "vue";
-import type { GameCharacterSummary } from "../characters/api";
-import type { GameMember } from "./api";
+
 import ScreenSection from "../../shared/design-system/ScreenSection.vue";
 
 const props = defineProps<{ character: GameCharacterSummary; role: "GM" | "Player"; members: GameMember[]; pending: boolean }>();

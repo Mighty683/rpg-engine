@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import DieIcon from "../../shared/design-system/DieIcon.vue";
+import type { OpponentDraft } from "./types";
 
-export type OpponentDraft = { dice: number[]; modifier: string };
+import DieIcon from "../../shared/design-system/DieIcon.vue";
 
 const props = withDefaults(defineProps<{ sizes?: readonly number[]; showPool?: boolean }>(), {
   sizes: () => [6, 8, 10, 12],

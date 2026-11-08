@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { OpponentDraft } from "./types";
+
 import DieIcon from "../../src/shared/design-system/DieIcon.vue";
 import { dieSizes } from "./model";
 
-export type OpponentDraft = { dice: number[]; modifier: string };
 withDefaults(defineProps<{ sizes?: readonly number[]; showPool?: boolean }>(), { sizes: () => dieSizes, showPool: true });
 const opponent = defineModel<OpponentDraft>({ required: true });
 </script>

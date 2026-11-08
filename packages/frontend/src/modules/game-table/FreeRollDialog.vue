@@ -1,14 +1,9 @@
 <script setup lang="ts">
+import type { FreeDraft, OpponentDraft } from "./types";
+
 import { computed } from "vue";
 import DieIcon from "../../shared/design-system/DieIcon.vue";
-import OpposedSetup, { type OpponentDraft } from "./OpposedSetup.vue";
-
-export type FreeDraft = {
-  characterId: string;
-  dice: number[];
-  modifier: string;
-  note: string;
-};
+import OpposedSetup from "./OpposedSetup.vue";
 
 const props = defineProps<{
   draft: FreeDraft;

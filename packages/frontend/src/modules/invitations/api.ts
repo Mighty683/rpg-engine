@@ -1,22 +1,6 @@
+import type { GameInvitation, InvitationPreview } from "./types";
 import { secureFetch } from "../../shared/secure-fetch.ts";
 import { request as apiRequest } from "../../shared/api";
-
-export type GameInvitation = {
-  id: string;
-  kind: "game" | "character";
-  characterId: string | null;
-  enabled: boolean;
-  url: string;
-};
-
-export type InvitationPreview = {
-  kind: "game" | "character";
-  gameId: string;
-  gameName: string;
-  alreadyMember: boolean;
-  characterId?: string;
-  characterName?: string;
-};
 
 async function request<T>(token: string, accept?: { makeActive: boolean }): Promise<T> {
   const response = await secureFetch(`/api/invitations/${encodeURIComponent(token)}${accept ? "/accept" : ""}`, accept ? {

@@ -1,5 +1,6 @@
+import type { OpposedSide } from "./types";
 import { expect, test } from "vite-plus/test";
-import { rollOpposed, type OpposedSide } from "./opposed";
+import { rollOpposed } from "./opposed";
 
 const side = (name: string, modifier = 0): OpposedSide => ({ name, modifier, dice: [{ attribute: "DEX", size: 8 }, { attribute: "MIG", size: 10 }] });
 const results = (faces: number[]) => {

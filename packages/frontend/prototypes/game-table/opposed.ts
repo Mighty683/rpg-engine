@@ -1,5 +1,4 @@
-export type OpposedSide = { name: string; dice: { attribute: string; size: number }[]; modifier: number };
-export type OpposedRoll = { name: string; dice: { attribute: string; size: number; face: number }[]; bonus: number; total: number; special: string };
+import type { OpposedSide, OpposedRoll } from "./types";
 
 /** Compare dice pools; Fabula criticals apply only to two standard attribute dice per side. */
 export function rollOpposed(sides: [OpposedSide, OpposedSide], random = Math.random) {

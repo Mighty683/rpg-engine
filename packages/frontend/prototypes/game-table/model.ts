@@ -1,38 +1,6 @@
+import type { PartyMember, CheckDraft, CheckResult, Attribute, CheckDie } from "./types";
 export const attributes = ["DEX", "INS", "MIG", "WLP"] as const;
 export const dieSizes = [6, 8, 10, 12] as const;
-export type Attribute = (typeof attributes)[number];
-export type DieSize = (typeof dieSizes)[number];
-export type Resource = { current: number; max: number };
-
-export type PartyMember = {
-  id: string;
-  name: string;
-  controller: string;
-  hp: Resource;
-  mp: Resource;
-  ip: Resource;
-  fabula: number;
-  baseDice: Record<Attribute, DieSize>;
-};
-
-export type CheckDraft = {
-  first: Attribute;
-  second: Attribute;
-  dice: Record<Attribute, DieSize>;
-  modifier: number | undefined;
-  difficulty: number | undefined;
-};
-
-export type CheckResult = {
-  character: string;
-  dice: readonly [CheckDie, CheckDie];
-  modifier: number;
-  difficulty: number;
-  total: number;
-  outcome: "Fumble" | "Critical success" | "Success" | "Failure";
-};
-
-type CheckDie = { attribute: Attribute; size: DieSize; face: number };
 
 export function startCheck(member: PartyMember): CheckDraft {
   return { first: "DEX", second: "INS", dice: { ...member.baseDice }, modifier: 0, difficulty: 10 };

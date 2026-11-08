@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { Account } from "./types";
+
 import { useToast } from "@nuxt/ui/composables";
 import { ref } from "vue";
-import { authApi, type Account } from "./api";
+import { authApi } from "./api";
 
 const emit = defineEmits<{ authenticated: [account: Account] }>();
 const mode = ref<"login" | "register">("login");

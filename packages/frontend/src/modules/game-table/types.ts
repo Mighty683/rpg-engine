@@ -1,6 +1,28 @@
-// HTTP shapes for Game Table requests and responses.
+export type FreeDraft = {
+  characterId: string;
+  dice: number[];
+  modifier: string;
+  note: string;
+};
+
+export type OpponentDraft = { dice: number[]; modifier: string };
+
+export type RollDraft = {
+  mode: "attribute" | "weapon";
+  character: PartyCharacter;
+  weaponId: string | null;
+  weaponName: string;
+  weaponBonus: number;
+  first: Attribute;
+  second: Attribute | null;
+  dice: Record<Attribute, number>;
+  modifier: string;
+  note: string;
+};
+
 export type Attribute = "DEX" | "INS" | "MIG" | "WLP";
-type Die = number;
+
+export type Die = number;
 
 export type ThrowKind =
   | "attribute-check"
@@ -23,6 +45,7 @@ export type AttributeSetup = {
   redModifier: number;
   note: string;
 };
+
 export type WeaponSetup = {
   type: "weapon";
   characterId: string;
@@ -32,6 +55,7 @@ export type WeaponSetup = {
   modifier: number;
   note: string;
 };
+
 export type FreeSetup = {
   type: "free";
   characterId: string;
@@ -41,6 +65,7 @@ export type FreeSetup = {
   redModifier: number;
   note: string;
 };
+
 export type ThrowSetup = AttributeSetup | WeaponSetup | FreeSetup;
 
 export type CreateThrowInput = {
@@ -68,6 +93,7 @@ export type SideOutcomeJson = {
   total: number;
   result: "fumble" | "critical" | "ordinary" | "none";
 };
+
 export type OutcomeJson = {
   first: SideOutcomeJson;
   second?: SideOutcomeJson;
@@ -111,4 +137,3 @@ export type PartyCharacter = {
   weapons: PartyWeapon[];
   canRoll: boolean;
 };
-

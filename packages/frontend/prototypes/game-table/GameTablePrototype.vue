@@ -1,14 +1,16 @@
 <script setup lang="ts">
+import type { ThrowResult, Attribute, PartyMember, OpponentDraft, OpposedSide } from "./types";
+
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import CharacterSheet from "../../src/modules/characters/sheet/CharacterSheet.vue";
 import { toCharacter } from "../../src/modules/characters/sheet/model";
 import PartyOverview from "./PartyOverview.vue";
 import { party, sheetFixtures } from "./mock-data";
-import { attributes, dieSizes, type Attribute, type PartyMember } from "./model";
+import { attributes, dieSizes } from "./model";
 import type { NamedEntry } from "../../src/modules/characters/sheet/types";
 import DieIcon from "../../src/shared/design-system/DieIcon.vue";
-import OpposedSetup, { type OpponentDraft } from "./OpposedSetup.vue";
-import { rollOpposed, type OpposedRoll, type OpposedSide } from "./opposed";
+import OpposedSetup from "./OpposedSetup.vue";
+import { rollOpposed } from "./opposed";
 
 const props = withDefaults(defineProps<{ role?: "GM" | "Player" }>(), { role: "GM" });
 const selectedSheetId = ref(party[0]!.id);
@@ -18,7 +20,7 @@ watch(() => props.role, () => { showSettings.value = false; });
 const playerActive = ref(true);
 const invitationCreated = ref(false);
 const invitationEnabled = ref(true);
-type ThrowResult = { id: string; character: string; actor?: string; weapon: string; weaponBonus?: number; dice: { attribute: string; size: number; face: number }[]; bonus: number; total: number; special: string; note?: string; opponent?: OpposedRoll; opposedSides?: [OpposedSide, OpposedSide]; outcome?: string; tied?: boolean };
+
 const throws = ref<ThrowResult[]>([
   { id: "sample-rowan", character: "Rowan Ash", weapon: "Longsword", dice: [{ attribute: "DEX", size: 8, face: 4 }, { attribute: "MIG", size: 10, face: 8 }], bonus: 1, total: 13, special: "" },
   { id: "sample-nera", character: "Nera Vale", weapon: "Dagger", dice: [{ attribute: "DEX", size: 8, face: 6 }, { attribute: "INS", size: 10, face: 6 }], bonus: 1, total: 13, special: "Critical success" },

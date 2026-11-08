@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import type { GameCharacterSummary } from "../characters/types";
+import type { GameInvitation } from "../invitations/types";
+import type { GameMember } from "./types";
+
 import { computed, ref } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { account } from "../auth/session";
-import type { GameCharacterSummary } from "../characters/api";
-import { invitationApi, type GameInvitation } from "../invitations/api";
-import { api, type GameMember } from "./api";
+
+import { invitationApi } from "../invitations/api";
+import { api } from "./api";
 import ScreenSection from "../../shared/design-system/ScreenSection.vue";
 
 const props = defineProps<{ gameId: string; members: GameMember[]; characters: GameCharacterSummary[] }>();

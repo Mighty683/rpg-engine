@@ -1,5 +1,5 @@
+import type { Account } from "./types";
 import { secureFetch } from "../../shared/secure-fetch.ts";
-export type Account = { id: string; username: string };
 
 async function authRequest<T>(path: string, body?: Record<string, string>): Promise<T> {
   const response = await secureFetch(`/api/auth/${path}`, body ? {

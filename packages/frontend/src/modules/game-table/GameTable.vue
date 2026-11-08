@@ -1,17 +1,18 @@
 <script setup lang="ts">
+import type { Attribute, PartyCharacter, ThrowRecord, ThrowSetup, RollDraft, FreeDraft, OpponentDraft } from "./types";
+
 import { computed, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import { account } from "../auth/session";
 import { useGameCharactersQuery } from "../characters/hooks";
 import { useGameMembersQuery } from "../games/hooks";
 import CharacterView from "../characters/CharacterView.vue";
-import type { Attribute, PartyCharacter, ThrowRecord, ThrowSetup } from "./contract";
+
 import { useCreateThrowMutation, useGamePartyQuery, useRemoveThrowMutation, useThrowHistory } from "./hooks";
 import PartyPanel from "./PartyPanel.vue";
 import HistoryPanel from "./HistoryPanel.vue";
-import RollDialog, { type RollDraft } from "./RollDialog.vue";
-import FreeRollDialog, { type FreeDraft } from "./FreeRollDialog.vue";
-import type { OpponentDraft } from "./OpposedSetup.vue";
+import RollDialog from "./RollDialog.vue";
+import FreeRollDialog from "./FreeRollDialog.vue";
 
 const props = defineProps<{ gameId: string; role: "GM" | "Player"; throwsHint: number }>();
 const toast = useToast();

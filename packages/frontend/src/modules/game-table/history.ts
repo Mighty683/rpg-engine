@@ -1,7 +1,7 @@
+import type { ThrowRecord } from "./types";
 // Pure throw-history windowing: merges fetched pages into one ascending, deduplicated
 // list and detects when the newest page no longer overlaps the loaded window, so the
 // UI resets to the newest window instead of showing a silent gap.
-import type { ThrowRecord } from "./contract";
 
 export const historyPageSize = 20;
 

@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import type { ApiError, Game, System } from "./types";
+
 import { h, nextTick, onMounted, ref } from "vue";
 import InteractiveCard from "../../shared/design-system/InteractiveCard.vue";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
 import { useRouter } from "vue-router";
-import type { Game, System } from "./api";
+
 import { useGamesQuery, useSystemsQuery, useCreateGameMutation } from "./hooks";
-type ApiError = { fields?: Record<string, string>; message?: string };
 
 const toast = useToast();
 const router = useRouter();

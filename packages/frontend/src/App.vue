@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import type { Account } from "./modules/auth/types";
+
 import { useToast } from "@nuxt/ui/composables";
 import { onMounted, onUnmounted, ref } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouter } from "vue-router";
 import AccountScreen from "./modules/auth/AccountScreen.vue";
-import { authApi, type Account } from "./modules/auth/api";
+import { authApi } from "./modules/auth/api";
 import { account } from "./modules/auth/session";
 import PrimaryNavigation from "./shared/components/PrimaryNavigation.vue";
 

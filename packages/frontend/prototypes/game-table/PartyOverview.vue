@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { attributes, type Attribute, type PartyMember } from "./model";
+import type { Attribute, PartyMember } from "./types";
+
+import { attributes } from "./model";
 import type { Character } from "../../src/modules/characters/sheet/types";
 import type { NamedEntry } from "../../src/modules/characters/sheet/types";
 import DieIcon from "../../src/shared/design-system/DieIcon.vue";

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import type { Resource } from "../types";
+
 import SheetSection from "../../../../shared/design-system/SheetSection.vue";
 import ResourceField from "./ResourceField.vue";
 import type { Character } from "../types";
-type Resource = "HP" | "MP" | "IP";
+
 defineProps<{
   current: Character["current"];
   maximum: Record<Resource, number>;

@@ -101,7 +101,6 @@ test("game creation validates the name and submits trimmed values", async () => 
   }
 });
 
-
 test("character creation retry reuses the same client id", async () => {
   const ids: string[] = [];
   vi.stubGlobal("EventSource", class { close() {} });

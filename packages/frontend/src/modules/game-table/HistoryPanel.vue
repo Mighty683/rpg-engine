@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { ThrowRecord } from "./types";
+
 import { nextTick, onMounted, ref, watch } from "vue";
-import type { ThrowRecord } from "./contract";
+
 import DieIcon from "../../shared/design-system/DieIcon.vue";
 
 const props = defineProps<{

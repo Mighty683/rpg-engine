@@ -1,8 +1,9 @@
+import type { CreateThrowInput, ThrowRecord } from "./types";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed, ref, watch } from "vue";
 import { account } from "../auth/session";
 import { api } from "./api";
-import type { CreateThrowInput, PartyCharacter, ThrowRecord } from "./contract";
+
 import { hasWindowGap, historyPageSize, mergeThrowPages, olderCursor } from "./history.ts";
 
 const gameKey = (gameId: string) => ["accounts", account.value?.id, "games", gameId];
@@ -80,4 +81,3 @@ export function useRemoveThrowMutation(gameId: string) {
   });
 }
 
-export type { PartyCharacter };
