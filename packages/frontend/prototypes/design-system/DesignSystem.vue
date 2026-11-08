@@ -5,6 +5,7 @@ import DieIcon from "../../src/shared/design-system/DieIcon.vue";
 import EquipmentIcon from "../../src/shared/design-system/EquipmentIcon.vue";
 import WeaponIcon from "../../src/shared/design-system/WeaponIcon.vue";
 import ZenitIcon from "../../src/shared/design-system/ZenitIcon.vue";
+defineProps<{ section?: "buttons" | "colors" | "icons" | "card" | "spacing" | "typography" }>();
 const palettes = [
   {
     title: "Semantic colors",
@@ -63,7 +64,11 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
       <h1 class="text-heading font-semibold">Design system</h1>
       <p class="text-muted">Primitive values feed semantic tokens used by the application.</p>
     </div>
-    <section class="space-y-large" aria-labelledby="button-examples">
+    <section
+      v-if="!section || section === 'buttons'"
+      class="space-y-large"
+      aria-labelledby="button-examples"
+    >
       <h2 id="button-examples" class="text-section font-semibold">Buttons</h2>
       <p class="text-muted">Choose emphasis by the action's role in its context.</p>
       <div class="grid gap-medium sm:grid-cols-2 lg:grid-cols-3">
@@ -110,7 +115,7 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
       </div>
     </section>
     <section
-      v-for="palette in palettes"
+      v-for="palette in !section || section === 'colors' ? palettes : []"
       :id="palette.title === 'Semantic colors' ? 'semantic-colors' : undefined"
       :key="palette.prefix"
       class="space-y-large"
@@ -126,7 +131,7 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
         </div>
       </div>
     </section>
-    <section class="space-y-large">
+    <section v-if="!section || section === 'icons'" class="space-y-large">
       <h2 class="text-section font-semibold">Icons</h2>
       <p class="text-muted">Dice used for attribute tiers.</p>
       <div class="flex flex-wrap gap-section">
@@ -144,7 +149,7 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
         </div>
       </div>
     </section>
-    <section class="space-y-large">
+    <section v-if="!section || section === 'card'" class="space-y-large">
       <h2 class="text-section font-semibold">Detail card</h2>
       <p class="text-muted">
         Select a card to edit details; click outside or press Escape to close.
@@ -159,19 +164,18 @@ const spacing = ["small", "medium", "large", "field", "section", "page", "page-w
         ></DetailCard>
       </div>
     </section>
-    <section class="space-y-large">
+    <section v-if="!section || section === 'spacing'" class="space-y-large">
       <h2 class="text-section font-semibold">Spacing</h2>
       <div v-for="size in spacing" :key="size" class="flex items-center gap-large">
         <code>--spacing-{{ size }}</code>
         <div class="h-4 bg-primary" :style="{ width: `var(--spacing-${size})` }" />
       </div>
     </section>
-    <section class="space-y-large">
+    <section v-if="!section || section === 'typography'" class="space-y-large">
       <h2 class="text-section font-semibold">Typography and radius</h2>
       <p class="text-heading font-semibold">Heading · sans</p>
       <p class="text-section font-semibold">Section · sans</p>
       <p class="text-body">Body · system sans</p>
-      <div class="rounded-panel border border-default p-large">Panel radius</div>
     </section>
   </UContainer>
 </template>

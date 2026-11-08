@@ -20,6 +20,7 @@ const draft = useEditableEntry(
     :notes="draft.notes"
     :remove-test-id="`remove-${draft.id}`"
     :remove-label="`Remove skill ${draft.name}`"
+    :remove-description="`Remove ${draft.name} from this character?`"
     :locked="locked"
     :open="open"
     @update:open="emit('update:open', $event)"

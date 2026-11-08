@@ -1,25 +1,16 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import ZenitIcon from "./ZenitIcon.vue";
-import WeaponIcon from "./WeaponIcon.vue";
-import EquipmentIcon from "./EquipmentIcon.vue";
-
-const props = withDefaults(
-  defineProps<{
-    title: string;
-    notes?: string;
-    price?: number | null;
-    removeLabel?: string;
-    removeBelow?: boolean;
-    weapon?: boolean;
-    armor?: boolean;
-    badge?: string;
-    equipped?: boolean;
-    locked?: boolean;
-    removeTestId?: string;
-  }>(),
-  { equipped: undefined },
-);
+import ConfirmDialog from "./ConfirmDialog.vue";
+const props = defineProps<{
+  title: string;
+  notes?: string;
+  editLabel?: string;
+  removeLabel?: string;
+  removeDescription?: string;
+  removeBelow?: boolean;
+  locked?: boolean;
+  removeTestId?: string;
+}>();
 const open = defineModel<boolean>("open", { default: false });
 const emit = defineEmits<{ remove: [] }>();
 const confirming = ref(false);
@@ -50,20 +41,16 @@ function confirmRemove() {
           type="button"
           class="card-trigger"
           data-testid="open-entry-details"
-          :aria-label="weapon ? `Edit ${title}, weapon` : `Edit ${title}`"
+          :aria-label="editLabel ?? `Edit ${title}`"
         >
           <span class="card-copy"
             ><span class="card-title"
               ><strong>{{ title }}</strong
-              ><WeaponIcon v-if="weapon" /><EquipmentIcon v-else-if="armor" kind="armor" class="armor-icon" /></span
-            ><span v-if="notes" class="card-notes">{{ notes }}</span
-            ><span v-if="equipped !== undefined" class="card-badge" :class="{ active: equipped }"
-              ><EquipmentIcon kind="equipped" />{{ equipped ? "Equipped" : "Not equipped" }}</span
-            ><span v-else-if="badge" class="card-badge active">{{ badge }}</span></span
-          >
-          <span v-if="price !== null && price !== undefined" class="card-price"
-            ><ZenitIcon /> {{ price }} <span class="sr-only">zenits</span></span
-          >
+              ><slot name="icon" /></span
+            ><span v-if="notes" class="card-notes">{{ notes }}</span>
+            <slot name="status" />
+          </span>
+          <span v-if="$slots.trailing" class="card-trailing"><slot name="trailing" /></span>
         </button>
         <template #content>
           <div class="card-editor">
@@ -102,25 +89,7 @@ function confirmRemove() {
         Remove
       </UButton>
     </div>
-    <UModal
-      v-model:open="confirming"
-      :title="`Remove ${title}?`"
-      :description="`Remove ${title} from this character?`"
-    >
-      <template #body
-        ><div class="flex gap-small">
-          <UButton
-            data-testid="cancel-remove"
-            color="neutral"
-            variant="outline"
-            @click="confirming = false"
-            >Cancel</UButton
-          ><UButton data-testid="confirm-remove" color="error" @click="confirmRemove"
-            >Remove</UButton
-          >
-        </div></template
-      >
-    </UModal>
+    <ConfirmDialog :open="confirming" :title="`Remove ${title}?`" :description="removeDescription ?? `Remove ${title}?`" confirm-label="Remove" confirm-test-id="confirm-remove" cancel-test-id="cancel-remove" destructive @cancel="confirming = false" @confirm="confirmRemove" />
   </article>
 </template>
 
@@ -157,9 +126,6 @@ function confirmRemove() {
   gap: var(--spacing-small);
   min-width: 0;
 }
-.armor-icon {
-  color: var(--ui-primary);
-}
 .card-copy strong,
 .card-notes {
   overflow-wrap: anywhere;
@@ -168,17 +134,7 @@ function confirmRemove() {
   color: var(--ui-text-muted);
   font-size: 0.875rem;
 }
-.card-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--ui-text-muted);
-  font-size: 0.75rem;
-}
-.card-badge.active {
-  color: var(--ui-primary);
-}
-.card-price {
+.card-trailing {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-small);

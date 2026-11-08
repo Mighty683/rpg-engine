@@ -6,7 +6,7 @@ The [Game Table UX journey](ux.md) describes the full roll workflow. The prototy
 
 | Area | Reviewed design |
 | --- | --- |
-| Gallery header | **Preview role** sits beside the prototype selector and is only shown for Game Table. It drives the GM and player previews. |
+| Gallery header | **Preview role** in the Histoire Controls panel drives the GM and player previews. |
 | Game header | Show the game name, system and role. **Settings** is available in the GM preview and leads to sample player and invitation controls with **Return to game**. |
 | Active party | Compact character cards show class names close beneath the character name. A row of clickable attribute dice sits above the stat tiles. Read-only stat values stay bottom-aligned without stretching and use the default cursor. Weapon cards show their configured attribute dice and names. Clicking the whole card opens roll setup. |
 | Character sheets | A right-edge bookmark opens a tabbed drawer over the table. The same bookmark closes it. Controller text sits in small type above the name field. The level field omits the manual hint. |
@@ -21,4 +21,4 @@ The dice controls use buttons or radio groups with visible selected and focus st
 
 The [Game Table prototype](../../../packages/frontend/prototypes/game-table/GameTablePrototype.vue) owns preview state and roll history. [PartyOverview](../../../packages/frontend/prototypes/game-table/PartyOverview.vue) presents character cards, [OpposedSetup](../../../packages/frontend/prototypes/game-table/OpposedSetup.vue) presents opposing dice and modifiers, and [the comparison logic](../../../packages/frontend/prototypes/game-table/opposed.ts) resolves the two sides.
 
-Run `pnpm --filter @rpg-engine/frontend prototypes:dev` and select **Game Table**. Check both role previews, a single-die attribute roll, a weapon roll, a two-sided roll and the seeded tie. Verify that reroll opens an editable setup and only confirmation adds a history entry. Confirm that drawer and settings navigation return to the table, and that the history scrolls independently on desktop and fits when stacked.
+Run `pnpm --filter @rpg-engine/frontend prototypes:dev` and select **Prototypes / Game Table**, and use its Controls panel to select the role. Check both role previews, a single-die attribute roll, a weapon roll, a two-sided roll and the seeded tie. Verify that reroll opens an editable setup and only confirmation adds a history entry. Confirm that drawer and settings navigation return to the table, and that the history scrolls independently on desktop and fits when stacked.

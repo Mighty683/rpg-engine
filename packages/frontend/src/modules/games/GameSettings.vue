@@ -7,6 +7,10 @@ import { account } from "../auth/session";
 import type { GameCharacterSummary } from "../characters/api";
 import { invitationApi, type GameInvitation } from "../invitations/api";
 import { api, type GameMember } from "./api";
+import ConfirmDialog from "../../shared/design-system/ConfirmDialog.vue";
+import ContentState from "../../shared/design-system/ContentState.vue";
+import PlayerAccessRow from "./PlayerAccessRow.vue";
+import InvitationLinkCard from "../invitations/InvitationLinkCard.vue";
 import ScreenSection from "../../shared/design-system/ScreenSection.vue";
 
 const props = defineProps<{ gameId: string; members: GameMember[]; characters: GameCharacterSummary[] }>();
@@ -77,29 +81,35 @@ function characterName(id: string | null) {
       <h2 class="text-section font-semibold">Players</h2>
       <p v-if="!members.length" class="text-muted">No players have joined this game yet.</p>
       <ul v-else class="space-y-small">
-        <li v-for="member in members" :key="member.id" class="flex flex-wrap items-center justify-between gap-small">
-          <span>{{ member.name }} <UBadge color="neutral" variant="subtle">{{ member.removed ? "Removed" : "Active" }}</UBadge></span>
-          <UButton v-if="member.removed" color="neutral" variant="outline" :disabled="pending" @click="changeMember(member, 'restore')">Restore access</UButton>
-          <UButton v-else color="error" variant="outline" :disabled="pending" @click="removingMember = member">Remove access</UButton>
-        </li>
+        <PlayerAccessRow
+          v-for="member in members"
+          :key="member.id"
+          :name="member.name"
+          :removed="member.removed"
+          :pending="pending"
+          @remove="removingMember = member"
+          @restore="changeMember(member, 'restore')"
+        />
       </ul>
     </ScreenSection>
     <ScreenSection class="space-y-medium p-large">
       <h2 class="text-section font-semibold">Invitations</h2>
-      <p v-if="invitations.isLoading.value">Loading invitations…</p>
-      <p v-else-if="invitations.isError.value"><UButton color="neutral" variant="outline" @click="invitations.refetch">Retry</UButton></p>
+      <ContentState v-if="invitations.isLoading.value" kind="loading">Loading invitations…</ContentState>
+      <ContentState v-else-if="invitations.isError.value" kind="error" @retry="invitations.refetch" />
       <template v-else>
         <UButton v-if="!rows.some((row) => row.kind === 'game')" :disabled="pending" @click="create('game')">Create game link</UButton>
         <ul class="space-y-medium">
-          <li v-for="invitation in rows" :key="invitation.id" class="space-y-small rounded-panel border border-default p-medium">
-            <div class="flex flex-wrap items-center gap-small"><strong>{{ invitation.kind === "game" ? "Game link" : `${characterName(invitation.characterId)} character link` }}</strong><UBadge color="neutral" variant="subtle">{{ invitation.enabled ? "Enabled" : "Disabled" }}</UBadge></div>
-            <label class="block text-sm text-muted">Invitation link <input readonly :value="invitationUrl(invitation)" class="block w-full rounded border border-default bg-default p-small text-default" /></label>
-            <div class="flex flex-wrap gap-small">
-              <UButton color="neutral" variant="outline" @click="copy(invitation)">Copy</UButton>
-              <UButton color="neutral" variant="outline" :disabled="pending" @click="toggle(invitation)">{{ invitation.enabled ? "Disable" : "Enable" }}</UButton>
-              <UButton color="neutral" variant="outline" :disabled="pending" @click="rotate(invitation)">Rotate link</UButton>
-            </div>
-          </li>
+          <InvitationLinkCard
+            v-for="invitation in rows"
+            :key="invitation.id"
+            :title="invitation.kind === 'game' ? 'Game link' : `${characterName(invitation.characterId)} character link`"
+            :url="invitationUrl(invitation)"
+            :enabled="invitation.enabled"
+            :pending="pending"
+            @copy="copy(invitation)"
+            @toggle="toggle(invitation)"
+            @rotate="rotate(invitation)"
+          />
         </ul>
         <form class="flex flex-wrap items-end gap-small" @submit.prevent="create('character')">
           <UFormField label="Create character link"><USelect v-model="selectedCharacterId" :items="availableCharacters" value-key="value" placeholder="Select character" /></UFormField>
@@ -107,11 +117,8 @@ function characterName(id: string | null) {
         </form>
       </template>
     </ScreenSection>
-    <UModal :open="Boolean(removingMember)" title="Remove player access" @update:open="(open: boolean) => { if (!open) removingMember = null }">
-      <template #body>
-        <p>Remove {{ removingMember?.name }} from the game? Their characters stay in the game under GM control and become inactive.</p>
-        <div class="mt-medium flex justify-end gap-small"><UButton color="neutral" variant="outline" @click="removingMember = null">Cancel</UButton><UButton color="error" @click="removingMember && changeMember(removingMember, 'remove')">Remove access</UButton></div>
-      </template>
-    </UModal>
+    <ConfirmDialog :open="Boolean(removingMember)" title="Remove player access" confirm-label="Remove access" destructive :pending="pending" @cancel="removingMember = null" @confirm="removingMember && changeMember(removingMember, 'remove')">
+      <p>Remove {{ removingMember?.name }} from the game? Their characters stay in the game under GM control and become inactive.</p>
+    </ConfirmDialog>
   </div>
 </template>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ConfirmDialog from "../../shared/design-system/ConfirmDialog.vue";
+import ContentState from "../../shared/design-system/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
@@ -201,7 +203,7 @@ async function removeCharacter() {
 
 <template>
   <div data-testid="game-view" class="mx-auto max-w-6xl space-y-section">
-    <p v-if="game.isLoading.value">Loading game…</p>
+    <ContentState v-if="game.isLoading.value" kind="loading">Loading game…</ContentState>
     <p v-else-if="game.isError.value"><UButton to="/" variant="outline" color="neutral">My games</UButton></p>
     <template v-else-if="gameRecord">
       <header class="flex flex-wrap items-start justify-between gap-medium">
@@ -217,8 +219,8 @@ async function removeCharacter() {
           <UButton v-else-if="gameRecord.role === 'GM'" color="neutral" variant="outline" data-testid="open-settings" @click="openSettings">Settings</UButton>
         </div>
       </header>
-      <p v-if="roster.isLoading.value">Loading characters…</p>
-      <p v-else-if="roster.isError.value"><UButton variant="outline" color="neutral" @click="roster.refetch">Retry</UButton></p>
+      <ContentState v-if="roster.isLoading.value" kind="loading">Loading characters…</ContentState>
+      <ContentState v-else-if="roster.isError.value" kind="error" @retry="roster.refetch" />
       <template v-else>
         <GameSettings v-if="settings" :game-id="gameId" :members="members" :characters="characters" @changed="refreshSettings" />
         <template v-else-if="management && managedCharacterId">
@@ -245,14 +247,8 @@ async function removeCharacter() {
         </form>
       </template>
     </UModal>
-    <UModal :open="Boolean(removingId)" title="Remove character" @update:open="(open: boolean) => { if (!open) removingId = '' }">
-      <template #body>
-        <p>Remove {{ removingCharacter?.name }}? This permanently removes the character and its sheet.</p>
-        <div class="mt-medium flex flex-wrap justify-end gap-small">
-          <UButton color="neutral" variant="outline" @click="removingId = ''">Cancel</UButton>
-          <UButton color="error" :loading="deleteCharacter.isPending.value" data-testid="confirm-character-removal" @click="removeCharacter">Remove permanently</UButton>
-        </div>
-      </template>
-    </UModal>
+    <ConfirmDialog :open="Boolean(removingId)" title="Remove character" confirm-label="Remove permanently" confirm-test-id="confirm-character-removal" destructive :pending="deleteCharacter.isPending.value" @cancel="removingId = ''" @confirm="removeCharacter">
+      <p>Remove {{ removingCharacter?.name }}? This permanently removes the character and its sheet.</p>
+    </ConfirmDialog>
   </div>
 </template>
