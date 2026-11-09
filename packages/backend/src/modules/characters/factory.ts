@@ -51,4 +51,3 @@ export function createCharactersService(
       listActiveParty({ gameAccessFor, database }, actor, gameId),
   };
 }
-

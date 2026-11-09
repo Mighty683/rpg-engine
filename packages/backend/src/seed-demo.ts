@@ -47,48 +47,42 @@ try {
       { id: demoGmId, username: "demo-gm", passwordHash: gmHash },
       { id: demoPlayerId, username: "demo-player", passwordHash: playerHash },
     ]);
-    await db
-      .insert(games)
-      .values({
-        id: demoGameId,
-        name: "The Lantern Road",
-        systemId: "fabula-ultima",
-        gmAccountId: demoGmId,
-      });
+    await db.insert(games).values({
+      id: demoGameId,
+      name: "The Lantern Road",
+      systemId: "fabula-ultima",
+      gmAccountId: demoGmId,
+    });
     const membershipId = randomUUID();
-    await db
-      .insert(players)
-      .values({
-        id: membershipId,
-        gameId: demoGameId,
-        accountId: demoPlayerId,
-        name: "Demo Player",
-      });
+    await db.insert(players).values({
+      id: membershipId,
+      gameId: demoGameId,
+      accountId: demoPlayerId,
+      name: "Demo Player",
+    });
     const playerCharacterId = randomUUID();
     for (const character of [
       { id: randomUUID(), name: "Rowan Ash", playerId: null, active: true },
       { id: playerCharacterId, name: "Nera Vale", playerId: membershipId, active: false },
     ]) {
       const sheet = defaultSheet(character.name);
-      await db
-        .insert(characters)
-        .values({
-          id: character.id,
-          gameId: demoGameId,
-          playerId: character.playerId,
-          gmActive: character.active,
-          name: sheet.name,
-          theme: sheet.theme,
-          level: sheet.level,
-          dexDie: sheet.baseDice.DEX,
-          insDie: sheet.baseDice.INS,
-          migDie: sheet.baseDice.MIG,
-          wlpDie: sheet.baseDice.WLP,
-          currentHp: sheet.resources.hp,
-          currentMp: sheet.resources.mp,
-          currentIp: sheet.resources.ip,
-          fabulaPoints: sheet.resources.fabula,
-        });
+      await db.insert(characters).values({
+        id: character.id,
+        gameId: demoGameId,
+        playerId: character.playerId,
+        gmActive: character.active,
+        name: sheet.name,
+        theme: sheet.theme,
+        level: sheet.level,
+        dexDie: sheet.baseDice.DEX,
+        insDie: sheet.baseDice.INS,
+        migDie: sheet.baseDice.MIG,
+        wlpDie: sheet.baseDice.WLP,
+        currentHp: sheet.resources.hp,
+        currentMp: sheet.resources.mp,
+        currentIp: sheet.resources.ip,
+        fabulaPoints: sheet.resources.fabula,
+      });
     }
     await db
       .update(players)

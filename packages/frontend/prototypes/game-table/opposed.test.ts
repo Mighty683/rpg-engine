@@ -2,7 +2,14 @@ import type { OpposedSide } from "./types";
 import { expect, test } from "vite-plus/test";
 import { rollOpposed } from "./opposed";
 
-const side = (name: string, modifier = 0): OpposedSide => ({ name, modifier, dice: [{ attribute: "DEX", size: 8 }, { attribute: "MIG", size: 10 }] });
+const side = (name: string, modifier = 0): OpposedSide => ({
+  name,
+  modifier,
+  dice: [
+    { attribute: "DEX", size: 8 },
+    { attribute: "MIG", size: 10 },
+  ],
+});
 const results = (faces: number[]) => {
   let index = 0;
   return () => (faces[index++]! - 0.5) / (index % 2 ? 8 : 10);
@@ -18,8 +25,23 @@ test("compares opposed totals, criticals, fumbles and ties", () => {
 });
 
 test("compares other dice pools without applying two-die critical rules", () => {
-  const first: OpposedSide = { name: "A", modifier: 0, dice: [{ attribute: "", size: 6 }, { attribute: "", size: 6 }] };
-  const second: OpposedSide = { name: "B", modifier: 0, dice: [{ attribute: "", size: 6 }, { attribute: "", size: 6 }, { attribute: "", size: 6 }] };
+  const first: OpposedSide = {
+    name: "A",
+    modifier: 0,
+    dice: [
+      { attribute: "", size: 6 },
+      { attribute: "", size: 6 },
+    ],
+  };
+  const second: OpposedSide = {
+    name: "B",
+    modifier: 0,
+    dice: [
+      { attribute: "", size: 6 },
+      { attribute: "", size: 6 },
+      { attribute: "", size: 6 },
+    ],
+  };
   const result = rollOpposed([first, second], () => 0.99);
   expect(result.fabulaCheck).toBe(false);
   expect(result.first.special).toBe("");

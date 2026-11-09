@@ -1,4 +1,10 @@
-import type { GameRow, GameAccessRepository, GameActor, GameAccess, DatabaseExecutor } from "./types.ts";
+import type {
+  GameRow,
+  GameAccessRepository,
+  GameActor,
+  GameAccess,
+  DatabaseExecutor,
+} from "./types.ts";
 import { randomUUID } from "node:crypto";
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";

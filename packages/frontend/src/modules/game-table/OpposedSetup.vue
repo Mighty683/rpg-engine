@@ -2,7 +2,6 @@
 import type { OpponentDraft } from "./types";
 import DicePoolEditor from "./DicePoolEditor.vue";
 
-
 const props = withDefaults(defineProps<{ sizes?: readonly number[]; showPool?: boolean }>(), {
   sizes: () => [6, 8, 10, 12],
   showPool: true,

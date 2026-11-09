@@ -31,4 +31,3 @@ export function createMembershipsService(
       setMemberRemoved({ gameAccessFor, events, database }, actor, gameId, membershipId, removed),
   };
 }
-

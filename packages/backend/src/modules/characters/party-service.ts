@@ -56,7 +56,10 @@ function equipmentEntry(row: EquipmentRow) {
   return { ...base, kind: "other" as const };
 }
 
-async function batchedSheets(tx: DatabaseTransaction, rows: Row[]): Promise<Map<string, FabulaSheet>> {
+async function batchedSheets(
+  tx: DatabaseTransaction,
+  rows: Row[],
+): Promise<Map<string, FabulaSheet>> {
   const ids = rows.map((row) => row.id);
   const classes = await tx
     .select({
@@ -120,7 +123,11 @@ function canRoll(access: GameAccess, playerId: string | null) {
   return access.role === "GM" || access.membershipId === playerId;
 }
 
-export async function listActiveParty({ gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database }, actor: GameActor, gameId: string) {
+export async function listActiveParty(
+  { gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database },
+  actor: GameActor,
+  gameId: string,
+) {
   return transaction(
     database,
     async (tx) => {

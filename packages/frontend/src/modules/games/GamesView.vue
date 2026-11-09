@@ -61,7 +61,11 @@ async function loadGames() {
     listState.value = "ready";
   } catch {
     listState.value = "error";
-    toast.add({ title: h("span", { "data-testid": "games-load-error-toast" }, t("games.loadError")), description: t("games.retry"), color: "error" });
+    toast.add({
+      title: h("span", { "data-testid": "games-load-error-toast" }, t("games.loadError")),
+      description: t("games.retry"),
+      color: "error",
+    });
   }
 }
 async function loadSystems() {
@@ -137,7 +141,11 @@ const submit = handleSubmit(
         const failure = cause as Error & { status?: number; payload?: { error?: ApiError } };
         if (failure.status === 400 || failure.status === 422) {
           const messages = Object.values(failure.payload?.error?.fields ?? {});
-          toast.add({ title: h("span", { "data-testid": "game-create-error-toast" }, t("games.createFailed")), description: messages.join(" ") || failure.payload?.error?.message, color: "error" });
+          toast.add({
+            title: h("span", { "data-testid": "game-create-error-toast" }, t("games.createFailed")),
+            description: messages.join(" ") || failure.payload?.error?.message,
+            color: "error",
+          });
           outcome.value = "failed";
           return;
         }
@@ -182,9 +190,19 @@ onMounted(() => {
       </p>
       <p class="text-sm text-muted">{{ t("games.joinHint") }}</p>
       <div aria-live="polite">
-        <ContentState v-if="listState === 'loading'" kind="loading">{{ t("games.loading") }}</ContentState>
-        <ContentState v-else-if="listState === 'error'" kind="error" retry-test-id="retry-games" :retry-label="t('games.retry')" @retry="loadGames" />
-        <ContentState v-else-if="games.length === 0" kind="empty" data-testid="games-empty">{{ t("games.empty") }}</ContentState>
+        <ContentState v-if="listState === 'loading'" kind="loading">{{
+          t("games.loading")
+        }}</ContentState>
+        <ContentState
+          v-else-if="listState === 'error'"
+          kind="error"
+          retry-test-id="retry-games"
+          :retry-label="t('games.retry')"
+          @retry="loadGames"
+        />
+        <ContentState v-else-if="games.length === 0" kind="empty" data-testid="games-empty">{{
+          t("games.empty")
+        }}</ContentState>
         <ul v-else class="divide-y divide-default rounded-panel border border-default">
           <GameListEntry
             v-for="game in games"

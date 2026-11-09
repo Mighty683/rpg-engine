@@ -56,7 +56,11 @@ export async function getAccount(database: Database, accountId: string) {
 }
 
 /** Revokes the session before closing any associated live streams. */
-export async function logout(events: GameEvents, revoke: (sessionId: string) => ReturnType<typeof revokeSession>, sessionId: string) {
+export async function logout(
+  events: GameEvents,
+  revoke: (sessionId: string) => ReturnType<typeof revokeSession>,
+  sessionId: string,
+) {
   await revoke(sessionId);
   await notifyAfterCommit(() => events.closeSessionStreams(sessionId));
 }

@@ -29,19 +29,25 @@ export function useThrowHistory(gameId: string) {
     queries: computed(() =>
       pages.value.map((before) => ({
         queryKey: [...throwsKey(gameId), before ?? "newest"],
-        queryFn: () => api.listGameThrows(gameId, { before: before ?? undefined, limit: historyPageSize }),
+        queryFn: () =>
+          api.listGameThrows(gameId, { before: before ?? undefined, limit: historyPageSize }),
       })),
     ),
   });
-  const pageData = computed(() => queries.value.map((query) => (query.data?.throws ?? []) as ThrowRecord[]));
+  const pageData = computed(() =>
+    queries.value.map((query) => (query.data?.throws ?? []) as ThrowRecord[]),
+  );
   const throws = computed(() => mergeThrowPages(pageData.value));
-  const newestPage = computed(() => queries.value.find((_, index) => pages.value[index] === null)?.data?.throws ?? []);
+  const newestPage = computed(
+    () => queries.value.find((_, index) => pages.value[index] === null)?.data?.throws ?? [],
+  );
   const isLoading = computed(() => queries.value.some((query) => query.isLoading));
   const isError = computed(() => queries.value.some((query) => query.isError));
   const oldestPageFull = computed(() => {
     let oldest = 0;
     pages.value.forEach((cursor, index) => {
-      if (cursor !== null && (pages.value[oldest] === null || cursor < pages.value[oldest]!)) oldest = index;
+      if (cursor !== null && (pages.value[oldest] === null || cursor < pages.value[oldest]!))
+        oldest = index;
     });
     return (queries.value[oldest]?.data?.throws.length ?? 0) === historyPageSize;
   });
@@ -80,4 +86,3 @@ export function useRemoveThrowMutation(gameId: string) {
     onSettled: () => client.invalidateQueries({ queryKey: throwsKey(gameId) }),
   });
 }
-

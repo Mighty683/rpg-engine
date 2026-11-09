@@ -1,4 +1,11 @@
-import type { ThrowRow, CreateThrowInput, ThrowRecord, ResolutionContext, RollCharacter, SourceThrow } from "./types.ts";
+import type {
+  ThrowRow,
+  CreateThrowInput,
+  ThrowRecord,
+  ResolutionContext,
+  RollCharacter,
+  SourceThrow,
+} from "./types.ts";
 import type { DieSource } from "../fabula/types.ts";
 import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
 import type { GameEvents } from "../events/types.ts";
@@ -129,14 +136,23 @@ export async function listThrows(
   });
 }
 
-async function lockGameRead(gameAccessFor: GameAccessFactory, tx: DatabaseTransaction, actor: GameActor, gameId: string) {
+async function lockGameRead(
+  gameAccessFor: GameAccessFactory,
+  tx: DatabaseTransaction,
+  actor: GameActor,
+  gameId: string,
+) {
   const access = await gameAccessFor(tx).gameAccess(actor, gameId);
   if (!access) throw fail("not_found");
   return access;
 }
 
 export async function createThrow(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   input: CreateThrowInput,
@@ -210,7 +226,11 @@ async function buildContext(
 
 /** Marks a history entry deleted; authorship follows the account even after reassignment. */
 export async function removeThrow(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   throwId: string,
@@ -228,6 +248,7 @@ export async function removeThrow(
     await tx.update(throws).set({ deleted: true }).where(eq(throws.id, throwId));
     return { deleted: true, changed: true };
   });
-  if (result.changed) await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "throws" }));
+  if (result.changed)
+    await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "throws" }));
   return result;
 }

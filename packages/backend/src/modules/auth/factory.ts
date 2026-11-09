@@ -25,4 +25,3 @@ export function createAuthService(
     logout: (sessionId: string) => logout(events, sessions.revoke, sessionId),
   };
 }
-

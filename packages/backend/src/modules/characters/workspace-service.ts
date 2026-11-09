@@ -55,13 +55,22 @@ function characterSummaries(tx: DatabaseTransaction, gameId: string, id?: string
     .orderBy(characters.createdAt, characters.id);
 }
 
-async function requireReadAccess(gameAccessFor: GameAccessFactory, tx: DatabaseTransaction, actor: GameActor, gameId: string) {
+async function requireReadAccess(
+  gameAccessFor: GameAccessFactory,
+  tx: DatabaseTransaction,
+  actor: GameActor,
+  gameId: string,
+) {
   const access = await gameAccessFor(tx).gameAccess(actor, gameId);
   if (!access) throw fail("not_found");
   return access;
 }
 
-export async function listWorkspaceCharacters({ gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database }, actor: GameActor, gameId: string) {
+export async function listWorkspaceCharacters(
+  { gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database },
+  actor: GameActor,
+  gameId: string,
+) {
   return transaction(
     database,
     async (tx) => {
@@ -102,7 +111,11 @@ export async function getWorkspaceCharacter(
 }
 
 export async function createWorkspaceCharacter(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
@@ -162,15 +175,13 @@ export async function createWorkspaceCharacter(
       .onConflictDoNothing({ target: characters.id })
       .returning(characterFields);
     if (!inserted[0]) throw fail("id_conflict");
-    await tx
-      .insert(characterCreateRequests)
-      .values({
-        accountId: actor.accountId,
-        requestId: id,
-        gameId,
-        characterId: id,
-        name: sheet.name,
-      });
+    await tx.insert(characterCreateRequests).values({
+      accountId: actor.accountId,
+      requestId: id,
+      gameId,
+      characterId: id,
+      name: sheet.name,
+    });
     if (access.role === "Player")
       await tx
         .update(players)
@@ -182,7 +193,11 @@ export async function createWorkspaceCharacter(
 }
 
 export async function setGmCharacterActive(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
@@ -210,7 +225,11 @@ export async function setGmCharacterActive(
 }
 
 export async function updateWorkspaceCharacter(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   gameId: string,
   actor: GameActor,
   id: string,
@@ -274,8 +293,7 @@ export async function updateWorkspaceCharacter(
         await c.delete(characterClasses).where(eq(characterClasses.characterId, id));
       else if (table === "character_skills")
         await c.delete(characterSkills).where(eq(characterSkills.characterId, id));
-      else
-        await c.delete(characterEquipment).where(eq(characterEquipment.characterId, id));
+      else await c.delete(characterEquipment).where(eq(characterEquipment.characterId, id));
       for (const [i, x] of entries.entries()) {
         if (table === "character_classes")
           await c
@@ -321,25 +339,23 @@ export async function updateWorkspaceCharacter(
                       x.initiativeModifier,
                     ]
                   : [null, null, null, null, null, null, null, null];
-          await c
-            .insert(characterEquipment)
-            .values({
-              id: x.id,
-              characterId: id,
-              name: x.name,
-              notes: x.notes,
-              position: i + 1,
-              kind: x.kind,
-              priceZenit: x.priceZenit,
-              equipped: z[0],
-              accuracyAttribute1: z[1],
-              accuracyAttribute2: z[2],
-              accuracyBonus: z[3],
-              fixedDefense: z[4],
-              defenseBonus: z[5],
-              magicDefenseBonus: z[6],
-              initiativeModifier: z[7],
-            });
+          await c.insert(characterEquipment).values({
+            id: x.id,
+            characterId: id,
+            name: x.name,
+            notes: x.notes,
+            position: i + 1,
+            kind: x.kind,
+            priceZenit: x.priceZenit,
+            equipped: z[0],
+            accuracyAttribute1: z[1],
+            accuracyAttribute2: z[2],
+            accuracyBonus: z[3],
+            fixedDefense: z[4],
+            defenseBonus: z[5],
+            magicDefenseBonus: z[6],
+            initiativeModifier: z[7],
+          });
         }
       }
     }
@@ -359,7 +375,11 @@ async function clearActiveCharacter(tx: DatabaseTransaction, gameId: string, id:
 
 /** Changes control under the game lock and invalidates all outstanding character links. */
 export async function assignCharacter(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
@@ -411,7 +431,11 @@ export async function assignCharacter(
 
 /** Permanently deletes a sheet while preserving its create-request receipt. */
 export async function deleteWorkspaceCharacter(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: GameActor,
   gameId: string,
   id: string,
@@ -429,9 +453,7 @@ export async function deleteWorkspaceCharacter(
     if (!character) throw fail("not_found");
     if (!canEditCharacter(access, character.player_id)) throw fail("forbidden");
     await clearActiveCharacter(tx, gameId, id);
-    await tx
-      .delete(characters)
-      .where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
+    await tx.delete(characters).where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
     afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
   });
 }

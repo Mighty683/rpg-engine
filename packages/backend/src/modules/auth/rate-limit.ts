@@ -55,7 +55,11 @@ export class PostgresRateStore implements Store {
   }
 }
 
-export function authenticationLimiters(stores: { loginAddress: Store; loginAccount: Store; registration: Store }) {
+export function authenticationLimiters(stores: {
+  loginAddress: Store;
+  loginAccount: Store;
+  registration: Store;
+}) {
   const options = {
     windowMs: 15 * 60_000,
     standardHeaders: "draft-8" as const,

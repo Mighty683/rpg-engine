@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import type { Attribute, PartyCharacter, ThrowRecord, ThrowSetup, RollDraft, FreeDraft, OpponentDraft } from "./types";
+import type {
+  Attribute,
+  PartyCharacter,
+  ThrowRecord,
+  ThrowSetup,
+  RollDraft,
+  FreeDraft,
+  OpponentDraft,
+} from "./types";
 
 import { computed, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
@@ -8,7 +16,12 @@ import { useGameCharactersQuery } from "../characters/hooks";
 import { useGameMembersQuery } from "../games/hooks";
 import CharacterView from "../characters/CharacterView.vue";
 
-import { useCreateThrowMutation, useGamePartyQuery, useRemoveThrowMutation, useThrowHistory } from "./hooks";
+import {
+  useCreateThrowMutation,
+  useGamePartyQuery,
+  useRemoveThrowMutation,
+  useThrowHistory,
+} from "./hooks";
 import CharacterSheetsDrawer from "./CharacterSheetsDrawer.vue";
 import PartyPanel from "./PartyPanel.vue";
 import HistoryPanel from "./HistoryPanel.vue";
@@ -26,14 +39,23 @@ const createThrow = useCreateThrowMutation(props.gameId);
 const removeThrow = useRemoveThrowMutation(props.gameId);
 
 const party = computed(() => partyQuery.data.value?.characters ?? []);
-const rosterById = computed(() => new Map((roster.data.value?.characters ?? []).map((entry) => [entry.id, entry])));
+const rosterById = computed(
+  () => new Map((roster.data.value?.characters ?? []).map((entry) => [entry.id, entry])),
+);
 
 const sheetOpen = ref(false);
 const selectedSheetId = ref("");
-const sheetTabs = computed(() => party.value.map((member) => ({ label: member.name, value: member.id })));
-watch(sheetTabs, (tabs) => {
-  if (!tabs.some((tab) => tab.value === selectedSheetId.value)) selectedSheetId.value = tabs[0]?.value ?? "";
-}, { immediate: true });
+const sheetTabs = computed(() =>
+  party.value.map((member) => ({ label: member.name, value: member.id })),
+);
+watch(
+  sheetTabs,
+  (tabs) => {
+    if (!tabs.some((tab) => tab.value === selectedSheetId.value))
+      selectedSheetId.value = tabs[0]?.value ?? "";
+  },
+  { immediate: true },
+);
 function openSheet(characterId: string) {
   selectedSheetId.value = characterId;
   sheetOpen.value = true;
@@ -54,20 +76,27 @@ const freeSourceId = ref<string | null>(null);
 const highlightId = ref("");
 let highlightTimer: ReturnType<typeof setTimeout> | undefined;
 
-watch(() => props.throwsHint, () => history.refresh());
+watch(
+  () => props.throwsHint,
+  () => history.refresh(),
+);
 watch(history.throws, (entries) => {
   if (!pendingHighlight.value) return;
   if (entries.some((entry) => entry.id === pendingHighlight.value)) {
     highlightId.value = pendingHighlight.value;
     pendingHighlight.value = null;
     clearTimeout(highlightTimer);
-    highlightTimer = setTimeout(() => { highlightId.value = ""; }, 1000);
+    highlightTimer = setTimeout(() => {
+      highlightId.value = "";
+    }, 1000);
   }
 });
 const pendingHighlight = ref<string | null>(null);
 
 const currentMember = computed(() =>
-  (membersQuery.data.value?.members ?? []).find((member) => member.accountId === account.value?.id && !member.removed),
+  (membersQuery.data.value?.members ?? []).find(
+    (member) => member.accountId === account.value?.id && !member.removed,
+  ),
 );
 const playerActiveCharacter = computed(() => {
   const activeId = currentMember.value?.activeCharacterId;
@@ -130,7 +159,11 @@ function openReroll(entry: ThrowRecord) {
   const character = party.value.find((member) => member.id === entry.setup.characterId) ?? null;
   if (entry.setup.type === "weapon" && entry.equipmentId) {
     if (!character) {
-      toast.add({ title: "The original character is no longer active, so this weapon roll cannot be rerolled. Make a free roll instead.", color: "error" });
+      toast.add({
+        title:
+          "The original character is no longer active, so this weapon roll cannot be rerolled. Make a free roll instead.",
+        color: "error",
+      });
       return;
     }
     rollSourceId.value = entry.id;
@@ -143,7 +176,10 @@ function openReroll(entry: ThrowRecord) {
       weaponBonus: entry.setup.weaponBonus ?? 0,
       first: entry.setup.accuracyDice?.[0] ?? "DEX",
       second: entry.setup.accuracyDice?.[1] ?? null,
-      dice: { ...character.baseDice, ...Object.fromEntries(entry.setup.dice.map((die) => [die.label, die.size])) } as Record<Attribute, number>,
+      dice: {
+        ...character.baseDice,
+        ...Object.fromEntries(entry.setup.dice.map((die) => [die.label, die.size])),
+      } as Record<Attribute, number>,
       modifier: String(entry.setup.modifier),
       note: entry.setup.note,
     };
@@ -151,11 +187,18 @@ function openReroll(entry: ThrowRecord) {
   }
   if (entry.setup.type === "attribute") {
     if (!character) {
-      toast.add({ title: "The original character is no longer active, so this roll cannot be rerolled. Make a free roll instead.", color: "error" });
+      toast.add({
+        title:
+          "The original character is no longer active, so this roll cannot be rerolled. Make a free roll instead.",
+        color: "error",
+      });
       return;
     }
     rollSourceId.value = entry.id;
-    rollOpponent.value = { dice: entry.setup.redDice.map((die) => die.size), modifier: String(entry.setup.redModifier) };
+    rollOpponent.value = {
+      dice: entry.setup.redDice.map((die) => die.size),
+      modifier: String(entry.setup.redModifier),
+    };
     const first = entry.setup.dice[0]?.label as Attribute | undefined;
     const second = entry.setup.dice[1]?.label as Attribute | undefined;
     if (!first) return;
@@ -167,15 +210,22 @@ function openReroll(entry: ThrowRecord) {
       weaponBonus: 0,
       first,
       second: second ?? null,
-      dice: { ...character.baseDice, ...Object.fromEntries(entry.setup.dice.map((die) => [die.label, die.size])) } as Record<Attribute, number>,
+      dice: {
+        ...character.baseDice,
+        ...Object.fromEntries(entry.setup.dice.map((die) => [die.label, die.size])),
+      } as Record<Attribute, number>,
       modifier: String(entry.setup.modifier),
       note: entry.setup.note,
     };
     return;
   }
   freeSourceId.value = entry.id;
-  freeOpponent.value = { dice: entry.setup.redDice.map((die) => die.size), modifier: String(entry.setup.redModifier) };
-  const attributed = props.role === "GM" ? entry.characterId ?? "gm" : playerActiveCharacter.value?.id ?? "";
+  freeOpponent.value = {
+    dice: entry.setup.redDice.map((die) => die.size),
+    modifier: String(entry.setup.redModifier),
+  };
+  const attributed =
+    props.role === "GM" ? (entry.characterId ?? "gm") : (playerActiveCharacter.value?.id ?? "");
   freeDraft.value = {
     characterId: attributed,
     dice: entry.setup.dice.map((die) => die.size),
@@ -190,14 +240,17 @@ function openFreeRoll() {
   freeError.value = "";
   freeOpponent.value = { dice: [], modifier: "0" };
   freeDraft.value = {
-    characterId: props.role === "GM" ? "gm" : playerActiveCharacter.value?.id ?? "",
+    characterId: props.role === "GM" ? "gm" : (playerActiveCharacter.value?.id ?? ""),
     dice: [],
     modifier: "0",
     note: "",
   };
 }
 
-const wholeNumber = (value: string | number) => { const text = String(value).trim(); return text !== "" && Number.isSafeInteger(Number(text)) ? Number(text) : null; };
+const wholeNumber = (value: string | number) => {
+  const text = String(value).trim();
+  return text !== "" && Number.isSafeInteger(Number(text)) ? Number(text) : null;
+};
 
 function rollSetup(draft: RollDraft): ThrowSetup | null {
   const modifier = wholeNumber(draft.modifier);
@@ -223,7 +276,10 @@ function rollSetup(draft: RollDraft): ThrowSetup | null {
     characterId: draft.character.id,
     expectedRevision: draft.character.revision,
     attributes: draft.second ? [draft.first, draft.second] : [draft.first],
-    dice: { [draft.first]: draft.dice[draft.first], ...(draft.second ? { [draft.second]: draft.dice[draft.second] } : {}) },
+    dice: {
+      [draft.first]: draft.dice[draft.first],
+      ...(draft.second ? { [draft.second]: draft.dice[draft.second] } : {}),
+    },
     modifier,
     redDice,
     redModifier,
@@ -242,15 +298,22 @@ async function submitRoll() {
     pendingHighlight.value = result.throw.id;
     rollDraft.value = null;
   } catch (error) {
-    const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload?.error;
+    const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload
+      ?.error;
     const status = (error as { status?: number }).status;
     if (!status || status >= 500) {
       rollDraft.value = null;
-      toast.add({ title: "Could not confirm the roll. Check history before rolling again.", color: "error" });
+      toast.add({
+        title: "Could not confirm the roll. Check history before rolling again.",
+        color: "error",
+      });
     } else if (payload?.code === "stale_revision" || payload?.code === "inactive_character") {
       rollDraft.value = null;
       void partyQuery.refetch();
-      toast.add({ title: "The character changed. Open the roll again to use the latest sheet.", color: "error" });
+      toast.add({
+        title: "The character changed. Open the roll again to use the latest sheet.",
+        color: "error",
+      });
     } else rollError.value = payload?.message ?? "The roll could not be submitted.";
   }
 }
@@ -267,7 +330,15 @@ function freeSetup(draft: FreeDraft): ThrowSetup | null {
     return null;
   }
   const redDice = freeOpponent.value.dice;
-  return { type: "free", characterId: draft.characterId, dice: [...draft.dice], modifier, redDice, redModifier, note: draft.note };
+  return {
+    type: "free",
+    characterId: draft.characterId,
+    dice: [...draft.dice],
+    modifier,
+    redDice,
+    redModifier,
+    note: draft.note,
+  };
 }
 
 async function submitFreeRoll() {
@@ -281,14 +352,19 @@ async function submitFreeRoll() {
     pendingHighlight.value = result.throw.id;
     freeDraft.value = null;
   } catch (error) {
-    const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload?.error;
+    const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload
+      ?.error;
     const status = (error as { status?: number }).status;
     if (!status || status >= 500) {
       freeDraft.value = null;
-      toast.add({ title: "Could not confirm the roll. Check history before rolling again.", color: "error" });
+      toast.add({
+        title: "Could not confirm the roll. Check history before rolling again.",
+        color: "error",
+      });
     } else {
       freeError.value = payload?.message ?? "The roll could not be submitted.";
-      if (payload?.code === "no_active_character" || payload?.code === "inactive_character") void partyQuery.refetch();
+      if (payload?.code === "no_active_character" || payload?.code === "inactive_character")
+        void partyQuery.refetch();
     }
   }
 }
@@ -352,7 +428,11 @@ async function removeEntry(entry: ThrowRecord) {
       @submit="submitFreeRoll"
       @cancel="freeDraft = null"
     />
-    <CharacterSheetsDrawer v-model:open="sheetOpen" v-model:selected-id="selectedSheetId" :tabs="sheetTabs">
+    <CharacterSheetsDrawer
+      v-model:open="sheetOpen"
+      v-model:selected-id="selectedSheetId"
+      :tabs="sheetTabs"
+    >
       <template #sheet="{ characterId }">
         <CharacterView
           :key="characterId"

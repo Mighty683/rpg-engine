@@ -39,4 +39,3 @@ export function createSessionService(database: Database) {
     revoke: (sessionId: string) => revokeSession(database, sessionId),
   };
 }
-

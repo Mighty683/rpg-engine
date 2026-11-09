@@ -21,9 +21,12 @@ async function submit() {
     emit("authenticated", result.account);
   } catch (cause) {
     const status = (cause as { status?: number }).status;
-    const message = status === 429 ? "Too many attempts. Try again later." :
-      mode.value === "login" ? "Could not sign in. Check your username and password." :
-      "Could not create the account. Check your details and try again.";
+    const message =
+      status === 429
+        ? "Too many attempts. Try again later."
+        : mode.value === "login"
+          ? "Could not sign in. Check your username and password."
+          : "Could not create the account. Check your details and try again.";
     toast.add({ title: message, color: "error" });
   } finally {
     busy.value = false;
@@ -34,17 +37,38 @@ async function submit() {
 <template>
   <main class="min-h-screen bg-default text-default flex items-center justify-center p-large">
     <section class="w-full max-w-md space-y-large">
-      <h1 class="text-2xl font-semibold">{{ mode === "login" ? "Sign in" : "Create an account" }}</h1>
+      <h1 class="text-2xl font-semibold">
+        {{ mode === "login" ? "Sign in" : "Create an account" }}
+      </h1>
       <form class="space-y-medium" @submit.prevent="submit">
         <div class="space-y-small">
           <label for="username" class="block">Username</label>
-          <UInput id="username" v-model="username" name="username" autocomplete="username" required class="w-full" data-testid="auth-username" />
+          <UInput
+            id="username"
+            v-model="username"
+            name="username"
+            autocomplete="username"
+            required
+            class="w-full"
+            data-testid="auth-username"
+          />
         </div>
         <div class="space-y-small">
           <label for="password" class="block">Password</label>
-          <UInput id="password" v-model="password" name="password" type="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" required class="w-full" data-testid="auth-password" />
+          <UInput
+            id="password"
+            v-model="password"
+            name="password"
+            type="password"
+            :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+            required
+            class="w-full"
+            data-testid="auth-password"
+          />
         </div>
-        <UButton type="submit" :loading="busy" data-testid="auth-submit">{{ mode === "login" ? "Sign in" : "Create account" }}</UButton>
+        <UButton type="submit" :loading="busy" data-testid="auth-submit">{{
+          mode === "login" ? "Sign in" : "Create account"
+        }}</UButton>
       </form>
       <UButton variant="link" @click="mode = mode === 'login' ? 'register' : 'login'">
         {{ mode === "login" ? "Create an account" : "Already have an account? Sign in" }}

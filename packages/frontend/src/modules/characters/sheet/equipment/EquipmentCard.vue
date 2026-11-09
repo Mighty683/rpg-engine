@@ -20,7 +20,8 @@ const draft = useEditableEntry(
 );
 const equipped = computed(() => {
   if (draft.value.itemType === "weapon") return Boolean(draft.value.weapon?.equipped);
-  if (draft.value.itemType === "armor" && draft.value.defenseKind) return Boolean(draft.value.equipped);
+  if (draft.value.itemType === "armor" && draft.value.defenseKind)
+    return Boolean(draft.value.equipped);
   return undefined;
 });
 </script>
@@ -42,7 +43,11 @@ const equipped = computed(() => {
       <EquipmentIcon v-else-if="draft.itemType === 'armor'" kind="armor" class="text-primary" />
     </template>
     <template #status>
-      <span v-if="equipped !== undefined" class="equipment-status" :class="equipped ? 'text-primary' : 'text-muted'">
+      <span
+        v-if="equipped !== undefined"
+        class="equipment-status"
+        :class="equipped ? 'text-primary' : 'text-muted'"
+      >
         <EquipmentIcon kind="equipped" />{{ equipped ? "Equipped" : "Not equipped" }}
       </span>
     </template>

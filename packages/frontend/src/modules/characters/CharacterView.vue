@@ -6,7 +6,11 @@ import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { useGameCharacterQuery, useGameCharactersQuery, useSaveGameCharacterMutation } from "./hooks";
+import {
+  useGameCharacterQuery,
+  useGameCharactersQuery,
+  useSaveGameCharacterMutation,
+} from "./hooks";
 import CharacterSheet from "./sheet/CharacterSheet.vue";
 import { toCharacter, toSheet } from "./sheet/model";
 import type { Character as SheetCharacter } from "./sheet/types";
@@ -59,11 +63,12 @@ const optimistic = useOptimisticSave<Snapshot, Record<string, unknown>>({
 });
 watch(optimistic.error, (error) => {
   if (!error) return;
-  const message = error.status === 403
-    ? "Your edit access changed. Your local draft is preserved."
-    : error.status === 400 || error.status === 422
-      ? "The change was rejected and has been reverted."
-      : "Your changes could not be confirmed. Your local draft is preserved.";
+  const message =
+    error.status === 403
+      ? "Your edit access changed. Your local draft is preserved."
+      : error.status === 400 || error.status === 422
+        ? "The change was rejected and has been reverted."
+        : "Your changes could not be confirmed. Your local draft is preserved.";
   toast.add({ title: message, color: "error" });
 });
 watch(
@@ -84,7 +89,9 @@ watch(
   { deep: true },
 );
 const sheet = computed(() => snapshot.value?.character.sheet);
-const rosterCharacter = computed(() => roster.data.value?.characters.find((character) => character.id === characterId.value));
+const rosterCharacter = computed(() =>
+  roster.data.value?.characters.find((character) => character.id === characterId.value),
+);
 const readAccessLost = computed(() => {
   const queryStatus = (query.error.value as { status?: number } | null)?.status;
   const saveStatus = optimistic.error.value?.status;
@@ -142,7 +149,8 @@ const maximumOverrides = computed(() => ({
 }));
 function overrideMaximum(resource: "HP" | "MP" | "IP", value: number | null) {
   const keys = { HP: "maxHp", MP: "maxMp", IP: "maxIp" } as const;
-  if (!locked.value && !effectiveReadOnly.value) optimistic.submit({ overrides: { [keys[resource]]: value } });
+  if (!locked.value && !effectiveReadOnly.value)
+    optimistic.submit({ overrides: { [keys[resource]]: value } });
 }
 const defenseKeys = { DEF: "defense", "MAG DEF": "magicDefense", INIT: "initiative" } as const;
 const baseDefense = computed(
@@ -179,7 +187,9 @@ const defenseDetails = computed(() => {
   ) as Record<keyof typeof defenseKeys, { name: string; value: number; modifier?: boolean }[]>;
 });
 const savedSheet = computed(() => optimistic.latestSaved.value?.character.sheet);
-const savedDraft = computed(() => savedSheet.value ? toCharacter(savedSheet.value, characterId.value, true) : null);
+const savedDraft = computed(() =>
+  savedSheet.value ? toCharacter(savedSheet.value, characterId.value, true) : null,
+);
 const savedDerived = computed(() => optimistic.latestSaved.value?.character.derived ?? {});
 const savedMaximum = computed(() => ({
   HP: savedSheet.value?.overrides.maxHp ?? savedDerived.value.maxima?.hp ?? 0,
@@ -191,18 +201,36 @@ const savedOverrides = computed(() => ({
   MP: savedSheet.value?.overrides.maxMp ?? null,
   IP: savedSheet.value?.overrides.maxIp ?? null,
 }));
-const savedDefense = computed(() => Object.fromEntries(Object.entries(defenseKeys).map(([label, key]) => [label, savedDerived.value.defenses?.[key]?.calculated ?? null])) as Record<keyof typeof defenseKeys, number | null>);
+const savedDefense = computed(
+  () =>
+    Object.fromEntries(
+      Object.entries(defenseKeys).map(([label, key]) => [
+        label,
+        savedDerived.value.defenses?.[key]?.calculated ?? null,
+      ]),
+    ) as Record<keyof typeof defenseKeys, number | null>,
+);
 const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
 </script>
 
 <template>
   <div class="mx-auto max-w-6xl space-y-small">
-    <p v-if="draft && rosterCharacter" data-testid="character-controller" class="text-sm text-muted">
-      {{ rosterCharacter.controllerMembershipId ? `Controlled by ${rosterCharacter.controllerName}` : "Controlled by the GM" }}.
+    <p
+      v-if="draft && rosterCharacter"
+      data-testid="character-controller"
+      class="text-sm text-muted"
+    >
+      {{
+        rosterCharacter.controllerMembershipId
+          ? `Controlled by ${rosterCharacter.controllerName}`
+          : "Controlled by the GM"
+      }}.
       <span v-if="effectiveReadOnly">You can view this sheet but cannot edit it.</span>
     </p>
     <UButton v-if="readAccessLost" to="/" color="neutral" variant="outline">My games</UButton>
-    <ContentState v-else-if="query.isPending.value && !draft" kind="loading">Loading character…</ContentState>
+    <ContentState v-else-if="query.isPending.value && !draft" kind="loading"
+      >Loading character…</ContentState
+    >
     <ContentState v-else-if="query.isError.value && !draft" kind="error" @retry="query.refetch" />
     <CharacterSheet
       v-else-if="draft"
@@ -215,17 +243,42 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
       :defense-details="defenseDetails"
     />
     <p v-if="optimistic.saving.value" data-testid="save-status" role="status">Saving…</p>
-    <div v-else-if="optimistic.error.value" data-testid="save-status" role="alert" class="space-y-small">
-      <p v-if="optimistic.paused.value">Your changes could not be confirmed. Your local draft is shown above.</p>
+    <div
+      v-else-if="optimistic.error.value"
+      data-testid="save-status"
+      role="alert"
+      class="space-y-small"
+    >
+      <p v-if="optimistic.paused.value">
+        Your changes could not be confirmed. Your local draft is shown above.
+      </p>
       <p v-else>The change was rejected and has been reverted.</p>
-      <UButton v-if="optimistic.paused.value" color="neutral" variant="outline" @click="optimistic.retry"
+      <UButton
+        v-if="optimistic.paused.value"
+        color="neutral"
+        variant="outline"
+        @click="optimistic.retry"
         >Discard draft and reload</UButton
       >
     </div>
-    <p v-else-if="draft && !effectiveReadOnly" class="text-sm text-muted" data-testid="save-status" role="status">Saved automatically</p>
+    <p
+      v-else-if="draft && !effectiveReadOnly"
+      class="text-sm text-muted"
+      data-testid="save-status"
+      role="status"
+    >
+      Saved automatically
+    </p>
     <details v-if="optimistic.paused.value && savedDraft && !readAccessLost" class="space-y-small">
       <summary class="cursor-pointer font-semibold">Review latest saved version</summary>
-      <CharacterSheet :character="savedDraft" read-only :maximum="savedMaximum" :maximum-overrides="savedOverrides" :base-defense="savedDefense" :defense-details="emptyDefenseDetails" />
+      <CharacterSheet
+        :character="savedDraft"
+        read-only
+        :maximum="savedMaximum"
+        :maximum-overrides="savedOverrides"
+        :base-defense="savedDefense"
+        :defense-details="emptyDefenseDetails"
+      />
     </details>
   </div>
 </template>

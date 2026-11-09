@@ -13,8 +13,7 @@ defineEmits<{ change: [event: Event] }>();
       :value="level"
       aria-label="Character level"
       @change="$emit('change', $event)"
-    /></label
-  >
+  /></label>
 </template>
 
 <style scoped>

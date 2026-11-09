@@ -22,7 +22,10 @@ export function olderCursor(throws: readonly ThrowRecord[]): number | null {
  * True when the newest page (minSeq..maxSeq) does not touch the rest of the loaded
  * window, meaning older pages no longer connect to what the server would return now.
  */
-export function hasWindowGap(throws: readonly ThrowRecord[], newest: readonly ThrowRecord[]): boolean {
+export function hasWindowGap(
+  throws: readonly ThrowRecord[],
+  newest: readonly ThrowRecord[],
+): boolean {
   if (!newest.length || throws.length <= newest.length) return false;
   const newestMin = Math.min(...newest.map((entry) => entry.seq));
   const rest = throws.filter((entry) => !newest.some((fresh) => fresh.id === entry.id));

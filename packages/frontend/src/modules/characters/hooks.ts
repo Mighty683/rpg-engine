@@ -3,7 +3,13 @@ import { computed } from "vue";
 import { account } from "../auth/session";
 import { api } from "./api";
 import { api as playersApi } from "../players/api";
-const gameCharactersKey = (gameId: string) => ["accounts", account.value?.id, "games", gameId, "characters"];
+const gameCharactersKey = (gameId: string) => [
+  "accounts",
+  account.value?.id,
+  "games",
+  gameId,
+  "characters",
+];
 export function useGameCharactersQuery(gameId: string) {
   return useQuery({
     queryKey: computed(() => gameCharactersKey(gameId)),

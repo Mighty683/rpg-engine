@@ -38,7 +38,8 @@ async function request(
   const headers: Record<string, string> = {};
   if (actor) headers.cookie = `rpg_session=${tokens[actor] ?? actor}`;
   if (requestOrigin) headers.origin = requestOrigin;
-  if (method !== "GET" && method !== "HEAD") Object.assign(headers, await csrfHeaders(origin, headers.cookie));
+  if (method !== "GET" && method !== "HEAD")
+    Object.assign(headers, await csrfHeaders(origin, headers.cookie));
   if (body !== undefined) headers["content-type"] = "application/json";
   return fetch(`${origin}/api${path}`, {
     method,
@@ -115,10 +116,34 @@ describe.skipIf(!url)("API permission boundaries", () => {
       player: { accountId: player, sessionId: randomUUID() },
       outsider: { accountId: outsider, sessionId: randomUUID() },
     };
-    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, actors.gm, game, gmCharacter, "GM sheet");
-    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) }, actors.player, game, playerCharacter, "Player sheet");
     await createWorkspaceCharacter(
-      { gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool!) },
+      {
+        gameAccessFor: createGameAccessService,
+        events: createGameEvents(),
+        database: databaseFromPool(pool!),
+      },
+      actors.gm,
+      game,
+      gmCharacter,
+      "GM sheet",
+    );
+    await createWorkspaceCharacter(
+      {
+        gameAccessFor: createGameAccessService,
+        events: createGameEvents(),
+        database: databaseFromPool(pool!),
+      },
+      actors.player,
+      game,
+      playerCharacter,
+      "Player sheet",
+    );
+    await createWorkspaceCharacter(
+      {
+        gameAccessFor: createGameAccessService,
+        events: createGameEvents(),
+        database: databaseFromPool(pool!),
+      },
       actors.outsider,
       otherGame,
       foreignCharacter,

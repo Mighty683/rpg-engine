@@ -37,6 +37,8 @@ The backend loads `packages/backend/.env`; shell environment variables take prec
 
 Shared Oxlint rules are in the root `vite.config.ts`, including a maximum block nesting depth of 6.
 
+Run `pnpm hooks:install` once per clone to install the pre-push hook. The hook runs `pnpm verify`, the same checks as CI: formatting, lint, type checks, builds, unit and integration tests, browser component tests, and end-to-end tests. Install Chromium with `pnpm --filter @rpg-engine/tests exec playwright install chromium` and export `TEST_DATABASE_URL` pointing to a disposable PostgreSQL database whose user can create schemas before running these checks or pushing. See the local PostgreSQL instructions below.
+
 ### Demo data
 
 Run `pnpm seed:demo` after migrations to create **The Lantern Road**, a GM account (`demo-gm`), a player account (`demo-player`), and an active character for each. Both accounts use `demo-password` by default; set `DEMO_PASSWORD` to change it.
@@ -84,7 +86,7 @@ Run `pnpm --filter @rpg-engine/backend test:mutation` without a database. Set `T
 - Focus a run: `pnpm --filter @rpg-engine/backend test:mutation -- --mutate src/modules/auth/guards.ts`.
 - View the report at `packages/backend/reports/mutation/mutation.html`; each run replaces it.
 
-Full runs can take a long time. Three older suites (`migrations.test.ts`, `games.test.ts`, and `character-setup-api.test.ts`) are excluded until updated for the current API and migrations.
+Full runs can take a long time. The mutation run targets the focused suites listed in `packages/backend/stryker.config.mjs`.
 
 ## Database migrations
 
@@ -122,7 +124,7 @@ Login is rate-limited by client address and account, and registration by client 
 
 A database administrator must apply these steps to the deployed database.
 
-SQL query construction is checked by an Oxlint plugin through `pnpm lint` and `pnpm check`, including SQL security CI. It detects dynamic text in direct `.query(...)` and `["query"](...)` calls and direct Drizzle `sql.raw()` calls in backend production TypeScript. It does not analyze indirect database APIs or SQL migrations.
+SQL query construction is checked by an Oxlint plugin through `pnpm lint` and `pnpm check`, including CI. It detects dynamic text in direct `.query(...)` and `["query"](...)` calls and direct Drizzle `sql.raw()` calls in backend production TypeScript. It does not analyze indirect database APIs or SQL migrations.
 
 ## AI skills and agents
 

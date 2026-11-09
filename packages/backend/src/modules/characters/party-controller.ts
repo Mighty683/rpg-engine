@@ -12,14 +12,19 @@ export function partyController(services: { auth: AuthService; characters: Chara
       return { actor, gameId: routeId(request.params.gameId) };
     })
     .registerRoutes(
-      Route<{ actor: { accountId: string; sessionId: string }; gameId: string }>().method("get").path("").handler(async (_request, _response, context) => {
-        try {
-          return await services.characters.listActiveParty(context.actor, context.gameId);
-        } catch (error) {
-          if ((error as { code?: string }).code === "not_found")
-            throw new RequestError(404, { error: { code: "not_found", message: "Game not found." } });
-          throw error;
-        }
-      }),
+      Route<{ actor: { accountId: string; sessionId: string }; gameId: string }>()
+        .method("get")
+        .path("")
+        .handler(async (_request, _response, context) => {
+          try {
+            return await services.characters.listActiveParty(context.actor, context.gameId);
+          } catch (error) {
+            if ((error as { code?: string }).code === "not_found")
+              throw new RequestError(404, {
+                error: { code: "not_found", message: "Game not found." },
+              });
+            throw error;
+          }
+        }),
     );
 }

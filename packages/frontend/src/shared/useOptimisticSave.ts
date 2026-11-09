@@ -13,7 +13,9 @@ export function useOptimisticSave<TSnapshot, TInput>(
     options.initial?.value ?? null,
   ) as Ref<TSnapshot | null>;
   const displayed = ref<TSnapshot | null>(options.initial?.value ?? null) as Ref<TSnapshot | null>;
-  const latestSaved = ref<TSnapshot | null>(options.initial?.value ?? null) as Ref<TSnapshot | null>;
+  const latestSaved = ref<TSnapshot | null>(
+    options.initial?.value ?? null,
+  ) as Ref<TSnapshot | null>;
   const pending = ref<TInput | null>(null) as Ref<TInput | null>;
   const saving = ref(false);
   const paused = ref(false);

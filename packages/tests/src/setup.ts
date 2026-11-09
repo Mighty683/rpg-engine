@@ -52,7 +52,9 @@ export default async function setup(project: TestProject) {
       server: {
         host: "127.0.0.1",
         port: 0,
-        proxy: { "/api": { target: `http://127.0.0.1:${backendAddress.port}`, changeOrigin: false } },
+        proxy: {
+          "/api": { target: `http://127.0.0.1:${backendAddress.port}`, changeOrigin: false },
+        },
       },
     });
     await frontend.listen();

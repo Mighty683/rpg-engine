@@ -9,7 +9,8 @@ import App from "../../App.vue";
 import GamesView from "./GamesView.vue";
 import "../../style.css";
 
-const requestUrl = (input: RequestInfo | URL) => typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+const requestUrl = (input: RequestInfo | URL) =>
+  typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status });
 
 test("a GM can retry a failed game list without a backend", async () => {
@@ -25,14 +26,19 @@ test("a GM can retry a failed game list without a backend", async () => {
   document.body.append(root);
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/", component: GamesView }, { path: "/games/:gameId", component: { template: "<div>Game opened</div>" } }],
+    routes: [
+      { path: "/", component: GamesView },
+      { path: "/games/:gameId", component: { template: "<div>Game opened</div>" } },
+    ],
   });
   await router.push("/");
   const app = createApp(App)
     .use(router)
     .use(ui)
     .use(createFrontendI18n())
-    .use(VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) });
+    .use(VueQueryPlugin, {
+      queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+    });
   app.mount(root);
   try {
     await nextTick();
@@ -50,7 +56,8 @@ test("a GM can retry a failed game list without a backend", async () => {
 
 test("game creation validates the name and submits trimmed values", async () => {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    if (requestUrl(input).endsWith("/auth/me")) return json({ account: { id: "a1", username: "gm" } });
+    if (requestUrl(input).endsWith("/auth/me"))
+      return json({ account: { id: "a1", username: "gm" } });
     if (requestUrl(input).endsWith("/auth/csrf")) return json({ csrfToken: "token" });
     if (init?.method === "POST") {
       return json({ game: { id: "g1", name: "My game" } }, 201);
@@ -67,14 +74,19 @@ test("game creation validates the name and submits trimmed values", async () => 
   document.body.append(root);
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/", component: GamesView }, { path: "/games/:gameId", component: { template: "<div>Game opened</div>" } }],
+    routes: [
+      { path: "/", component: GamesView },
+      { path: "/games/:gameId", component: { template: "<div>Game opened</div>" } },
+    ],
   });
   await router.push("/");
   const app = createApp(App)
     .use(router)
     .use(ui)
     .use(createFrontendI18n())
-    .use(VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) });
+    .use(VueQueryPlugin, {
+      queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+    });
   app.mount(root);
   try {
     await page.getByTestId("open-game-creation").click();
@@ -103,27 +115,52 @@ test("game creation validates the name and submits trimmed values", async () => 
 
 test("character creation retry reuses the same client id", async () => {
   const ids: string[] = [];
-  vi.stubGlobal("EventSource", class { close() {} });
-  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = requestUrl(input);
-    if (url.endsWith("/auth/me")) return json({ account: { id: "a1", username: "gm" } });
-    if (url.endsWith("/auth/csrf")) return json({ csrfToken: "token" });
-    if (url.endsWith("/api/games/g1")) return json({ game: { id: "g1", name: "Test", role: "GM", system: { id: "fabula-ultima", name: "Fabula Ultima" } } });
-    if (url.endsWith("/characters") && init?.method === "POST") {
-      ids.push((JSON.parse(init.body as string) as { id: string }).id);
-      return json({ error: { code: "unknown" } }, 500);
-    }
-    if (url.endsWith("/characters")) return json({ characters: [] });
-    if (url.endsWith("/members")) return json({ members: [] });
-    if (url.endsWith("/party")) return json({ characters: [] });
-    if (url.includes("/throws")) return json({ throws: [] });
-    return json({});
-  }));
+  vi.stubGlobal(
+    "EventSource",
+    class {
+      close() {}
+    },
+  );
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = requestUrl(input);
+      if (url.endsWith("/auth/me")) return json({ account: { id: "a1", username: "gm" } });
+      if (url.endsWith("/auth/csrf")) return json({ csrfToken: "token" });
+      if (url.endsWith("/api/games/g1"))
+        return json({
+          game: {
+            id: "g1",
+            name: "Test",
+            role: "GM",
+            system: { id: "fabula-ultima", name: "Fabula Ultima" },
+          },
+        });
+      if (url.endsWith("/characters") && init?.method === "POST") {
+        ids.push((JSON.parse(init.body as string) as { id: string }).id);
+        return json({ error: { code: "unknown" } }, 500);
+      }
+      if (url.endsWith("/characters")) return json({ characters: [] });
+      if (url.endsWith("/members")) return json({ members: [] });
+      if (url.endsWith("/party")) return json({ characters: [] });
+      if (url.includes("/throws")) return json({ throws: [] });
+      return json({});
+    }),
+  );
   const root = document.createElement("div");
   document.body.append(root);
-  const router = createRouter({ history: createMemoryHistory(), routes: [{ path: "/games/:gameId", component: (await import("./GameView.vue")).default }] });
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: "/games/:gameId", component: (await import("./GameView.vue")).default }],
+  });
   await router.push("/games/g1");
-  const app = createApp(App).use(router).use(ui).use(createFrontendI18n()).use(VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) });
+  const app = createApp(App)
+    .use(router)
+    .use(ui)
+    .use(createFrontendI18n())
+    .use(VueQueryPlugin, {
+      queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+    });
   app.mount(root);
   try {
     await page.getByTestId("create-character").click();
@@ -131,7 +168,11 @@ test("character creation retry reuses the same client id", async () => {
     const submit = page.getByRole("dialog").getByRole("button", { name: "Create character" });
     await submit.click();
     await expect.poll(() => ids.length).toBe(1);
-    await expect.element(page.getByText("Could not confirm character creation. Submit again to safely retry.")).toBeVisible();
+    await expect
+      .element(
+        page.getByText("Could not confirm character creation. Submit again to safely retry."),
+      )
+      .toBeVisible();
     await submit.click();
     await expect.poll(() => ids.length).toBe(2);
     expect(ids[0]).toBe(ids[1]);

@@ -49,16 +49,29 @@ export async function seedAccount(): Promise<SeededAccount> {
 }
 
 /** Seeds a Fabula Ultima game with a GM account, a player membership, and active characters. */
-export async function seedGame(options: { gmWeapon?: "complete" | "incomplete" | "none"; playerCharacters?: number } = {}) {
+export async function seedGame(
+  options: { gmWeapon?: "complete" | "incomplete" | "none"; playerCharacters?: number } = {},
+) {
   const pool = await seedPool();
   try {
     const gm: SeededAccount = { username: unique("gm"), password: "password-123", accountId: "" };
-    const player: SeededAccount = { username: unique("player"), password: "password-123", accountId: "" };
+    const player: SeededAccount = {
+      username: unique("player"),
+      password: "password-123",
+      accountId: "",
+    };
     gm.accountId = (await registerAccount(databaseFromPool(pool), gm.username, gm.password)).id;
-    player.accountId = (await registerAccount(databaseFromPool(pool), player.username, player.password)).id;
+    player.accountId = (
+      await registerAccount(databaseFromPool(pool), player.username, player.password)
+    ).id;
     const gmActor = { accountId: gm.accountId, sessionId: randomUUID() };
     const playerActor = { accountId: player.accountId, sessionId: randomUUID() };
-    const game = await createActorGame(databaseFromPool(pool), gmActor, unique("Table"), "fabula-ultima");
+    const game = await createActorGame(
+      databaseFromPool(pool),
+      gmActor,
+      unique("Table"),
+      "fabula-ultima",
+    );
     const gameId = game.id;
     const membershipId = randomUUID();
     await pool.query("INSERT INTO players(id,game_id,account_id,name) VALUES ($1,$2,$3,$4)", [
@@ -68,17 +81,50 @@ export async function seedGame(options: { gmWeapon?: "complete" | "incomplete" |
       unique("member"),
     ]);
     const gmCharacterId = randomUUID();
-    await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, gmActor, gameId, gmCharacterId, unique("GM Hero"));
-    await setGmCharacterActive({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, gmActor, gameId, gmCharacterId, true);
+    await createWorkspaceCharacter(
+      {
+        gameAccessFor: createGameAccessService,
+        events: createGameEvents(),
+        database: databaseFromPool(pool),
+      },
+      gmActor,
+      gameId,
+      gmCharacterId,
+      unique("GM Hero"),
+    );
+    await setGmCharacterActive(
+      {
+        gameAccessFor: createGameAccessService,
+        events: createGameEvents(),
+        database: databaseFromPool(pool),
+      },
+      gmActor,
+      gameId,
+      gmCharacterId,
+      true,
+    );
     const playerCharacterIds: string[] = [];
     const playerCharacters = options.playerCharacters ?? 1;
     for (let index = 0; index < playerCharacters; index++) {
       const id = randomUUID();
-      await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, playerActor, gameId, id, unique(`Player Hero ${index + 1}`));
+      await createWorkspaceCharacter(
+        {
+          gameAccessFor: createGameAccessService,
+          events: createGameEvents(),
+          database: databaseFromPool(pool),
+        },
+        playerActor,
+        gameId,
+        id,
+        unique(`Player Hero ${index + 1}`),
+      );
       playerCharacterIds.push(id);
     }
     const playerCharacterId = playerCharacterIds[0]!;
-    await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [playerCharacterId, membershipId]);
+    await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [
+      playerCharacterId,
+      membershipId,
+    ]);
     let weaponId: string | null = null;
     if (options.gmWeapon && options.gmWeapon !== "none") {
       const weapon = {
@@ -88,16 +134,40 @@ export async function seedGame(options: { gmWeapon?: "complete" | "incomplete" |
         priceZenit: null,
         kind: "weapon" as const,
         equipped: true,
-        accuracyDice: options.gmWeapon === "complete" ? (["DEX", "INS"] as ["DEX", "INS"]) : (["DEX", null] as ["DEX", null]),
+        accuracyDice:
+          options.gmWeapon === "complete"
+            ? (["DEX", "INS"] as ["DEX", "INS"])
+            : (["DEX", null] as ["DEX", null]),
         accuracyBonus: options.gmWeapon === "complete" ? 1 : null,
       };
       const revision = Number(
-        (await pool.query("SELECT revision FROM characters WHERE id=$1", [gmCharacterId])).rows[0]!.revision,
+        (await pool.query("SELECT revision FROM characters WHERE id=$1", [gmCharacterId])).rows[0]!
+          .revision,
       );
-      await updateWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, gameId, gmActor, gmCharacterId, revision, { equipment: [weapon] });
+      await updateWorkspaceCharacter(
+        {
+          gameAccessFor: createGameAccessService,
+          events: createGameEvents(),
+          database: databaseFromPool(pool),
+        },
+        gameId,
+        gmActor,
+        gmCharacterId,
+        revision,
+        { equipment: [weapon] },
+      );
       weaponId = weapon.id;
     }
-    return { gameId, gm, player, membershipId, gmCharacterId, playerCharacterId, playerCharacterIds, weaponId };
+    return {
+      gameId,
+      gm,
+      player,
+      membershipId,
+      gmCharacterId,
+      playerCharacterId,
+      playerCharacterIds,
+      weaponId,
+    };
   } finally {
     await pool.end();
   }
@@ -106,7 +176,10 @@ export async function seedGame(options: { gmWeapon?: "complete" | "incomplete" |
 export async function setPlayerActiveCharacter(game: SeededGame, characterId: string | null) {
   const pool = await seedPool();
   try {
-    await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [characterId, game.membershipId]);
+    await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [
+      characterId,
+      game.membershipId,
+    ]);
   } finally {
     await pool.end();
   }

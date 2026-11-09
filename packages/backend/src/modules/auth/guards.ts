@@ -11,15 +11,25 @@ export function requireWriteOrigin(config: Configuration, request: Request) {
   const localHost = host && /^(localhost|127\.0\.0\.1)(:\d{1,5})?$/.test(host);
   const localOrigin = !config.production && localHost && origin === `http://${host}`;
   if (!origin || !(configuredOrigin ? origin === configuredOrigin : localOrigin)) {
-    throw new RequestError(403, { error: { code: "forbidden", message: "Invalid request origin." } });
+    throw new RequestError(403, {
+      error: { code: "forbidden", message: "Invalid request origin." },
+    });
   }
 }
 
-export async function requireActor(resolve: (token: string) => ReturnType<typeof resolveSession>, request: Request): Promise<Actor> {
-  const cookie = request.headers.cookie?.split(";").map((part) => part.trim()).find((part) => part.startsWith("rpg_session="));
+export async function requireActor(
+  resolve: (token: string) => ReturnType<typeof resolveSession>,
+  request: Request,
+): Promise<Actor> {
+  const cookie = request.headers.cookie
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith("rpg_session="));
   const actor = cookie ? await resolve(cookie.slice("rpg_session=".length)) : null;
   if (!actor) {
-    throw new RequestError(401, { error: { code: "unauthorized", message: "Sign in to continue." } });
+    throw new RequestError(401, {
+      error: { code: "unauthorized", message: "Sign in to continue." },
+    });
   }
   return actor;
 }

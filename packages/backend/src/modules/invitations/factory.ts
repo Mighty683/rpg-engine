@@ -37,4 +37,3 @@ export function createInvitationsService(
     ) => updateInvitation({ gameAccessFor, config, database }, actor, gameId, invitationId, change),
   };
 }
-

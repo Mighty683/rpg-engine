@@ -1,4 +1,12 @@
-import type { Attribute, FabulaSheet, SheetChanges, Contribution, CalculatedDefense, FabulaPreview, EquipmentEntry } from "./types.ts";
+import type {
+  Attribute,
+  FabulaSheet,
+  SheetChanges,
+  Contribution,
+  CalculatedDefense,
+  FabulaPreview,
+  EquipmentEntry,
+} from "./types.ts";
 
 const attributes: Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 const dice = new Set([6, 8, 10, 12]);

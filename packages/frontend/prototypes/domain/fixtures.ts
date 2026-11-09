@@ -1,9 +1,5 @@
 import type { Character, NamedEntry } from "../../src/modules/characters/sheet/types";
-import type {
-  PartyCharacter,
-  PartyWeapon,
-  ThrowRecord,
-} from "../../src/modules/game-table/types";
+import type { PartyCharacter, PartyWeapon, ThrowRecord } from "../../src/modules/game-table/types";
 import type { GameCharacterSummary } from "../../src/modules/characters/types";
 import type { GameMember } from "../../src/modules/games/types";
 

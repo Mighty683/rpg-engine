@@ -45,12 +45,21 @@ function present(config: Configuration, row: InvitationRow) {
   };
 }
 
-async function requireGm(gameAccessFor: GameAccessFactory, tx: DatabaseTransaction, actor: Actor, gameId: string) {
+async function requireGm(
+  gameAccessFor: GameAccessFactory,
+  tx: DatabaseTransaction,
+  actor: Actor,
+  gameId: string,
+) {
   const access = await gameAccessFor(tx).lockGame(actor, gameId);
   if (access.role !== "GM") throw failure("forbidden");
 }
 
-export async function listInvitations({ config, database }: { config: Configuration; database: Database }, actor: Actor, gameId: string) {
+export async function listInvitations(
+  { config, database }: { config: Configuration; database: Database },
+  actor: Actor,
+  gameId: string,
+) {
   const result = await database
     .select({ invitation: invitations })
     .from(invitations)
@@ -60,7 +69,15 @@ export async function listInvitations({ config, database }: { config: Configurat
   return result.map((row) => present(config, row.invitation));
 }
 
-export async function ensureGameInvitation({ gameAccessFor, config, database }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database }, actor: Actor, gameId: string) {
+export async function ensureGameInvitation(
+  {
+    gameAccessFor,
+    config,
+    database,
+  }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database },
+  actor: Actor,
+  gameId: string,
+) {
   return transaction(database, async (tx) => {
     await requireGm(gameAccessFor, tx, actor, gameId);
     const db = tx;
@@ -85,7 +102,11 @@ export async function ensureGameInvitation({ gameAccessFor, config, database }: 
 }
 
 export async function createCharacterInvitation(
-  { gameAccessFor, config, database }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database },
+  {
+    gameAccessFor,
+    config,
+    database,
+  }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database },
   actor: Actor,
   gameId: string,
   characterId: string,
@@ -121,7 +142,11 @@ export async function createCharacterInvitation(
 }
 
 export async function updateInvitation(
-  { gameAccessFor, config, database }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database },
+  {
+    gameAccessFor,
+    config,
+    database,
+  }: { gameAccessFor: GameAccessFactory; config: Configuration; database: Database },
   actor: Actor,
   gameId: string,
   invitationId: string,

@@ -71,8 +71,25 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
     <AccountScreen v-else-if="!account" @authenticated="setAccount" />
     <main v-else class="min-h-screen bg-default text-default">
       <header class="flex items-center gap-small border-b border-default p-medium">
-        <UButton color="neutral" variant="outline" aria-label="Open menu" :aria-expanded="menuOpen" data-testid="open-navigation" @click="menuOpen = true">
-          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+        <UButton
+          color="neutral"
+          variant="outline"
+          aria-label="Open menu"
+          :aria-expanded="menuOpen"
+          data-testid="open-navigation"
+          @click="menuOpen = true"
+        >
+          <svg
+            class="size-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </UButton>
         <RouterLink to="/" class="font-semibold">RPG Engine</RouterLink>
       </header>
@@ -81,7 +98,9 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
           <div class="space-y-large">
             <PrimaryNavigation @navigate="menuOpen = false" />
             <div class="space-y-small border-t border-default pt-medium">
-              <UButton variant="outline" color="error" data-testid="sign-out" @click="signOut">Sign out</UButton>
+              <UButton variant="outline" color="error" data-testid="sign-out" @click="signOut"
+                >Sign out</UButton
+              >
             </div>
           </div>
         </template>

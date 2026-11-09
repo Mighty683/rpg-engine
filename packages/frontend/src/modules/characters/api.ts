@@ -6,22 +6,37 @@ export const api = {
     request<{ characters: GameCharacterSummary[] }>(`/api/games/${gameId}/characters`),
   createGameCharacter: (gameId: string, input: { id: string; name: string }) =>
     request<{ character: Character }>(`/api/games/${gameId}/characters`, {
-      method: "POST", body: JSON.stringify(input),
+      method: "POST",
+      body: JSON.stringify(input),
     }),
   getGameCharacter: (gameId: string, characterId: string) =>
     request<{ character: Character }>(`/api/games/${gameId}/characters/${characterId}`),
-  saveGameCharacter: (gameId: string, characterId: string, expectedRevision: number, changes: Record<string, unknown>) =>
+  saveGameCharacter: (
+    gameId: string,
+    characterId: string,
+    expectedRevision: number,
+    changes: Record<string, unknown>,
+  ) =>
     request<{ character: Character }>(`/api/games/${gameId}/characters/${characterId}`, {
-      method: "PATCH", body: JSON.stringify({ expectedRevision, changes }),
+      method: "PATCH",
+      body: JSON.stringify({ expectedRevision, changes }),
     }),
   setGameCharacterActive: (gameId: string, characterId: string, active: boolean) =>
-    request<{ character: GameCharacterSummary }>(`/api/games/${gameId}/characters/${characterId}/active`, {
-      method: "PUT", body: JSON.stringify({ active }),
-    }),
+    request<{ character: GameCharacterSummary }>(
+      `/api/games/${gameId}/characters/${characterId}/active`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ active }),
+      },
+    ),
   assignGameCharacter: (gameId: string, characterId: string, membershipId: string | null) =>
-    request<{ character: GameCharacterSummary }>(`/api/games/${gameId}/characters/${characterId}/controller`, {
-      method: "PATCH", body: JSON.stringify({ membershipId }),
-    }),
+    request<{ character: GameCharacterSummary }>(
+      `/api/games/${gameId}/characters/${characterId}/controller`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ membershipId }),
+      },
+    ),
   deleteGameCharacter: (gameId: string, characterId: string) =>
     request<void>(`/api/games/${gameId}/characters/${characterId}`, { method: "DELETE" }),
   listCharacters: (gameId: string, playerId: string) =>

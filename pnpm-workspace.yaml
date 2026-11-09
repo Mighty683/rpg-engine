@@ -2,8 +2,11 @@ packages:
   - packages/*
 
 allowBuilds:
+  argon2: true
   esbuild: true
   vue-demi: true
+
+trustLockfile: true
 
 overrides:
   vite: npm:@voidzero-dev/vite-plus-core@1.5.0

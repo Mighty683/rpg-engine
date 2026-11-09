@@ -80,9 +80,9 @@ describe.skipIf(!url)("API game access and membership", () => {
     const created = await request(`/games/${ids.game}/invitations`, "gm", "POST", { kind: "game" });
     expect(created.status).toBe(200);
     const token = (await created.json()).invitation.url.split("/").at(-1);
-    expect((await request(`/games/${ids.game}/members/${ids.member}/remove`, "gm", "POST")).status).toBe(
-      200,
-    );
+    expect(
+      (await request(`/games/${ids.game}/members/${ids.member}/remove`, "gm", "POST")).status,
+    ).toBe(200);
     const before = await readPersistedState(fixture);
     for (const path of [
       `/games/${ids.game}`,
@@ -98,12 +98,12 @@ describe.skipIf(!url)("API game access and membership", () => {
     ).toBe(404);
     expect((await request(`/invitations/${token}/accept`, "player", "POST", {})).status).toBe(404);
     expect(await readPersistedState(fixture)).toEqual(before);
-    expect((await request(`/games/${ids.game}/members/${ids.member}/restore`, "gm", "POST")).status).toBe(
-      200,
-    );
-    expect((await request(`/games/${ids.game}/characters/${ids.playerCharacter}`, "player")).status).toBe(
-      200,
-    );
+    expect(
+      (await request(`/games/${ids.game}/members/${ids.member}/restore`, "gm", "POST")).status,
+    ).toBe(200);
+    expect(
+      (await request(`/games/${ids.game}/characters/${ids.playerCharacter}`, "player")).status,
+    ).toBe(200);
     expect(
       (await request(`/games/${ids.game}/characters/${ids.playerCharacter}`, "player", "DELETE"))
         .status,

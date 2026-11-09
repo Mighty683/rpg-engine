@@ -43,7 +43,11 @@ export async function listMembers(database: Database, actor: Actor, gameId: stri
 }
 
 export async function setMemberRemoved(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: Actor,
   gameId: string,
   membershipId: string,
@@ -85,14 +89,19 @@ export async function setMemberRemoved(
     return { member: updated!, changed: true };
   });
   if (result.changed) {
-    if (removed) await notifyAfterCommit(() => events.closeMemberStreams(gameId, result.member.accountId));
+    if (removed)
+      await notifyAfterCommit(() => events.closeMemberStreams(gameId, result.member.accountId));
     await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
   }
   return result.member;
 }
 
 export async function selectPlayerCharacter(
-  { gameAccessFor, events, database }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+  {
+    gameAccessFor,
+    events,
+    database,
+  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
   actor: Actor,
   gameId: string,
   expectedRevision: number,
@@ -136,6 +145,7 @@ export async function selectPlayerCharacter(
       .returning(memberFields);
     return { member: updated!, changed: true };
   });
-  if (result.changed) await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
+  if (result.changed)
+    await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
   return result.member;
 }

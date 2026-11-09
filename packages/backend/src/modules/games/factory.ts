@@ -12,4 +12,3 @@ export function createGamesService(database: Database) {
     listActorGames: (actor: GameActor) => listActorGames(database, actor),
   };
 }
-

@@ -25,7 +25,10 @@ onMounted(async () => {
     }
   } catch {
     unavailable.value = true;
-    toast.add({ title: "This invitation is unavailable. Ask the GM for an active link.", color: "error" });
+    toast.add({
+      title: "This invitation is unavailable. Ask the GM for an active link.",
+      color: "error",
+    });
   } finally {
     loading.value = false;
   }
@@ -34,10 +37,17 @@ async function accept() {
   accepting.value = true;
   try {
     const result = await invitationApi.accept(token, makeActive.value);
-    const inactiveCharacter = isCharacter.value && !makeActive.value ? result.characterId : undefined;
-    await router.replace({ path: `/games/${result.gameId}`, query: inactiveCharacter ? { character: inactiveCharacter } : {} });
+    const inactiveCharacter =
+      isCharacter.value && !makeActive.value ? result.characterId : undefined;
+    await router.replace({
+      path: `/games/${result.gameId}`,
+      query: inactiveCharacter ? { character: inactiveCharacter } : {},
+    });
   } catch {
-    toast.add({ title: "This invitation could not be accepted. Ask the GM for an active link.", color: "error" });
+    toast.add({
+      title: "This invitation could not be accepted. Ask the GM for an active link.",
+      color: "error",
+    });
   } finally {
     accepting.value = false;
   }
@@ -52,11 +62,20 @@ async function accept() {
       <UButton to="/" color="neutral" variant="outline">My games</UButton>
     </template>
     <template v-else-if="invitation">
-      <p v-if="isCharacter">You have been invited to control <strong>{{ invitation.characterName }}</strong> in <strong>{{ invitation.gameName }}</strong>.</p>
-      <p v-else>You have been invited to join <strong>{{ invitation.gameName }}</strong>.</p>
+      <p v-if="isCharacter">
+        You have been invited to control <strong>{{ invitation.characterName }}</strong> in
+        <strong>{{ invitation.gameName }}</strong
+        >.
+      </p>
+      <p v-else>
+        You have been invited to join <strong>{{ invitation.gameName }}</strong
+        >.
+      </p>
       <UCheckbox v-if="isCharacter" v-model="makeActive" label="Make this character active" />
       <div class="flex flex-wrap gap-small">
-        <UButton :loading="accepting" data-testid="accept-invitation" @click="accept">{{ isCharacter ? "Accept character" : "Join game" }}</UButton>
+        <UButton :loading="accepting" data-testid="accept-invitation" @click="accept">{{
+          isCharacter ? "Accept character" : "Join game"
+        }}</UButton>
         <UButton to="/" color="neutral" variant="outline">My games</UButton>
       </div>
     </template>

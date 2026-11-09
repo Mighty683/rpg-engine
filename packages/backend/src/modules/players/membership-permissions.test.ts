@@ -82,7 +82,23 @@ describe("membership API permissions with in-memory access repository", () => {
       app,
       Application()
         .prefix("api")
-        .registerControllers(membershipsController({ auth: createAuthService({} as Database, createConfiguration(), createGameEvents(), { ...createSessionService({} as Database), resolve: async (token: string) => { const accountId = state.sessions.get(token); return accountId ? { accountId, sessionId: token } : null; } }), games: createGamesService({} as Database), memberships: createMembershipsService({} as Database, createGameEvents(), createGameAccessService) })),
+        .registerControllers(
+          membershipsController({
+            auth: createAuthService({} as Database, createConfiguration(), createGameEvents(), {
+              ...createSessionService({} as Database),
+              resolve: async (token: string) => {
+                const accountId = state.sessions.get(token);
+                return accountId ? { accountId, sessionId: token } : null;
+              },
+            }),
+            games: createGamesService({} as Database),
+            memberships: createMembershipsService(
+              {} as Database,
+              createGameEvents(),
+              createGameAccessService,
+            ),
+          }),
+        ),
     ).configure(false);
     server = app.listen(0, "127.0.0.1");
     await new Promise<void>((resolve, reject) => {

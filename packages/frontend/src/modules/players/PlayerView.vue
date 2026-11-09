@@ -52,7 +52,10 @@ async function createCharacter() {
     await characters.refetch();
     await router.push(`/games/${gameId}/players/${playerId}/characters/${created.character.id}`);
   } catch {
-    toast.add({ title: "Could not confirm character creation. Submit again to safely retry.", color: "error" });
+    toast.add({
+      title: "Could not confirm character creation. Submit again to safely retry.",
+      color: "error",
+    });
   } finally {
     creatingCharacter.value = false;
   }
@@ -103,7 +106,8 @@ async function setActive(id: string) {
           </InteractiveCard>
           <UButton
             size="sm"
-            color="neutral" variant="outline"
+            color="neutral"
+            variant="outline"
             class="absolute bottom-4 left-4 z-10"
             :data-testid="
               playerRecord.activeCharacter?.id === character.id ? 'active-character' : 'set-active'

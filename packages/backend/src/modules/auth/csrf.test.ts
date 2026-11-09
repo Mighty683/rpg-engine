@@ -11,6 +11,8 @@ describe("CSRF configuration", () => {
     vi.stubEnv("CSRF_SECRET", "short");
     expect(() => verifyCsrfConfiguration(createConfiguration())).toThrow("CSRF_SECRET");
     vi.stubEnv("CSRF_SECRET", "production-test-secret-with-32-bytes");
-    expect(verifyCsrfConfiguration(createConfiguration())).toBe("production-test-secret-with-32-bytes");
+    expect(verifyCsrfConfiguration(createConfiguration())).toBe(
+      "production-test-secret-with-32-bytes",
+    );
   });
 });

@@ -30,10 +30,24 @@ const sheet = () => ({
 async function mount(fetchMock: ReturnType<typeof vi.fn>, canEdit = true) {
   vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    if (url.endsWith("/auth/csrf")) return Promise.resolve(Response.json({ csrfToken: "test-token" }));
-    if (url.endsWith("/auth/me")) return Promise.resolve(new Response(JSON.stringify({ account: { id: "p1", username: "Player" } })));
-    if (url.endsWith("/characters") && !init?.method) return Promise.resolve(new Response(JSON.stringify({ characters: [{ id: "c1", controllerMembershipId: null, controllerName: null, canEdit }] })));
-    return (fetchMock as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>)(input, init);
+    if (url.endsWith("/auth/csrf"))
+      return Promise.resolve(Response.json({ csrfToken: "test-token" }));
+    if (url.endsWith("/auth/me"))
+      return Promise.resolve(
+        new Response(JSON.stringify({ account: { id: "p1", username: "Player" } })),
+      );
+    if (url.endsWith("/characters") && !init?.method)
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            characters: [{ id: "c1", controllerMembershipId: null, controllerName: null, canEdit }],
+          }),
+        ),
+      );
+    return (fetchMock as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>)(
+      input,
+      init,
+    );
   });
   const root = document.createElement("div");
   document.body.append(root);
@@ -80,7 +94,9 @@ test("read-only sheets explain control and keep informational help focusable", a
   const fetchMock = vi.fn(() => Promise.resolve(response()));
   const mounted = await mount(fetchMock, false);
   try {
-    await expect.element(page.getByTestId("character-controller")).toHaveTextContent("Controlled by the GM. You can view this sheet but cannot edit it.");
+    await expect
+      .element(page.getByTestId("character-controller"))
+      .toHaveTextContent("Controlled by the GM. You can view this sheet but cannot edit it.");
     await expect.element(page.getByTestId("character-name")).toBeDisabled();
     const help = mounted.root.querySelector<HTMLElement>('[data-testid="info-tooltip"]');
     expect(help?.tabIndex).toBe(0);
@@ -186,8 +202,14 @@ test("conflict keeps the draft and offers the latest saved sheet", async () => {
   const mounted = await mount(fetchMock);
   try {
     await page.getByTestId("character-theme").fill("Stale");
-    await expect.element(page.getByTestId("save-status")).toHaveTextContent("Your changes could not be confirmed. Your local draft is shown above.Discard draft and reload");
-    const themes = mounted.root.querySelectorAll<HTMLInputElement>('[data-testid="character-theme"]');
+    await expect
+      .element(page.getByTestId("save-status"))
+      .toHaveTextContent(
+        "Your changes could not be confirmed. Your local draft is shown above. Discard draft and reload",
+      );
+    const themes = mounted.root.querySelectorAll<HTMLInputElement>(
+      '[data-testid="character-theme"]',
+    );
     expect([...themes].map((input) => input.value)).toEqual(["Stale", "Authoritative"]);
   } finally {
     mounted.app.unmount();
@@ -257,9 +279,15 @@ test("resource maximum overrides remain editable", async () => {
     maximumInput.value = "50";
     maximumInput.dispatchEvent(new Event("change", { bubbles: true }));
     await expect.element(page.getByTestId("maximum-button-HP")).toHaveTextContent("50");
-    await expect.poll(() => fetchMock.mock.calls.some(([, init]) =>
-      init?.method === "PATCH" && JSON.parse(init.body as string).changes.overrides.maxHp === 50,
-    )).toBe(true);
+    await expect
+      .poll(() =>
+        fetchMock.mock.calls.some(
+          ([, init]) =>
+            init?.method === "PATCH" &&
+            JSON.parse(init.body as string).changes.overrides.maxHp === 50,
+        ),
+      )
+      .toBe(true);
   } finally {
     mounted.app.unmount();
     mounted.root.remove();

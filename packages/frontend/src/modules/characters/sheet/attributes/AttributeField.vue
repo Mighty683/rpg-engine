@@ -13,8 +13,20 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
       ><InfoTooltip :label="`About ${label}`" :text="help" />
     </div>
     <div class="die-value">
-      <DieIcon :sides="value" /><USelect v-model="value" :items="dice" value-key="value" :aria-label="label" :data-testid="`attribute-die-${label}`" variant="ghost" class="die-select">
-        <template #item-label="{ item }"><span :data-testid="`attribute-die-option-${item.value}`">{{ item.label }}</span></template>
+      <DieIcon :sides="value" /><USelect
+        v-model="value"
+        :items="dice"
+        value-key="value"
+        :aria-label="label"
+        :data-testid="`attribute-die-${label}`"
+        variant="ghost"
+        class="die-select"
+      >
+        <template #item-label="{ item }"
+          ><span :data-testid="`attribute-die-option-${item.value}`">{{
+            item.label
+          }}</span></template
+        >
       </USelect>
     </div>
   </div>

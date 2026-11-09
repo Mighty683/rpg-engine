@@ -24,4 +24,3 @@ export function createThrowsService(
       removeThrow({ gameAccessFor, events, database }, actor, gameId, throwId),
   };
 }
-

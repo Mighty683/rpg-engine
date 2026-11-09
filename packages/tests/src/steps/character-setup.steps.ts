@@ -15,11 +15,16 @@ When("I open character management", async function (this: BrowserWorld) {
   await this.game.openManagement();
 });
 
-When("I edit the character theme to {string} and HP to {int}", async function (this: BrowserWorld, theme: string, hp: number) {
-  await this.character.editTheme(theme);
-  await this.character.editHp(hp);
-  await expect.poll(() => this.page.getByTestId("save-status").textContent()).toBe("Saved automatically");
-});
+When(
+  "I edit the character theme to {string} and HP to {int}",
+  async function (this: BrowserWorld, theme: string, hp: number) {
+    await this.character.editTheme(theme);
+    await this.character.editHp(hp);
+    await expect
+      .poll(async () => (await this.page.getByTestId("save-status").textContent())?.trim())
+      .toBe("Saved automatically");
+  },
+);
 
 When("I reload and reopen character {string}", async function (this: BrowserWorld, name: string) {
   await this.page.reload();
@@ -28,14 +33,20 @@ When("I reload and reopen character {string}", async function (this: BrowserWorl
   await expect.poll(() => this.character.theme.isVisible()).toBe(true);
 });
 
-Then("the character sheet shows theme {string} and HP {int}", async function (this: BrowserWorld, theme: string, hp: number) {
-  expect(await this.character.theme.inputValue()).toBe(theme);
-  expect(await this.character.hp.inputValue()).toBe(String(hp));
-});
+Then(
+  "the character sheet shows theme {string} and HP {int}",
+  async function (this: BrowserWorld, theme: string, hp: number) {
+    expect(await this.character.theme.inputValue()).toBe(theme);
+    expect(await this.character.hp.inputValue()).toBe(String(hp));
+  },
+);
 
-Then("character {string} is in the character list", async function (this: BrowserWorld, name: string) {
-  await expect.poll(() => this.game.character(name).isVisible()).toBe(true);
-});
+Then(
+  "character {string} is in the character list",
+  async function (this: BrowserWorld, name: string) {
+    await expect.poll(() => this.game.character(name).isVisible()).toBe(true);
+  },
+);
 
 When("I set character {string} active", async function (this: BrowserWorld, name: string) {
   await this.game.toggleCharacter(name);
@@ -46,9 +57,13 @@ When("I set character {string} inactive", async function (this: BrowserWorld, na
 });
 
 Then("character {string} is active", async function (this: BrowserWorld, name: string) {
-  await expect.poll(() => this.game.character(name).getByTestId("set-active").textContent()).toBe("Make inactive");
+  await expect
+    .poll(() => this.game.character(name).getByTestId("set-active").textContent())
+    .toBe("Make inactive");
 });
 
 Then("character {string} is inactive", async function (this: BrowserWorld, name: string) {
-  await expect.poll(() => this.game.character(name).getByTestId("set-active").textContent()).toBe("Make active");
+  await expect
+    .poll(() => this.game.character(name).getByTestId("set-active").textContent())
+    .toBe("Make active");
 });

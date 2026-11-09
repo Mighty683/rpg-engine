@@ -21,4 +21,3 @@ export function createConfiguration(env: NodeJS.ProcessEnv = process.env) {
     invitationSecret: env.INVITATION_SECRET,
   };
 }
-

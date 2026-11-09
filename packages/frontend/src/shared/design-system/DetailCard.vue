@@ -58,7 +58,15 @@ function confirmRemove() {
               <slot name="title"
                 ><strong>{{ title }}</strong></slot
               >
-              <UButton color="neutral" variant="outline" class="shrink-0" type="button" aria-label="Close details" @click="open = false">×</UButton>
+              <UButton
+                color="neutral"
+                variant="outline"
+                class="shrink-0"
+                type="button"
+                aria-label="Close details"
+                @click="open = false"
+                >×</UButton
+              >
             </div>
             <slot />
           </div>
@@ -89,7 +97,17 @@ function confirmRemove() {
         Remove
       </UButton>
     </div>
-    <ConfirmDialog :open="confirming" :title="`Remove ${title}?`" :description="removeDescription ?? `Remove ${title}?`" confirm-label="Remove" confirm-test-id="confirm-remove" cancel-test-id="cancel-remove" destructive @cancel="confirming = false" @confirm="confirmRemove" />
+    <ConfirmDialog
+      :open="confirming"
+      :title="`Remove ${title}?`"
+      :description="removeDescription ?? `Remove ${title}?`"
+      confirm-label="Remove"
+      confirm-test-id="confirm-remove"
+      cancel-test-id="cancel-remove"
+      destructive
+      @cancel="confirming = false"
+      @confirm="confirmRemove"
+    />
   </article>
 </template>
 

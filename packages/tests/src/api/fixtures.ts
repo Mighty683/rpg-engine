@@ -72,9 +72,39 @@ async function seedStandardFixture(pool: Pool) {
     player: { accountId: player, sessionId: randomUUID() },
     outsider: { accountId: outsider, sessionId: randomUUID() },
   };
-  await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, actors.gm, game, gmCharacter, "GM sheet");
-  await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, actors.player, game, playerCharacter, "Player sheet");
-  await createWorkspaceCharacter({ gameAccessFor: createGameAccessService, events: createGameEvents(), database: databaseFromPool(pool) }, actors.outsider, otherGame, foreignCharacter, "Foreign sheet");
+  await createWorkspaceCharacter(
+    {
+      gameAccessFor: createGameAccessService,
+      events: createGameEvents(),
+      database: databaseFromPool(pool),
+    },
+    actors.gm,
+    game,
+    gmCharacter,
+    "GM sheet",
+  );
+  await createWorkspaceCharacter(
+    {
+      gameAccessFor: createGameAccessService,
+      events: createGameEvents(),
+      database: databaseFromPool(pool),
+    },
+    actors.player,
+    game,
+    playerCharacter,
+    "Player sheet",
+  );
+  await createWorkspaceCharacter(
+    {
+      gameAccessFor: createGameAccessService,
+      events: createGameEvents(),
+      database: databaseFromPool(pool),
+    },
+    actors.outsider,
+    otherGame,
+    foreignCharacter,
+    "Foreign sheet",
+  );
   const tokens: Record<string, string> = {};
   for (const [name, actor] of Object.entries(actors))
     tokens[name] = (
@@ -112,8 +142,11 @@ export async function readPersistedState(fixture: Pick<ApiFixture, "pool" | "ids
 export async function csrfHeaders(origin: string, cookie = "") {
   const response = await fetch(`${origin}/api/auth/csrf`, { headers: cookie ? { cookie } : {} });
   if (!response.ok) throw new Error("Failed to acquire CSRF token");
-  const { csrfToken } = await response.json() as { csrfToken: string };
-  const cookies = response.headers.getSetCookie().map((value) => value.split(";")[0]).join("; ");
+  const { csrfToken } = (await response.json()) as { csrfToken: string };
+  const cookies = response.headers
+    .getSetCookie()
+    .map((value) => value.split(";")[0])
+    .join("; ");
   return { cookie: [cookie, cookies].filter(Boolean).join("; "), "x-csrf-token": csrfToken };
 }
 
@@ -125,7 +158,9 @@ export async function csrfHeaders(origin: string, cookie = "") {
 export async function createApiFixture(suite: string): Promise<ApiFixture> {
   const url = process.env.TEST_DATABASE_URL;
   if (!url)
-    throw new Error("Set TEST_DATABASE_URL to a disposable PostgreSQL database for API integration tests");
+    throw new Error(
+      "Set TEST_DATABASE_URL to a disposable PostgreSQL database for API integration tests",
+    );
   const schema = `${suite.replaceAll(/[^a-z0-9]+/gi, "_")}_test_${randomUUID().replaceAll("-", "")}`;
   const admin = new pg.Pool({ connectionString: url });
   const pool = new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` });
@@ -139,15 +174,15 @@ export async function createApiFixture(suite: string): Promise<ApiFixture> {
     server.once("error", reject);
   });
   const address = server.address();
-  if (!address || typeof address === "string")
-    throw new Error("The API server has no TCP address");
+  if (!address || typeof address === "string") throw new Error("The API server has no TCP address");
   const origin = `http://127.0.0.1:${address.port}`;
   const { ids, tokens } = await seedStandardFixture(pool);
   const request: ApiRequest = async (path, actor, method = "GET", body, requestOrigin = origin) => {
     const headers: Record<string, string> = {};
     if (actor) headers.cookie = `rpg_session=${tokens[actor] ?? actor}`;
     if (requestOrigin) headers.origin = requestOrigin;
-    if (method !== "GET" && method !== "HEAD") Object.assign(headers, await csrfHeaders(origin, headers.cookie));
+    if (method !== "GET" && method !== "HEAD")
+      Object.assign(headers, await csrfHeaders(origin, headers.cookie));
     if (body !== undefined) headers["content-type"] = "application/json";
     return fetch(`${origin}/api${path}`, {
       method,

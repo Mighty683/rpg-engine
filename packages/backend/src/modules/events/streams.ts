@@ -61,4 +61,3 @@ export function createGameEvents() {
 
   return { registerStream, publishGameEvent, closeSessionStreams, closeMemberStreams };
 }
-

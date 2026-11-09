@@ -21,7 +21,8 @@ export class GameTablePage {
       this.page.waitForResponse((response) => response.url().endsWith("/api/auth/login")),
       this.page.getByTestId("auth-submit").click(),
     ]);
-    if (!response.ok()) throw new Error(`Sign-in failed with HTTP ${response.status()}: ${await response.text()}`);
+    if (!response.ok())
+      throw new Error(`Sign-in failed with HTTP ${response.status()}: ${await response.text()}`);
     await this.page.getByTestId("open-game-creation").waitFor({ state: "visible" });
   }
 
@@ -31,7 +32,11 @@ export class GameTablePage {
   }
 
   async selectCharacter(name: string) {
-    await this.page.getByTestId("character-control-tile").filter({ hasText: name }).getByTestId("set-active").click();
+    await this.page
+      .getByTestId("character-control-tile")
+      .filter({ hasText: name })
+      .getByTestId("set-active")
+      .click();
   }
 
   async configureWeapon() {

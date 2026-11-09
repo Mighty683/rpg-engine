@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import pg from "pg";
+import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { applyMigrations } from "./migrations.ts";
 
@@ -11,7 +12,9 @@ describe("migration runner", () => {
     };
     const pool = { connect: vi.fn().mockResolvedValue(client) } as unknown as pg.Pool;
 
-    await expect(applyMigrations(pool)).rejects.toThrow("connection failed");
+    await expect(applyMigrations(pool)).rejects.toMatchObject({
+      cause: expect.objectContaining({ message: "connection failed" }),
+    });
     expect(client.release).toHaveBeenCalledOnce();
   });
 
@@ -28,7 +31,10 @@ describe("migration runner", () => {
       const result = await first.query(
         `SELECT hash, created_at FROM "${schema}"."__drizzle_migrations" ORDER BY created_at`,
       );
-      expect(result.rows).toHaveLength(4);
+      const journal = JSON.parse(
+        await readFile(new URL("../drizzle/meta/_journal.json", import.meta.url), "utf8"),
+      );
+      expect(result.rows).toHaveLength(journal.entries.length);
       expect(result.rows.every((row) => row.hash && row.created_at)).toBe(true);
     } finally {
       await first.end();

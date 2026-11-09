@@ -1,9 +1,9 @@
-name: SQL security check
+name: CI
 on:
   push:
   pull_request:
 jobs:
-  static-sql:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,9 +13,23 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm exec vp test lint/sql-security.test.js
-  api-security:
+      - run: pnpm check
+      - run: pnpm --filter @rpg-engine/backend build
+      - run: pnpm build
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rpg-engine/tests exec playwright install --with-deps chromium
+      - run: pnpm test
+      - run: pnpm --filter @rpg-engine/frontend test:browser --run
+  integration:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -39,5 +53,5 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @rpg-engine/tests test:api
-      - run: pnpm exec vp test packages/backend/src/app.security.test.ts packages/backend/src/modules/auth/sessions.integration.test.ts packages/backend/src/modules/auth/hash-capacity.test.ts packages/backend/src/modules/auth/csrf.test.ts packages/frontend/src/shared/secure-fetch.test.ts
+      - run: pnpm --filter @rpg-engine/tests exec playwright install --with-deps chromium
+      - run: pnpm test:integration

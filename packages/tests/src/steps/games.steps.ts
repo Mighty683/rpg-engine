@@ -6,7 +6,11 @@ import type { BrowserWorld } from "../support/world.ts";
 
 Given("the games list is empty", async function (this: BrowserWorld) {
   const account = await seedAccount();
-  await new GameTablePage(this.page).signIn(inject("frontendUrl"), account.username, account.password);
+  await new GameTablePage(this.page).signIn(
+    inject("frontendUrl"),
+    account.username,
+    account.password,
+  );
   await expect.poll(() => this.games.emptyState.isVisible()).toBe(true);
   expect(await this.games.createButton.isVisible()).toBe(true);
   expect(

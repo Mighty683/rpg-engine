@@ -11,14 +11,18 @@ test("selecting an attribute die updates its value", async () => {
   const root = document.createElement("div");
   document.body.append(root);
   const app = createApp({
-    render: () => h(UApp, null, {
-      default: () => h(AttributeField, {
-        label: "WLP",
-        help: "Willpower",
-        modelValue: value.value,
-        "onUpdate:modelValue": (next: string) => { value.value = next; },
+    render: () =>
+      h(UApp, null, {
+        default: () =>
+          h(AttributeField, {
+            label: "WLP",
+            help: "Willpower",
+            modelValue: value.value,
+            "onUpdate:modelValue": (next: string) => {
+              value.value = next;
+            },
+          }),
       }),
-    }),
   }).use(ui);
   app.mount(root);
   try {

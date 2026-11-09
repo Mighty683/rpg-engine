@@ -1,4 +1,12 @@
-import type { DieSource, RolledDie, CheckResult, SideOutcome, OpposedOutcome, Attribute, Die } from "./types.ts";
+import type {
+  DieSource,
+  RolledDie,
+  CheckResult,
+  SideOutcome,
+  OpposedOutcome,
+  Attribute,
+  Die,
+} from "./types.ts";
 // Fabula Ultima dice resolution: pure outcome calculation over rolled faces with an
 // injectable die source. Production passes the server's uniform random generator;
 // tests pass a seeded or scripted one. See docs/spec/fabula-ultima/checks.md.
@@ -58,8 +66,13 @@ export function opposedOutcome(first: SideOutcome, second: SideOutcome): Opposed
 }
 
 /** Resolves the effective die size for an attribute, defaulting to the sheet's base die. */
-export function effectiveDie(baseDice: Record<Attribute, Die>, attribute: Attribute, requested: number | undefined): Die {
+export function effectiveDie(
+  baseDice: Record<Attribute, Die>,
+  attribute: Attribute,
+  requested: number | undefined,
+): Die {
   const size = requested ?? baseDice[attribute];
-  if (!standardDice.includes(size as Die)) throw Object.assign(new Error("Invalid die size"), { code: "validation" });
+  if (!standardDice.includes(size as Die))
+    throw Object.assign(new Error("Invalid die size"), { code: "validation" });
   return size as Die;
 }
