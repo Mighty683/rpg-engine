@@ -114,7 +114,9 @@ test("a pending roll cannot be submitted twice, and an uncertain response refres
     rejectRoll(new Error("connection lost"));
     await expect.poll(() => table.historyReads()).toBeGreaterThan(initialReads);
     await expect.element(page.getByTestId("free-roll-dialog")).not.toBeInTheDocument();
-    expect(document.body.textContent).toContain("Check history before rolling again");
+    await expect
+      .poll(() => document.body.textContent)
+      .toContain("Check history before rolling again");
   } finally {
     table.cleanup();
   }
