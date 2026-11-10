@@ -7,7 +7,9 @@ describe.skipIf(!url)("API session and origin guards", () => {
   let fixture: ApiFixture;
 
   beforeAll(async () => {
-    fixture = await createApiFixture("session_origin");
+    // Strict origin enforcement is exercised with an explicit APP_ORIGIN; unset APP_ORIGIN in
+    // development intentionally accepts any origin (covered by guards unit tests).
+    fixture = await createApiFixture("session_origin", { appOrigin: "http://localhost:5173" });
   });
 
   afterAll(async () => {

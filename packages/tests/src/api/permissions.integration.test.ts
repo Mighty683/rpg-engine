@@ -12,6 +12,9 @@ import { createSession } from "../../../backend/src/modules/auth/sessions.ts";
 import { createWorkspaceCharacter } from "../../../backend/src/modules/characters/workspace-service.ts";
 
 const url = process.env.TEST_DATABASE_URL;
+// Strict origin enforcement is tested with an explicit APP_ORIGIN; unset APP_ORIGIN in
+// development intentionally accepts any origin (covered by guards unit tests).
+const appOrigin = "http://localhost:5173";
 const schema = `permissions_test_${randomUUID().replaceAll("-", "")}`;
 const admin = url ? new pg.Pool({ connectionString: url }) : null;
 const pool = url
@@ -33,7 +36,7 @@ async function request(
   actor: string | null,
   method = "GET",
   body?: unknown,
-  requestOrigin: string | null = origin,
+  requestOrigin: string | null = appOrigin,
 ) {
   const headers: Record<string, string> = {};
   if (actor) headers.cookie = `rpg_session=${tokens[actor] ?? actor}`;
@@ -78,7 +81,7 @@ async function waitForBlockedGameLock(blockerPid: number) {
 describe.skipIf(!url)("API permission boundaries", () => {
   beforeAll(async () => {
     vi.stubEnv("INVITATION_SECRET", "integration-test-secret-at-least-32-bytes");
-    vi.stubEnv("APP_ORIGIN", "");
+    vi.stubEnv("APP_ORIGIN", appOrigin);
     await admin!.query(`CREATE SCHEMA "${schema}"`);
     await applyMigrations(pool!);
     server = createApp(databaseFromPool(pool!)).listen(0, "127.0.0.1");
