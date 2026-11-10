@@ -155,7 +155,10 @@ export async function csrfHeaders(origin: string, cookie = "") {
  * ephemeral port, stubbed env, and the standard seeded fixture. Suites call this in `beforeAll` and
  * `cleanup` in `afterAll`.
  */
-export async function createApiFixture(suite: string): Promise<ApiFixture> {
+export async function createApiFixture(
+  suite: string,
+  options: { appOrigin?: string } = {},
+): Promise<ApiFixture> {
   const url = process.env.TEST_DATABASE_URL;
   if (!url)
     throw new Error(
@@ -165,7 +168,7 @@ export async function createApiFixture(suite: string): Promise<ApiFixture> {
   const admin = new pg.Pool({ connectionString: url });
   const pool = new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` });
   vi.stubEnv("INVITATION_SECRET", "integration-test-secret-at-least-32-bytes");
-  vi.stubEnv("APP_ORIGIN", "");
+  vi.stubEnv("APP_ORIGIN", options.appOrigin ?? "");
   await admin.query(`CREATE SCHEMA "${schema}"`);
   await applyMigrations(pool);
   const server = createApp(databaseFromPool(pool)).listen(0, "127.0.0.1");
@@ -177,7 +180,13 @@ export async function createApiFixture(suite: string): Promise<ApiFixture> {
   if (!address || typeof address === "string") throw new Error("The API server has no TCP address");
   const origin = `http://127.0.0.1:${address.port}`;
   const { ids, tokens } = await seedStandardFixture(pool);
-  const request: ApiRequest = async (path, actor, method = "GET", body, requestOrigin = origin) => {
+  const request: ApiRequest = async (
+    path,
+    actor,
+    method = "GET",
+    body,
+    requestOrigin = options.appOrigin ?? origin,
+  ) => {
     const headers: Record<string, string> = {};
     if (actor) headers.cookie = `rpg_session=${tokens[actor] ?? actor}`;
     if (requestOrigin) headers.origin = requestOrigin;
