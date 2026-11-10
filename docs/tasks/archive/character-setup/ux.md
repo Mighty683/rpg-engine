@@ -32,16 +32,16 @@ Setup can be revisited in any order. Show the game, player, update status, remai
 
 ## Recovery and boundaries
 
-| Situation | Expected behavior |
-| --- | --- |
-| Character is incomplete | Keep the character and show outstanding choices. |
-| Update fails | Keep the local edit and offer retry. |
-| Update outcome is unknown | Let the GM check saved state before retrying. |
-| A changed choice affects another | Show affected choices and preserve input while the GM resolves them. |
-| A choice is missing or invalid | Show the issue at the relevant step and in review. |
-| Character is completed | The GM can edit it later. |
-| GM leaves while an update is unresolved | Preserve the local edit and explain its status. |
-| Game uses another system | Do not start Fabula character setup. |
+| Situation                               | Expected behavior                                                    |
+| --------------------------------------- | -------------------------------------------------------------------- |
+| Character is incomplete                 | Keep the character and show outstanding choices.                     |
+| Update fails                            | Keep the local edit and offer retry.                                 |
+| Update outcome is unknown               | Let the GM check saved state before retrying.                        |
+| A changed choice affects another        | Show affected choices and preserve input while the GM resolves them. |
+| A choice is missing or invalid          | Show the issue at the relevant step and in review.                   |
+| Character is completed                  | The GM can edit it later.                                            |
+| GM leaves while an update is unresolved | Preserve the local edit and explain its status.                      |
+| Game uses another system                | Do not start Fabula character setup.                                 |
 
 ## Player and character rules
 

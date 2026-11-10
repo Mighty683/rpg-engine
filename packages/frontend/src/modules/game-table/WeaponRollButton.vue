@@ -7,6 +7,9 @@ defineProps<{
   baseDice: Record<Attribute, number>;
   characterName: string;
   canRoll: boolean;
+  reach?: "melee" | "ranged" | null;
+  damageBonus?: number | null;
+  damageType?: string | null;
 }>();
 const emit = defineEmits<{ roll: []; needsSetup: [] }>();
 </script>
@@ -29,11 +32,18 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
       @click="weapon.ready ? emit('roll') : emit('needsSetup')"
     >
       <span>{{ weapon.name }}</span>
-      <span v-if="weapon.accuracyDice.every(Boolean)" class="weapon-dice" aria-hidden="true">
-        <span v-for="(attribute, index) in weapon.accuracyDice" :key="index" class="weapon-die">
-          <template v-if="attribute"
-            ><DieIcon :sides="baseDice[attribute]" /><span>{{ attribute }}</span></template
-          >
+      <span class="flex items-center gap-small">
+        <span
+          v-if="reach && damageBonus !== null && damageBonus !== undefined"
+          class="text-label text-muted"
+          >{{ reach }} · high roll +{{ damageBonus }}{{ damageType ? ` ${damageType}` : "" }}</span
+        >
+        <span v-if="weapon.accuracyDice.every(Boolean)" class="weapon-dice" aria-hidden="true">
+          <span v-for="(attribute, index) in weapon.accuracyDice" :key="index" class="weapon-die">
+            <template v-if="attribute"
+              ><DieIcon :sides="baseDice[attribute]" /><span>{{ attribute }}</span></template
+            >
+          </span>
         </span>
       </span>
     </button>

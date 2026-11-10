@@ -13,3 +13,7 @@ export type OptimisticSaveOptions<TSnapshot, TInput> = {
   merge?: (previous: TInput, next: TInput) => TInput;
   isKnownRejection?: (error: SaveError) => boolean;
 };
+
+export type TagColor = "primary" | "warning" | "error" | "info" | "success" | "neutral";
+
+export type Tag = { name: string; color: TagColor };

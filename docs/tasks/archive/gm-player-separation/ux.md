@@ -85,25 +85,25 @@ flowchart TD
 
 ## Creating and assigning characters
 
-| Action | Experience |
-| --- | --- |
-| Create a character | From the overview, a player creates a sheet assigned to them. It becomes active if their slot is empty. A new GM-controlled sheet starts inactive. Open newly created inactive sheets in **Characters management**. |
-| Assign or take back a character | From **Characters management**, the GM can assign a character to a current player, reassign it, or return it to GM control. The same sheet stays in the game and becomes inactive. A character invitation can activate it as part of acceptance when the player selects that option. |
-| Select an active character | The player or the GM chooses which of the player's assigned characters is active. Choosing **None** removes their tab from the main screen. The GM can make GM-controlled sheets active or inactive individually. |
-| Permanently remove a character | In **Characters management**, the GM can remove any sheet and a player can remove a sheet assigned to them. The confirmation names the character and states that removal is permanent. An active sheet can be removed directly. After confirmation succeeds, the sheet disappears from the roster and its tab disappears for everyone. Its invitation links become unavailable. |
-| Remove a player | The GM removes the player's game access. Their sheets stay in the game under GM control and become inactive. Invitations cannot bypass removal. The GM can restore the account's access, and character assignment remains a separate action. |
+| Action                          | Experience                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create a character              | From the overview, a player creates a sheet assigned to them. It becomes active if their slot is empty. A new GM-controlled sheet starts inactive. Open newly created inactive sheets in **Characters management**.                                                                                                                                                             |
+| Assign or take back a character | From **Characters management**, the GM can assign a character to a current player, reassign it, or return it to GM control. The same sheet stays in the game and becomes inactive. A character invitation can activate it as part of acceptance when the player selects that option.                                                                                            |
+| Select an active character      | The player or the GM chooses which of the player's assigned characters is active. Choosing **None** removes their tab from the main screen. The GM can make GM-controlled sheets active or inactive individually.                                                                                                                                                               |
+| Permanently remove a character  | In **Characters management**, the GM can remove any sheet and a player can remove a sheet assigned to them. The confirmation names the character and states that removal is permanent. An active sheet can be removed directly. After confirmation succeeds, the sheet disappears from the roster and its tab disappears for everyone. Its invitation links become unavailable. |
+| Remove a player                 | The GM removes the player's game access. Their sheets stay in the game under GM control and become inactive. Invitations cannot bypass removal. The GM can restore the account's access, and character assignment remains a separate action.                                                                                                                                    |
 
 The existing manual character sheet is the starting point. Rules-validated character creation remains separate work. See the [character setup task](../character-setup/summary.md).
 
 ## Recovery
 
-| Situation | Expected experience |
-| --- | --- |
-| Regular link is disabled, replaced, or invalid | Explain that the invitation is unavailable and suggest asking the GM for an active link. |
+| Situation                                        | Expected experience                                                                                                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Regular link is disabled, replaced, or invalid   | Explain that the invitation is unavailable and suggest asking the GM for an active link.                                                                            |
 | Character link is disabled, replaced, or removed | Explain that the character invitation cannot be accepted. Offer a return to the game for current members. An unsuccessful claim does not join the user to the game. |
-| Player has no assigned characters | Show the full character overview and offer **Create character**. The GM can also assign an existing character. |
-| Game or sheet access is lost | Explain that the page cannot be opened and offer a return to available games or the game overview as appropriate. |
-| Edit access changes while the sheet is open | Explain that the edit could not be saved. Keep local input where possible and reopen the sheet in read-only mode if game access remains. |
-| Save fails, conflicts, or has an unknown outcome | Keep the local edit where possible. Show the current saved state when available so the user can review it before retrying. |
+| Player has no assigned characters                | Show the full character overview and offer **Create character**. The GM can also assign an existing character.                                                      |
+| Game or sheet access is lost                     | Explain that the page cannot be opened and offer a return to available games or the game overview as appropriate.                                                   |
+| Edit access changes while the sheet is open      | Explain that the edit could not be saved. Keep local input where possible and reopen the sheet in read-only mode if game access remains.                            |
+| Save fails, conflicts, or has an unknown outcome | Keep the local edit where possible. Show the current saved state when available so the user can review it before retrying.                                          |
 
 Apply the same role and visibility rules to direct links, data requests, and any future AI-assisted actions.

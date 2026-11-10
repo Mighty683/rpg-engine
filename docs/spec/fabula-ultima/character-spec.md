@@ -2,7 +2,7 @@
 
 **Purpose:** Hand this document to a coding AI agent implementing the **player-character (PC)** model, creation wizard, validation, and stat recalculation in an RPG engine.
 
-**Source:** User-provided Polish *Fabula Ultima* Core Rulebook (2024). Primary printed pages: 34–37 (character anatomy), 56–57 (Bonds), 92–94 (damage affinities and statuses), 122 (equipment slots), 154–171 (character creation and starting equipment), 176–215 (classes), 226–229 (advancement). Printed page numbers are two less than PDF page numbers.
+**Source:** User-provided Polish _Fabula Ultima_ Core Rulebook (2024). Primary printed pages: 34–37 (character anatomy), 56–57 (Bonds), 92–94 (damage affinities and statuses), 122 (equipment slots), 154–171 (character creation and starting equipment), 176–215 (classes), 226–229 (advancement). Printed page numbers are two less than PDF page numbers.
 
 **Scope:** Core-rulebook PCs, normally beginning at level 5. This is a **condensed implementation specification**, not a transcription of every skill/spell/item effect. A companion `Fabula_Ultima_Core_Skill_Index.json` was described as listing all 75 class-skill names and rank limits, but is not available in this repository and does **not** contain their effects. Full rules for each individual skill and spell must be entered into rule catalogs from the relevant book pages before claiming full mechanical support. Do not fabricate missing effects.
 
@@ -28,36 +28,26 @@ A creation wizard may allow users to revisit steps; persist a draft until all ma
 
 ## 2. Class catalog: free benefits
 
-The rulebook has 15 core classes. These free effects apply **once upon first acquiring that class**, even if multiple starting levels are invested. Bonuses from **different** classes stack. All 15 have five class skills, some with multi-rank caps; keep these in a separate rules catalog.
+The rulebook has 15 core classes. These free effects apply **once upon first acquiring that class**, even if multiple starting levels are invested. Bonuses from **different** classes stack. All classes have class skills, some with multi-rank caps; keep those in a separate rules catalog.
 
-| Class ID (suggested) | Original name | Once-per-class benefit | Additional entitlement |
-|---|---|---|---|
-| `chimerist` | Chimera | +5 maximum MP | Ritualism rituals |
-| `darkblade` | Córa Cienia | +5 maximum HP | Martial melee weapons and martial armor |
-| `elementalist` | Elementalistka | +5 maximum MP | Ritualism rituals |
-| `fury` | Furia | +5 maximum HP | Martial melee weapons and martial armor |
-| `rogue` | Łotrzyca | +2 maximum IP | — |
-| `entropist` | Mag Chaosu | +5 maximum MP | Ritualism rituals |
-| `spiritist` | Medium | +5 maximum MP | Ritualism rituals |
-| `weaponmaster` | Mistrz Broni | +5 maximum HP | Martial melee weapons and martial shields |
-| `loremaster` | Mistrz Wiedzy | +5 maximum MP | — |
-| `arcanist` | Mistyczka | +5 maximum MP | — |
-| `orator` | Mówcze | +5 maximum MP | — |
-| `guardian` | Obrońca | +5 maximum HP | Martial armor and martial shields |
-| `sharpshooter` | Strzelczyni Wyborowa | +5 maximum HP | Martial ranged weapons and martial shields |
-| `wayfarer` | Wagabunda | +2 maximum IP | — |
-| `tinkerer` | Złota Rączka | +2 maximum IP | May start Projects |
+The table below is **only an example** showing a few classes and their shapes — it is not the full catalog. Enter the complete list of 15 classes, their free benefits and entitlements from the rulebook (printed pp. 176–215) before implementing; do not treat these rows as exhaustive.
 
-**Important:** Class *free benefits* and class *skill effects* are different sources. For example, a Guardian receives +5 HP merely for taking the class, while a separately purchased skill may increase HP further. Do not apply a class-free bonus per class level. Ritualism permission does **not** automatically grant every school-specific ritual: school-specific capabilities come from appropriate skills.
+| Class ID (suggested) | Original name | Once-per-class benefit (example) | Additional entitlement (example)  |
+| -------------------- | ------------- | -------------------------------- | --------------------------------- |
+| `guardian`           | Obrońca       | +5 maximum HP                    | Martial armor and martial shields |
+| `orator`             | Mówcze        | +5 maximum MP                    | —                                 |
+| `rogue`              | Łotrzyca      | +2 maximum IP                    | —                                 |
+
+**Important:** Class _free benefits_ and class _skill effects_ are different sources. For example, a Guardian receives +5 HP merely for taking the class, while a separately purchased skill may increase HP further. Do not apply a class-free bonus per class level. Ritualism permission does **not** automatically grant every school-specific ritual: school-specific capabilities come from appropriate skills.
 
 ## 3. Attributes and permitted starting arrays
 
 Choose exactly one array, then permute its dice across the four attributes:
 
-| Profile | Dice multiset |
-|---|---|
-| Generalist (`generalist`) | d8, d8, d8, d8 |
-| Balanced (`balanced`) | d10, d8, d8, d6 |
+| Profile                   | Dice multiset    |
+| ------------------------- | ---------------- |
+| Generalist (`generalist`) | d8, d8, d8, d8   |
+| Balanced (`balanced`)     | d10, d8, d8, d6  |
 | Specialist (`specialist`) | d10, d10, d6, d6 |
 
 - All four stored **base attribute dice** must exactly match the selected multiset (in any order). These are **dice sizes, not rolled values**.
@@ -127,9 +117,32 @@ These values are enough to validate the sample character in §11; they do **not*
 
 ```json
 {
-  "rapier": { "category": "melee_weapon", "martial": true, "hands": 1, "priceZenit": 200, "accuracyDice": ["DEX", "INS"], "accuracyBonus": 1, "damageBonus": 6, "damageType": "physical" },
-  "traveler_garb": { "category": "armor", "martial": false, "priceZenit": 100, "dexDefenseBonus": 1, "insDefenseBonus": 1, "initiativeModifier": -1 },
-  "runic_shield": { "category": "shield", "martial": true, "priceZenit": 150, "defenseBonus": 2, "magicDefenseBonus": 2, "initiativeModifier": 0 }
+  "rapier": {
+    "category": "melee_weapon",
+    "martial": true,
+    "hands": 1,
+    "priceZenit": 200,
+    "accuracyDice": ["DEX", "INS"],
+    "accuracyBonus": 1,
+    "damageBonus": 6,
+    "damageType": "physical"
+  },
+  "traveler_garb": {
+    "category": "armor",
+    "martial": false,
+    "priceZenit": 100,
+    "dexDefenseBonus": 1,
+    "insDefenseBonus": 1,
+    "initiativeModifier": -1
+  },
+  "runic_shield": {
+    "category": "shield",
+    "martial": true,
+    "priceZenit": 150,
+    "defenseBonus": 2,
+    "magicDefenseBonus": 2,
+    "initiativeModifier": 0
+  }
 }
 ```
 
@@ -192,45 +205,64 @@ Use a **normalized source-of-truth** document and recalculate derived numbers fr
 
 ```ts
 type Die = 6 | 8 | 10 | 12;
-type Attribute = 'DEX' | 'INS' | 'MIG' | 'WLP';
-type EquipmentSlot = 'armor' | 'mainHand' | 'offHand' | 'accessory';
-type BondEmotion = 'admiration' | 'inferiority' | 'loyalty' | 'distrust' | 'affection' | 'hatred';
+type Attribute = "DEX" | "INS" | "MIG" | "WLP";
+type EquipmentSlot = "armor" | "mainHand" | "offHand" | "accessory";
+type BondEmotion = "admiration" | "inferiority" | "loyalty" | "distrust" | "affection" | "hatred";
 
 type CharacterProfile = {
   id: string;
-  ruleSet: 'fabula_ultima_core';
+  ruleSet: "fabula_ultima_core";
   ruleSetVersion?: string;
   campaignId?: string;
   partyId?: string;
 
-  identity: { name: string; pronouns?: string; appearance?: string;
-              concept: string; theme: string; themeDetails?: string;
-              origin: string; originLocationId?: string;
-              description?: string; };
+  identity: {
+    name: string;
+    pronouns?: string;
+    appearance?: string;
+    concept: string;
+    theme: string;
+    themeDetails?: string;
+    origin: string;
+    originLocationId?: string;
+    description?: string;
+  };
 
-  creation: { startingAttributeProfile: 'generalist' | 'balanced' | 'specialist';
-              purchaseBudgetZenit: number;
-              startingCashRoll?: [number, number];
-              exceptionApprovals?: string[]; };
+  creation: {
+    startingAttributeProfile: "generalist" | "balanced" | "specialist";
+    purchaseBudgetZenit: number;
+    startingCashRoll?: [number, number];
+    exceptionApprovals?: string[];
+  };
 
   attributes: { base: Record<Attribute, Die> };
-  classes: Array<{ classId: string; level: number;
-                   skills: Array<{ skillId: string; rank: number;
-                                  choices?: Record<string, unknown> }> }>;
+  classes: Array<{
+    classId: string;
+    level: number;
+    skills: Array<{ skillId: string; rank: number; choices?: Record<string, unknown> }>;
+  }>;
 
-  equipment: { inventory: Array<{ instanceId: string; itemId: string;
-                                  customName?: string; acquiredPriceZenit?: number }>;
-               equipped: Partial<Record<EquipmentSlot, string>>;
-               cashZenit: number; };
+  equipment: {
+    inventory: Array<{
+      instanceId: string;
+      itemId: string;
+      customName?: string;
+      acquiredPriceZenit?: number;
+    }>;
+    equipped: Partial<Record<EquipmentSlot, string>>;
+    cashZenit: number;
+  };
 
-  resources: { hp: number; mp: number; ip: number;
-               fabula: number; xp: number; };
+  resources: { hp: number; mp: number; ip: number; fabula: number; xp: number };
 
-  bonds: Array<{ targetId?: string; targetName: string;
-                 emotions: BondEmotion[] }>;
+  bonds: Array<{ targetId?: string; targetName: string; emotions: BondEmotion[] }>;
   activeStatuses: string[];
-  ongoingEffects: Array<{ effectId: string; sourceRef?: string;
-                         remainingDuration?: string; params?: Record<string, unknown> }>;
+  ongoingEffects: Array<{
+    effectId: string;
+    sourceRef?: string;
+    remainingDuration?: string;
+    params?: Record<string, unknown>;
+  }>;
 
   // Class/skill-dependent state; only populated when applicable:
   learnedSpells?: Array<{ spellId: string; sourceSkillId: string }>;
@@ -244,8 +276,13 @@ type CharacterProfile = {
 type DerivedCharacter = {
   level: number;
   currentDice: Record<Attribute, Die>;
-  maxHP: number; maxMP: number; maxIP: number; crisisThreshold: number;
-  physicalDefense: number; magicalDefense: number; initiativeModifier: number;
+  maxHP: number;
+  maxMP: number;
+  maxIP: number;
+  crisisThreshold: number;
+  physicalDefense: number;
+  magicalDefense: number;
+  initiativeModifier: number;
   equipmentProficiencies: string[];
   capabilities: string[];
   effectiveDamageAffinities: Record<string, string>;
@@ -310,14 +347,17 @@ Based on the rulebook's example character Camilla (printed pp. 161–165). This 
 {
   "name": "Camilla",
   "level": 5,
-  "classes": [ { "id": "orator", "level": 2 }, { "id": "weaponmaster", "level": 3 } ],
+  "classes": [
+    { "id": "orator", "level": 2 },
+    { "id": "weaponmaster", "level": 3 }
+  ],
   "baseDice": { "DEX": 8, "INS": 10, "MIG": 6, "WLP": 8 },
   "classBonuses": { "maxHP": 5, "maxMP": 5, "maxIP": 0 },
   "maxHP": 40,
   "maxMP": 50,
   "maxIP": 6,
   "crisis": 20,
-  "loadout": [ "rapier", "traveler_garb", "runic_shield" ],
+  "loadout": ["rapier", "traveler_garb", "runic_shield"],
   "physicalDefense": 11,
   "magicalDefense": 13,
   "initiativeModifier": -1,

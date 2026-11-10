@@ -1,6 +1,7 @@
 # Fabula Ultima — weapon attacks
 
 ## Accuracy and damage
+
 Accuracy uses the standard [two-die check rules](checks.md). The target supplies a Defense score for the attack.
 
 A weapon specifies the two attributes used for its accuracy check, an accuracy modifier, a damage formula and damage type. Attribute values are dice sizes; roll one current attribute die for each attribute specified by the weapon. Keep the individual results as well as their sum.

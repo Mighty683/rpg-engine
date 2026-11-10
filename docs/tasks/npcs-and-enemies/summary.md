@@ -6,6 +6,7 @@
 ## Task documents
 
 1. [User story](story.md)
+2. [UX journey](ux.md)
 
 ## Supporting material
 

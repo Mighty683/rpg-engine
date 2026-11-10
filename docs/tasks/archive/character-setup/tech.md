@@ -10,12 +10,12 @@
 
 The MVP lets a single GM create a Fabula Ultima game, add players, and create and edit named characters in place. Calculations use the available inputs and are marked partial. **Active** identifies the character shown on the game overview. The earlier wizard, review, and completion flow belongs to a later rules milestone.
 
-| Screen | Production behavior and differences from the prototype |
-| --- | --- |
-| Games | Offer Fabula Ultima as the only system. Remove the D&D placeholder from the catalog and supported paths. Open saved Fabula games by ID. |
-| Game | Show the player list and each player’s active character. Add a named player and open their page. |
-| Player | List named characters and show the active marker. **Create character** requires a name and opens the sheet after acknowledgement. The GM can select or clear the active character independently of creation. |
-| Sheet | Reuse the responsive header, paired sections, item editors, dice controls and defense breakdown. Keep editable name, theme, manual level, base dice, resources, named entries, resource maximum and defense overrides, and a browser-local editing lock. Keep removal confirmation for sheet entries and show save status. |
+| Screen                      | Production behavior and differences from the prototype                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Games                       | Offer Fabula Ultima as the only system. Remove the D&D placeholder from the catalog and supported paths. Open saved Fabula games by ID.                                                                                                                                                                                                                    |
+| Game                        | Show the player list and each player’s active character. Add a named player and open their page.                                                                                                                                                                                                                                                           |
+| Player                      | List named characters and show the active marker. **Create character** requires a name and opens the sheet after acknowledgement. The GM can select or clear the active character independently of creation.                                                                                                                                               |
+| Sheet                       | Reuse the responsive header, paired sections, item editors, dice controls and defense breakdown. Keep editable name, theme, manual level, base dice, resources, named entries, resource maximum and defense overrides, and a browser-local editing lock. Keep removal confirmation for sheet entries and show save status.                                 |
 | Future rules-validated flow | Resolve the missing identity/concept, origin and presentation fields before exposing completion. Design catalog-backed class and skill allocation for the rules milestone. Direct die selection can stay if it validates the resulting starting multiset. Plan structured loadout, sourced effects and review feedback before claiming validated creation. |
 
 The manual sheet has a hard two-class cap. Classes and skills are named notes. Equipment prices and weapon accuracy inputs are GM-entered data. Starting cash, budget and equipment eligibility, attacks, advancement and player sign-in are deferred. Deployment assumes a trusted environment operated by one GM.
@@ -31,16 +31,16 @@ The manual sheet has a hard two-class cap. Classes and skills are named notes. E
 
 All IDs are UUIDs and timestamps are ISO 8601 UTC strings. In this table, `G` means `/api/games/:gameId`, `P` means `G/players/:playerId` and `C` means `P/characters/:characterId`.
 
-| Method and path | Request | Success |
-| --- | --- | --- |
-| `GET G` | — | `200 { game }`, using the existing game DTO. |
-| `GET G/players` | — | `200 { players: Player[] }`, ordered by `createdAt ASC, id ASC`. |
-| `POST G/players` | `{ id, name }` | `201 { player }` on creation, `200 { player }` on replay. |
-| `GET P` | — | `200 { player }`. |
-| `GET P/characters` | — | `200 { characters: CharacterSummary[] }`, ordered by `createdAt ASC, id ASC`. |
-| `POST P/characters` | `{ id, name }` | `201 { character }` with server defaults, `200 { character }` on replay. |
-| `GET C` | — | `200 { character }`. |
-| `PATCH C` | `{ expectedRevision, changes: SheetChanges }` | `200 { character }` with the new canonical sheet and derived values. |
+| Method and path          | Request                                             | Success                                                                                   |
+| ------------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `GET G`                  | —                                                   | `200 { game }`, using the existing game DTO.                                              |
+| `GET G/players`          | —                                                   | `200 { players: Player[] }`, ordered by `createdAt ASC, id ASC`.                          |
+| `POST G/players`         | `{ id, name }`                                      | `201 { player }` on creation, `200 { player }` on replay.                                 |
+| `GET P`                  | —                                                   | `200 { player }`.                                                                         |
+| `GET P/characters`       | —                                                   | `200 { characters: CharacterSummary[] }`, ordered by `createdAt ASC, id ASC`.             |
+| `POST P/characters`      | `{ id, name }`                                      | `201 { character }` with server defaults, `200 { character }` on replay.                  |
+| `GET C`                  | —                                                   | `200 { character }`.                                                                      |
+| `PATCH C`                | `{ expectedRevision, changes: SheetChanges }`       | `200 { character }` with the new canonical sheet and derived values.                      |
 | `PUT P/active-character` | `{ expectedRevision, characterId: string \| null }` | `200 { player }`. Use a character from this player or send `null` to clear the selection. |
 
 ```ts
@@ -87,9 +87,27 @@ type EquipmentEntry = {
   priceZenit: number | null;
 } & (
   | { kind: "other" }
-  | { kind: "weapon"; equipped: boolean; accuracyDice: [Attribute | null, Attribute | null]; accuracyBonus: number | null }
-  | { kind: "armor"; equipped: boolean; fixedDefense: number | null; defenseBonus: number; magicDefenseBonus: number; initiativeModifier: number }
-  | { kind: "shield"; equipped: boolean; defenseBonus: number; magicDefenseBonus: number; initiativeModifier: number }
+  | {
+      kind: "weapon";
+      equipped: boolean;
+      accuracyDice: [Attribute | null, Attribute | null];
+      accuracyBonus: number | null;
+    }
+  | {
+      kind: "armor";
+      equipped: boolean;
+      fixedDefense: number | null;
+      defenseBonus: number;
+      magicDefenseBonus: number;
+      initiativeModifier: number;
+    }
+  | {
+      kind: "shield";
+      equipped: boolean;
+      defenseBonus: number;
+      magicDefenseBonus: number;
+      initiativeModifier: number;
+    }
 );
 
 type FabulaSheet = {
@@ -126,7 +144,8 @@ type Contribution = {
 type FabulaPreview = {
   coverage: "partial";
   maxima: { hp: number; mp: number; ip: number };
-  defenses: Record<"defense" | "magicDefense" | "initiative",
+  defenses: Record<
+    "defense" | "magicDefense" | "initiative",
     | { calculated: number; contributions: Contribution[] }
     | { calculated: null; reason: "ambiguous_equipment" }
   >;
@@ -144,15 +163,15 @@ type FabulaPreview = {
 
 Keep the existing `games` table. Use relational columns for scalar fields and child rows for each ordered list. Compute the preview from saved inputs. The API still presents one sheet aggregate.
 
-| Migration and table | Columns and constraints |
-| --- | --- |
-| `002_players.sql` · `players` | UUID primary key, required `game_id` FK, required trimmed nonblank `name varchar(20)`, nonnegative integer `revision` default 0, and `created_at timestamptz`. Index `(game_id, created_at, id)`. |
-| `003_characters.sql` · `characters` | UUID primary key, required `player_id` FK, `UNIQUE (player_id, id)`, nonnegative integer `revision` default 0, and `created_at` and `updated_at` timestamps. Required trimmed nonblank `name varchar(100)`, nullable `theme varchar(200)`, required `level smallint` checked to 5–50, and required `dex_die`, `ins_die`, `mig_die`, `wlp_die` checked to 6, 8, 10 or 12. |
-| `characters` · resources and overrides | Required nonnegative integers `current_hp`, `current_mp`, `current_ip`, `fabula_points`. Nullable nonnegative integer overrides `max_hp_override`, `max_mp_override`, `max_ip_override`. Nullable integer overrides `defense_override`, `magic_defense_override`, `initiative_override`. Index character list reads by `(player_id, created_at, id)`. |
-| `character_classes` | UUID primary key, required `character_id` FK, required trimmed nonblank `name varchar(100)`, and `notes varchar(500) NOT NULL`. Required `position smallint` checked to 1 or 2, unique per character. |
-| `character_skills` | Same identity, ownership, name and notes constraints as classes. Required position from 1 to 100, unique per character. |
-| `character_equipment` | Same identity, ownership, name, notes and position constraints as skills. Required kind from `other`, `weapon`, `armor`, or `shield`. Nullable nonnegative `price_zenit`. Typed columns for `equipped`, `accuracy_attribute_1`, `accuracy_attribute_2`, `accuracy_bonus`, `fixed_defense`, `defense_bonus`, `magic_defense_bonus`, `initiative_modifier`. Use a row check to enforce the equipment variants described below. |
-| `003_characters.sql` · active selection | Add nullable `players.active_character_id` with `FOREIGN KEY (id, active_character_id) REFERENCES characters(player_id, id)`. A null pointer represents no active selection. |
+| Migration and table                     | Columns and constraints                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `002_players.sql` · `players`           | UUID primary key, required `game_id` FK, required trimmed nonblank `name varchar(20)`, nonnegative integer `revision` default 0, and `created_at timestamptz`. Index `(game_id, created_at, id)`.                                                                                                                                                                                                                            |
+| `003_characters.sql` · `characters`     | UUID primary key, required `player_id` FK, `UNIQUE (player_id, id)`, nonnegative integer `revision` default 0, and `created_at` and `updated_at` timestamps. Required trimmed nonblank `name varchar(100)`, nullable `theme varchar(200)`, required `level smallint` checked to 5–50, and required `dex_die`, `ins_die`, `mig_die`, `wlp_die` checked to 6, 8, 10 or 12.                                                     |
+| `characters` · resources and overrides  | Required nonnegative integers `current_hp`, `current_mp`, `current_ip`, `fabula_points`. Nullable nonnegative integer overrides `max_hp_override`, `max_mp_override`, `max_ip_override`. Nullable integer overrides `defense_override`, `magic_defense_override`, `initiative_override`. Index character list reads by `(player_id, created_at, id)`.                                                                        |
+| `character_classes`                     | UUID primary key, required `character_id` FK, required trimmed nonblank `name varchar(100)`, and `notes varchar(500) NOT NULL`. Required `position smallint` checked to 1 or 2, unique per character.                                                                                                                                                                                                                        |
+| `character_skills`                      | Same identity, ownership, name and notes constraints as classes. Required position from 1 to 100, unique per character.                                                                                                                                                                                                                                                                                                      |
+| `character_equipment`                   | Same identity, ownership, name, notes and position constraints as skills. Required kind from `other`, `weapon`, `armor`, or `shield`. Nullable nonnegative `price_zenit`. Typed columns for `equipped`, `accuracy_attribute_1`, `accuracy_attribute_2`, `accuracy_bonus`, `fixed_defense`, `defense_bonus`, `magic_defense_bonus`, `initiative_modifier`. Use a row check to enforce the equipment variants described below. |
+| `003_characters.sql` · active selection | Add nullable `players.active_character_id` with `FOREIGN KEY (id, active_character_id) REFERENCES characters(player_id, id)`. A null pointer represents no active selection.                                                                                                                                                                                                                                                 |
 
 Child rows use `ON DELETE CASCADE` from the sheet. Name checks enforce both trimmed text and at least one non-whitespace character. The player and character names have no uniqueness constraint. Each list is read in position order. The two numbered class positions enforce the limit in the database.
 
@@ -167,12 +186,12 @@ Equipment variant checks require `equipped` for weapons, armor and shields and u
 
 Use routes `/`, `/games/:gameId`, `/games/:gameId/players/:playerId` and `/games/:gameId/players/:playerId/characters/:characterId`. Derive context from route IDs and saved names. Direct links and reloads fetch the same record. Keep responsive sidebar and slideover navigation, translated labels, and stable `data-testid` selectors.
 
-| Layer | Responsibility |
-| --- | --- |
-| Module `api.ts` | Define typed request functions for every endpoint used by the flow, including existing game and system calls. Keep URLs, methods, bodies, response mapping and HTTP error classification here. Share the low-level JSON transport. |
-| Module query and mutation composables | Wrap every request in an application Vue hook, such as `useGame`, `usePlayers`, `useCreateCharacter`, or `useUpdateCharacter`. Own query keys, enabled conditions and invalidation. Feature controllers call these hooks. |
-| Shared `useOptimisticSave` | Wrap TanStack Vue Query mutations for reusable optimistic edits. Own serial dispatch, pending input, acknowledgement and failure policy. Accept typed apply and save functions from module hooks. |
-| Controllers and views | Controllers coordinate hooks, routes and local preferences. Views receive display data and emit edit intents. Read and write the sheet's editing lock through `localStorage`, keyed by character ID. The lock governs that browser's edit controls. |
+| Layer                                 | Responsibility                                                                                                                                                                                                                                      |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module `api.ts`                       | Define typed request functions for every endpoint used by the flow, including existing game and system calls. Keep URLs, methods, bodies, response mapping and HTTP error classification here. Share the low-level JSON transport.                  |
+| Module query and mutation composables | Wrap every request in an application Vue hook, such as `useGame`, `usePlayers`, `useCreateCharacter`, or `useUpdateCharacter`. Own query keys, enabled conditions and invalidation. Feature controllers call these hooks.                           |
+| Shared `useOptimisticSave`            | Wrap TanStack Vue Query mutations for reusable optimistic edits. Own serial dispatch, pending input, acknowledgement and failure policy. Accept typed apply and save functions from module hooks.                                                   |
+| Controllers and views                 | Controllers coordinate hooks, routes and local preferences. Views receive display data and emit edit intents. Read and write the sheet's editing lock through `localStorage`, keyed by character ID. The lock governs that browser's edit controls. |
 
 TanStack Vue Query owns server cache and mutation lifecycle. Use its retry option for transient read failures and retry-safe create requests that reuse the original ID. Keep conditional sheet and active-selection writes on the revision they were dispatched with. A conflict requires a fresh read, and a write based on a newer revision requires new user intent. [TanStack Vue Query optimistic updates](https://tanstack.com/query/latest/docs/framework/vue/guides/optimistic-updates) · [TanStack Vue Query mutations](https://tanstack.com/query/latest/docs/framework/vue/guides/mutations)
 

@@ -27,10 +27,10 @@ The first screen lists saved games and provides game creation. A game requires a
 
 Latest test run on 2026-11-04:
 
-| Suite                      | Result            | Coverage                                                                                                                                                                     |
+| Suite | Result | Coverage |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API/unit                   | 4 passed          | Valid creation and trimming; blank/over-limit names and invalid systems; empty versus failed listing; malformed JSON; catalog endpoint; sanitized save failure.              |
-| Frontend component browser | 1 passed          | A failed list request can be retried to reach the empty state, using mocked API responses without a backend.                                                                 |
-| Cucumber end-to-end        | 1 scenario passed | Real frontend, backend, and isolated PostgreSQL schema: visible create button, named game and selected system, success toast, list entry, and persistence after page reload. |
+| API/unit | 4 passed | Valid creation and trimming; blank/over-limit names and invalid systems; empty versus failed listing; malformed JSON; catalog endpoint; sanitized save failure. |
+| Frontend component browser | 1 passed | A failed list request can be retried to reach the empty state, using mocked API responses without a backend. |
+| Cucumber end-to-end | 1 scenario passed | Real frontend, backend, and isolated PostgreSQL schema: visible create button, named game and selected system, success toast, list entry, and persistence after page reload. |
 
 Frontend build, backend and end-to-end type checks, and `pnpm check` passed during implementation. A separate manual database check confirmed that a saved game survived a PostgreSQL container restart.

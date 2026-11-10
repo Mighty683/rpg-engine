@@ -1,6 +1,6 @@
 # Game creation — UX journey
 
-**Created:** 2026-11-04  
+**Created:** 2026-11-04
 
 **Related:** [Task summary](summary.md)
 

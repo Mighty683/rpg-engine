@@ -1,6 +1,6 @@
 # Game creation — UI solution
 
-**Created:** 2026-11-04  
+**Created:** 2026-11-04
 
 **Related:** [UX journey](ux.md) · [Task summary](summary.md)
 
