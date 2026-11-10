@@ -6,11 +6,11 @@
 
 ## Scope and evidence
 
-The request is to run the application as a single GM and create a game; player participation and player workflows are out of scope. A game can be a campaign or a single session, without choosing between them at creation. Creation requires a name of at most 20 characters and an RPG system; the system cannot be changed later. Created games are saved in the database and survive restarts; unfinished setup is lost on restart or page reload. A simple game list is the application's first screen. The initial system catalog may be hardcoded; system setup belongs to a different task. No separate story exists yet. The [UX guidelines](../../spec/ux.md) describe a minimal, multi-system RPG engine and future GM/player roles.
+The request is to run the application as a single GM and create a game; player participation and player workflows are out of scope. A game can be a campaign or a single session, without choosing between them at creation. Creation requires a name of at most 20 characters and an RPG system; the system cannot be changed later. Created games are saved in the database and survive restarts; unfinished setup is lost on restart or page reload. A simple game list is the application's first screen. The initial system catalog may be hardcoded; system setup belongs to a different task. No separate story exists yet. The [UX guidelines](../../../spec/ux.md) describe a minimal, multi-system RPG engine and future GM/player roles.
 
-The [frontend](../../../packages/frontend/src/App.vue) now provides this flow with database-backed creation and listing. Startup and migration instructions are in the [README](../../../README.md); delivered scope and verification are in the [implementation plan](plan.md#verification-results).
+The [frontend](../../../../packages/frontend/src/App.vue) now provides this flow with database-backed creation and listing. Startup and migration instructions are in the [README](../../../../README.md); delivered scope and verification are in the [implementation plan](plan.md#verification-results).
 
-The [GM persona](../../research/personas/game-master.md) and [interview](../../research/interviews/game-master.md) are simulated, not participant research. They suggest hypotheses worth testing: a GM may want a low-effort trial, clear feedback, and a way to recover without committing a group. They do not establish required fields or validate this flow.
+The [GM persona](../../../research/personas/game-master.md) and [interview](../../../research/interviews/game-master.md) are simulated, not participant research. They suggest hypotheses worth testing: a GM may want a low-effort trial, clear feedback, and a way to recover without committing a group. They do not establish required fields or validate this flow.
 
 ## Delivered journey
 

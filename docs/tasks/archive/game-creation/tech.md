@@ -8,9 +8,9 @@
 
 Provide the single-GM application with a persisted game list and game creation. A game has a required name and RPG system; its system cannot change after creation. It may represent a campaign or a single session without a type choice. Player workflows, opening or editing games, system setup, identity, and AI actions are outside this task. No separate story exists; sequencing is in the [implementation plan](plan.md).
 
-The Vue/Nuxt UI frontend is wired through [main.ts](../../../packages/frontend/src/main.ts) to the game list and creation flow. The backend uses Express with module-owned Arrow Express controllers and PostgreSQL through `pg`, with an initial SQL migration. Vitest covers API/unit and frontend component browser tests; the separate end-to-end package runs Cucumber.js scenarios through Vitest. Local setup and commands are documented in the [README](../../../README.md).
+The Vue/Nuxt UI frontend is wired through [main.ts](../../../../packages/frontend/src/main.ts) to the game list and creation flow. The backend uses Express with module-owned Arrow Express controllers and PostgreSQL through `pg`, with an initial SQL migration. Vitest covers API/unit and frontend component browser tests; the separate end-to-end package runs Cucumber.js scenarios through Vitest. Local setup and commands are documented in the [README](../../../../README.md).
 
-The [character setup design](../character-setup/tech.md) remains a proposal, not a delivered character contract.
+The [character setup design](../character-setup/tech.md) was a proposal at the time of this design; the manual sheet MVP has since been implemented.
 
 ## Responsibilities and boundaries
 
@@ -19,7 +19,7 @@ The [character setup design](../character-setup/tech.md) remains a proposal, not
 | Game list and creation UI | `packages/frontend/src/modules/games`: retrieve games and available systems, manage the in-memory form and submission states, and present the agreed [UI](ui.md). Do not persist drafts in browser storage.                                                              |
 | Game domain               | `packages/backend/src/modules/games`: validate and create games, list saved games, and own game identity and the immutable system association. Keep HTTP handling separate from domain/persistence responsibilities.                                                     |
 | RPG system catalog        | `packages/backend/src/modules/rpg-systems` provides a hardcoded initial catalog with stable system IDs, display names and creation availability. System setup and management remain a separate task.                                                                     |
-| Infrastructure            | Backend application/server, database connection and migrations expose the domain over HTTP and PostgreSQL. Follow the existing dependency choices and [code conventions](../../spec/code-conventions.md); place genuinely shared code in `src/shared` only where needed. |
+| Infrastructure            | Backend application/server, database connection and migrations expose the domain over HTTP and PostgreSQL. Follow the existing dependency choices and [code conventions](../../../spec/code-conventions.md); place genuinely shared code in `src/shared` only where needed. |
 
 Single GM is a deployment assumption, not authentication or authorization. Do not manufacture an owner ID or claim access control. Until identity and authorization are designed, restrict deployment to a trusted environment; a public or multi-user deployment is not secured by this assumption.
 
@@ -46,7 +46,7 @@ Errors use `{ error: { code, message, fields? } }`. Use `400` for malformed requ
 
 Do not automatically retry creation. Disable repeat submission while it is pending; if the outcome is unknown, let the GM check the game list before deciding whether to try again. Duplicate names are allowed, so the list cannot always resolve ambiguity. Durable idempotency and duplicate prevention across retries are deferred.
 
-Differentiate validation/known rejection from a transport interruption or server failure where commit status is unknown. Map the latter to the UI's unknown-outcome state; never assert that a game was not created solely because the response failed. Sanitize errors and avoid exposing database details. A list refresh failure does not retract the success toast; success notifications follow the [UI conventions](../../spec/ui.md).
+Differentiate validation/known rejection from a transport interruption or server failure where commit status is unknown. Map the latter to the UI's unknown-outcome state; never assert that a game was not created solely because the response failed. Sanitize errors and avoid exposing database details. A list refresh failure does not retract the success toast; success notifications follow the [UI conventions](../../../spec/ui.md).
 
 ## Decisions and tradeoffs
 
@@ -57,7 +57,7 @@ Differentiate validation/known rejection from a transport interruption or server
 
 ## Verification requirements
 
-Follow [testing conventions](../../spec/testing.md): Vitest unit tests cover input branches; browser tests cover complete journeys without duplicating unit cases. The [implementation plan](plan.md#verification-results) records the executed checks and coverage limits.
+Follow [testing conventions](../../../spec/testing.md): Vitest unit tests cover input branches; browser tests cover complete journeys without duplicating unit cases. The [implementation plan](plan.md#verification-results) records the executed checks and coverage limits.
 
 - Unit/API: valid creation, empty or over-limit names, invalid system ID, and empty versus failed list.
 - Database/browser: create and list a game, verify it survives restart, and verify an unfinished form is lost on reload. Check validation and a failed or uncertain save without falsely reporting success.
@@ -65,4 +65,4 @@ Follow [testing conventions](../../spec/testing.md): Vitest unit tests cover inp
 ## Resolved implementation choices
 
 - The initial catalog contains Dungeons & Dragons 5e (`dnd-5e`). Its rules and system management remain separate work.
-- The backend generates UUIDs and uses PostgreSQL with a SQL migration. Local configuration and startup commands are in the [README](../../../README.md).
+- The backend generates UUIDs and uses PostgreSQL with a SQL migration. Local configuration and startup commands are in the [README](../../../../README.md).

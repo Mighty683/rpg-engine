@@ -9,4 +9,4 @@ test runner and do not yet have step definitions. Move the agreed scenarios into
 - [Game management](game-management.feature): accounts, per-game roles, membership, and access.
 - [Live collaboration](live-collaboration.feature): updates, access loss, reconnect, and draft recovery.
 
-These are browser journeys. Adversarial API authorization checks live in [`packages/tests/src/api`](../../../../packages/tests/src/api/permissions.integration.test.ts). They exercise direct bypass attempts and state preservation; keep browser scenarios focused on user-visible behavior. Database constraints and competing transactions need focused integration tests as described in the [technical design](../tech.md).
+These are browser journeys. Adversarial API authorization checks live in [`packages/tests/src/api`](../../../../../packages/tests/src/api/permissions.integration.test.ts). They exercise direct bypass attempts and state preservation; keep browser scenarios focused on user-visible behavior. Database constraints and competing transactions need focused integration tests as described in the [technical design](../tech.md).

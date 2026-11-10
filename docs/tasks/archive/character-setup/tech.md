@@ -4,7 +4,7 @@
 
 **Updated** 2026-11-06
 
-**Related** [Story](story.md) · [UX journey](ux.md) · [UI prototype](ui.md) · [Fabula Ultima specification](fabula-ultima-character-spec.md) · [Implementation plan](plan.md)
+**Related** [Story](story.md) · [UX journey](ux.md) · [UI prototype](ui.md) · [Fabula Ultima specification](../../../spec/fabula-ultima/character-spec.md) · [Implementation plan](plan.md)
 
 ## Release scope and UI analysis
 
@@ -22,10 +22,10 @@ The manual sheet has a hard two-class cap. Classes and skills are named notes. E
 
 ## Existing implementation and ownership
 
-- [Games backend](../../../packages/backend/src/modules/games) uses Express, Arrow Express and parameterized PostgreSQL queries. It already returns immutable game system IDs. Add detail retrieval and replace the placeholder catalog entry with `fabula-ultima`. Filter game reads to the supported system and reject creation with the retired ID. Existing placeholder rows are outside the app.
+- [Games backend](../../../../packages/backend/src/modules/games) uses Express, Arrow Express and parameterized PostgreSQL queries. It already returns immutable game system IDs. Add detail retrieval and replace the placeholder catalog entry with `fabula-ultima`. Filter game reads to the supported system and reject creation with the retired ID. Existing placeholder rows are outside the app.
 - Add backend `players` and `characters` modules under `src/modules`. Players own the roster and active selection. Characters own identity, sheet writes, and revision. Put the Fabula payload validator, defaults and pure calculations in a Fabula-specific module. Controllers parse HTTP and translate domain errors. Services enforce scope and own transaction boundaries.
-- The [frontend router](../../../packages/frontend/src/main.ts) currently mounts a single games view, with fetch and form state in [GamesView](../../../packages/frontend/src/modules/games/GamesView.vue). Use controller components for new screens and API adapters at the module boundary. The earlier prototype sheet has been removed; the [production sheet](../../../packages/frontend/src/modules/characters/sheet/CharacterSheet.vue) is the current component reference.
-- The [migration CLI](../../../packages/backend/src/migrate.ts) and [isolated browser stack](../../../packages/tests/src/setup.ts) both read only `001_games.sql`. Give both entry points the same ordered migration function.
+- The [frontend router](../../../../packages/frontend/src/main.ts) currently mounts a single games view, with fetch and form state in [GamesView](../../../../packages/frontend/src/modules/games/GamesView.vue). Use controller components for new screens and API adapters at the module boundary. The earlier prototype sheet has been removed; the [production sheet](../../../../packages/frontend/src/modules/characters/sheet/CharacterSheet.vue) is the current component reference.
+- The [migration CLI](../../../../packages/backend/src/migrate.ts) and [isolated browser stack](../../../../packages/tests/src/setup.ts) both read only `001_games.sql`. Give both entry points the same ordered migration function.
 
 ## HTTP contract
 

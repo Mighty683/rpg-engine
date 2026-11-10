@@ -4,7 +4,7 @@
 
 ## Context
 
-The [simulated GM review](../../research/interviews/game-master-application-review.md) found that the GM had to switch sheets to see the party’s resources. The Game Table brings those summaries and rolls together. The workflow below reflects prototype review. Its usefulness during a live session has yet to be tested.
+The [simulated GM review](../../../research/interviews/game-master-application-review.md) found that the GM had to switch sheets to see the party’s resources. The Game Table brings those summaries and rolls together. The workflow below reflects prototype review. Its usefulness during a live session has yet to be tested.
 
 ## Run the table
 
@@ -35,4 +35,4 @@ Click **Roll** to confirm. Canceling leaves history intact. Temporary choices ap
 
 The prototype uses seeded data and in-memory history. It previews GM and player attribution through a gallery control. Production still needs to define live roster and sheet permissions, durable or shared history, and handling of changes to active characters while a roll is open. The current prototype still limits GM free rolls to GM-controlled characters and matches free reroll attribution by name. The agreed flow uses all active characters for GM selection and stable character IDs for attribution.
 
-The table does not resolve attacks against a target, apply damage or change resources automatically. Fixed-Difficulty adjudication, support and group checks, and Fabula Point spending remain outside the reviewed flow. See [Fabula Ultima checks](../../spec/fabula-ultima/checks.md) and [weapon attacks](../../spec/fabula-ultima/weapon-attacks.md).
+The table does not resolve attacks against a target, apply damage or change resources automatically. Fixed-Difficulty adjudication, support and group checks, and Fabula Point spending remain outside the reviewed flow. See [Fabula Ultima checks](../../../spec/fabula-ultima/checks.md) and [weapon attacks](../../../spec/fabula-ultima/weapon-attacks.md).

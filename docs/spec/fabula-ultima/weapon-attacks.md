@@ -15,4 +15,4 @@ Example: the supplied rapier uses DEX + INS + 1 for accuracy and high roll + 6 p
 
 A weapon's rules data must retain both attribute choices and its accuracy bonus separately from damage and character attribute values. Resolve attacks against the applicable game and rules configuration. Do not present an incomplete calculation as final when required rules data is unavailable. This specification does not define spell attacks, equipment eligibility, special abilities or a complete combat engine.
 
-Source: [supplied Fabula Ultima character specification](../../tasks/character-setup/fabula-ultima-character-spec.md), especially §§4–6 and 9; [publisher's sample characters](https://www.needgames.it/wp-content/uploads/2022/10/FABULA-ULTIMA-Premi-Start-Editable-Pregens.pdf) illustrate weapon accuracy, damage and high roll.
+Source: [supplied Fabula Ultima character specification](character-spec.md), especially §§4–6 and 9; [publisher's sample characters](https://www.needgames.it/wp-content/uploads/2022/10/FABULA-ULTIMA-Premi-Start-Editable-Pregens.pdf) illustrate weapon accuracy, damage and high roll.

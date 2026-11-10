@@ -34,8 +34,8 @@ The MVP delivers a persistent manual sheet for the GM. The integration owner mai
 | Browser components | Verify optimistic updates, slow acknowledgements, newer input during a save, rollback and refresh after failure, and a response after navigation. Verify calculation status while saving, and lock behavior across reloads in the same browser. |
 | Full stack | Create a Fabula game and a player, create two named characters, edit one, and select it as active. Reload, open the same sheet by URL, verify saved inputs and the active name, then clear the selection. |
 
-Run the backend and frontend builds, repository checks, API and browser component tests, and the Cucumber/Vitest journey against a disposable PostgreSQL database. [Testing conventions](../../spec/testing.md) · [End-to-end package guidance](../../../packages/tests/AGENTS.md)
+Run the backend and frontend builds, repository checks, API and browser component tests, and the Cucumber/Vitest journey against a disposable PostgreSQL database. [Testing conventions](../../../spec/testing.md) · [End-to-end package guidance](../../../../packages/tests/AGENTS.md)
 
 ## Follow-on milestone — Rules validation
 
-Plan sourced skill ranks, choices and effects, spell data, starting equipment, and versioned catalogs. Resolve the review and completion interaction before adding a rules-validated profile. [Fabula Ultima character specification](fabula-ultima-character-spec.md)
+Plan sourced skill ranks, choices and effects, spell data, starting equipment, and versioned catalogs. Resolve the review and completion interaction before adding a rules-validated profile. [Fabula Ultima character specification](../../../spec/fabula-ultima/character-spec.md)

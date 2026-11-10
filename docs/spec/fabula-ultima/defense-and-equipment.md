@@ -12,4 +12,4 @@ Only equipped items contribute equipped effects. Normally a character can equip 
 
 Keep equipped-item selections and sourced effects separate from derived Defense, Magic Defense and Initiative. Recalculate when applicable attributes, equipment or effects change. Unknown item or skill effects must not be represented as known zero effects or presented as a complete result. A manually entered override must remain distinguishable from the calculated value and be reversible.
 
-Source: [supplied Fabula Ultima character specification](../../tasks/character-setup/fabula-ultima-character-spec.md), §§3–5 and 11.
+Source: [supplied Fabula Ultima character specification](character-spec.md), §§3–5 and 11.

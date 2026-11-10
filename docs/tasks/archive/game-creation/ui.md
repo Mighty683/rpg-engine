@@ -6,7 +6,7 @@
 
 ## Scope and visual approach
 
-The [application](../../../packages/frontend/src/App.vue) provides a simple saved-games list and a creation view. The [UX journey](ux.md) defines the single-GM scope, database persistence, fixed RPG system, and deferred player and system-setup workflows. There is no separate story yet. The [GM persona](../../research/personas/game-master.md) and [interview](../../research/interviews/game-master.md) are simulated; they do not validate this design.
+The [application](../../../../packages/frontend/src/App.vue) provides a simple saved-games list and a creation view. The [UX journey](ux.md) defines the single-GM scope, database persistence, fixed RPG system, and deferred player and system-setup workflows. There is no separate story yet. The [GM persona](../../../research/personas/game-master.md) and [interview](../../../research/interviews/game-master.md) are simulated; they do not validate this design.
 
 Retain the existing `UApp`, `UContainer`, and default theme surfaces and text tokens. Use existing Nuxt UI buttons, form controls, and feedback components with restrained spacing and borders; no new visual system is needed. Keep the content in a readable column that fits narrow screens, with controls wrapping rather than overflowing.
 
@@ -16,7 +16,7 @@ Retain the existing `UApp`, `UContainer`, and default theme surfaces and text to
 - Show each saved game's name and RPG system in a simple, non-interactive row. Do not imply a game can be opened, edited, or deleted; those actions are not required for now.
 - While loading, show **Loading games…**. If the list is empty, show **No games yet. Create your first game.** Keep the create button visible.
 - If loading fails, show **Could not load games.** and a **Retry** button. Do not show the empty state for a failed request. Creating remains available if its own dependencies are available.
-- After confirmed creation, return to the list, show a **Game created: [name].** success toast, and refresh the list. If the refresh fails, show the list error without retracting the confirmed save. The toast follows the [UI conventions](../../spec/ui.md).
+- After confirmed creation, return to the list, show a **Game created: [name].** success toast, and refresh the list. If the refresh fails, show the list error without retracting the confirmed save. The toast follows the [UI conventions](../../../spec/ui.md).
 
 ## Create game view
 

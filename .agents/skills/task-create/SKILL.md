@@ -1,11 +1,13 @@
 ---
 name: task-create
-description: Create or update a task navigation page linking its phase documents.
+description: Create or update a task navigation page linking its phase documents, and archive implemented tasks.
 ---
 
 # Task Create
 
 Use the existing task directory or a descriptive kebab-case name. Link only existing documents, including the handover once created. Preserve creation metadata; when reducing an existing summary, move unique detail to its owning phase and update references.
+
+After implementation, set the task status to Implemented and move the complete task directory from `docs/tasks/<task>/` to `docs/tasks/archive/<task>/`. Update links to and from the moved documents. Preserve any outstanding verification or open items.
 
 ## Example: `docs/tasks/<task>/summary.md`
 

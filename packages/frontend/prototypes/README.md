@@ -1,6 +1,6 @@
 # UI prototypes and design system
 
-Run `pnpm --filter @rpg-engine/frontend prototypes:dev` to open Histoire. Browse **Prototypes** and **Design system** in its sidebar; select **Game Table** and use the Controls panel to switch the preview role. Prototype data and interactions are local and reset on reload.
+Run `pnpm --filter @rpg-engine/frontend prototypes:dev` to open Histoire. Browse **Design system** and **Domain** in its sidebar. Story data and interactions are local and reset on reload.
 
 Run `pnpm --filter @rpg-engine/frontend prototypes:build` to type-check and build the book into `packages/frontend/prototypes/dist`, and `pnpm --filter @rpg-engine/frontend prototypes:preview` to serve the build. This is separate from the production application.
 

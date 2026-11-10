@@ -4,7 +4,7 @@
 
 **Source:** User-provided Polish *Fabula Ultima* Core Rulebook (2024). Primary printed pages: 34–37 (character anatomy), 56–57 (Bonds), 92–94 (damage affinities and statuses), 122 (equipment slots), 154–171 (character creation and starting equipment), 176–215 (classes), 226–229 (advancement). Printed page numbers are two less than PDF page numbers.
 
-**Scope:** Core-rulebook PCs, normally beginning at level 5. This is a **condensed implementation specification**, not a transcription of every skill/spell/item effect. The companion `Fabula_Ultima_Core_Skill_Index.json` lists all 75 class-skill names and rank limits, but **not** their effects. Full rules for each individual skill and spell must be entered into rule catalogs from the relevant book pages before claiming full mechanical support. Do not fabricate missing effects.
+**Scope:** Core-rulebook PCs, normally beginning at level 5. This is a **condensed implementation specification**, not a transcription of every skill/spell/item effect. A companion `Fabula_Ultima_Core_Skill_Index.json` was described as listing all 75 class-skill names and rank limits, but is not available in this repository and does **not** contain their effects. Full rules for each individual skill and spell must be entered into rule catalogs from the relevant book pages before claiming full mechanical support. Do not fabricate missing effects.
 
 **Notation:** d6/d8/d10/d12 = dice with that many faces. `DEX` = Zręczność (ZR), `INS` = Wejrzenie (WJ), `MIG` = Potęga (PO), `WLP` = Siła Woli (SW); HP = Punkty Życia; MP = Punkty Mocy; IP = Punkty Ekwipunku; Fabula = Punkty Fabuli; zenit = ZNT; skill rank = `PU` (poziom umiejętności). The English aliases in this file are **engine identifiers**, not official translated nomenclature.
 
@@ -142,7 +142,7 @@ classId, skillId, maxRank, sourcePage, choicesSchema, derivedModifiers, effects
 ```
 
 - Skill rank (`PU`) equals the number of times it was chosen; single-purchase skills have `maxRank = 1`.
-- Reject selection exceeding the rule-defined maximum rank. The companion `Fabula_Ultima_Core_Skill_Index.json` supplies IDs and maximum ranks for all 75 class skills. Some skills have ranks 2, 3, 4, 5, 6, or 10; **do not assume every skill has the same cap**.
+- Reject selection exceeding the rule-defined maximum rank. The described companion `Fabula_Ultima_Core_Skill_Index.json` is not available in this repository; obtain IDs and maximum ranks from the rulebook before implementing them. Some skills have ranks 2, 3, 4, 5, 6, or 10; **do not assume every skill has the same cap**.
 - Five starting class levels imply five total skill-rank purchases spread over the chosen classes. Sum of chosen skill ranks **within each class** equals that class's current level (barring future special rule exceptions, which need explicit handling).
 - Skills may require **parameters at purchase time** (learned spell, preferred test dice, gadget category/tier, bound Arcanum, etc.). Store those selections, not just the skill name and rank.
 - Class-granted ritual disciplines, learned spells, summon/companion state, project access and passive effects belong to **capabilities**, not to numeric stats alone.

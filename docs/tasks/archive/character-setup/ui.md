@@ -5,7 +5,7 @@
 
 ## Prototype
 
-The character setup prototype was an in-memory exploration and has been removed from the gallery. The shared character sheet is now available in the [production UI](../../../packages/frontend/src/modules/characters/sheet/CharacterSheet.vue) and the [GM and player prototype](../../../packages/frontend/prototypes/gm-player-separation/GameSeparationPrototype.vue).
+The character setup prototype was an in-memory exploration and has been removed from the gallery. The shared character sheet is now available in the [production UI](../../../../packages/frontend/src/modules/characters/sheet/CharacterSheet.vue).
 
 The sheet uses full-width cards: attributes and resources share one card; classes and skills occupy left and right sections of another; equipment and defense share a third. Sections stack on narrow screens. The sheet uses the supplied Fabula Ultima character sheet as a reference and retains the dark palette. It removes appearance, pronouns, identity/concept, origin and the starting-array selector at the user's direction; theme sits in the header. Attribute dice can be changed directly; the setup-issues summary has been removed. The rules specification still calls for identity and origin at creation; how those requirements are met remains open.
 

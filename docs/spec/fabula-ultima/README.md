@@ -6,4 +6,4 @@ These specifications capture Fabula Ultima rules relevant across the project. Th
 - [Weapon attacks](weapon-attacks.md)
 - [Defense and equipment](defense-and-equipment.md)
 
-The supplied [character specification](../../tasks/character-setup/fabula-ultima-character-spec.md) provides additional creation and character rules. Individual skill effects and the full weapon catalog are not supplied; do not infer them from incomplete data.
+The supplied [character specification](character-spec.md) provides additional creation and character rules. Individual skill effects and the full weapon catalog are not supplied; do not infer them from incomplete data.

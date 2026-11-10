@@ -24,7 +24,7 @@ Use labeled form controls, native button semantics, and visible keyboard focus. 
 
 ## Review the prototype
 
-Run `pnpm --filter @rpg-engine/frontend prototypes:dev` and select **GM and player separation** in the gallery. The [prototype entry](../../../packages/frontend/prototypes/gm-player-separation/GameSeparationPrototype.vue) starts in **The Lantern Road** as Robin, its GM. Gallery controls above the application switch sample accounts and open sample invitations. The displayed URLs, sign-in, and data are simulated in memory. Reload the gallery to reset them.
+The prototype has since been removed from the gallery. Its entry started in **The Lantern Road** as Robin, its GM. Gallery controls switched sample accounts and opened sample invitations. The displayed URLs, sign-in, and data were simulated in memory.
 
 1. As **Robin**, switch between character sheets and use **Characters management** to change who controls a character. Open **Settings** and disable one of the two Rowan Ash links to check that the other stays enabled. Review player removal and restoration in the same screen.
 2. Switch to **Mira**. Compare Nera Vale's editable sheet with another character's read-only sheet. Create another character, then use **Characters management** to activate it. Return to the game and check that the new character replaces Nera in the tab strip.

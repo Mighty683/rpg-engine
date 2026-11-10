@@ -6,12 +6,17 @@ export default defineConfig({
     jsPlugins: [
       { name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
       { name: "sql-security", specifier: "./lint/sql-security.js" },
+      { name: "prototype-boundary", specifier: "./lint/prototype-boundary.js" },
     ],
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
       "max-depth": ["error", 6],
     },
     overrides: [
+      {
+        files: ["packages/*/src/**/*.{js,jsx,ts,tsx,vue}"],
+        rules: { "prototype-boundary/no-prototype-imports": "error" },
+      },
       {
         files: ["packages/backend/src/**/*.ts"],
         rules: { "sql-security/static-query": "error", "sql-security/no-drizzle-raw": "error" },

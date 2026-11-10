@@ -4,7 +4,7 @@
 
 ## Role and goals
 
-The player participates in a tabletop RPG game and manages their character while being able to view the other characters. The intended journey lets them join a game, create or receive a character, edit assigned sheets, and view other sheets ([user stories](../../tasks/gm-player-separation/story.md), [UX journey](../../tasks/gm-player-separation/ux.md)).
+The player participates in a tabletop RPG game and manages their character while being able to view the other characters. The intended journey lets them join a game, create or receive a character, edit assigned sheets, and view other sheets ([user stories](../../tasks/archive/gm-player-separation/story.md), [UX journey](../../tasks/archive/gm-player-separation/ux.md)).
 
 ## Working assumptions to validate
 
@@ -18,8 +18,8 @@ These are hypotheses for design and evaluation, not observed behavior or validat
 
 ## Evidence and limitations
 
-- [GM and player separation user stories](../../tasks/gm-player-separation/story.md), created 2026-11-06: states the intended player goal and scope; it is not participant research.
-- [GM and player separation UX journey](../../tasks/gm-player-separation/ux.md), created 2026-11-06: describes proposed joining, character control, and recovery flows; it says the flow has not been tested with players.
+- [GM and player separation user stories](../../tasks/archive/gm-player-separation/story.md), created 2026-11-06: states the intended player goal and scope; it is not participant research.
+- [GM and player separation UX journey](../../tasks/archive/gm-player-separation/ux.md), created 2026-11-06: describes proposed joining, character control, and recovery flows; it says the flow has not been tested with players.
 - [UX guidelines](../../spec/ux.md), accessed 2026-11-06: describes broad role boundaries and product direction. Its statement that player workflows are deferred predates or conflicts with the more specific player journey above.
 
 No player interviews or direct participant observations were found. This profile does not represent all players, and simulated use cannot validate it.

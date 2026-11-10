@@ -1,6 +1,6 @@
 ---
 name: task-handover
-description: Define task acceptance criteria and required tests before implementation planning, then record verification evidence.
+description: Define task acceptance criteria and required tests before implementation planning, record verification evidence, and archive implemented tasks.
 ---
 
 # Task Handover
@@ -9,7 +9,7 @@ Write `docs/tasks/<task>/handover.md` before the implementation plan. Use the st
 
 Limit the handover's test scope to browser E2E and API integration in `packages/tests`. Describe complete browser journeys as Gherkin scenarios and API integration cases with expected outcomes and persisted effects. Follow the package guidance and give each test a stable ID. Decide unit coverage alongside the code during implementation.
 
-Use the handover for final acceptance. Record checks as pending until they run, then add evidence, failures, and open items.
+Use the handover for final acceptance. Record checks as pending until they run, then add evidence, failures, and open items. After implementation, set the task summary status to Implemented and move the complete task directory to `docs/tasks/archive/<task>/`; update links to and from the moved documents and preserve outstanding verification and open items.
 
 ## Example
 

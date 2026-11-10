@@ -6,9 +6,9 @@
 
 The game owns every character sheet created in it. The GM can manage all sheets. Players can edit sheets assigned to them and read the rest of the cast. The game overview centers on characters, with membership and invitations available as separate management actions for the GM. See the [user stories](story.md).
 
-The current application lets a single GM create games and manage characters through game-specific player records. This journey introduces accounts and game membership, and lets the GM create characters directly in a game before any players join. Existing games, player records, and character sheets do not require migration for this release. See the [UX guidelines](../../spec/ux.md) and [character setup journey](../character-setup/ux.md) for the earlier flow.
+The current application lets a single GM create games and manage characters through game-specific player records. This journey introduces accounts and game membership, and lets the GM create characters directly in a game before any players join. Existing games, player records, and character sheets do not require migration for this release. See the [UX guidelines](../../../spec/ux.md) and [character setup journey](../character-setup/ux.md) for the earlier flow.
 
-The GM persona and interview are simulated. Their suggestions about finding characters quickly and making visibility clear are hypotheses. The flow has yet to be tested with GMs or players. See the [GM persona](../../research/personas/game-master.md) and [simulated interview](../../research/interviews/game-master.md).
+The GM persona and interview are simulated. Their suggestions about finding characters quickly and making visibility clear are hypotheses. The flow has yet to be tested with GMs or players. See the [GM persona](../../../research/personas/game-master.md) and [simulated interview](../../../research/interviews/game-master.md).
 
 ## Accounts and game overview
 
