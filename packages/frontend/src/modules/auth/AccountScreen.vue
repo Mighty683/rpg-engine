@@ -3,7 +3,9 @@ import type { Account } from "./types";
 
 import { useToast } from "@nuxt/ui/composables";
 import { ref } from "vue";
-import { authApi } from "./api";
+import { useApiServices } from "../../shared/api-services";
+
+const { auth: authApi } = useApiServices();
 
 const emit = defineEmits<{ authenticated: [account: Account] }>();
 const mode = ref<"login" | "register">("login");

@@ -9,6 +9,13 @@ import GamesView from "./modules/games/GamesView.vue";
 import GameView from "./modules/games/GameView.vue";
 import CharacterView from "./modules/characters/CharacterView.vue";
 import InvitationView from "./modules/invitations/InvitationView.vue";
+import { apiServicesKey } from "./shared/api-services";
+import { authApi } from "./modules/auth/api";
+import { api as characters } from "./modules/characters/api";
+import { api as gameTable } from "./modules/game-table/api";
+import { api as games } from "./modules/games/api";
+import { invitationApi } from "./modules/invitations/api";
+import { api as players } from "./modules/players/api";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -24,6 +31,14 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5_000 } },
 });
 createApp(App)
+  .provide(apiServicesKey, {
+    auth: authApi,
+    characters,
+    gameTable,
+    games,
+    invitations: invitationApi,
+    players,
+  })
   .use(router)
   .use(ui)
   .use(createFrontendI18n())

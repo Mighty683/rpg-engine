@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed } from "vue";
 import { account } from "../auth/session";
-import { api } from "./api";
-import { api as playersApi } from "../players/api";
+import { useApiServices } from "../../shared/api-services";
 const gameCharactersKey = (gameId: string) => [
   "accounts",
   account.value?.id,
@@ -11,12 +10,14 @@ const gameCharactersKey = (gameId: string) => [
   "characters",
 ];
 export function useGameCharactersQuery(gameId: string) {
+  const { characters: api } = useApiServices();
   return useQuery({
     queryKey: computed(() => gameCharactersKey(gameId)),
     queryFn: () => api.listGameCharacters(gameId),
   });
 }
 export function useCreateGameCharacterMutation(gameId: string) {
+  const { characters: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { id: string; name: string }) => api.createGameCharacter(gameId, input),
@@ -24,12 +25,14 @@ export function useCreateGameCharacterMutation(gameId: string) {
   });
 }
 export function useGameCharacterQuery(gameId: string, characterId: string) {
+  const { characters: api } = useApiServices();
   return useQuery({
     queryKey: computed(() => [...gameCharactersKey(gameId), characterId]),
     queryFn: () => api.getGameCharacter(gameId, characterId),
   });
 }
 export function useSaveGameCharacterMutation(gameId: string, characterId: string) {
+  const { characters: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { expectedRevision: number; changes: Record<string, unknown> }) =>
@@ -38,6 +41,7 @@ export function useSaveGameCharacterMutation(gameId: string, characterId: string
   });
 }
 export function useGameCharacterActiveMutation(gameId: string) {
+  const { characters: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { characterId: string; active: boolean }) =>
@@ -46,6 +50,7 @@ export function useGameCharacterActiveMutation(gameId: string) {
   });
 }
 export function useAssignGameCharacterMutation(gameId: string) {
+  const { characters: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { characterId: string; membershipId: string | null }) =>
@@ -54,6 +59,7 @@ export function useAssignGameCharacterMutation(gameId: string) {
   });
 }
 export function useDeleteGameCharacterMutation(gameId: string) {
+  const { characters: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (characterId: string) => api.deleteGameCharacter(gameId, characterId),
@@ -61,12 +67,14 @@ export function useDeleteGameCharacterMutation(gameId: string) {
   });
 }
 export function useCharactersQuery(gameId: string, playerId: string) {
+  const { characters: api } = useApiServices();
   return useQuery({
     queryKey: ["games", gameId, "players", playerId, "characters"],
     queryFn: () => api.listCharacters(gameId, playerId),
   });
 }
 export function useCreateCharacterMutation(gameId: string, playerId: string) {
+  const { characters: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { id: string; name: string }) =>
@@ -76,12 +84,14 @@ export function useCreateCharacterMutation(gameId: string, playerId: string) {
   });
 }
 export function useCharacterQuery(gameId: string, playerId: string, characterId: string) {
+  const { characters: api } = useApiServices();
   return useQuery({
     queryKey: ["games", gameId, "players", playerId, "characters", characterId],
     queryFn: () => api.getCharacter(gameId, playerId, characterId),
   });
 }
 export function useSaveCharacterMutation(gameId: string, playerId: string, characterId: string) {
+  const { characters: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { expectedRevision: number; changes: Record<string, unknown> }) =>
@@ -94,6 +104,7 @@ export function useSaveCharacterMutation(gameId: string, playerId: string, chara
   });
 }
 export function useActiveCharacterMutation(gameId: string, playerId: string) {
+  const { players: playersApi } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { expectedRevision: number; characterId: string | null }) =>

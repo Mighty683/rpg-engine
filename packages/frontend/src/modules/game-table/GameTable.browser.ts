@@ -1,4 +1,6 @@
 import { expect, test, vi } from "vite-plus/test";
+import { apiServicesKey } from "../../shared/api-services";
+import { browserApiServices } from "../../shared/api-services.browser-support";
 import { page } from "vite-plus/test/browser";
 import { createApp, defineComponent, h } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -67,6 +69,7 @@ async function mountTable(post: (body: unknown) => Promise<Response>) {
     }),
   );
   app
+    .provide(apiServicesKey, browserApiServices)
     .use(router)
     .use(ui)
     .use(createFrontendI18n())

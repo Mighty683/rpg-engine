@@ -4,7 +4,9 @@ import ContentState from "../../shared/design-system/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { invitationApi } from "./api";
+import { useApiServices } from "../../shared/api-services";
+
+const { invitations: invitationApi } = useApiServices();
 
 const toast = useToast();
 const route = useRoute();

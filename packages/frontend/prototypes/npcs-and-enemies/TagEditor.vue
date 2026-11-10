@@ -63,7 +63,9 @@ function removeTag(name: string) {
         data-testid="tag-input"
         aria-label="Add tag"
       />
-      <UButton type="submit" size="sm" color="neutral" variant="outline">Add</UButton>
+      <UButton type="submit" size="sm" color="neutral" variant="outline" data-testid="add-tag"
+        >Add</UButton
+      >
     </form>
     <ul v-if="tagInput && suggestions.length" class="tag-suggestions" data-testid="tag-suggestions">
       <li v-for="tag in suggestions" :key="tag.name">

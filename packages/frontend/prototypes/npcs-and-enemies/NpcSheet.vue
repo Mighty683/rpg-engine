@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, toRaw } from "vue";
 import SheetSection from "../../src/shared/design-system/SheetSection.vue";
 import TagEditor from "./TagEditor.vue";
 import type { Tag } from "./tags";
@@ -8,6 +8,8 @@ import type { Npc, NpcRank } from "./fixtures";
 const props = defineProps<{
   npc: Npc | null;
   savedTags: readonly Tag[];
+  readOnly?: boolean;
+  pending?: boolean;
 }>();
 const emit = defineEmits<{ save: [npc: Npc, newTags: Tag[]] }>();
 
@@ -17,7 +19,7 @@ const form = ref<Partial<Npc>>({});
 watch(
   () => props.npc,
   (npc) => {
-    form.value = npc ? structuredClone(npc) : { tags: [], attacks: [], abilities: [] };
+    form.value = npc ? structuredClone(toRaw(npc)) : { tags: [], attacks: [], abilities: [] };
   },
   { immediate: true },
 );
@@ -25,19 +27,19 @@ watch(
 const isValid = computed(() => Boolean(form.value.name?.trim()));
 
 function save() {
-  if (!isValid.value) return;
+  if (!isValid.value || props.readOnly || props.pending) return;
   const base: Npc = props.npc ?? {
-    id: `npc-${Date.now()}`,
+    id: `npc-${crypto.randomUUID()}`,
     name: "",
     level: 5,
     rank: "Soldier",
     baseDice: { DEX: 8, INS: 8, MIG: 8, WLP: 8 },
-    hp: { current: 0, max: 0 },
-    mp: { current: 0, max: 0 },
-    crisis: 0,
-    defense: 0,
-    magicDefense: 0,
-    initiative: 0,
+    hp: { current: 50, max: 50 },
+    mp: { current: 45, max: 45 },
+    crisis: 25,
+    defense: 8,
+    magicDefense: 8,
+    initiative: 8,
     attacks: [],
     abilities: [],
     vulnerabilities: [],
@@ -47,7 +49,11 @@ function save() {
     notes: "",
     tags: [],
   };
-  const saved = { ...base, ...structuredClone(form.value), name: form.value.name!.trim() } as Npc;
+  const saved = {
+    ...base,
+    ...structuredClone(toRaw(form.value)),
+    name: form.value.name!.trim(),
+  } as Npc;
   const newTags = (saved.tags ?? []).filter(
     (tag) => !props.savedTags.some((savedTag) => savedTag.name === tag.name),
   );
@@ -60,60 +66,69 @@ function save() {
     class="sheet space-y-small rounded-panel border border-default bg-default p-medium"
     data-testid="npc-sheet"
   >
-    <header class="sheet-header border-b border-default pb-small">
-      <div class="name-field min-w-0">
-        <p class="sheet-kicker">FABULA ULTIMA <span> / NPC SHEET</span></p>
-        <label class="sheet-name min-w-0"
-          ><span class="sr-only">NPC name</span
-          ><input v-model="form.name" placeholder="NPC name" data-testid="npc-name"
-        /></label>
+    <fieldset :disabled="readOnly || pending" class="contents">
+      <header class="sheet-header border-b border-default pb-small">
+        <div class="name-field min-w-0">
+          <p class="sheet-kicker">FABULA ULTIMA <span> / NPC SHEET</span></p>
+          <label class="sheet-name min-w-0"
+            ><span class="sr-only">NPC name</span
+            ><input v-model="form.name" placeholder="NPC name" data-testid="npc-name"
+          /></label>
+        </div>
+        <div class="level-mark" aria-label="NPC level">
+          <span>LEVEL</span>
+          <strong>{{ form.level ?? 5 }}</strong>
+        </div>
+      </header>
+
+      <div class="sheet-sections">
+        <section class="sheet-panel" aria-label="Rank">
+          <SheetSection
+            ><template #heading>◈ RANK</template
+            ><template #hint>SOLDIER / ELITE / CHAMPION</template>
+            <label class="select-field rank-field"
+              >RANK
+              <select v-model="form.rank" aria-label="NPC rank">
+                <option v-for="rank in ranks" :key="rank" :value="rank">{{ rank }}</option>
+              </select></label
+            >
+          </SheetSection>
+        </section>
+
+        <section class="sheet-panel sheet-split" aria-label="Tags and notes">
+          <SheetSection
+            ><template #heading>◉ TAGS</template><template #hint>PER GAME</template>
+            <TagEditor
+              :tags="form.tags ?? []"
+              :saved-tags="savedTags"
+              @change="(tags) => (form.tags = tags)"
+            />
+          </SheetSection>
+          <SheetSection
+            ><template #heading>✎ NOTES</template><template #hint>GM ONLY</template>
+            <textarea
+              v-model="form.notes"
+              class="text-field notes"
+              rows="3"
+              placeholder="Behavior, loot, scene notes…"
+              aria-label="NPC notes"
+            ></textarea>
+          </SheetSection>
+        </section>
       </div>
-      <div class="level-mark" aria-label="NPC level">
-        <span>LEVEL</span>
-        <strong>{{ form.level ?? 5 }}</strong>
+
+      <div class="flex justify-end border-t border-default pt-small">
+        <UButton
+          v-if="!readOnly"
+          color="primary"
+          :disabled="!isValid || pending"
+          data-testid="save-npc"
+          @click="save"
+        >
+          Save NPC
+        </UButton>
       </div>
-    </header>
-
-    <div class="sheet-sections">
-      <section class="sheet-panel" aria-label="Rank">
-        <SheetSection
-          ><template #heading>◈ RANK</template><template #hint>SOLDIER / ELITE / CHAMPION</template>
-          <label class="select-field rank-field"
-            >RANK
-            <select v-model="form.rank" aria-label="NPC rank">
-              <option v-for="rank in ranks" :key="rank" :value="rank">{{ rank }}</option>
-            </select></label
-          >
-        </SheetSection>
-      </section>
-
-      <section class="sheet-panel sheet-split" aria-label="Tags and notes">
-        <SheetSection
-          ><template #heading>◉ TAGS</template><template #hint>PER GAME</template>
-          <TagEditor
-            :tags="form.tags ?? []"
-            :saved-tags="savedTags"
-            @change="(tags) => (form.tags = tags)"
-          />
-        </SheetSection>
-        <SheetSection
-          ><template #heading>✎ NOTES</template><template #hint>GM ONLY</template>
-          <textarea
-            v-model="form.notes"
-            class="text-field notes"
-            rows="3"
-            placeholder="Behavior, loot, scene notes…"
-            aria-label="NPC notes"
-          ></textarea>
-        </SheetSection>
-      </section>
-    </div>
-
-    <div class="flex justify-end border-t border-default pt-small">
-      <UButton color="primary" :disabled="!isValid" data-testid="save-npc" @click="save">
-        Save NPC
-      </UButton>
-    </div>
+    </fieldset>
   </main>
 </template>
 
