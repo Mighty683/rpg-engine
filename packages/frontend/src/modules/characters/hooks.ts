@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed } from "vue";
 import { account } from "../auth/session";
 import { useApiServices } from "../../shared/api-services";
+import { partyKey } from "../game-table/hooks";
 const gameCharactersKey = (gameId: string) => [
   "accounts",
   account.value?.id,
@@ -37,7 +38,11 @@ export function useSaveGameCharacterMutation(gameId: string, characterId: string
   return useMutation({
     mutationFn: (input: { expectedRevision: number; changes: Record<string, unknown> }) =>
       api.saveGameCharacter(gameId, characterId, input.expectedRevision, input.changes),
-    onSuccess: () => client.invalidateQueries({ queryKey: gameCharactersKey(gameId), exact: true }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: gameCharactersKey(gameId), exact: true }),
+        client.invalidateQueries({ queryKey: partyKey(gameId) }),
+      ]),
   });
 }
 export function useGameCharacterActiveMutation(gameId: string) {

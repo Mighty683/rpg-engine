@@ -1,7 +1,6 @@
 <script setup lang="ts">
 /** Composition root for the persisted NPC table prototype. */
 import { toRef } from "vue";
-import { useApiServices } from "../../src/shared/api-services";
 import { useNpcApi } from "./npc-api";
 import { prototypeGameId } from "../api";
 import { useNpcTable } from "./useNpcTable";
@@ -15,12 +14,6 @@ const props = withDefaults(
     gameId: prototypeGameId,
   },
 );
-const table = useNpcTable(
-  useApiServices(),
-  useNpcApi(),
-  props.gameId,
-  toRef(props, "role"),
-  toRef(props, "view"),
-);
+const table = useNpcTable(useNpcApi(), props.gameId, toRef(props, "role"), toRef(props, "view"));
 </script>
-<template><GameTableWithNpcsView :table="table" /></template>
+<template><GameTableWithNpcsView :table="table" :game-id="gameId" /></template>

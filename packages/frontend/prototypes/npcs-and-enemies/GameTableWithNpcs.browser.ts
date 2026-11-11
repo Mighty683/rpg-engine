@@ -1,6 +1,6 @@
 /** Regression coverage against the same HTTP/MSW persistence used by Histoire. */
-import { expect, test, vi } from "vite-plus/test";
-import { page } from "vite-plus/test/browser";
+import { expect, test } from "vite-plus/test";
+import { page, userEvent } from "vite-plus/test/browser";
 import { createApp, defineComponent, h, ref } from "vue";
 import ui from "@nuxt/ui/vue-plugin";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -57,16 +57,16 @@ test("editing either selected sheet persists only that character and refreshes b
     await page.getByTestId("character-name").fill("Rowan Updated");
     await page.getByTestId("tag-input").fill("Vanguard");
     await page.getByTestId("add-tag").click();
-    await page.getByTestId("save-character").click();
-    await page.getByTestId("close-sheets").click();
+    await expect.element(page.getByTestId("save-status")).toHaveTextContent("Saved automatically");
+    await userEvent.keyboard("{Escape}");
     await expect
       .poll(() => document.querySelector('[data-testid="party-rowan"]')?.textContent)
       .toContain("Rowan Updated");
     await page.getByTestId("party-nera").getByTestId("edit-character").click();
     await expect.element(page.getByTestId("character-name")).toHaveValue("Nera Vale");
     await page.getByTestId("character-name").fill("Nera Updated");
-    await page.getByTestId("save-character").click();
-    await page.getByTestId("close-sheets").click();
+    await expect.element(page.getByTestId("save-status")).toHaveTextContent("Saved automatically");
+    await userEvent.keyboard("{Escape}");
     await expect
       .poll(() => document.querySelector('[data-testid="party-nera"]')?.textContent)
       .toContain("Nera Updated");
@@ -74,7 +74,7 @@ test("editing either selected sheet persists only that character and refreshes b
       .poll(() => document.querySelector('[data-testid="party-rowan"]')?.textContent)
       .toContain("Rowan Updated");
     await page.getByTestId("edge-tab-sheets").click();
-    await page.getByTestId("sheet-tab-rowan").click();
+    await page.getByTestId("sheet-tab").filter({ hasText: "Rowan Updated" }).click();
     await expect.element(page.getByTestId("character-name")).toHaveValue("Rowan Updated");
     const party = await prototypeApiServices.gameTable.getGameParty(prototypeGameId);
     expect(party.characters.map((member) => member.name)).toEqual([
@@ -91,7 +91,9 @@ test("editing either selected sheet persists only that character and refreshes b
 test("NPC create and edit survive closing and reopening the sheet; player sheets remain read-only", async () => {
   const table = await mountTable();
   try {
-    await page.getByTestId("add-npc").click();
+    await expect.element(page.getByTestId("add-npc")).not.toBeInTheDocument();
+    await expect.element(page.getByTestId("close-npcs")).not.toBeInTheDocument();
+    await page.getByTestId("edge-tab-npcs").click();
     await page.getByTestId("npc-name").fill("Lantern Guide");
     await page.getByTestId("tag-input").fill("Ally");
     await page.getByTestId("add-tag").click();
@@ -108,13 +110,13 @@ test("NPC create and edit survive closing and reopening the sheet; player sheets
         );
       })
       .toBe(true);
-    await page.getByTestId("close-npcs").click();
+    await userEvent.keyboard("{Escape}");
     await page.getByTestId("edge-tab-npcs").click();
     await expect.element(page.getByTestId("npc-name")).toHaveValue("Lantern Keeper");
     table.role.value = "Player";
     await expect.element(page.getByTestId("npc-name")).toBeDisabled();
     await expect.element(page.getByTestId("save-npc")).not.toBeInTheDocument();
-    await page.getByTestId("close-npcs").click();
+    await userEvent.keyboard("{Escape}");
     await page.getByTestId("edge-tab-sheets").click();
     await expect.element(page.getByTestId("character-name")).toBeDisabled();
     await expect.element(page.getByTestId("save-character")).not.toBeInTheDocument();
@@ -134,12 +136,14 @@ test("a rejected save retains the draft, shows an error, and does not change the
     );
     await page.getByTestId("party-rowan").getByTestId("edit-character").click();
     await page.getByTestId("character-name").fill("Unsaved name");
-    await page.getByTestId("save-character").click();
     await expect
-      .poll(() => document.querySelector('[data-testid="table-error"]')?.textContent)
+      .poll(() => document.querySelector('[data-testid="save-status"]')?.textContent)
+      .toContain("Your changes could not be confirmed");
+    await expect
+      .poll(() => document.querySelector('[data-testid="save-status"]')?.textContent)
       .toBeTruthy();
-    await expect.element(page.getByTestId("character-name")).toHaveValue("Unsaved name");
-    await page.getByTestId("close-sheets").click();
+    await expect.element(page.getByTestId("character-name").first()).toHaveValue("Unsaved name");
+    await userEvent.keyboard("{Escape}");
     await expect
       .poll(() => document.querySelector('[data-testid="party-rowan"]')?.textContent)
       .toContain("Rowan Ash");
@@ -150,20 +154,41 @@ test("a rejected save retains the draft, shows an error, and does not change the
   }
 });
 
-test("canceling a sheet switch preserves unsaved edits", async () => {
+test("production tabs select the requested sheet without prototype save controls", async () => {
   const table = await mountTable();
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   try {
     await page.getByTestId("party-rowan").getByTestId("edit-character").click();
-    await page.getByTestId("character-name").fill("Keep this draft");
-    await page.getByTestId("sheet-tab-nera").click();
-    expect(confirm).toHaveBeenCalledWith("Discard unsaved character changes and switch sheets?");
-    await expect.element(page.getByTestId("character-name")).toHaveValue("Keep this draft");
-    confirm.mockReturnValue(true);
-    await page.getByTestId("sheet-tab-nera").click();
+    await expect.element(page.getByTestId("save-character")).not.toBeInTheDocument();
+    await expect.element(page.getByTestId("close-sheets")).not.toBeInTheDocument();
+    await page.getByTestId("sheet-tab").filter({ hasText: "Nera Vale" }).click();
     await expect.element(page.getByTestId("character-name")).toHaveValue("Nera Vale");
   } finally {
-    confirm.mockRestore();
+    table.cleanup();
+  }
+});
+
+test("the prototype layout uses production free-roll validation and persisted history", async () => {
+  const table = await mountTable();
+  try {
+    await page.getByTestId("edge-tab-history").click();
+    await page.getByTestId("make-roll").click();
+    await page.getByTestId("submit-free-roll").click();
+    await expect
+      .element(page.getByTestId("free-error"))
+      .toHaveTextContent("Choose one or two friendly dice.");
+    await page.getByTestId("add-die-d8").click();
+    await page.getByTestId("submit-free-roll").click();
+    await expect.element(page.getByTestId("free-roll-dialog")).not.toBeInTheDocument();
+    await expect
+      .poll(async () => {
+        const result = await prototypeApiServices.gameTable.listGameThrows(prototypeGameId, {
+          limit: 100,
+        });
+        return result.throws.length;
+      })
+      .toBeGreaterThan(0);
+    await expect.element(page.getByTestId("throw-history")).toBeVisible();
+  } finally {
     table.cleanup();
   }
 });
