@@ -5,6 +5,7 @@ defineProps<{
   help: string;
   calculated: number | null;
   contributions: { name: string; value: number; modifier?: boolean }[];
+  manual?: boolean;
 }>();
 const value = defineModel<number | null>({ required: true });
 function update(event: Event) {
@@ -26,7 +27,11 @@ function update(event: Event) {
       :value="value ?? calculated"
       @input="update"
     />
-    <ul class="defense-calculation" :aria-label="`${label} calculated contributions`">
+    <ul
+      v-if="!manual"
+      class="defense-calculation"
+      :aria-label="`${label} calculated contributions`"
+    >
       <li v-for="(contribution, index) in contributions" :key="index">
         <span>{{ contribution.name }}</span
         ><span
@@ -35,9 +40,9 @@ function update(event: Event) {
         >
       </li>
     </ul>
-    <span v-if="value !== null" class="override-label">Overridden</span
+    <span v-if="!manual && value !== null" class="override-label">Overridden</span
     ><button
-      v-if="value !== null"
+      v-if="!manual && value !== null"
       :data-testid="`restore-${label}`"
       type="button"
       @click="value = null"

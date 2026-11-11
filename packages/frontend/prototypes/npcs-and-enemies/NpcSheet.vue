@@ -1,38 +1,37 @@
 <script setup lang="ts">
 import { computed, ref, watch, toRaw } from "vue";
 import SheetSection from "../../src/shared/design-system/SheetSection.vue";
-import TagEditor from "./TagEditor.vue";
+import AttributeField from "../../src/modules/characters/sheet/attributes/AttributeField.vue";
+import ResourceField from "../../src/modules/characters/sheet/resources/ResourceField.vue";
+import DefenseField from "../../src/modules/characters/sheet/defense/DefenseField.vue";
+import CharacterLevelField from "../../src/modules/characters/sheet/identity/CharacterLevelField.vue";
+import NpcAttacksEditor from "./NpcAttacksEditor.vue";
 import type { Tag } from "./tags";
 import type { Npc, NpcRank } from "./fixtures";
 
 const props = defineProps<{
   npc: Npc | null;
-  savedTags: readonly Tag[];
   readOnly?: boolean;
   pending?: boolean;
 }>();
 const emit = defineEmits<{ save: [npc: Npc, newTags: Tag[]] }>();
 
 const ranks: NpcRank[] = ["Soldier", "Elite", "Champion"];
+const attributes = ["DEX", "INS", "MIG", "WLP"] as const;
+const attributeHelp = {
+  DEX: "Dexterity measures agility and is the usual base for Defense.",
+  INS: "Insight measures awareness and is the base for Magic Defense.",
+  MIG: "Might measures physical strength and contributes to maximum HP.",
+  WLP: "Willpower measures resolve and contributes to maximum MP.",
+};
 
-const form = ref<Partial<Npc>>({});
-watch(
-  () => props.npc,
-  (npc) => {
-    form.value = npc ? structuredClone(toRaw(npc)) : { tags: [], attacks: [], abilities: [] };
-  },
-  { immediate: true },
-);
-
-const isValid = computed(() => Boolean(form.value.name?.trim()));
-
-function save() {
-  if (!isValid.value || props.readOnly || props.pending) return;
-  const base: Npc = props.npc ?? {
+function newNpc(): Npc {
+  return {
     id: `npc-${crypto.randomUUID()}`,
     name: "",
     level: 5,
     rank: "Soldier",
+    visibility: "hidden",
     baseDice: { DEX: 8, INS: 8, MIG: 8, WLP: 8 },
     hp: { current: 50, max: 50 },
     mp: { current: 45, max: 45 },
@@ -49,15 +48,45 @@ function save() {
     notes: "",
     tags: [],
   };
+}
+const form = ref<Npc>(newNpc());
+watch(
+  () => props.npc,
+  (npc) => {
+    form.value = npc ? structuredClone(toRaw(npc)) : newNpc();
+    form.value.visibility ??= "known";
+  },
+  { immediate: true },
+);
+
+const isValid = computed(
+  () =>
+    Boolean(form.value.name.trim()) &&
+    Number.isInteger(form.value.level) &&
+    form.value.level >= 5 &&
+    form.value.level <= 60 &&
+    [
+      form.value.hp.current,
+      form.value.hp.max,
+      form.value.mp.current,
+      form.value.mp.max,
+      form.value.defense,
+      form.value.magicDefense,
+    ].every((value) => Number.isInteger(value) && value >= 0) &&
+    form.value.hp.current <= form.value.hp.max &&
+    form.value.mp.current <= form.value.mp.max &&
+    form.value.attacks.every(
+      (attack) => Boolean(attack.name.trim()) && Number.isInteger(attack.damageBonus),
+    ),
+);
+
+function save() {
+  if (!isValid.value || props.readOnly || props.pending) return;
   const saved = {
-    ...base,
     ...structuredClone(toRaw(form.value)),
-    name: form.value.name!.trim(),
-  } as Npc;
-  const newTags = (saved.tags ?? []).filter(
-    (tag) => !props.savedTags.some((savedTag) => savedTag.name === tag.name),
-  );
-  emit("save", saved, newTags);
+    name: form.value.name.trim(),
+  };
+  emit("save", saved, []);
 }
 </script>
 
@@ -75,35 +104,112 @@ function save() {
             ><input v-model="form.name" placeholder="NPC name" data-testid="npc-name"
           /></label>
         </div>
-        <div class="level-mark" aria-label="NPC level">
-          <span>LEVEL</span>
-          <strong>{{ form.level ?? 5 }}</strong>
-        </div>
+        <label class="select-field rank-field"
+          >RANK
+          <select v-model="form.rank" aria-label="NPC rank" data-testid="npc-rank">
+            <option v-for="rank in ranks" :key="rank" :value="rank">{{ rank }}</option>
+          </select>
+        </label>
+        <CharacterLevelField
+          :level="form.level"
+          :max="60"
+          label="NPC level"
+          test-id="npc-level"
+          @change="form.level = ($event.target as HTMLInputElement).valueAsNumber"
+        />
       </header>
 
       <div class="sheet-sections">
-        <section class="sheet-panel" aria-label="Rank">
-          <SheetSection
-            ><template #heading>◈ RANK</template
-            ><template #hint>SOLDIER / ELITE / CHAMPION</template>
+        <section v-if="!readOnly" class="sheet-panel" aria-label="Player visibility">
+          <SheetSection>
+            <template #heading>PLAYER VISIBILITY</template>
             <label class="select-field rank-field"
-              >RANK
-              <select v-model="form.rank" aria-label="NPC rank">
-                <option v-for="rank in ranks" :key="rank" :value="rank">{{ rank }}</option>
-              </select></label
-            >
+              >Visibility
+              <select v-model="form.visibility" data-testid="npc-visibility">
+                <option value="hidden">Hidden — players cannot see this NPC</option>
+                <option value="visible">Visible — name and rank only</option>
+                <option value="known">Known — stats are visible</option>
+              </select>
+            </label>
+            <p class="text-label text-muted">Save NPC to apply visibility changes.</p>
           </SheetSection>
         </section>
-
-        <section class="sheet-panel sheet-split" aria-label="Tags and notes">
+        <section class="sheet-panel sheet-split" aria-label="Attributes and resources">
           <SheetSection
-            ><template #heading>◉ TAGS</template><template #hint>PER GAME</template>
-            <TagEditor
-              :tags="form.tags ?? []"
-              :saved-tags="savedTags"
-              @change="(tags) => (form.tags = tags)"
-            />
+            ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
+            <div class="stat-grid">
+              <AttributeField
+                v-for="attribute in attributes"
+                :key="attribute"
+                :model-value="String(form.baseDice[attribute])"
+                :label="attribute"
+                :help="attributeHelp[attribute]"
+                :disabled="readOnly || pending"
+                @update:model-value="form.baseDice[attribute] = Number($event)"
+              />
+            </div>
           </SheetSection>
+          <SheetSection>
+            <template #heading>✚ RESOURCES</template><template #hint>CURRENT / MAX</template>
+            <div class="stat-grid">
+              <ResourceField
+                v-for="resource in ['hp', 'mp'] as const"
+                :key="resource"
+                :model-value="form[resource].current"
+                :label="resource.toUpperCase()"
+                :maximum="form[resource].max"
+                :maximum-override="form[resource].max"
+                :allow-calculated="false"
+                :disabled="readOnly || pending"
+                @update:model-value="
+                  (value) => {
+                    if (value !== null) form[resource].current = value;
+                  }
+                "
+                @override="
+                  (value) => {
+                    if (value !== null) form[resource].max = value;
+                  }
+                "
+              />
+            </div>
+          </SheetSection>
+        </section>
+        <section class="sheet-panel" aria-label="Defenses">
+          <SheetSection>
+            <template #heading>◈ DEFENSES</template><template #hint>EDIT VALUES MANUALLY</template>
+            <div class="defense-grid">
+              <DefenseField
+                v-for="stat in ['defense', 'magicDefense'] as const"
+                :key="stat"
+                :model-value="form[stat]"
+                :label="{ defense: 'DEF', magicDefense: 'MAG DEF' }[stat]"
+                :help="
+                  {
+                    defense: 'Defense against physical attacks.',
+                    magicDefense: 'Defense against magical attacks.',
+                  }[stat]
+                "
+                :calculated="null"
+                :contributions="[]"
+                manual
+                @update:model-value="
+                  (value) => {
+                    if (value !== null) form[stat] = value;
+                  }
+                "
+              />
+            </div>
+            <p v-if="!isValid" class="text-label text-muted">
+              Enter a name, level 5–60 and valid non-negative stats. Current HP and MP cannot exceed
+              their maximum. Attacks require a name and a whole-number damage bonus.
+            </p>
+          </SheetSection>
+        </section>
+        <section class="sheet-panel" aria-label="Attacks">
+          <NpcAttacksEditor :attacks="form.attacks" />
+        </section>
+        <section v-if="!readOnly" class="sheet-panel" aria-label="Notes">
           <SheetSection
             ><template #heading>✎ NOTES</template><template #hint>GM ONLY</template>
             <textarea
@@ -135,12 +241,13 @@ function save() {
 <style scoped>
 .sheet {
   --sheet-label-size: 0.75rem;
+  --sheet-meta-size: 0.625rem;
   --sheet-tight: 0.25rem;
   border-color: var(--ui-border-accented);
 }
 .sheet-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 12rem) auto;
   gap: var(--spacing-small);
   align-items: stretch;
 }
@@ -158,7 +265,8 @@ function save() {
 }
 .sheet-name input,
 .text-field,
-.select-field select {
+.select-field select,
+.select-field input {
   display: block;
   width: 100%;
   min-width: 0;
@@ -174,22 +282,6 @@ function save() {
 .text-field::placeholder {
   color: var(--ui-text-muted);
 }
-.level-mark {
-  display: grid;
-  text-align: center;
-  border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
-  padding: var(--spacing-small) var(--spacing-medium);
-  line-height: 1;
-  color: var(--ui-text-muted);
-  font-size: var(--sheet-label-size);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-.level-mark strong {
-  color: var(--ui-text-highlighted);
-  font-size: var(--text-body);
-}
 .sheet-sections {
   display: grid;
   gap: var(--spacing-small);
@@ -200,13 +292,36 @@ function save() {
   padding: var(--spacing-small);
   min-width: 0;
 }
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--spacing-small);
+  margin-top: var(--spacing-small);
+}
+.defense-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-small);
+}
 .sheet-split {
   display: grid;
   gap: var(--spacing-medium);
 }
+@media (min-width: 640px) {
+  .sheet-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .rank-field {
-  margin-top: var(--sheet-tight);
-  max-width: 16rem;
+  align-content: end;
+}
+@media (max-width: 600px) {
+  .sheet-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .name-field {
+    grid-column: 1 / -1;
+  }
 }
 .select-field {
   display: grid;
@@ -226,10 +341,5 @@ function save() {
 }
 .notes {
   resize: vertical;
-}
-@media (min-width: 640px) {
-  .sheet-split {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 </style>

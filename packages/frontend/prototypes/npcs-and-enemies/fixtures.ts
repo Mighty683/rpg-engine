@@ -1,6 +1,7 @@
 import type { Tag } from "./tags";
 
 export type NpcRank = "Soldier" | "Elite" | "Champion";
+export type NpcVisibility = "hidden" | "visible" | "known";
 
 export type DamageType =
   | "physical"
@@ -20,7 +21,7 @@ export type NpcAttack = {
   attributes: [string, string];
   /** Fixed damage bonus; total damage is high roll + this bonus. */
   damageBonus: number;
-  damageType: DamageType;
+  damageType: string;
 };
 
 export type NpcAbility = {
@@ -34,6 +35,7 @@ export type Npc = {
   name: string;
   level: number;
   rank: NpcRank;
+  visibility?: NpcVisibility;
   baseDice: { DEX: number; INS: number; MIG: number; WLP: number };
   hp: { current: number; max: number };
   mp: { current: number; max: number };

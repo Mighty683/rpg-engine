@@ -10,6 +10,7 @@ defineProps<{
   reach?: "melee" | "ranged" | null;
   damageBonus?: number | null;
   damageType?: string | null;
+  hideHighRoll?: boolean;
 }>();
 const emit = defineEmits<{ roll: []; needsSetup: [] }>();
 </script>
@@ -36,7 +37,8 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
         <span
           v-if="reach && damageBonus !== null && damageBonus !== undefined"
           class="text-label text-muted"
-          >{{ reach }} · high roll +{{ damageBonus }}{{ damageType ? ` ${damageType}` : "" }}</span
+          >{{ reach }} · {{ hideHighRoll ? "" : "high roll " }}+{{ damageBonus
+          }}{{ damageType ? ` ${damageType}` : "" }}</span
         >
         <span v-if="weapon.accuracyDice.every(Boolean)" class="weapon-dice" aria-hidden="true">
           <span v-for="(attribute, index) in weapon.accuracyDice" :key="index" class="weapon-die">

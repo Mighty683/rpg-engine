@@ -1,5 +1,14 @@
 <script setup lang="ts">
-defineProps<{ label: string; maximum?: number; maximumOverride?: number | null }>();
+withDefaults(
+  defineProps<{
+    label: string;
+    maximum?: number;
+    maximumOverride?: number | null;
+    allowCalculated?: boolean;
+    disabled?: boolean;
+  }>(),
+  { allowCalculated: true },
+);
 const emit = defineEmits<{ override: [value: number | null] }>();
 const value = defineModel<number | null>({ required: true });
 function update(event: Event) {
@@ -23,6 +32,7 @@ function updateMaximum(event: Event) {
         min="0"
         :data-testid="`character-${label.toLowerCase()}`"
         :aria-label="`Current ${label}`"
+        :disabled="disabled"
         :value="value ?? maximum"
         @input="update"
       /><span aria-hidden="true">/</span
@@ -32,22 +42,33 @@ function updateMaximum(event: Event) {
           class="maximum"
           :data-testid="`maximum-button-${label}`"
           :aria-label="`Edit maximum ${label}, currently ${maximum}`"
+          :disabled="disabled"
         >
           {{ maximum }}
         </button>
         <template #content>
           <div class="maximum-editor">
-            <label :for="`maximum-${label}`">Maximum {{ label }} override</label>
+            <label :for="`maximum-${label}`"
+              >Maximum {{ label }}{{ allowCalculated ? " override" : "" }}</label
+            >
             <input
               :id="`maximum-${label}`"
               :data-testid="`maximum-input-${label}`"
               type="number"
               min="0"
               :value="maximumOverride"
-              placeholder="Calculated"
-              @change="updateMaximum"
+              :placeholder="allowCalculated ? 'Calculated' : undefined"
+              :disabled="disabled"
+              @input="!allowCalculated && updateMaximum($event)"
+              @change="allowCalculated && updateMaximum($event)"
             />
-            <UButton size="sm" color="neutral" variant="outline" @click="emit('override', null)"
+            <UButton
+              v-if="allowCalculated"
+              size="sm"
+              color="neutral"
+              variant="outline"
+              :disabled="disabled"
+              @click="emit('override', null)"
               >Use calculated</UButton
             >
           </div>
@@ -58,6 +79,7 @@ function updateMaximum(event: Event) {
       type="number"
       min="0"
       aria-label="Fabula points"
+      :disabled="disabled"
       :value="value"
       @input="update"
     />

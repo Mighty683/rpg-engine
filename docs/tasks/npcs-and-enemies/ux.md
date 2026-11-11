@@ -1,58 +1,43 @@
 # NPCs and enemies — UX journey
 
-**Created:** 2026-11-10
-**Revised:** 2026-11-10 (aligned with the current prototype; focused on UX decisions and flows, not rendering)
+**Created:** 2026-11-10  
+**Revised:** 2026-11-11
 
 ## Context
 
-The [user story](story.md) covers preparing and using NPCs and enemies during a session. The current prototype (`packages/frontend/prototypes/npcs-and-enemies/`) demonstrates the flows below. They reflect prototype review; none of them has been tested with a real GM. The [simulated GM interview](../../research/interviews/game-master-npcs-and-enemies.md) is invented, not evidence.
+The [user story](story.md) covers preparing and using NPCs during a session. This journey records the user's prototype-review decisions, not research validation. The [GM interview](../../research/interviews/game-master-npcs-and-enemies.md) is simulated, not evidence of real-user behavior. Player views are being explored for this task even though broader player workflows remain deferred in the [UX guidelines](../../spec/ux.md).
 
-## Run the table with NPCs
+## Prepare and edit an NPC
 
-**Goal:** during a session, the GM sees everyone in the scene at once and can act for NPCs.
+The GM opens **NPCs** and selects **+ New NPC**, or uses the edit action on an existing card. The side panel retains the table context and follows the character-sheet interaction and component style while using NPC-specific fields.
 
-- **Decision:** characters and NPCs live on the same table view, so the GM reads the whole scene in one place instead of switching views.
-- **Decision:** the GM can filter the table to characters only or NPCs only, and the table has explicit empty, loading and error (with retry) states, so a sparse or failing table is never ambiguous.
-- **Decision:** NPC attribute checks and attacks are rolled from the table with the same roll dialog as character weapons — one interaction pattern for all checks in a scene.
-- **Decision:** NPC attacks use `+floor(level/10)` accuracy, per the rules, and attacks show their reach and damage information next to the roll action.
-- **Decision:** the high-roll damage rule applies to both PC weapon attacks and NPC attacks — damage = high roll (higher of the two accuracy dice) + the attack's fixed damage bonus, per [weapon attacks](../../spec/fabula-ultima/weapon-attacks.md); accuracy modifiers are not added to the high roll, and a successful roll shows the computed damage in the throw result.
-- **Decision:** a GM/Player view switch gates permissions: players cannot roll NPC dice, cannot add or edit NPCs, and see the character sheet read-only. A character's own roll permission is preserved regardless of role.
-- Throw history and character sheets are reachable from the same side-panel entry point as the NPC editor, so all session tools sit in one place.
+- Edit name, rank (Soldier, Elite, Champion), level, attribute dice, HP and MP, physical and magic defense, attacks and free-text GM notes. Rank appears beside the name; no rank multiplier is shown.
+- Add, edit or remove attacks, including reach, two attributes, damage bonus and free-text damage type. Attack information is shown without redundant “high roll” wording.
+- Save explicitly to update the NPC card. The prototype keeps a local draft until save; saving failures retain it. Stats are currently manual and do not recalculate when other fields change.
+- Tags, structured abilities, damage-affinity badges, crisis and initiative are outside this iteration. Notes are ordinary text, not tags. Previously seeded fields are retained in the prototype data but not displayed or edited.
+- Closing the panel or switching NPCs can currently discard unsaved edits. Preventing accidental draft loss is required before implementation; the exact confirmation or draft-preservation interaction remains to be decided.
 
-## Tag NPCs and characters
+## Run the table
 
-**Goal:** the GM organizes scene actors with memorable labels without leaving the creation flow.
+Characters and NPCs appear together. NPC cards show the same saved name, rank, level, dice, HP, MP, defenses, attacks and notes as their editor; there is no extra accuracy or visibility badge. The GM can roll NPC attributes and expand attacks to roll them. The prototype's NPC attack roll retains the rules-based level accuracy modifier; hiding its card label does not remove that modifier. High-roll damage remains a rules calculation, not a separate damage mode. See [NPC rules](../../spec/fabula-ultima/npcs-and-enemies.md) and [weapon attacks](../../spec/fabula-ultima/weapon-attacks.md).
 
-- **Decision:** tags are free-form text with autocomplete — previously used tags are suggested while typing and can be picked or newly created on confirm.
-- **Decision:** the tag list is per game, so tags carry over between NPCs and characters; tags can be attached to both NPCs and party characters.
-- **Decision:** each tag carries a color from a fixed palette; reusing a saved tag keeps its color, a new tag gets the chosen color. (Open question: is color meaningful to users, or should tags be single-color?)
-- **Decision:** tags are not restricted to the eight Fabula Ultima types; the prototype NPC no longer exposes a separate type field.
+The gallery offers mixed, character-only, NPC-only, empty, loading and error review states. These are review controls, not an implemented production filtering feature. The GM can reach character sheets and throw history through the table panels. Players cannot edit NPCs or roll NPC actions in the prototype.
 
-## Create and edit NPCs
+## Control what players see
 
-**Goal:** the GM prepares an NPC before or during a session with minimal friction.
+The GM selects player visibility in the NPC editor and saves the NPC to apply it. New NPCs default to **Hidden**. Existing prototype fixtures without a visibility setting are treated as **Known** to preserve the existing review experience.
 
-- **Flow:** "+ Add NPC" starts a new NPC; the edit action on an existing NPC card opens that NPC for editing. Both open the NPC editor panel with one tab per NPC plus a "+ New NPC" tab.
-- **Decision:** editing happens in the side panel, not on the card and not on a separate page, so the GM keeps the table in view while editing.
-- **Decision:** the NPC editor mirrors the character sheet layout — same sheet header (kicker, name, read-only level mark) and `SheetSection` panels — and collects only editable fields: name (required — saving is blocked until it is set), rank (Soldier / Elite / Champion), tags and notes. Role, traits, type and level are not editable in the prototype.
-- **Decision:** saving an NPC also saves any new tags it introduced into the game's tag list.
-- **Open question (untested):** the side-panel editor is the prototype's resolution; drawer vs. separate view vs. inline editing in production remains unresolved.
+| Setting | Player table and NPC panel                                                                                                                 |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Hidden  | No card or NPC tab; the NPC is not visible.                                                                                                |
+| Visible | Name and rank are visible; level, attributes, resources, defenses and attacks are concealed with `???`. The detailed sheet is unavailable. |
+| Known   | Card and read-only sheet show stats and attacks. GM notes remain private.                                                                  |
 
-## Inspect attacks and abilities without leaving the table
+The GM sees the full card regardless of setting and checks or changes visibility in the editor, not via a card badge. The role selector in Histoire previews these states; it is not an actual multi-user session. Visibility is a product decision under review, not evidence that players can safely access prototype endpoints.
 
-**Goal:** the GM can check what an NPC can do mid-scene without losing table context.
+## Handoff and open questions
 
-- **Decision:** attacks and abilities are collapsed by default on the NPC card so the table stays scannable; expanding reveals the full list.
-- **Decision:** each attack is directly rollable from the expanded list, with its damage information visible beside the roll action.
-- **Decision:** a preview of the collapsed entries is available on hover/focus, so the GM can peek at attacks or abilities without expanding and reflowing the card.
-
-## View the detailed NPC profile
-
-**Goal:** the GM can review an NPC's complete stat block — attacks, abilities, affinities, notes — in one place.
-
-- **Decision:** the detailed NPC profile is a standalone full view (prototype: the NPC card story), separate from the compact table card.
-- **Open question (untested):** in the table flow, editing is reached via the card's edit action opening the side panel — not by clicking the card body.
-
-## Scope and handoff
-
-The prototype uses local fixture data and local state; none of these flows is wired to production persistence. Production still needs to define tag persistence per game, whether tags are shared with players, and how NPC visibility to players works during a session. Adding the damage bonus to production weapons (schema, validation, party payload, roll resolution showing high roll + bonus damage on a hit) is specified but not implemented; the shared high-roll rule is in [weapon attacks](../../spec/fabula-ultima/weapon-attacks.md).
+- The prototype uses shared MSW handlers and in-memory persistence, not production NPC storage or real-time collaboration. The mock API sends full records to both role previews; production must enforce authorization, filtering and redaction server-side for lists, detail endpoints, events and related data. Client-side hiding is not security.
+- Preserve drafts on failure and prevent loss on tab/panel changes; resolve the interaction before implementation.
+- Decide how visibility changes reach connected players, including revocation of previously known information. A player who already saw information cannot be made to forget it.
+- The high-roll damage calculation and authoritative NPC roll integration are not implemented by this prototype. Avoid treating its free-roll fixture as production combat automation.

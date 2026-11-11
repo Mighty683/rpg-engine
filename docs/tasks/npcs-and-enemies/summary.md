@@ -1,12 +1,13 @@
 # NPCs and enemies
 
 **Created:** 2026-11-09
-**Status:** Story
+**Status:** UI prototype in review
 
 ## Task documents
 
 1. [User story](story.md)
 2. [UX journey](ux.md)
+3. [UI design and prototype](ui.md)
 
 ## Supporting material
 

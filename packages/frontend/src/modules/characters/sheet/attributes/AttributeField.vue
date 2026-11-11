@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import InfoTooltip from "../../../../shared/design-system/InfoTooltip.vue";
 import DieIcon from "../../../../shared/design-system/DieIcon.vue";
-defineProps<{ label: string; help: string }>();
+defineProps<{ label: string; help: string; disabled?: boolean }>();
 const value = defineModel<string>({ required: true });
 const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: size }));
 </script>
@@ -18,6 +18,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
         :items="dice"
         value-key="value"
         :aria-label="label"
+        :disabled="disabled"
         :data-testid="`attribute-die-${label}`"
         variant="ghost"
         class="die-select"

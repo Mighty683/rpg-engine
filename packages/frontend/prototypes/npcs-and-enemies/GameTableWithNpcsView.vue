@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** NPC layout extension of the production table and character controllers. */
+import { computed } from "vue";
 import ScreenSection from "../../src/shared/design-system/ScreenSection.vue";
-import SheetSection from "../../src/shared/design-system/SheetSection.vue";
 import ContentState from "../../src/shared/design-system/ContentState.vue";
 import EdgeTabs from "../../src/shared/design-system/EdgeTabs.vue";
 import GameTable from "../../src/modules/game-table/GameTable.vue";
@@ -11,12 +11,28 @@ import PartyCharacterCard from "../../src/modules/game-table/PartyCharacterCard.
 import HistoryPanel from "../../src/modules/game-table/HistoryPanel.vue";
 import NpcCard from "./NpcCard.vue";
 import NpcSheet from "./NpcSheet.vue";
-import TagEditor from "./TagEditor.vue";
 import type { Npc } from "./fixtures";
 import type { Attribute, FreeDraft } from "../../src/modules/game-table/types";
 import type { useNpcTable } from "./useNpcTable";
 const props = defineProps<{ table: ReturnType<typeof useNpcTable>; gameId: string }>();
 const state = props.table.state;
+const availableNpcs = computed(() =>
+  state.role === "GM"
+    ? state.npcs
+    : state.npcs.filter((npc) => (npc.visibility ?? "known") !== "hidden"),
+);
+const selectedNpcId = computed({
+  get: () =>
+    state.role === "GM" || availableNpcs.value.some((npc) => npc.id === state.selectedNpcId)
+      ? state.selectedNpcId
+      : (availableNpcs.value[0]?.id ?? ""),
+  set: (id: string) => {
+    state.selectedNpcId = id;
+  },
+});
+const selectedNpc = computed(() =>
+  availableNpcs.value.find((npc) => npc.id === selectedNpcId.value),
+);
 const tabs = [
   {
     id: "sheets",
@@ -45,7 +61,7 @@ function npcRoll(
     characterId: "gm",
     dice: attributes.map((attribute) => npc.baseDice[attribute]),
     modifier: String(attack ? Math.floor(npc.level / 10) : 0),
-    note: `${npc.name}${attack ? ` — ${attack.name}: high roll +${attack.damageBonus} ${attack.damageType}` : ""}`,
+    note: `${npc.name}${attack ? ` — ${attack.name}: +${attack.damageBonus} ${attack.damageType}` : ""}`,
   });
 }
 </script>
@@ -101,7 +117,7 @@ function npcRoll(
                     :data-testid="`party-${member.id}`"
                   >
                     <PartyCharacterCard
-                      :member="member"
+                      :member="{ ...member, tags: [] }"
                       :can-edit="state.role === 'GM'"
                       @roll-attribute="controller.openAttributeRoll(member, $event)"
                       @roll-weapon="controller.openWeaponRoll(member, $event)"
@@ -111,11 +127,13 @@ function npcRoll(
                   </li>
                 </template>
                 <template v-if="state.view === 'Mixed' || state.view === 'NPCs only'">
-                  <li v-for="npc in state.npcs" :key="npc.id">
+                  <li v-for="npc in availableNpcs" :key="npc.id">
                     <NpcCard
                       :npc="npc"
                       :can-roll="state.role === 'GM'"
                       :can-edit="state.role === 'GM'"
+                      :redacted="state.role !== 'GM' && npc.visibility === 'visible'"
+                      :show-notes="state.role === 'GM'"
                       @edit="
                         state.selectedNpcId = npc.id;
                         state.edgeTab = 'npcs';
@@ -155,48 +173,35 @@ function npcRoll(
                     :character-id="characterId"
                     :read-only="state.role !== 'GM'"
                   />
-                  <section class="mt-small rounded-panel border border-default p-medium">
-                    <SheetSection>
-                      <template #heading>◉ TAGS</template><template #hint>PER GAME</template>
-                      <fieldset v-if="state.role === 'GM'" :disabled="state.pending">
-                        <TagEditor
-                          :tags="
-                            controller.party.find((member) => member.id === characterId)?.tags ?? []
-                          "
-                          :saved-tags="state.savedTags"
-                          @change="table.saveCharacterTags(characterId, $event)"
-                        />
-                      </fieldset>
-                      <p v-else data-testid="readonly-character-tags">
-                        {{
-                          controller.party
-                            .find((member) => member.id === characterId)
-                            ?.tags?.map((tag) => tag.name)
-                            .join(", ")
-                        }}
-                      </p>
-                    </SheetSection>
-                  </section>
                 </template>
               </CharacterSheetTabs>
             </template>
             <template #npcs>
               <UTabs
-                v-model="state.selectedNpcId"
+                v-model="selectedNpcId"
                 :items="[
-                  ...state.npcs.map((npc) => ({ label: npc.name, value: npc.id })),
+                  ...availableNpcs.map((npc) => ({ label: npc.name, value: npc.id })),
                   ...(state.role === 'GM' ? [{ label: '+ New NPC', value: '__new__' }] : []),
                 ]"
               />
               <NpcSheet
-                v-if="state.selectedNpcId !== '__new__' || state.role === 'GM'"
-                :key="state.selectedNpcId"
-                :npc="state.npcs.find((npc) => npc.id === state.selectedNpcId) ?? null"
-                :saved-tags="state.savedTags"
+                v-if="state.role === 'GM' || (selectedNpc && selectedNpc.visibility !== 'visible')"
+                :key="selectedNpcId"
+                :npc="selectedNpc ?? null"
                 :read-only="state.role !== 'GM'"
                 :pending="state.pending"
                 @save="table.saveNpc"
               />
+              <p
+                v-else-if="selectedNpc"
+                class="p-medium text-muted"
+                data-testid="npc-redacted-sheet"
+              >
+                Only this NPC's name and rank are known.
+              </p>
+              <p v-else class="p-medium text-muted" data-testid="no-visible-npcs">
+                No NPCs are visible.
+              </p>
             </template>
             <template #history>
               <HistoryPanel
