@@ -7,7 +7,7 @@ import DefenseField from "../../src/modules/characters/sheet/defense/DefenseFiel
 import CharacterLevelField from "../../src/modules/characters/sheet/identity/CharacterLevelField.vue";
 import NpcAttacksEditor from "./NpcAttacksEditor.vue";
 import type { Tag } from "./tags";
-import type { Npc, NpcRank } from "./fixtures";
+import type { Npc, NpcRank } from "./types";
 
 const props = defineProps<{
   npc: Npc | null;

@@ -1,7 +1,7 @@
 /** MSW HTTP boundary for offline prototypes, including production character clients. */
 import { delay, http, HttpResponse } from "msw";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
-import type { Npc } from "../npcs-and-enemies/fixtures";
+import type { Npc } from "../npcs-and-enemies/types";
 import type { Tag } from "../../src/shared/types";
 import type { CreateThrowInput } from "../../src/modules/game-table/types";
 import { createPrototypeThrow } from "./throws";

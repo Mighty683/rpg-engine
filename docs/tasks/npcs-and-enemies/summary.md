@@ -8,6 +8,7 @@
 1. [User story](story.md)
 2. [UX journey](ux.md)
 3. [UI design and prototype](ui.md)
+4. [Technical design](tech.md)
 
 ## Supporting material
 

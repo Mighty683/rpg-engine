@@ -2,7 +2,7 @@
 import { reactive, watch, type Ref } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { partyKey } from "../../src/modules/game-table/hooks";
-import type { Npc } from "./fixtures";
+import type { Npc } from "./types";
 import type { Tag } from "./tags";
 import type { NpcApi, TableRole, TableScenario } from "./types";
 

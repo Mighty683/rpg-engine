@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SheetSection from "../../src/shared/design-system/SheetSection.vue";
-import type { NpcAttack } from "./fixtures";
+import type { NpcAttack } from "./types";
 
 const props = defineProps<{ attacks: NpcAttack[] }>();
 const attributes = ["DEX", "INS", "MIG", "WLP"];

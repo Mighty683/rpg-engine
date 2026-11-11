@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import NpcCard from "./NpcCard.vue";
 import { allNpcs, goblinSoldier } from "./fixtures";
-import type { Npc, NpcRank } from "./fixtures";
+import type { Npc, NpcRank } from "./types";
 
 function initialState() {
   return {

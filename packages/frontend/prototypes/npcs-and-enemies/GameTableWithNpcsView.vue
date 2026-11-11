@@ -11,7 +11,7 @@ import PartyCharacterCard from "../../src/modules/game-table/PartyCharacterCard.
 import HistoryPanel from "../../src/modules/game-table/HistoryPanel.vue";
 import NpcCard from "./NpcCard.vue";
 import NpcSheet from "./NpcSheet.vue";
-import type { Npc } from "./fixtures";
+import type { Npc } from "./types";
 import type { Attribute, FreeDraft } from "../../src/modules/game-table/types";
 import type { useNpcTable } from "./useNpcTable";
 const props = defineProps<{ table: ReturnType<typeof useNpcTable>; gameId: string }>();
@@ -146,7 +146,7 @@ function npcRoll(
                         (record, attack) =>
                           npcRoll(
                             record,
-                            attack.attributes as Attribute[],
+                            attack.attributes,
                             controller.openCustomFreeRoll,
                             attack,
                           )

@@ -297,6 +297,31 @@ test("a rejected save retains the draft, shows an error, and does not change the
   }
 });
 
+test("a rejected NPC save keeps the draft and leaves the saved record unchanged", async () => {
+  const table = await mountTable();
+  try {
+    prototypeWorker.use(
+      http.put("*/api/prototype/npcs/:id", () =>
+        HttpResponse.json({ error: "save_rejected" }, { status: 500 }),
+      ),
+    );
+    await page.getByTestId("npc-card-goblin-soldier").getByTestId("edit-npc").click();
+    await page.getByTestId("npc-name").fill("Unsaved goblin");
+    await page.getByTestId("save-npc").click();
+    await expect.element(page.getByTestId("table-error")).toBeVisible();
+    await expect.element(page.getByTestId("npc-name")).toHaveValue("Unsaved goblin");
+    await expect
+      .poll(() => document.querySelector('[data-testid="npc-card-goblin-soldier"]')?.textContent)
+      .toContain("Goblin Sentry");
+    const result = await (await fetch("/api/prototype/npcs")).json();
+    expect(result.npcs.find((npc: { id: string }) => npc.id === "goblin-soldier").name).toBe(
+      "Goblin Sentry",
+    );
+  } finally {
+    table.cleanup();
+  }
+});
+
 test("production tabs select the requested sheet without prototype save controls", async () => {
   const table = await mountTable();
   try {

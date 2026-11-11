@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import AttributeRollButton from "../../src/modules/game-table/AttributeRollButton.vue";
 import WeaponRollButton from "../../src/modules/game-table/WeaponRollButton.vue";
 import type { Attribute, PartyWeapon } from "../../src/modules/game-table/types";
-import type { Npc, NpcAttack } from "./fixtures";
+import type { Npc, NpcAttack } from "./types";
 
 const props = withDefaults(
   defineProps<{
@@ -30,7 +30,7 @@ function toWeapon(attack: NpcAttack): PartyWeapon {
     id: attack.id,
     name: attack.name,
     equipped: true,
-    accuracyDice: attack.attributes as [Attribute, Attribute],
+    accuracyDice: attack.attributes,
     accuracyBonus: Math.floor(props.npc.level / 10),
     ready: true,
   };

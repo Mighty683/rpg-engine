@@ -13,6 +13,8 @@ The shared MSW backend serves production HTTP clients; no running application ba
 
 Visibility is a UI prototype only: the shared mock API still returns complete NPC records and does not enforce player authorization. A production implementation must filter and redact responses on the server.
 
+The prototype record is not a complete Fabula Ultima model: it lacks NPC type, traits, current attribute dice and champion strength. Crisis and initiative are stored fixture values and are not recalculated or edited. Attack damage type is free text. Production design must decide how to represent and derive these values rather than treating this record as a validated rules schema. Switching NPC tabs or changing role can discard an unsaved NPC draft; the prototype does not yet protect against that.
+
 Persistence lasts for the prototype backend session, not across a page reload. Character save errors and roll validation/recovery use the production controllers. NPC-only operations report failures without pretending to save.
 
 Endpoint details: [API-CONTRACT.md](API-CONTRACT.md).
