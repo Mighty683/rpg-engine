@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed } from "vue";
 import { account } from "../auth/session";
-import { api } from "./api";
+import { useApiServices } from "../../shared/api-services";
 const gamesKey = () => ["accounts", account.value?.id, "games"];
 export function useGamesQuery() {
+  const { games: api } = useApiServices();
   return useQuery({
     queryKey: computed(gamesKey),
     queryFn: api.listGames,
@@ -12,6 +13,7 @@ export function useGamesQuery() {
   });
 }
 export function useSystemsQuery() {
+  const { games: api } = useApiServices();
   return useQuery({
     queryKey: ["rpg-systems"],
     queryFn: api.listSystems,
@@ -20,6 +22,7 @@ export function useSystemsQuery() {
   });
 }
 export function useGameQuery(gameId: string) {
+  const { games: api } = useApiServices();
   return useQuery({
     queryKey: computed(() => [...gamesKey(), gameId]),
     queryFn: () => api.getGame(gameId),
@@ -27,12 +30,14 @@ export function useGameQuery(gameId: string) {
 }
 const membersKey = (gameId: string) => [...gamesKey(), gameId, "members"];
 export function useGameMembersQuery(gameId: string) {
+  const { games: api } = useApiServices();
   return useQuery({
     queryKey: computed(() => membersKey(gameId)),
     queryFn: () => api.listGameMembers(gameId),
   });
 }
 export function useSelectGameCharacterMutation(gameId: string) {
+  const { games: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: {
@@ -57,6 +62,7 @@ export function useSelectGameCharacterMutation(gameId: string) {
   });
 }
 export function useCreateGameMutation() {
+  const { games: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: api.createGame,

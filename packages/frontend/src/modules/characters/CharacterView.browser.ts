@@ -1,4 +1,6 @@
 import { expect, test, vi } from "vite-plus/test";
+import { apiServicesKey } from "../../shared/api-services";
+import { browserApiServices } from "../../shared/api-services.browser-support";
 import { page } from "vite-plus/test/browser";
 import { createApp } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -64,6 +66,7 @@ async function mount(fetchMock: ReturnType<typeof vi.fn>, canEdit = true) {
   await router.push("/games/g1/players/p1/characters/c1");
   await router.isReady();
   const app = createApp(App)
+    .provide(apiServicesKey, browserApiServices)
     .use(router)
     .use(ui)
     .use(createFrontendI18n())

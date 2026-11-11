@@ -9,6 +9,9 @@ export const sword: PartyWeapon = {
   equipped: true,
   accuracyDice: ["DEX", "MIG"],
   accuracyBonus: 1,
+  reach: "melee",
+  damageBonus: 6,
+  damageType: "physical",
   ready: true,
 };
 
@@ -16,6 +19,7 @@ export const partyMember: PartyCharacter = {
   id: "rowan",
   revision: 1,
   name: "Rowan Ash",
+  level: 5,
   classes: ["Guardian"],
   baseDice: { DEX: 8, INS: 8, MIG: 10, WLP: 6 },
   resources: { hp: 28, mp: 24, ip: 5, fabula: 3 },

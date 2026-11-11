@@ -1,4 +1,6 @@
 import { expect, test, vi } from "vite-plus/test";
+import { apiServicesKey } from "../../shared/api-services";
+import { browserApiServices } from "../../shared/api-services.browser-support";
 import { page } from "vite-plus/test/browser";
 import { createApp, nextTick } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -33,6 +35,7 @@ test("a GM can retry a failed game list without a backend", async () => {
   });
   await router.push("/");
   const app = createApp(App)
+    .provide(apiServicesKey, browserApiServices)
     .use(router)
     .use(ui)
     .use(createFrontendI18n())
@@ -81,6 +84,7 @@ test("game creation validates the name and submits trimmed values", async () => 
   });
   await router.push("/");
   const app = createApp(App)
+    .provide(apiServicesKey, browserApiServices)
     .use(router)
     .use(ui)
     .use(createFrontendI18n())
@@ -155,6 +159,7 @@ test("character creation retry reuses the same client id", async () => {
   });
   await router.push("/games/g1");
   const app = createApp(App)
+    .provide(apiServicesKey, browserApiServices)
     .use(router)
     .use(ui)
     .use(createFrontendI18n())

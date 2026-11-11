@@ -1,3 +1,5 @@
+import type { Tag } from "../../shared/types";
+
 export type FreeDraft = {
   characterId: string;
   dice: number[];
@@ -121,6 +123,9 @@ export type PartyWeapon = {
   equipped: boolean;
   accuracyDice: [Attribute | null, Attribute | null];
   accuracyBonus: number | null;
+  reach?: "melee" | "ranged" | null;
+  damageBonus?: number | null;
+  damageType?: string | null;
   ready: boolean;
 };
 
@@ -128,6 +133,7 @@ export type PartyCharacter = {
   id: string;
   revision: number;
   name: string;
+  level?: number | null;
   classes: string[];
   baseDice: Record<Attribute, number>;
   resources: { hp: number; mp: number; ip: number; fabula: number };
@@ -136,4 +142,5 @@ export type PartyCharacter = {
   magicDefense: number | null;
   weapons: PartyWeapon[];
   canRoll: boolean;
+  tags?: Tag[];
 };

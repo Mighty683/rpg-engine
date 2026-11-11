@@ -3,11 +3,14 @@ import type { Attribute, PartyCharacter } from "./types";
 import AttributeRollButton from "./AttributeRollButton.vue";
 import WeaponRollButton from "./WeaponRollButton.vue";
 
-defineProps<{ member: PartyCharacter }>();
+const props = withDefaults(defineProps<{ member: PartyCharacter; canEdit?: boolean }>(), {
+  canEdit: false,
+});
 const emit = defineEmits<{
   rollAttribute: [attribute: Attribute];
   rollWeapon: [weaponId: string];
   needsWeaponSetup: [weaponId: string];
+  edit: [];
 }>();
 
 const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
@@ -23,7 +26,30 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
       <div>
         <div class="flex flex-wrap items-center gap-small">
           <span class="font-semibold">{{ member.name }}</span>
+          <UBadge v-if="member.level" color="neutral" variant="outline" size="sm">
+            Lv {{ member.level }}
+          </UBadge>
           <UBadge v-if="member.resources.hp === 0" color="error" variant="subtle">0 HP</UBadge>
+          <UBadge
+            v-for="tag in member.tags ?? []"
+            :key="tag.name"
+            :color="tag.color"
+            variant="outline"
+            size="sm"
+          >
+            {{ tag.name }}
+          </UBadge>
+          <UButton
+            v-if="props.canEdit"
+            class="ml-auto"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            icon="i-lucide-pencil"
+            aria-label="Edit character"
+            data-testid="edit-character"
+            @click="emit('edit')"
+          />
         </div>
         <p class="text-label text-muted">{{ member.classes.join(", ") || "No classes" }}</p>
       </div>
@@ -80,6 +106,9 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
               :base-dice="member.baseDice"
               :character-name="member.name"
               :can-roll="member.canRoll"
+              :reach="weapon.reach ?? null"
+              :damage-bonus="weapon.damageBonus ?? null"
+              :damage-type="weapon.damageType ?? null"
               @roll="emit('rollWeapon', weapon.id)"
               @needs-setup="emit('needsWeaponSetup', weapon.id)"
             />

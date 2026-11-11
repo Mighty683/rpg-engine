@@ -247,6 +247,12 @@ function openFreeRoll() {
   };
 }
 
+function openCustomFreeRoll(draft: FreeDraft) {
+  if (props.role !== "GM") return;
+  openFreeRoll();
+  freeDraft.value = draft;
+}
+
 const wholeNumber = (value: string | number) => {
   const text = String(value).trim();
   return text !== "" && Number.isSafeInteger(Number(text)) ? Number(text) : null;
@@ -380,29 +386,57 @@ async function removeEntry(entry: ThrowRecord) {
 
 <template>
   <div class="grid gap-section lg:grid-cols-2" data-testid="game-table">
-    <PartyPanel
+    <slot
+      name="layout"
       :party="party"
-      :is-loading="partyQuery.isLoading.value"
-      :is-error="partyQuery.isError.value"
-      :weapon-hint="weaponHint"
-      @retry="partyQuery.refetch"
-      @roll-attribute="openAttributeRoll"
-      @roll-weapon="openWeaponRoll"
-      @needs-weapon-setup="needsWeaponSetup"
-      @open-sheet="openSheet"
-    />
-    <HistoryPanel
-      :throws="history.throws.value"
-      :is-loading="history.isLoading.value"
-      :is-error="history.isError.value"
-      :has-older="history.hasOlder.value"
+      :party-query="partyQuery"
+      :history="history"
       :highlight-id="highlightId"
-      @reroll="openReroll"
-      @remove="removeEntry"
-      @load-older="history.loadOlder"
-      @retry="history.refresh"
-      @make-roll="openFreeRoll"
-    />
+      :open-attribute-roll="openAttributeRoll"
+      :open-weapon-roll="openWeaponRoll"
+      :open-free-roll="openFreeRoll"
+      :open-custom-free-roll="openCustomFreeRoll"
+      :reroll="openReroll"
+      :remove-entry="removeEntry"
+    >
+      <PartyPanel
+        :party="party"
+        :is-loading="partyQuery.isLoading.value"
+        :is-error="partyQuery.isError.value"
+        :weapon-hint="weaponHint"
+        @retry="partyQuery.refetch"
+        @roll-attribute="openAttributeRoll"
+        @roll-weapon="openWeaponRoll"
+        @needs-weapon-setup="needsWeaponSetup"
+        @open-sheet="openSheet"
+      />
+      <HistoryPanel
+        :throws="history.throws.value"
+        :is-loading="history.isLoading.value"
+        :is-error="history.isError.value"
+        :has-older="history.hasOlder.value"
+        :highlight-id="highlightId"
+        @reroll="openReroll"
+        @remove="removeEntry"
+        @load-older="history.loadOlder"
+        @retry="history.refresh"
+        @make-roll="openFreeRoll"
+      />
+      <CharacterSheetsDrawer
+        v-model:open="sheetOpen"
+        v-model:selected-id="selectedSheetId"
+        :tabs="sheetTabs"
+      >
+        <template #sheet="{ characterId }">
+          <CharacterView
+            :key="characterId"
+            :game-id="gameId"
+            :character-id="characterId"
+            :read-only="role !== 'GM' && !rosterById.get(characterId)?.canEdit"
+          />
+        </template>
+      </CharacterSheetsDrawer>
+    </slot>
     <RollDialog
       v-if="rollDraft"
       :draft="rollDraft"
@@ -428,19 +462,5 @@ async function removeEntry(entry: ThrowRecord) {
       @submit="submitFreeRoll"
       @cancel="freeDraft = null"
     />
-    <CharacterSheetsDrawer
-      v-model:open="sheetOpen"
-      v-model:selected-id="selectedSheetId"
-      :tabs="sheetTabs"
-    >
-      <template #sheet="{ characterId }">
-        <CharacterView
-          :key="characterId"
-          :game-id="gameId"
-          :character-id="characterId"
-          :read-only="role !== 'GM' && !rosterById.get(characterId)?.canEdit"
-        />
-      </template>
-    </CharacterSheetsDrawer>
   </div>
 </template>

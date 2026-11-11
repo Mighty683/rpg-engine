@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useApiServices } from "../../shared/api-services";
 import ConfirmDialog from "../../shared/design-system/ConfirmDialog.vue";
 import ContentState from "../../shared/design-system/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
@@ -71,7 +72,8 @@ const pendingId = ref<string | null>(null);
 const pendingName = ref("");
 const heading = ref<HTMLElement>();
 const throwsHint = ref(0);
-let events: EventSource | undefined;
+const { games: gamesApi } = useApiServices();
+let events: ReturnType<typeof gamesApi.openGameEvents> | undefined;
 let eventConnectionFailed = false;
 
 function refreshGameQueries(characterId?: string) {
@@ -84,7 +86,7 @@ function refreshGameQueries(characterId?: string) {
   throwsHint.value += 1;
 }
 onMounted(() => {
-  events = new EventSource(`/api/games/${gameId}/events`);
+  events = gamesApi.openGameEvents(gameId);
   events.onopen = () => {
     eventConnectionFailed = false;
     refreshGameQueries(managedCharacterId.value || selectedId.value || undefined);

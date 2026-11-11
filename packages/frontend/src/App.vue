@@ -6,11 +6,12 @@ import { onMounted, onUnmounted, ref } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouter } from "vue-router";
 import AccountScreen from "./modules/auth/AccountScreen.vue";
-import { authApi } from "./modules/auth/api";
+import { useApiServices } from "./shared/api-services";
 import { account } from "./modules/auth/session";
 import PrimaryNavigation from "./shared/components/PrimaryNavigation.vue";
 
 const toast = useToast();
+const { auth: authApi } = useApiServices();
 const client = useQueryClient();
 const router = useRouter();
 const loading = ref(true);

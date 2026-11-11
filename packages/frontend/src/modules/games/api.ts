@@ -2,6 +2,7 @@ import type { Game, System, GameMember } from "./types";
 import { request } from "../../shared/api";
 
 export const api = {
+  openGameEvents: (gameId: string) => new EventSource(`/api/games/${gameId}/events`),
   listGames: () => request<{ games: Game[] }>("/api/games"),
   listSystems: () => request<{ systems: System[] }>("/api/rpg-systems"),
   createGame: (input: { name: string; systemId: string }) =>

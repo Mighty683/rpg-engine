@@ -12,4 +12,4 @@ Each participant rolls the same attribute pair using their own current dice and 
 
 A weapon attack normally compares its Accuracy Check against the target’s Defense. Resolve it under the [weapon attack rules](weapon-attacks.md). A single die or a generic dice pool can be rolled as a table utility. Fabula check outcomes require a valid two-die check.
 
-Rules references: [Press Start character kit](https://d1vzi28wh99zvq.cloudfront.net/pdf_previews/411240-sample.pdf) and *Fabula Ultima Core Rulebook*, “Performing an Attribute Check” and “Opposed Checks”, pp. 42 and 48.
+Rules references: [Press Start character kit](https://d1vzi28wh99zvq.cloudfront.net/pdf_previews/411240-sample.pdf) and _Fabula Ultima Core Rulebook_, “Performing an Attribute Check” and “Opposed Checks”, pp. 42 and 48.

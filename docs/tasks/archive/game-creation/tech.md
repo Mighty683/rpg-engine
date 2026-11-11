@@ -1,6 +1,6 @@
 # Game creation — technical design
 
-**Created:** 2026-11-04  
+**Created:** 2026-11-04
 
 **Related:** [UX journey](ux.md) · [UI solution](ui.md) · [Task summary](summary.md)
 
@@ -14,11 +14,11 @@ The [character setup design](../character-setup/tech.md) was a proposal at the t
 
 ## Responsibilities and boundaries
 
-| Responsibility            | Implemented location and contract                                                                                                                                                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Game list and creation UI | `packages/frontend/src/modules/games`: retrieve games and available systems, manage the in-memory form and submission states, and present the agreed [UI](ui.md). Do not persist drafts in browser storage.                                                              |
-| Game domain               | `packages/backend/src/modules/games`: validate and create games, list saved games, and own game identity and the immutable system association. Keep HTTP handling separate from domain/persistence responsibilities.                                                     |
-| RPG system catalog        | `packages/backend/src/modules/rpg-systems` provides a hardcoded initial catalog with stable system IDs, display names and creation availability. System setup and management remain a separate task.                                                                     |
+| Responsibility            | Implemented location and contract                                                                                                                                                                                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Game list and creation UI | `packages/frontend/src/modules/games`: retrieve games and available systems, manage the in-memory form and submission states, and present the agreed [UI](ui.md). Do not persist drafts in browser storage.                                                                 |
+| Game domain               | `packages/backend/src/modules/games`: validate and create games, list saved games, and own game identity and the immutable system association. Keep HTTP handling separate from domain/persistence responsibilities.                                                        |
+| RPG system catalog        | `packages/backend/src/modules/rpg-systems` provides a hardcoded initial catalog with stable system IDs, display names and creation availability. System setup and management remain a separate task.                                                                        |
 | Infrastructure            | Backend application/server, database connection and migrations expose the domain over HTTP and PostgreSQL. Follow the existing dependency choices and [code conventions](../../../spec/code-conventions.md); place genuinely shared code in `src/shared` only where needed. |
 
 Single GM is a deployment assumption, not authentication or authorization. Do not manufacture an owner ID or claim access control. Until identity and authorization are designed, restrict deployment to a trusted environment; a public or multi-user deployment is not secured by this assumption.

@@ -16,12 +16,12 @@ Add a game-scoped active-party read projection under the character workspace. Re
 
 A card receives a stable character ID and sheet revision, display name, classes, base attribute dice, current and maximum resources, Fabula Points, Defense, Magic Defense, and weapons by equipment ID. Reuse the sheet's derivation and override precedence, including valid zero overrides and unknown values. Include weapon name, equipped state, configured accuracy attributes, saved bonus, and whether the weapon is ready to roll. A weapon needs both accuracy attributes and a saved bonus (zero is valid). Show configured weapons as in the prototype even when unequipped; no equipment change occurs. Also expose whether the viewer can roll from the card. Derive this server-side independently of sheet edit permissions.
 
-| Action | GM | Current player |
-| --- | --- | --- |
-| Read party, sheets, and history | Within existing game visibility rules | Within existing game visibility rules |
-| Roll from an attribute or weapon card | Any active character in the game | Own active character |
-| Make a roll without using a card | As GM, or as any active character in the game | As their active character at submission |
-| Remove a history entry | Any entry in the game | Entries they authored |
+| Action                                | GM                                            | Current player                          |
+| ------------------------------------- | --------------------------------------------- | --------------------------------------- |
+| Read party, sheets, and history       | Within existing game visibility rules         | Within existing game visibility rules   |
+| Roll from an attribute or weapon card | Any active character in the game              | Own active character                    |
+| Make a roll without using a card      | As GM, or as any active character in the game | As their active character at submission |
+| Remove a history entry                | Any entry in the game                         | Entries they authored                   |
 
 The server checks current game access for every request. An inactive or reassigned character cannot be rolled under a permission that no longer applies. A player without an active character can still read the table and history; direct them to select a character before rolling. Removal follows authorship even when a character changes hands, but requires current game access. Sheet editing, lock behavior, and management routes retain their existing permissions. Red dice are manually configured by the person making the roll; they never roll as another account or resolve a live opponent's sheet.
 
@@ -29,11 +29,11 @@ The server checks current game access for every request. An inactive or reassign
 
 Use a game-scoped throw module with a paged list, create, and remove boundary, following the application's existing auth, write-origin, and error conventions. The create request contains an optional source throw ID for a reroll and a discriminated setup. No endpoint accepts faces, calculated totals, roles, display names, or a client-supplied weapon bonus.
 
-| Setup | Client supplies | Server resolves |
-| --- | --- | --- |
-| Attribute | Character ID and expected sheet revision, first attribute, optional second attribute, effective die sizes, check modifier, optional red pool and note | Current roll permission, attribute labels, repeated-attribute validation, result type |
-| Weapon | Character and equipment IDs, expected sheet revision, effective die sizes in weapon order, check modifier and optional note | Current roll permission, equipment ownership, saved accuracy pair and bonus |
-| Free | One or two friendly die sizes, optional red pool, modifiers and note; GM chooses GM or the ID of any active character in the game; player sends the active character ID shown in the dialog as an expectation | Current role, active character attribution and result type |
+| Setup     | Client supplies                                                                                                                                                                                               | Server resolves                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Attribute | Character ID and expected sheet revision, first attribute, optional second attribute, effective die sizes, check modifier, optional red pool and note                                                         | Current roll permission, attribute labels, repeated-attribute validation, result type |
+| Weapon    | Character and equipment IDs, expected sheet revision, effective die sizes in weapon order, check modifier and optional note                                                                                   | Current roll permission, equipment ownership, saved accuracy pair and bonus           |
+| Free      | One or two friendly die sizes, optional red pool, modifiers and note; GM chooses GM or the ID of any active character in the game; player sends the active character ID shown in the dialog as an expectation | Current role, active character attribution and result type                            |
 
 An opposing pool may contain zero, one, or two dice, independently chosen from the friendly pool. Attribute rolls use standard dice (d6, d8, d10, d12); free rolls also allow d4 and d20. Two standard dice on each side use Fabula opposed ranking; other opposed pools compare totals without criticals or fumbles. In an attribute check, opposing dice are labeled in friendly attribute order but their sizes are selected independently. A repeated friendly attribute uses the same effective size for both dice and independent faces. Weapon accuracy has no opposing pool. Trim notes and cap them at 500 characters. Accept signed 32-bit modifiers, consistent with saved weapon bonuses, and calculate totals without 32-bit truncation.
 

@@ -19,14 +19,14 @@ The [UX guidance](../../spec/ux.md) favors a minimal interface and AI assistance
 
 ## States and interactions
 
-| State | Presentation and behavior |
-| --- | --- |
-| Backend not connected | Show “AI chat is not connected yet.” Allow drafting, disable Send, and make no network calls or simulated successful messages. |
-| Provider not configured, once integration exists | Show a sanitized configuration-unavailable message; allow drafting and disable Send. |
-| Ready, once integration exists | Allow sending nonempty messages. Add the user's message and clear the submitted draft. |
-| Waiting | Show “Waiting for response…” and prevent duplicate submissions. Allow a next draft and minimizing without cancelling. |
-| Failed | Show a sanitized inline explanation. Keep the submitted text and any next draft; do not automatically resend or fabricate a reply. |
-| Received | Add the assistant response. Do not claim unconfirmed game changes. |
+| State                                            | Presentation and behavior                                                                                                          |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Backend not connected                            | Show “AI chat is not connected yet.” Allow drafting, disable Send, and make no network calls or simulated successful messages.     |
+| Provider not configured, once integration exists | Show a sanitized configuration-unavailable message; allow drafting and disable Send.                                               |
+| Ready, once integration exists                   | Allow sending nonempty messages. Add the user's message and clear the submitted draft.                                             |
+| Waiting                                          | Show “Waiting for response…” and prevent duplicate submissions. Allow a next draft and minimizing without cancelling.              |
+| Failed                                           | Show a sanitized inline explanation. Keep the submitted text and any next draft; do not automatically resend or fabricate a reply. |
+| Received                                         | Add the assistant response. Do not claim unconfirmed game changes.                                                                 |
 
 Chat is the first application AI action and connects to Mistral through the backend for text responses. Tools and game actions are out of scope. Render text safely; rich Markdown is not required.
 

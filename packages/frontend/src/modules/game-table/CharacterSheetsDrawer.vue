@@ -1,7 +1,7 @@
 <script setup lang="ts">
-type SheetTab = { label: string; value: string };
+import CharacterSheetTabs from "./CharacterSheetTabs.vue";
 
-withDefaults(defineProps<{ tabs: SheetTab[]; showBookmark?: boolean }>(), {
+withDefaults(defineProps<{ tabs: { label: string; value: string }[]; showBookmark?: boolean }>(), {
   showBookmark: true,
 });
 defineSlots<{ sheet(props: { characterId: string }): unknown }>();
@@ -29,18 +29,11 @@ const selectedId = defineModel<string>("selectedId", { required: true });
         @click="open = false"
         >Character sheets</UButton
       >
-      <UTabs
-        v-model="selectedId"
-        :items="tabs"
-        :ui="{ list: 'max-w-full overflow-x-auto', trigger: 'flex-none', content: 'min-w-0' }"
-      >
-        <template #default="{ item }">
-          <span data-testid="sheet-tab">{{ item.label }}</span>
+      <CharacterSheetTabs v-model:selected-id="selectedId" :tabs="tabs">
+        <template #sheet="{ characterId }">
+          <slot name="sheet" :character-id="characterId" />
         </template>
-        <template #content="{ item }">
-          <slot name="sheet" :character-id="item.value" />
-        </template>
-      </UTabs>
+      </CharacterSheetTabs>
     </template>
   </USlideover>
 </template>

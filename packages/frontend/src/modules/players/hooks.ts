@@ -1,18 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { api } from "./api";
+import { useApiServices } from "../../shared/api-services";
 export function usePlayersQuery(gameId: string) {
+  const { players: api } = useApiServices();
   return useQuery({
     queryKey: ["games", gameId, "players"],
     queryFn: () => api.listPlayers(gameId),
   });
 }
 export function usePlayerQuery(gameId: string, playerId: string) {
+  const { players: api } = useApiServices();
   return useQuery({
     queryKey: ["games", gameId, "players", playerId],
     queryFn: () => api.getPlayer(gameId, playerId),
   });
 }
 export function useCreatePlayerMutation(gameId: string) {
+  const { players: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: { id: string; name: string }) => api.createPlayer(gameId, input),

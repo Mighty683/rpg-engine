@@ -12,16 +12,16 @@ For an unmodified soldier, calculate initiative as (base DEX die size + base INS
 
 ## Types
 
-| Type | Starting abilities | Type rules |
-| --- | ---: | --- |
-| Beast | 4 | Cannot acquire the equipment ability. |
-| Demon | 3 | Resistant to two chosen damage types. |
-| Humanoid | 3 | Gains the equipment ability for free. |
-| Construct | 2 | Immune to poison damage and poisoned; resistant to earth damage. |
-| Undead | 2 | Immune to dark and poison damage and poisoned; vulnerable to light. The controller of a healing effect may instead make it lose half the HP the effect would restore. |
-| Monster | 4 | No special type rule. |
-| Plant | 3 | Immune to dazed, shaken and enraged; vulnerable to a chosen air, bolt, fire or ice damage type. |
-| Elemental | 2 | Immune to poison damage and poisoned; resistant to one other chosen damage type. |
+| Type      | Starting abilities | Type rules                                                                                                                                                            |
+| --------- | -----------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Beast     |                  4 | Cannot acquire the equipment ability.                                                                                                                                 |
+| Demon     |                  3 | Resistant to two chosen damage types.                                                                                                                                 |
+| Humanoid  |                  3 | Gains the equipment ability for free.                                                                                                                                 |
+| Construct |                  2 | Immune to poison damage and poisoned; resistant to earth damage.                                                                                                      |
+| Undead    |                  2 | Immune to dark and poison damage and poisoned; vulnerable to light. The controller of a healing effect may instead make it lose half the HP the effect would restore. |
+| Monster   |                  4 | No special type rule.                                                                                                                                                 |
+| Plant     |                  3 | Immune to dazed, shaken and enraged; vulnerable to a chosen air, bolt, fire or ice damage type.                                                                       |
+| Elemental |                  2 | Immune to poison damage and poisoned; resistant to one other chosen damage type.                                                                                      |
 
 Source: pp. 304–305. English terms here are translations of the supplied Polish edition; exact product terminology should be checked against the selected localization.
 
@@ -35,4 +35,4 @@ For encounter guidance, party level is the highest level of a participating play
 
 The rulebook also describes NPC abilities and spells (pp. 306 onward), villains, affinities, status effects, conflict turns, rewards and bestiary profiles. This analysis does not transcribe their full rules or establish automation, visibility, persistence, encounter design, or a complete NPC lifecycle. Consult the relevant pages before specifying those behaviors. Existing [checks](checks.md), [weapon attacks](weapon-attacks.md), and [defense and equipment](defense-and-equipment.md) cover shared mechanics but do not exhaust NPC exceptions.
 
-**Source:** User-supplied *Fabula Ultima*, Polish first edition, second printing (2024), pp. 293–295 and 302–307; PDF pages 295–297 and 304–309. Rules are paraphrased. No participant behavior is inferred from this source.
+**Source:** User-supplied _Fabula Ultima_, Polish first edition, second printing (2024), pp. 293–295 and 302–307; PDF pages 295–297 and 304–309. Rules are paraphrased. No participant behavior is inferred from this source.

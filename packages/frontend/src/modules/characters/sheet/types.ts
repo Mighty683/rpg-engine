@@ -1,3 +1,5 @@
+import type { Tag } from "../../../shared/types";
+
 /** Data shapes used by the character setup prototype. */
 export type Attribute = "DEX" | "INS" | "MIG" | "WLP";
 export type WeaponSettings = {
@@ -36,6 +38,7 @@ export type Character = {
   equipment: NamedEntry[];
   current: { HP: number | null; MP: number | null; IP: number | null; Fabula: number };
   overrides: { DEF: number | null; "MAG DEF": number | null; INIT: number | null };
+  tags?: Tag[];
 };
 export type Player = {
   id: string;

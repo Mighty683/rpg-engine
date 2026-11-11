@@ -3,7 +3,9 @@ import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
 import { account } from "../../modules/auth/session";
-import { api } from "../../modules/games/api";
+import { useApiServices } from "../api-services";
+
+const { games: api } = useApiServices();
 
 const emit = defineEmits<{ navigate: [] }>();
 const route = useRoute();

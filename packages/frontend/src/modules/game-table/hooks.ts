@@ -2,7 +2,7 @@ import type { CreateThrowInput, ThrowRecord } from "./types";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { computed, ref, watch } from "vue";
 import { account } from "../auth/session";
-import { api } from "./api";
+import { useApiServices } from "../../shared/api-services";
 
 import { hasWindowGap, historyPageSize, mergeThrowPages, olderCursor } from "./history.ts";
 
@@ -11,6 +11,7 @@ export const partyKey = (gameId: string) => [...gameKey(gameId), "party"];
 export const throwsKey = (gameId: string) => [...gameKey(gameId), "throws"];
 
 export function useGamePartyQuery(gameId: string) {
+  const { gameTable: api } = useApiServices();
   return useQuery({
     queryKey: computed(() => partyKey(gameId)),
     queryFn: () => api.getGameParty(gameId),
@@ -23,6 +24,7 @@ export function useGamePartyQuery(gameId: string) {
  * authoritative; the in-process event stream only triggers refetches.
  */
 export function useThrowHistory(gameId: string) {
+  const { gameTable: api } = useApiServices();
   const client = useQueryClient();
   const pages = ref<(number | null)[]>([null]);
   const queries = useQueries({
@@ -72,6 +74,7 @@ export function useThrowHistory(gameId: string) {
 }
 
 export function useCreateThrowMutation(gameId: string) {
+  const { gameTable: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateThrowInput) => api.createGameThrow(gameId, input),
@@ -80,6 +83,7 @@ export function useCreateThrowMutation(gameId: string) {
 }
 
 export function useRemoveThrowMutation(gameId: string) {
+  const { gameTable: api } = useApiServices();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (throwId: string) => api.deleteGameThrow(gameId, throwId),

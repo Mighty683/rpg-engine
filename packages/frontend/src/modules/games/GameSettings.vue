@@ -8,8 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { account } from "../auth/session";
-import { invitationApi } from "../invitations/api";
-import { api } from "./api";
+import { useApiServices } from "../../shared/api-services";
 import ConfirmDialog from "../../shared/design-system/ConfirmDialog.vue";
 import ContentState from "../../shared/design-system/ContentState.vue";
 import PlayerAccessRow from "./PlayerAccessRow.vue";
@@ -22,6 +21,7 @@ const props = defineProps<{
   characters: GameCharacterSummary[];
 }>();
 const emit = defineEmits<{ changed: [] }>();
+const { games: api, invitations: invitationApi } = useApiServices();
 const client = useQueryClient();
 const toast = useToast();
 const key = computed(() => ["accounts", account.value?.id, "games", props.gameId, "invitations"]);

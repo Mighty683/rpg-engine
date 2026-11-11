@@ -18,8 +18,18 @@
 - View components receive data and callbacks through their interfaces and render the UI. They do not own application or domain logic and do not connect to the backend. Local presentation behavior, such as focus and opening a popover, may remain in a view.
 - Controller components own application state and logic, coordinate domain operations and backend access, and supply data and callbacks to views. Keep backend details behind the appropriate application or API boundary.
 - Keep component-specific styles with the component they style.
+- Inject frontend API services through `shared/api-services.ts` using Vue `provide` / `inject`. Assemble production implementations in `main.ts`; controllers and hooks use `useApiServices()` rather than importing implementations. Provide dependencies once at the composition root, without passing them through intermediate component props. Test and prototype composition roots must provide the registry explicitly; consumers must not fall back to production services. Keep transport details, including event-stream creation, in API implementations.
 
 - Add stable `data-testid` attributes to UI elements targeted by browser tests.
+
+## Frontend prototypes
+
+- Keep prototypes under `packages/frontend/prototypes/` and follow its [gallery guidance](../../packages/frontend/prototypes/README.md). Production source must not import prototype code, fixtures, or mocks.
+- Keep stories limited to composition and review controls. For existing flows, reuse production components and controllers with injected services instead of duplicating navigation, loading, or save behavior. Extract shared composition where needed; only new behavior belongs in prototype-specific controllers. Apply the same controller/view boundaries as production. Keep fixtures and backend simulation out of views.
+- Use explicitly injected API services backed by the shared MSW backend. Reuse production HTTP clients for existing contracts; define typed, explicitly injected adapters for prototype-only contracts. Await shared worker startup before mounting backend-connected stories. API requests must not reach a live backend.
+- Keep deterministic seeds and in-memory persistence in shared mock-backend files, separate from stories. Reset state explicitly for independent review scenarios. Mocks should support the behavior under review without becoming a second production backend.
+- Derive editable records and their display projections from one saved source of truth. Successful mutations must update or invalidate dependent state. Keep unsaved drafts separate, preserve them on failure, and prevent accidental loss when switching records. Make save behavior and deliberate production differences explicit.
+- Purely presentational prototypes may omit tests. Stateful prototype logic requires regression coverage for consequential interactions under the [testing conventions](testing.md), including edit/display synchronization where applicable. Verify networked flows against shared MSW handlers rather than a parallel mock implementation.
 
 ## Backend dependencies
 
