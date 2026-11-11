@@ -226,13 +226,18 @@ test("NPC relationships persist on cards and removal requires confirmation", asy
     const cardElement = () => document.querySelector('[data-testid="npc-card-goblin-soldier"]');
     expect(cardElement()?.getAttribute("data-relationship")).toBe("neutral");
     await card.getByTestId("edit-npc").click();
-    expect((document.querySelector('[data-testid="npc-relationship-neutral"]') as HTMLInputElement).checked).toBe(true);
+    expect(
+      (document.querySelector('[data-testid="npc-relationship-neutral"]') as HTMLInputElement)
+        .checked,
+    ).toBe(true);
     for (const relationship of ["enemy", "friend", "neutral"]) {
       await page.getByTestId(`npc-relationship-${relationship}`).click();
       await page.getByTestId("save-npc").click();
       await expect.poll(() => cardElement()?.getAttribute("data-relationship")).toBe(relationship);
       const result = await (await fetch("/api/prototype/npcs")).json();
-      expect(result.npcs.find((npc: { id: string }) => npc.id === "goblin-soldier").relationship).toBe(relationship);
+      expect(
+        result.npcs.find((npc: { id: string }) => npc.id === "goblin-soldier").relationship,
+      ).toBe(relationship);
     }
     await page.getByTestId("remove-npc").click();
     await page.getByTestId("cancel-remove-npc").click();

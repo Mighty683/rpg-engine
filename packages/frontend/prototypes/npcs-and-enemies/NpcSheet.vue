@@ -108,7 +108,12 @@ function save() {
           /></label>
           <fieldset class="relationship" aria-label="NPC relationship">
             <label v-for="relationship in relationships" :key="relationship">
-              <input v-model="form.relationship" type="radio" :value="relationship" :data-testid="`npc-relationship-${relationship}`" />
+              <input
+                v-model="form.relationship"
+                type="radio"
+                :value="relationship"
+                :data-testid="`npc-relationship-${relationship}`"
+              />
               <span>{{ relationship }}</span>
             </label>
           </fieldset>
@@ -226,13 +231,30 @@ function save() {
         </section>
       </div>
 
-      <div class="flex flex-wrap items-center justify-end gap-small border-t border-default pt-small">
+      <div
+        class="flex flex-wrap items-center justify-end gap-small border-t border-default pt-small"
+      >
         <template v-if="!readOnly && npc">
-          <UButton v-if="!confirmingRemoval" color="error" variant="outline" data-testid="remove-npc" @click="confirmingRemoval = true">Remove NPC</UButton>
+          <UButton
+            v-if="!confirmingRemoval"
+            color="error"
+            variant="outline"
+            data-testid="remove-npc"
+            @click="confirmingRemoval = true"
+            >Remove NPC</UButton
+          >
           <template v-else>
             <span>Remove {{ npc.name }}?</span>
-            <UButton color="neutral" variant="outline" data-testid="cancel-remove-npc" @click="confirmingRemoval = false">Cancel</UButton>
-            <UButton color="error" data-testid="confirm-remove-npc" @click="emit('remove', npc.id)">Confirm removal</UButton>
+            <UButton
+              color="neutral"
+              variant="outline"
+              data-testid="cancel-remove-npc"
+              @click="confirmingRemoval = false"
+              >Cancel</UButton
+            >
+            <UButton color="error" data-testid="confirm-remove-npc" @click="emit('remove', npc.id)"
+              >Confirm removal</UButton
+            >
           </template>
         </template>
         <UButton

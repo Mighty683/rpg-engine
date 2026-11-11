@@ -170,11 +170,21 @@ function attackSummary(npc: Npc): string {
 </template>
 
 <style scoped>
-article[data-relationship="enemy"] { border-color: var(--ui-error); }
-article[data-relationship="enemy"] .npc-name { color: var(--ui-error); }
-article[data-relationship="friend"] { border-color: var(--ui-success); }
-article[data-relationship="friend"] .npc-name { color: var(--ui-success); }
-article[data-relationship="neutral"] .npc-name { color: var(--ui-text-highlighted); }
+article[data-relationship="enemy"] {
+  border-color: var(--ui-error);
+}
+article[data-relationship="enemy"] .npc-name {
+  color: var(--ui-error);
+}
+article[data-relationship="friend"] {
+  border-color: var(--ui-success);
+}
+article[data-relationship="friend"] .npc-name {
+  color: var(--ui-success);
+}
+article[data-relationship="neutral"] .npc-name {
+  color: var(--ui-text-highlighted);
+}
 .attribute-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

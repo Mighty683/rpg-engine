@@ -41,13 +41,17 @@ const tabs = computed(() => [
     color: "primary" as const,
     testId: "edge-tab-sheets",
   },
-  ...(state.role === "GM" ? [{
-    id: "npcs",
-    width: "wide" as const,
-    label: "NPCs",
-    color: "info" as const,
-    testId: "edge-tab-npcs",
-  }] : []),
+  ...(state.role === "GM"
+    ? [
+        {
+          id: "npcs",
+          width: "wide" as const,
+          label: "NPCs",
+          color: "info" as const,
+          testId: "edge-tab-npcs",
+        },
+      ]
+    : []),
   { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
 ]);
 function npcRoll(
@@ -144,12 +148,7 @@ function npcRoll(
                       "
                       @roll-attack="
                         (record, attack) =>
-                          npcRoll(
-                            record,
-                            attack.attributes,
-                            controller.openCustomFreeRoll,
-                            attack,
-                          )
+                          npcRoll(record, attack.attributes, controller.openCustomFreeRoll, attack)
                       "
                     />
                   </li>
