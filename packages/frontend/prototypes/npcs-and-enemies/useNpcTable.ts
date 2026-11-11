@@ -79,6 +79,14 @@ export function useNpcTable(
       await client.invalidateQueries({ queryKey: partyKey(gameId) });
     });
   }
+  async function removeNpc(id: string) {
+    if (state.role !== "GM") return;
+    await perform(async () => {
+      await npcs.remove(id);
+      state.npcs = state.npcs.filter((npc) => npc.id !== id);
+      state.selectedNpcId = "__new__";
+    });
+  }
   function openSheet(id: string) {
     state.selectedSheetId = id;
     state.edgeTab = "sheets";
@@ -87,6 +95,7 @@ export function useNpcTable(
     role,
     (value) => {
       state.role = value;
+      if (value !== "GM" && state.edgeTab === "npcs") state.edgeTab = null;
       if (value !== "GM" && state.selectedNpcId === "__new__")
         state.selectedNpcId = state.npcs[0]?.id ?? "__new__";
     },
@@ -96,5 +105,5 @@ export function useNpcTable(
     state.view = value;
   });
   void reload();
-  return { state, reload, saveNpc, saveCharacterTags, openSheet };
+  return { state, reload, saveNpc, removeNpc, saveCharacterTags, openSheet };
 }

@@ -8,6 +8,7 @@
 - Apply visibility projections on the server. The [prototype](../../../packages/frontend/prototypes/npcs-and-enemies/) sends full records and uses shared free rolls; neither contract is suitable for production.
 - Extend the existing throw service with NPC-specific setup and GM-only snapshots. This prevents shared history from exposing NPC data; the audience policy requires confirmation before implementation.
 - Use game transaction locks, revision checks and idempotent creation to serialize writes and prevent duplicates or lost updates.
+- NPC rank is not stored or exposed; stats are entered manually. The rules reference remains intact, but rank-based automation is outside this task.
 
 ## Data structures
 
@@ -20,7 +21,8 @@ CREATE TABLE npcs (
   id uuid PRIMARY KEY,
   game_id uuid NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   name varchar(100) NOT NULL CHECK (name = trim(name) AND char_length(name) > 0),
-  rank text NOT NULL CHECK (rank IN ('Soldier', 'Elite', 'Champion')),
+  relationship text NOT NULL DEFAULT 'neutral'
+    CHECK (relationship IN ('enemy', 'neutral', 'friend')),
   level smallint NOT NULL CHECK (level BETWEEN 5 AND 60),
   visibility text NOT NULL DEFAULT 'hidden'
     CHECK (visibility IN ('hidden', 'visible', 'known')),
@@ -79,7 +81,7 @@ Attack positions are zero-based array indexes. The deferred unique constraint pe
 ```ts
 type Attribute = "DEX" | "INS" | "MIG" | "WLP";
 type Die = 6 | 8 | 10 | 12;
-type Rank = "Soldier" | "Elite" | "Champion";
+type Relationship = "enemy" | "neutral" | "friend";
 type Visibility = "hidden" | "visible" | "known";
 type Resource = { current: number; max: number };
 type Attack = {
@@ -92,7 +94,7 @@ type Attack = {
 };
 type NpcProfile = {
   name: string;
-  rank: Rank;
+  relationship: Relationship;
   level: number;
   baseDice: Record<Attribute, Die>;
   hp: Resource;
@@ -109,7 +111,7 @@ type GmNpc = NpcWrite & {
   createdAt: string;
   updatedAt: string;
 };
-type VisibleNpc = { view: "visible"; id: string; name: string; rank: Rank };
+type VisibleNpc = { view: "visible"; id: string; name: string; relationship: Relationship };
 type KnownNpc = NpcProfile & { view: "known"; id: string };
 type NpcRead = GmNpc | VisibleNpc | KnownNpc;
 ```

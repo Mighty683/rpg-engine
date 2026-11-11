@@ -135,9 +135,8 @@ test("NPC create and edit survive closing and reopening the sheet; player sheets
     await expect.element(page.getByTestId("npc-name")).toHaveValue("Lantern Keeper");
     await expect.element(page.getByTestId("attribute-die-DEX")).toHaveTextContent("d10");
     table.role.value = "Player";
-    await expect.element(page.getByTestId("npc-name")).toBeDisabled();
-    await expect.element(page.getByTestId("save-npc")).not.toBeInTheDocument();
-    await userEvent.keyboard("{Escape}");
+    await expect.element(page.getByTestId("edge-tab-npcs")).not.toBeInTheDocument();
+    await expect.element(page.getByTestId("npc-sheet")).not.toBeInTheDocument();
     await page.getByTestId("edge-tab-sheets").click();
     await expect.element(page.getByTestId("character-name")).toBeDisabled();
     await expect.element(page.getByTestId("save-character")).not.toBeInTheDocument();
@@ -152,7 +151,7 @@ test("NPC attacks and notes save to the card, can be edited and removed, and ret
     const card = page.getByTestId("npc-card-goblin-soldier");
     const knight = document.querySelector('[data-testid="npc-card-dark-knight"]')!;
     expect(knight.textContent).not.toMatch(/Accuracy \+|Vulnerable:|Immune:|Resistant:/);
-    expect(knight.textContent).toContain("Elite");
+    expect(knight.textContent).not.toContain("Elite");
     expect(knight.textContent).not.toContain("×2");
     expect(knight.querySelector('[data-testid="npc-notes"]')?.textContent).toContain(
       "Commands a squad of skeletal soldiers.",
@@ -173,7 +172,6 @@ test("NPC attacks and notes save to the card, can be edited and removed, and ret
     await page.getByTestId("attack-damage-2").fill("9");
     await page.getByTestId("attack-damage-type-2").fill("fire and shadow");
     for (const [testId, value] of [
-      ["npc-rank", "Elite"],
       ["attack-range-2", "ranged"],
       ["attack-attribute-2-0", "INS"],
       ["attack-attribute-2-1", "WLP"],
@@ -205,17 +203,46 @@ test("NPC attacks and notes save to the card, can be edited and removed, and ret
       damageBonus: 9,
       damageType: "fire and shadow",
     });
-    expect(goblin.rank).toBe("Elite");
+    expect(goblin).not.toHaveProperty("rank");
     expect(goblin.abilities[0].name).toBe("Skirmish");
     await card.getByTestId("edit-npc").click();
     await expect.element(page.getByTestId("attack-damage-type-2")).toHaveValue("fire and shadow");
-    await expect.element(page.getByTestId("npc-rank")).toHaveValue("Elite");
+    await expect.element(page.getByTestId("npc-rank")).not.toBeInTheDocument();
     await page.getByTestId("remove-attack-2").click();
     await page.getByTestId("save-npc").click();
     await userEvent.keyboard("{Escape}");
     await expect
       .poll(() => document.querySelector('[data-testid="npc-card-goblin-soldier"]')?.textContent)
       .not.toContain("Flame bolt");
+  } finally {
+    table.cleanup();
+  }
+});
+
+test("NPC relationships persist on cards and removal requires confirmation", async () => {
+  const table = await mountTable();
+  try {
+    const card = page.getByTestId("npc-card-goblin-soldier");
+    const cardElement = () => document.querySelector('[data-testid="npc-card-goblin-soldier"]');
+    expect(cardElement()?.getAttribute("data-relationship")).toBe("neutral");
+    await card.getByTestId("edit-npc").click();
+    expect((document.querySelector('[data-testid="npc-relationship-neutral"]') as HTMLInputElement).checked).toBe(true);
+    for (const relationship of ["enemy", "friend", "neutral"]) {
+      await page.getByTestId(`npc-relationship-${relationship}`).click();
+      await page.getByTestId("save-npc").click();
+      await expect.poll(() => cardElement()?.getAttribute("data-relationship")).toBe(relationship);
+      const result = await (await fetch("/api/prototype/npcs")).json();
+      expect(result.npcs.find((npc: { id: string }) => npc.id === "goblin-soldier").relationship).toBe(relationship);
+    }
+    await page.getByTestId("remove-npc").click();
+    await page.getByTestId("cancel-remove-npc").click();
+    await expect.element(card).toBeVisible();
+    await page.getByTestId("remove-npc").click();
+    await page.getByTestId("confirm-remove-npc").click();
+    await expect.element(card).not.toBeInTheDocument();
+    const result = await (await fetch("/api/prototype/npcs")).json();
+    expect(result.npcs.some((npc: { id: string }) => npc.id === "goblin-soldier")).toBe(false);
+    await expect.element(page.getByTestId("remove-npc")).not.toBeInTheDocument();
   } finally {
     table.cleanup();
   }
@@ -250,7 +277,7 @@ test("GM controls player visibility without exposing hidden or redacted NPC deta
     await expect.element(goblin).toBeVisible();
     const text = document.querySelector('[data-testid="npc-card-goblin-soldier"]')!.textContent!;
     expect(text).toContain("Goblin Sentry");
-    expect(text).toContain("Soldier");
+    expect(text).not.toContain("Soldier");
     expect(text).toContain("???");
     expect(text).not.toMatch(/Lv 5|d8|50|Rusty Blade|watchtower/);
     await expect.element(goblin.getByTestId("edit-npc")).not.toBeInTheDocument();
@@ -260,10 +287,31 @@ test("GM controls player visibility without exposing hidden or redacted NPC deta
     await expect
       .element(page.getByTestId("npc-card-dark-knight").getByTestId("npc-notes"))
       .not.toBeInTheDocument();
-    await page.getByTestId("edge-tab-npcs").click();
-    await expect.element(page.getByTestId("npc-redacted-sheet")).toBeVisible();
+    await expect.element(page.getByTestId("edge-tab-npcs")).not.toBeInTheDocument();
     await expect.element(page.getByTestId("npc-sheet")).not.toBeInTheDocument();
     expect(document.body.textContent).not.toContain("Giant Forest Spider");
+  } finally {
+    table.cleanup();
+  }
+});
+
+test("player examples cover each visible relationship and hide hidden NPCs", async () => {
+  const table = await mountTable("Player");
+  try {
+    await expect.element(page.getByTestId("edge-tab-npcs")).not.toBeInTheDocument();
+    for (const [id, relationship, redacted] of [
+      ["goblin-soldier", "neutral", false],
+      ["dark-knight", "enemy", false],
+      ["forest-spider", "friend", false],
+      ["visible-enemy", "enemy", true],
+      ["visible-neutral", "neutral", true],
+      ["visible-friend", "friend", true],
+    ] as const) {
+      const card = document.querySelector(`[data-testid="npc-card-${id}"]`)!;
+      expect(card.getAttribute("data-relationship")).toBe(relationship);
+      expect(card.textContent?.includes("???")).toBe(redacted);
+    }
+    await expect.element(page.getByTestId("npc-card-hidden-npc")).not.toBeInTheDocument();
   } finally {
     table.cleanup();
   }

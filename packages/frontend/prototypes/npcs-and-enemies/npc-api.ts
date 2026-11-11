@@ -10,6 +10,7 @@ export const npcApi: NpcApi = {
       method: "PUT",
       body: JSON.stringify({ npc, tags }),
     }),
+  remove: (id) => request(`/api/prototype/npcs/${encodeURIComponent(id)}`, { method: "DELETE" }),
   saveCharacterTags: (id, tags) =>
     request(`/api/prototype/characters/${encodeURIComponent(id)}/tags`, {
       method: "PUT",

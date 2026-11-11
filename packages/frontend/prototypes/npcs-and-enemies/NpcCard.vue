@@ -39,12 +39,6 @@ const weapons = computed(() => props.npc.attacks.map(toWeapon));
 
 const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 
-const rankLabels: Record<string, string> = {
-  Soldier: "Soldier",
-  Elite: "Elite",
-  Champion: "Champion",
-};
-
 const attacksOpen = ref(false);
 
 function attackSummary(npc: Npc): string {
@@ -55,16 +49,16 @@ function attackSummary(npc: Npc): string {
 <template>
   <article
     class="flex h-full flex-col rounded-panel border border-default bg-default p-medium"
+    :data-relationship="npc.relationship ?? 'neutral'"
     :data-testid="`npc-card-${npc.id}`"
   >
     <div class="flex flex-1 flex-col space-y-medium">
       <header>
         <div class="flex flex-wrap items-center gap-small">
-          <h3 class="text-section font-semibold">{{ npc.name }}</h3>
+          <h3 class="npc-name text-section font-semibold">{{ npc.name }}</h3>
           <UBadge v-if="!redacted" color="neutral" variant="outline" size="sm"
             >Lv {{ npc.level }}</UBadge
           >
-          <UBadge color="warning" variant="subtle">{{ rankLabels[npc.rank] }}</UBadge>
           <UBadge v-if="!redacted && npc.hp.current === 0" color="error" variant="subtle"
             >0 HP</UBadge
           >
@@ -176,6 +170,11 @@ function attackSummary(npc: Npc): string {
 </template>
 
 <style scoped>
+article[data-relationship="enemy"] { border-color: var(--ui-error); }
+article[data-relationship="enemy"] .npc-name { color: var(--ui-error); }
+article[data-relationship="friend"] { border-color: var(--ui-success); }
+article[data-relationship="friend"] .npc-name { color: var(--ui-success); }
+article[data-relationship="neutral"] .npc-name { color: var(--ui-text-highlighted); }
 .attribute-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

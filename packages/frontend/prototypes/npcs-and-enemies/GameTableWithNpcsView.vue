@@ -33,7 +33,7 @@ const selectedNpcId = computed({
 const selectedNpc = computed(() =>
   availableNpcs.value.find((npc) => npc.id === selectedNpcId.value),
 );
-const tabs = [
+const tabs = computed(() => [
   {
     id: "sheets",
     width: "wide" as const,
@@ -41,15 +41,15 @@ const tabs = [
     color: "primary" as const,
     testId: "edge-tab-sheets",
   },
-  {
+  ...(state.role === "GM" ? [{
     id: "npcs",
     width: "wide" as const,
     label: "NPCs",
     color: "info" as const,
     testId: "edge-tab-npcs",
-  },
+  }] : []),
   { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
-];
+]);
 function npcRoll(
   npc: Npc,
   attributes: Attribute[],
@@ -191,13 +191,14 @@ function npcRoll(
                 :read-only="state.role !== 'GM'"
                 :pending="state.pending"
                 @save="table.saveNpc"
+                @remove="table.removeNpc"
               />
               <p
                 v-else-if="selectedNpc"
                 class="p-medium text-muted"
                 data-testid="npc-redacted-sheet"
               >
-                Only this NPC's name and rank are known.
+                Only this NPC's name and relationship are known.
               </p>
               <p v-else class="p-medium text-muted" data-testid="no-visible-npcs">
                 No NPCs are visible.

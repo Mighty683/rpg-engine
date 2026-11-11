@@ -63,7 +63,7 @@ describe("prototype backend", () => {
       tags: [],
     });
     resetPrototypeBackend();
-    expect((await fetch(collection).then((response) => response.json())).npcs).toHaveLength(3);
+    expect((await fetch(collection).then((response) => response.json())).npcs).toHaveLength(7);
   });
 
   it("records submitted dice and notes and deletes history entries", async () => {

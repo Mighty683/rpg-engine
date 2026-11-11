@@ -4,6 +4,7 @@ The shared MSW bootstrap owns all persisted state. This folder does not keep a s
 
 - `GET /api/prototype/npcs` → `{ npcs: Npc[], tags: Tag[] }`
 - `PUT /api/prototype/npcs/:id` body `{ npc: Npc, tags: Tag[] }` → `{ npc: Npc }`
+- `DELETE /api/prototype/npcs/:id` → 204
 - `PUT /api/prototype/characters/:id/tags` body `{ tags: Tag[] }` → `{ tags: Tag[] }`
 
 `Npc` and its related prototype types are defined in `types.ts`; `Tag` comes from `tags.ts`. Seed NPCs from `fixtures.ts` (`allNpcs`). These are prototype contracts, not a proposed production schema.

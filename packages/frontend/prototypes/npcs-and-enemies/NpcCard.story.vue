@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import NpcCard from "./NpcCard.vue";
 import { allNpcs, goblinSoldier } from "./fixtures";
-import type { Npc, NpcRank } from "./types";
+import type { Npc } from "./types";
 
 function initialState() {
   return {
     selectedNpcId: goblinSoldier.id,
     hp: goblinSoldier.hp.current,
-    rank: "Soldier" as NpcRank,
   };
 }
 </script>
@@ -26,7 +25,6 @@ function initialState() {
                     current: state.hp,
                     max: (allNpcs.find((n) => n.id === state.selectedNpcId) ?? allNpcs[0]).hp.max,
                   },
-                  rank: state.rank,
                 } as Npc
               "
             />
@@ -46,7 +44,6 @@ function initialState() {
         :min="0"
         :max="(allNpcs.find((n) => n.id === state.selectedNpcId) ?? allNpcs[0]).hp.max"
       />
-      <HstSelect v-model="state.rank" title="Rank" :options="['Soldier', 'Elite', 'Champion']" />
     </template>
   </Story>
 </template>

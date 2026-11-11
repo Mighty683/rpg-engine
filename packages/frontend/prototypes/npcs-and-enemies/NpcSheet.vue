@@ -7,16 +7,17 @@ import DefenseField from "../../src/modules/characters/sheet/defense/DefenseFiel
 import CharacterLevelField from "../../src/modules/characters/sheet/identity/CharacterLevelField.vue";
 import NpcAttacksEditor from "./NpcAttacksEditor.vue";
 import type { Tag } from "./tags";
-import type { Npc, NpcRank } from "./types";
+import type { Npc, NpcRelationship } from "./types";
 
 const props = defineProps<{
   npc: Npc | null;
   readOnly?: boolean;
   pending?: boolean;
 }>();
-const emit = defineEmits<{ save: [npc: Npc, newTags: Tag[]] }>();
+const emit = defineEmits<{ save: [npc: Npc, newTags: Tag[]]; remove: [id: string] }>();
 
-const ranks: NpcRank[] = ["Soldier", "Elite", "Champion"];
+const relationships: NpcRelationship[] = ["enemy", "neutral", "friend"];
+const confirmingRemoval = ref(false);
 const attributes = ["DEX", "INS", "MIG", "WLP"] as const;
 const attributeHelp = {
   DEX: "Dexterity measures agility and is the usual base for Defense.",
@@ -29,8 +30,8 @@ function newNpc(): Npc {
   return {
     id: `npc-${crypto.randomUUID()}`,
     name: "",
+    relationship: "neutral",
     level: 5,
-    rank: "Soldier",
     visibility: "hidden",
     baseDice: { DEX: 8, INS: 8, MIG: 8, WLP: 8 },
     hp: { current: 50, max: 50 },
@@ -55,6 +56,8 @@ watch(
   (npc) => {
     form.value = npc ? structuredClone(toRaw(npc)) : newNpc();
     form.value.visibility ??= "known";
+    form.value.relationship ??= "neutral";
+    confirmingRemoval.value = false;
   },
   { immediate: true },
 );
@@ -103,13 +106,13 @@ function save() {
             ><span class="sr-only">NPC name</span
             ><input v-model="form.name" placeholder="NPC name" data-testid="npc-name"
           /></label>
+          <fieldset class="relationship" aria-label="NPC relationship">
+            <label v-for="relationship in relationships" :key="relationship">
+              <input v-model="form.relationship" type="radio" :value="relationship" :data-testid="`npc-relationship-${relationship}`" />
+              <span>{{ relationship }}</span>
+            </label>
+          </fieldset>
         </div>
-        <label class="select-field rank-field"
-          >RANK
-          <select v-model="form.rank" aria-label="NPC rank" data-testid="npc-rank">
-            <option v-for="rank in ranks" :key="rank" :value="rank">{{ rank }}</option>
-          </select>
-        </label>
         <CharacterLevelField
           :level="form.level"
           :max="60"
@@ -123,11 +126,11 @@ function save() {
         <section v-if="!readOnly" class="sheet-panel" aria-label="Player visibility">
           <SheetSection>
             <template #heading>PLAYER VISIBILITY</template>
-            <label class="select-field rank-field"
+            <label class="select-field"
               >Visibility
               <select v-model="form.visibility" data-testid="npc-visibility">
                 <option value="hidden">Hidden — players cannot see this NPC</option>
-                <option value="visible">Visible — name and rank only</option>
+                <option value="visible">Visible — name and relationship only</option>
                 <option value="known">Known — stats are visible</option>
               </select>
             </label>
@@ -223,7 +226,15 @@ function save() {
         </section>
       </div>
 
-      <div class="flex justify-end border-t border-default pt-small">
+      <div class="flex flex-wrap items-center justify-end gap-small border-t border-default pt-small">
+        <template v-if="!readOnly && npc">
+          <UButton v-if="!confirmingRemoval" color="error" variant="outline" data-testid="remove-npc" @click="confirmingRemoval = true">Remove NPC</UButton>
+          <template v-else>
+            <span>Remove {{ npc.name }}?</span>
+            <UButton color="neutral" variant="outline" data-testid="cancel-remove-npc" @click="confirmingRemoval = false">Cancel</UButton>
+            <UButton color="error" data-testid="confirm-remove-npc" @click="emit('remove', npc.id)">Confirm removal</UButton>
+          </template>
+        </template>
         <UButton
           v-if="!readOnly"
           color="primary"
@@ -247,7 +258,7 @@ function save() {
 }
 .sheet-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(8rem, 12rem) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--spacing-small);
   align-items: stretch;
 }
@@ -262,6 +273,19 @@ function save() {
   min-width: 0;
   flex-direction: column;
   justify-content: end;
+}
+.relationship {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-small);
+  margin-top: var(--sheet-tight);
+  font-size: var(--sheet-label-size);
+  text-transform: capitalize;
+}
+.relationship label {
+  display: flex;
+  align-items: center;
+  gap: var(--sheet-tight);
 }
 .sheet-name input,
 .text-field,
@@ -312,15 +336,9 @@ function save() {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-.rank-field {
-  align-content: end;
-}
 @media (max-width: 600px) {
   .sheet-header {
     grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .name-field {
-    grid-column: 1 / -1;
   }
 }
 .select-field {

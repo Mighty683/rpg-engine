@@ -4,7 +4,6 @@ export const goblinSoldier: Npc = {
   id: "goblin-soldier",
   name: "Goblin Sentry",
   level: 5,
-  rank: "Soldier",
   // Legal array d8/d8/d8/d8. HP = 2*5 + 5*8 = 50, MP = 5 + 5*8 = 45, crisis = 25,
   // DEF = DEX = 8, MAG DEF = INS = 8, INIT = (8+8)/2 = 8.
   baseDice: { DEX: 8, INS: 8, MIG: 8, WLP: 8 },
@@ -54,7 +53,6 @@ export const darkKnight: Npc = {
   id: "dark-knight",
   name: "Sir Malachar",
   level: 20,
-  rank: "Elite",
   // Legal array d10/d10/d6/d6. Soldier HP = 2*20 + 5*6 = 70, elite doubles to 140,
   // crisis = 70. MP = 20 + 5*6 = 50 (elite does not change MP). DEF = 10, MAG DEF = 10,
   // INIT = (10+10)/2 + 2 elite = 12. Level 20 damage bonus = 5 + 5 = 10.
@@ -104,7 +102,6 @@ export const forestSpider: Npc = {
   id: "forest-spider",
   name: "Giant Forest Spider",
   level: 10,
-  rank: "Soldier",
   // Legal array d10/d8/d8/d6. HP = 2*10 + 5*8 = 60, crisis = 30, MP = 10 + 5*6 = 40,
   // DEF = DEX = 10, MAG DEF = INS = 8, INIT = (10+8)/2 = 9.
   baseDice: { DEX: 10, INS: 8, MIG: 8, WLP: 6 },
@@ -142,4 +139,12 @@ export const forestSpider: Npc = {
   notes: "Cannot use equipment.",
 };
 
-export const allNpcs: Npc[] = [goblinSoldier, darkKnight, forestSpider];
+export const allNpcs: Npc[] = [
+  goblinSoldier,
+  { ...darkKnight, relationship: "enemy", visibility: "known" },
+  { ...forestSpider, relationship: "friend", visibility: "known" },
+  { ...goblinSoldier, id: "visible-enemy", name: "Enemy Scout", relationship: "enemy", visibility: "visible" },
+  { ...goblinSoldier, id: "visible-neutral", name: "Wandering Merchant", relationship: "neutral", visibility: "visible" },
+  { ...goblinSoldier, id: "visible-friend", name: "Friendly Guide", relationship: "friend", visibility: "visible" },
+  { ...goblinSoldier, id: "hidden-npc", name: "Hidden Observer", relationship: "neutral", visibility: "hidden" },
+];

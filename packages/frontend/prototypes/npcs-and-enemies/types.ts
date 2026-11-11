@@ -1,8 +1,8 @@
 /** Contracts for the NPC table composition and its prototype-only endpoints. */
 import type { Attribute } from "../../src/modules/game-table/types";
 import type { Tag } from "./tags";
-export type NpcRank = "Soldier" | "Elite" | "Champion";
 export type NpcVisibility = "hidden" | "visible" | "known";
+export type NpcRelationship = "enemy" | "neutral" | "friend";
 
 export type DamageType =
   | "physical"
@@ -34,8 +34,8 @@ export type NpcAbility = {
 export type Npc = {
   id: string;
   name: string;
+  relationship?: NpcRelationship;
   level: number;
-  rank: NpcRank;
   visibility?: NpcVisibility;
   baseDice: { DEX: number; INS: number; MIG: number; WLP: number };
   hp: { current: number; max: number };
@@ -65,5 +65,6 @@ export type TableScenario =
 export interface NpcApi {
   list(): Promise<{ npcs: Npc[]; tags: Tag[] }>;
   save(npc: Npc, tags: Tag[]): Promise<{ npc: Npc }>;
+  remove(id: string): Promise<void>;
   saveCharacterTags(id: string, tags: Tag[]): Promise<{ tags: Tag[] }>;
 }

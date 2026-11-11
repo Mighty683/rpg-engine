@@ -11,7 +11,7 @@ The [user story](story.md) covers preparing and using NPCs during a session. Thi
 
 The GM opens **NPCs** and selects **+ New NPC**, or uses the edit action on an existing card. The side panel retains the table context and follows the character-sheet interaction and component style while using NPC-specific fields.
 
-- Edit name, rank (Soldier, Elite, Champion), level, attribute dice, HP and MP, physical and magic defense, attacks and free-text GM notes. Rank appears beside the name; no rank multiplier is shown.
+- Edit name, relationship (enemy, neutral, friend), level, attribute dice, HP and MP, physical and magic defense, attacks and free-text GM notes. NPCs do not have a rank field.
 - Add, edit or remove attacks, including reach, two attributes, damage bonus and free-text damage type. Attack information is shown without redundant “high roll” wording.
 - Save explicitly to update the NPC card. The prototype keeps a local draft until save; saving failures retain it. Stats are currently manual and do not recalculate when other fields change.
 - Tags, structured abilities, damage-affinity badges, crisis and initiative are outside this iteration. Notes are ordinary text, not tags. Previously seeded fields are retained in the prototype data but not displayed or edited.
@@ -19,7 +19,7 @@ The GM opens **NPCs** and selects **+ New NPC**, or uses the edit action on an e
 
 ## Run the table
 
-Characters and NPCs appear together. NPC cards show the same saved name, rank, level, dice, HP, MP, defenses, attacks and notes as their editor; there is no extra accuracy or visibility badge. The GM can roll NPC attributes and expand attacks to roll them. The prototype's NPC attack roll retains the rules-based level accuracy modifier; hiding its card label does not remove that modifier. High-roll damage remains a rules calculation, not a separate damage mode. See [NPC rules](../../spec/fabula-ultima/npcs-and-enemies.md) and [weapon attacks](../../spec/fabula-ultima/weapon-attacks.md).
+Characters and NPCs appear together. NPC cards show the same saved name, level, dice, HP, MP, defenses, attacks and notes as their editor; relationship determines name and border color. There is no extra accuracy or visibility badge. The GM can roll NPC attributes and expand attacks to roll them. The prototype's NPC attack roll retains the rules-based level accuracy modifier; hiding its card label does not remove that modifier. High-roll damage remains a rules calculation, not a separate damage mode. See [NPC rules](../../spec/fabula-ultima/npcs-and-enemies.md) and [weapon attacks](../../spec/fabula-ultima/weapon-attacks.md).
 
 The gallery offers mixed, character-only, NPC-only, empty, loading and error review states. These are review controls, not an implemented production filtering feature. The GM can reach character sheets and throw history through the table panels. Players cannot edit NPCs or roll NPC actions in the prototype.
 
@@ -30,10 +30,10 @@ The GM selects player visibility in the NPC editor and saves the NPC to apply it
 | Setting | Player table and NPC panel                                                                                                                 |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Hidden  | No card or NPC tab; the NPC is not visible.                                                                                                |
-| Visible | Name and rank are visible; level, attributes, resources, defenses and attacks are concealed with `???`. The detailed sheet is unavailable. |
-| Known   | Card and read-only sheet show stats and attacks. GM notes remain private.                                                                  |
+| Visible | Name and relationship are visible; level, attributes, resources, defenses and attacks are concealed with `???`. |
+| Known   | Card shows stats and attacks. GM notes remain private. |
 
-The GM sees the full card regardless of setting and checks or changes visibility in the editor, not via a card badge. The role selector in Histoire previews these states; it is not an actual multi-user session. Visibility is a product decision under review, not evidence that players can safely access prototype endpoints.
+The GM sees the full card regardless of setting and checks or changes visibility in the editor, not via a card badge. Players have no NPC edge tab. The role selector in Histoire previews these states; it is not an actual multi-user session. Visibility is a product decision under review, not evidence that players can safely access prototype endpoints.
 
 ## Handoff and open questions
 
