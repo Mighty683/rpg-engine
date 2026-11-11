@@ -12,5 +12,13 @@ if (!process.env.TEST_DATABASE_URL && testDatabaseUrl)
 
 export default defineConfig({
   plugins: [cucumber({ import: ["src/support/**/*.ts", "src/steps/**/*.ts"] })],
-  test: { include: ["src/features/**/*.feature"], globalSetup: ["src/setup.ts"] },
+  // The Cucumber plugin must register tests against this runner's Vitest instance.
+  resolve: {
+    alias: [{ find: /^vitest$/, replacement: fileURLToPath(import.meta.resolve("vitest")) }],
+  },
+  test: {
+    include: ["src/features/**/*.feature"],
+    globalSetup: ["src/setup.ts"],
+    server: { deps: { inline: ["@lotun/vitest-cucumber"] } },
+  },
 });
