@@ -33,11 +33,14 @@ export function createGameEvents() {
     };
   }
 
-  function publishGameEvent(gameId: string, event: GameEvent) {
+  function publishGameEvent(gameId: string, event: GameEvent, accountId?: string) {
     for (const stream of subscriptions) {
-      if (stream.gameId === gameId && stream.active) {
+      if (
+        stream.gameId === gameId &&
+        stream.active &&
+        (!accountId || stream.accountId === accountId)
+      )
         stream.response.write(`data: ${JSON.stringify(event)}\n\n`);
-      }
     }
   }
 
@@ -59,5 +62,10 @@ export function createGameEvents() {
     }
   }
 
-  return { registerStream, publishGameEvent, closeSessionStreams, closeMemberStreams };
+  return {
+    registerStream,
+    publishGameEvent,
+    closeSessionStreams,
+    closeMemberStreams,
+  };
 }

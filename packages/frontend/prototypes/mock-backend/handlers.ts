@@ -91,8 +91,13 @@ export const prototypeHandlers = [
         throws: empty
           ? []
           : store.throws
-              .filter((entry) => !query.has("before") || entry.seq < Number(query.get("before")))
-              .slice(0, Number(query.get("limit") ?? 50)),
+              .slice(
+                query.has("before")
+                  ? store.throws.findIndex((entry) => entry.id === query.get("before")) + 1
+                  : 0,
+              )
+              .slice(0, Number(query.get("limit") ?? 50))
+              .reverse(),
       });
     }
     if (path.includes("/throws/") && method === "DELETE") {

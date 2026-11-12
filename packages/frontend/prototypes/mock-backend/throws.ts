@@ -41,13 +41,13 @@ export function createPrototypeThrow(input: CreateThrowInput): ThrowRecord {
         : redDice.length
           ? "opposed-check"
           : "attribute-check";
-  const seq = Math.max(0, ...prototypeStore.throws.map((entry) => entry.seq)) + 1;
+  const seq = prototypeStore.throws.length + 1;
   const first = outcome(dice, setup.modifier);
   const second = redDice.length ? outcome(redDice, redModifier) : undefined;
   return {
     ...makeThrow("free"),
     id: `throw-${seq}`,
-    seq,
+    private: input.private ?? false,
     kind,
     characterId: setup.characterId,
     characterName: (character?.sheet.name as string) ?? npc?.name ?? "GM",

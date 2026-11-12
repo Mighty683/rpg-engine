@@ -705,8 +705,8 @@ paths:
       parameters:
         - name: before
           in: query
-          schema: { type: integer, minimum: 1 }
-          description: Exclude this sequence and later sequences.
+          schema: { $ref: "#/components/schemas/Id" }
+          description: Exclude this visible throw and newer throws; deleted visible anchors remain usable.
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
@@ -2182,6 +2182,12 @@ components:
       required:
         - setup
       properties:
+        private:
+          {
+            type: boolean,
+            default: false,
+            description: "When true, only the author can see the roll.",
+          }
         sourceThrowId:
           oneOf:
             - { $ref: "#/components/schemas/Id" }
@@ -2347,7 +2353,7 @@ components:
       type: object
       required:
         - id
-        - seq
+        - private
         - createdAt
         - kind
         - role
@@ -2360,7 +2366,7 @@ components:
         - canRemove
       properties:
         id: { $ref: "#/components/schemas/Id" }
-        seq: { type: integer, minimum: 1 }
+        private: { type: boolean }
         createdAt: { type: string, format: date-time }
         kind: { $ref: "#/components/schemas/ThrowKind" }
         role: { type: string, enum: [GM, Player] }

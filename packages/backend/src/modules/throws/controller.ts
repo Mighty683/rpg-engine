@@ -5,17 +5,17 @@ import { Controller, RequestError, Route } from "arrow-express";
 
 import { routeId } from "../games/controller.ts";
 
-import { fail, parseCreateRequest } from "./contract.ts";
+import { fail, isUuid, parseCreateRequest } from "./contract.ts";
 
 const pageLimit = (value: unknown) => {
   const limit = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : 20;
   return Math.min(Math.max(limit, 1), 100);
 };
 
-const cursor = (value: unknown): number | null => {
+const cursor = (value: unknown): string | null => {
   if (value === undefined || value === null || value === "") return null;
-  if (typeof value !== "string" || !/^\d+$/.test(value) || Number(value) <= 0) return null;
-  return Number(value);
+  if (!isUuid(value)) throw fail("bad_request", "Invalid cursor.");
+  return value;
 };
 
 function requestError(error: unknown): never {

@@ -85,7 +85,7 @@ describe("prototype backend", () => {
     });
     const { throw: record } = await response.json();
     expect(record).toMatchObject({
-      seq: 3,
+      private: false,
       characterName: "Nera Vale",
       setup: { note: "Review roll", dice: [{ label: null, size: 20 }] },
       outcome: { first: { total: 8 } },

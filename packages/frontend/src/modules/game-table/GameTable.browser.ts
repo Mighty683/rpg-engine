@@ -115,11 +115,13 @@ test("a pending roll cannot be submitted twice, and an uncertain response refres
     await page.getByTestId("edge-tab-history").click();
     await page.getByTestId("make-roll").click();
     await page.getByTestId("add-die-d8").click();
+    await page.getByTestId("private-roll").click();
     await page.getByTestId("submit-free-roll").click();
     await expect.element(page.getByTestId("submit-free-roll")).toBeDisabled();
     expect(table.submissions).toHaveLength(1);
     expect(table.submissions[0]).toMatchObject({
       sourceThrowId: null,
+      private: true,
       setup: { type: "free", dice: [8] },
     });
     const initialReads = table.historyReads();
@@ -141,6 +143,7 @@ test("a stale character roll closes and a new roll uses the refreshed revision",
   try {
     await page.getByTestId("roll-attribute-DEX").click();
     table.setRevision(1);
+    await page.getByTestId("private-roll").click();
     await page.getByTestId("submit-roll").click();
     await expect.element(page.getByTestId("roll-dialog")).not.toBeInTheDocument();
     await expect.poll(() => document.body.textContent).toContain("Open the roll again");
@@ -148,8 +151,8 @@ test("a stale character roll closes and a new roll uses the refreshed revision",
     await page.getByTestId("roll-attribute-DEX").click();
     await page.getByTestId("submit-roll").click();
     await expect.poll(() => table.submissions.length).toBe(2);
-    expect(table.submissions[0]).toMatchObject({ setup: { expectedRevision: 0 } });
-    expect(table.submissions[1]).toMatchObject({ setup: { expectedRevision: 1 } });
+    expect(table.submissions[0]).toMatchObject({ private: true, setup: { expectedRevision: 0 } });
+    expect(table.submissions[1]).toMatchObject({ private: false, setup: { expectedRevision: 1 } });
   } finally {
     table.cleanup();
   }

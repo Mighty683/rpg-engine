@@ -11,10 +11,12 @@ const props = defineProps<{
   opponent: OpponentDraft;
   error: string;
   pending: boolean;
+  privateRoll: boolean;
 }>();
 const emit = defineEmits<{
   submit: [];
   cancel: [];
+  "update:privateRoll": [value: boolean];
   "update:opponent": [value: OpponentDraft];
 }>();
 
@@ -47,93 +49,103 @@ function toggleSecond(attribute: Attribute) {
     >
     <template #body>
       <form class="space-y-medium" data-testid="roll-dialog" @submit.prevent="emit('submit')">
-        <div class="space-y-small">
-          <template v-for="(attribute, index) in usedAttributes" :key="`${attribute}-${index}`">
-            <div class="flex flex-wrap items-end gap-medium">
-              <fieldset>
+        <fieldset :disabled="pending" class="space-y-medium">
+          <div class="space-y-small">
+            <template v-for="(attribute, index) in usedAttributes" :key="`${attribute}-${index}`">
+              <div class="flex flex-wrap items-end gap-medium">
+                <fieldset>
+                  <legend class="mb-small text-sm font-medium">
+                    {{ attribute }} die<span v-if="index === 1 && attribute === draft.first">
+                      (same size as first)</span
+                    >
+                  </legend>
+                  <div class="flex flex-wrap gap-small">
+                    <label v-for="size in dieSizes" :key="size" class="die-choice">
+                      <input
+                        v-model="draft.dice[attribute]"
+                        class="sr-only"
+                        type="radio"
+                        :name="`die-${index}-${attribute}`"
+                        :value="size"
+                        :data-testid="
+                          index === 1 && attribute === draft.first
+                            ? `second-die-size-${attribute}-${size}`
+                            : `die-size-${attribute}-${size}`
+                        "
+                      />
+                      <span class="die-choice-content"
+                        ><DieIcon :sides="size" /><span>d{{ size }}</span></span
+                      >
+                    </label>
+                  </div>
+                </fieldset>
+                <UFormField v-if="index === 0" label="Check modifier" class="w-28">
+                  <UInput
+                    v-model="draft.modifier"
+                    type="number"
+                    step="1"
+                    class="w-full"
+                    data-testid="check-modifier"
+                  />
+                </UFormField>
+              </div>
+              <fieldset v-if="index === 0 && draft.mode === 'attribute'">
                 <legend class="mb-small text-sm font-medium">
-                  {{ attribute }} die<span v-if="index === 1 && attribute === draft.first">
-                    (same size as first)</span
-                  >
+                  Second attribute <span class="text-muted">(optional)</span>
                 </legend>
                 <div class="flex flex-wrap gap-small">
-                  <label v-for="size in dieSizes" :key="size" class="die-choice">
-                    <input
-                      v-model="draft.dice[attribute]"
-                      class="sr-only"
-                      type="radio"
-                      :name="`die-${index}-${attribute}`"
-                      :value="size"
-                      :data-testid="
-                        index === 1 && attribute === draft.first
-                          ? `second-die-size-${attribute}-${size}`
-                          : `die-size-${attribute}-${size}`
-                      "
-                    />
-                    <span class="die-choice-content"
-                      ><DieIcon :sides="size" /><span>d{{ size }}</span></span
-                    >
-                  </label>
+                  <button
+                    v-for="choice in attributes"
+                    :key="choice"
+                    type="button"
+                    class="attribute-choice die-choice-content"
+                    :data-testid="`second-attribute-${choice}`"
+                    :aria-pressed="draft.second === choice"
+                    @click="toggleSecond(choice)"
+                  >
+                    {{ choice }}
+                  </button>
                 </div>
               </fieldset>
-              <UFormField v-if="index === 0" label="Check modifier" class="w-28">
-                <UInput
-                  v-model="draft.modifier"
-                  type="number"
-                  step="1"
-                  class="w-full"
-                  data-testid="check-modifier"
-                />
-              </UFormField>
-            </div>
-            <fieldset v-if="index === 0 && draft.mode === 'attribute'">
-              <legend class="mb-small text-sm font-medium">
-                Second attribute <span class="text-muted">(optional)</span>
-              </legend>
-              <div class="flex flex-wrap gap-small">
-                <button
-                  v-for="choice in attributes"
-                  :key="choice"
-                  type="button"
-                  class="attribute-choice die-choice-content"
-                  :data-testid="`second-attribute-${choice}`"
-                  :aria-pressed="draft.second === choice"
-                  @click="toggleSecond(choice)"
-                >
-                  {{ choice }}
-                </button>
-              </div>
-            </fieldset>
-          </template>
-        </div>
-        <p v-if="draft.mode === 'weapon'">
-          Weapon accuracy bonus:
-          <strong data-testid="weapon-bonus"
-            >{{ draft.weaponBonus >= 0 ? "+" : "" }}{{ draft.weaponBonus }}</strong
-          >
-        </p>
-        <OpposedSetup
-          v-if="draft.mode === 'attribute'"
-          :model-value="opponent"
-          @update:model-value="emit('update:opponent', $event)"
-        />
-        <UFormField label="Note" hint="Optional"
-          ><UInput v-model="draft.note" class="w-full" data-testid="roll-note"
-        /></UFormField>
-        <p v-if="error" role="alert" class="text-error" data-testid="roll-error">{{ error }}</p>
-        <div class="flex justify-end gap-small">
-          <UButton
-            type="button"
-            color="neutral"
-            variant="outline"
-            data-testid="cancel-roll"
-            @click="emit('cancel')"
-            >Cancel</UButton
-          >
-          <UButton type="submit" :loading="pending" :disabled="pending" data-testid="submit-roll"
-            >Roll</UButton
-          >
-        </div>
+            </template>
+          </div>
+          <p v-if="draft.mode === 'weapon'">
+            Weapon accuracy bonus:
+            <strong data-testid="weapon-bonus"
+              >{{ draft.weaponBonus >= 0 ? "+" : "" }}{{ draft.weaponBonus }}</strong
+            >
+          </p>
+          <OpposedSetup
+            v-if="draft.mode === 'attribute'"
+            :model-value="opponent"
+            @update:model-value="emit('update:opponent', $event)"
+          />
+          <UFormField label="Note" hint="Optional"
+            ><UInput v-model="draft.note" class="w-full" data-testid="roll-note"
+          /></UFormField>
+          <UCheckbox
+            :model-value="privateRoll"
+            label="Private roll"
+            description="Only you can see this roll, including the result and note."
+            :disabled="pending"
+            data-testid="private-roll"
+            @update:model-value="emit('update:privateRoll', $event === true)"
+          />
+          <p v-if="error" role="alert" class="text-error" data-testid="roll-error">{{ error }}</p>
+          <div class="flex justify-end gap-small">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              data-testid="cancel-roll"
+              @click="emit('cancel')"
+              >Cancel</UButton
+            >
+            <UButton type="submit" :loading="pending" :disabled="pending" data-testid="submit-roll"
+              >Roll</UButton
+            >
+          </div>
+        </fieldset>
       </form>
     </template>
   </UModal>

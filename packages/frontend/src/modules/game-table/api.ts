@@ -4,7 +4,7 @@ import { request } from "../../shared/api";
 export const api = {
   getGameParty: (gameId: string) =>
     request<{ characters: PartyCharacter[] }>(`/api/games/${gameId}/party`),
-  listGameThrows: (gameId: string, options: { before?: number; limit: number }) => {
+  listGameThrows: (gameId: string, options: { before?: string; limit: number }) => {
     const query = new URLSearchParams({ limit: String(options.limit) });
     if (options.before !== undefined) query.set("before", String(options.before));
     return request<{ throws: ThrowRecord[] }>(`/api/games/${gameId}/throws?${query}`);

@@ -101,6 +101,7 @@ function openSheet(characterId: string) {
 
 const weaponHint = ref<{ character: PartyCharacter; weaponName: string } | null>(null);
 
+const privateRoll = ref(false);
 const rollDraft = ref<RollDraft | null>(null);
 const rollOpponent = ref<OpponentDraft>({ dice: [], modifier: "0" });
 const rollError = ref("");
@@ -181,6 +182,7 @@ const rollAsOptions = computed(() => [
 ]);
 
 function openAttributeRoll(character: PartyCharacter, attribute: Attribute) {
+  privateRoll.value = false;
   npcRoll.value = null;
   weaponHint.value = null;
   rollSourceId.value = null;
@@ -201,6 +203,7 @@ function openAttributeRoll(character: PartyCharacter, attribute: Attribute) {
 }
 
 function openWeaponRoll(character: PartyCharacter, weaponId: string) {
+  privateRoll.value = false;
   npcRoll.value = null;
   const weapon = character.weapons.find((entry) => entry.id === weaponId);
   if (!weapon || !weapon.ready) return;
@@ -228,6 +231,7 @@ function needsWeaponSetup(character: PartyCharacter, weaponId: string) {
 }
 
 function openReroll(entry: ThrowRecord) {
+  privateRoll.value = entry.private;
   rollError.value = "";
   freeError.value = "";
   if (entry.setup.type === "npc-attribute" || entry.setup.type === "npc-attack") {
@@ -258,6 +262,7 @@ function openReroll(entry: ThrowRecord) {
       rollDraft.value.modifier = String(setup.modifier);
       rollDraft.value.note = setup.note;
     }
+    privateRoll.value = entry.private;
     rollSourceId.value = entry.id;
     rollOpponent.value = {
       dice: setup.redDice.map((die) => die.size),
@@ -275,6 +280,7 @@ function openReroll(entry: ThrowRecord) {
       });
       return;
     }
+    privateRoll.value = entry.private;
     rollSourceId.value = entry.id;
     rollOpponent.value = { dice: [], modifier: "0" };
     rollDraft.value = {
@@ -303,6 +309,7 @@ function openReroll(entry: ThrowRecord) {
       });
       return;
     }
+    privateRoll.value = entry.private;
     rollSourceId.value = entry.id;
     rollOpponent.value = {
       dice: entry.setup.redDice.map((die) => die.size),
@@ -346,6 +353,7 @@ function openReroll(entry: ThrowRecord) {
 }
 
 function openFreeRoll() {
+  privateRoll.value = false;
   weaponHint.value = null;
   freeSourceId.value = null;
   freeError.value = "";
@@ -418,7 +426,11 @@ async function submitRoll() {
   }
   rollError.value = "";
   try {
-    const result = await createThrow.mutateAsync({ sourceThrowId: rollSourceId.value, setup });
+    const result = await createThrow.mutateAsync({
+      sourceThrowId: rollSourceId.value,
+      private: privateRoll.value,
+      setup,
+    });
     pendingHighlight.value = result.throw.id;
     rollDraft.value = null;
     historyTab.value = "history";
@@ -439,7 +451,11 @@ async function submitRoll() {
         title: "The character changed. Open the roll again to use the latest sheet.",
         color: "error",
       });
-    } else rollError.value = payload?.message ?? "The roll could not be submitted.";
+    } else
+      toast.add({
+        title: payload?.message ?? "The roll could not be submitted. Try again.",
+        color: "error",
+      });
   }
 }
 
@@ -473,7 +489,11 @@ async function submitFreeRoll() {
   if (!setup) return;
   freeError.value = "";
   try {
-    const result = await createThrow.mutateAsync({ sourceThrowId: freeSourceId.value, setup });
+    const result = await createThrow.mutateAsync({
+      sourceThrowId: freeSourceId.value,
+      private: privateRoll.value,
+      setup,
+    });
     pendingHighlight.value = result.throw.id;
     freeDraft.value = null;
     historyTab.value = "history";
@@ -488,7 +508,10 @@ async function submitFreeRoll() {
         color: "error",
       });
     } else {
-      freeError.value = payload?.message ?? "The roll could not be submitted.";
+      toast.add({
+        title: payload?.message ?? "The roll could not be submitted. Try again.",
+        color: "error",
+      });
       if (payload?.code === "no_active_character" || payload?.code === "inactive_character")
         void partyQuery.refetch();
     }
@@ -593,6 +616,8 @@ async function removeEntry(entry: ThrowRecord) {
       :opponent="rollOpponent"
       :error="rollError"
       :pending="createThrow.isPending.value"
+      :private-roll="privateRoll"
+      @update:private-roll="privateRoll = $event"
       @update:opponent="rollOpponent = $event"
       @submit="submitRoll"
       @cancel="rollDraft = null"
@@ -607,6 +632,8 @@ async function removeEntry(entry: ThrowRecord) {
       :player-has-active="Boolean(playerActiveCharacter)"
       :error="freeError"
       :pending="createThrow.isPending.value"
+      :private-roll="privateRoll"
+      @update:private-roll="privateRoll = $event"
       @update:opponent="freeOpponent = $event"
       @update:character="freeDraft.characterId = $event"
       @submit="submitFreeRoll"

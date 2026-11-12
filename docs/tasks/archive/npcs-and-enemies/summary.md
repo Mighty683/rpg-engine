@@ -19,4 +19,4 @@
 
 ## Related tasks
 
-- [Private rolls](../../private-rolls/summary.md) — separate future work; NPC rolls in this task are public.
+- [Private rolls](../private-rolls/summary.md) — separate task; NPC rolls in this task were public.

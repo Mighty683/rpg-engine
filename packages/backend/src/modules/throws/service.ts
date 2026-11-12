@@ -10,7 +10,7 @@ import type { DieSource } from "../fabula/types.ts";
 import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
 import type { GameEvents } from "../events/types.ts";
 import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
-import { and, desc, eq, lt, sql } from "drizzle-orm";
+import { and, desc, eq, lt, or, sql } from "drizzle-orm";
 import {
   activeCharacterCondition,
   characters,
@@ -35,7 +35,7 @@ import { resolveNpcThrow } from "./npc-resolve.ts";
 
 const present = (row: ThrowRow, actor: GameActor, access: GameAccess): ThrowRecord => ({
   id: row.id,
-  seq: Number(row.seq),
+  private: row.private,
   createdAt: new Date(row.created_at).toISOString(),
   kind: row.kind,
   role: row.role,
@@ -98,11 +98,19 @@ async function loadSource(
   tx: DatabaseTransaction,
   gameId: string,
   throwId: string,
+  accountId: string,
 ): Promise<SourceThrow | null> {
   const [row] = await tx
     .select(throwFields)
     .from(throws)
-    .where(and(eq(throws.gameId, gameId), eq(throws.id, throwId), eq(throws.deleted, false)));
+    .where(
+      and(
+        eq(throws.gameId, gameId),
+        eq(throws.id, throwId),
+        eq(throws.deleted, false),
+        visibleTo(accountId),
+      ),
+    );
   if (!row) return null;
   return {
     kind: row.kind,
@@ -112,16 +120,26 @@ async function loadSource(
   };
 }
 
-/** Ordered history read: exclusive sequence cursor, ascending result, live rows only. */
+const visibleTo = (accountId: string) =>
+  or(eq(throws.private, false), eq(throws.authorAccountId, accountId));
+
+/** Ordered history read: exclusive throw ID cursor, ascending result, live rows only. */
 export async function listThrows(
   { gameAccessFor, database }: { gameAccessFor: GameAccessFactory; database: Database },
   actor: GameActor,
   gameId: string,
-  before: number | null,
+  before: string | null,
   limit: number,
 ) {
   return readTransaction(database, async (tx) => {
     const access = await lockGameRead(gameAccessFor, tx, actor, gameId);
+    const [anchor] = before
+      ? await tx
+          .select({ seq: throws.seq })
+          .from(throws)
+          .where(and(eq(throws.gameId, gameId), eq(throws.id, before), visibleTo(actor.accountId)))
+      : [];
+    if (before && !anchor) throw fail("not_found");
     const result = await tx
       .select(throwFields)
       .from(throws)
@@ -129,7 +147,8 @@ export async function listThrows(
         and(
           eq(throws.gameId, gameId),
           eq(throws.deleted, false),
-          before === null ? undefined : lt(throws.seq, before),
+          visibleTo(actor.accountId),
+          anchor ? lt(throws.seq, anchor.seq) : undefined,
         ),
       )
       .orderBy(desc(throws.seq))
@@ -165,8 +184,16 @@ export async function createThrow(
     const setup = input.setup;
     const resolved =
       setup.type === "npc-attribute" || setup.type === "npc-attack"
-        ? await resolveNpcThrow(tx, gameId, access, setup, input.sourceThrowId, dieSource)
-        : await resolveStandardThrow(tx, gameId, access, input, dieSource);
+        ? await resolveNpcThrow(
+            tx,
+            gameId,
+            access,
+            setup,
+            input.sourceThrowId,
+            dieSource,
+            actor.accountId,
+          )
+        : await resolveStandardThrow(tx, gameId, access, input, dieSource, actor.accountId);
     const [sequence] = await tx
       .select({ next: sql<string>`COALESCE(MAX(${throws.seq}),0)+1` })
       .from(throws)
@@ -179,6 +206,7 @@ export async function createThrow(
         gameId,
         seq: Number(sequence!.next),
         authorAccountId: actor.accountId,
+        private: input.private ?? false,
         role: resolved.role,
         characterId: resolved.characterId,
         equipmentId: resolved.equipmentId,
@@ -191,7 +219,13 @@ export async function createThrow(
       .returning(throwFields);
     return { record: present(inserted!, actor, access) };
   });
-  await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "throws" }));
+  await notifyAfterCommit(() =>
+    events.publishGameEvent(
+      gameId,
+      { type: "throws" },
+      input.private ? actor.accountId : undefined,
+    ),
+  );
   return result;
 }
 
@@ -201,6 +235,7 @@ async function resolveStandardThrow(
   access: GameAccess,
   input: CreateThrowInput,
   dieSource: DieSource,
+  accountId: string,
 ) {
   const setup = input.setup;
   if (setup.type === "free" && setup.characterId !== gmActorId) {
@@ -213,13 +248,13 @@ async function resolveStandardThrow(
       const gmInput = { ...input, setup: { ...setup, characterId: gmActorId } };
       const resolved = resolveThrow(
         gmInput,
-        await buildContext(tx, gameId, access, gmInput),
+        await buildContext(tx, gameId, access, gmInput, accountId),
         dieSource,
       );
       return { ...resolved, characterName: npc.name, setup: { ...resolved.setup, npcId: npc.id } };
     }
   }
-  return resolveThrow(input, await buildContext(tx, gameId, access, input), dieSource);
+  return resolveThrow(input, await buildContext(tx, gameId, access, input, accountId), dieSource);
 }
 
 async function buildContext(
@@ -227,6 +262,7 @@ async function buildContext(
   gameId: string,
   access: GameAccess,
   input: CreateThrowInput,
+  accountId: string,
 ): Promise<ResolutionContext> {
   const active = await activeCharacterIds(tx, gameId);
   const ownActive =
@@ -244,7 +280,9 @@ async function buildContext(
           | Extract<RollCharacter["sheet"]["equipment"][number], { kind: "weapon" }>
           | undefined) ?? null)
       : null;
-  const source = input.sourceThrowId ? await loadSource(tx, gameId, input.sourceThrowId) : null;
+  const source = input.sourceThrowId
+    ? await loadSource(tx, gameId, input.sourceThrowId, accountId)
+    : null;
   if (input.sourceThrowId && !source) throw fail("not_found");
   return {
     role: access.role,
@@ -275,13 +313,19 @@ export async function removeThrow(
       .from(throws)
       .where(and(eq(throws.gameId, gameId), eq(throws.id, throwId)))
       .for("update");
-    if (!row) throw fail("not_found");
+    if (!row || (row.private && row.author_account_id !== actor.accountId)) throw fail("not_found");
     if (row.deleted) return { deleted: true, changed: false };
     if (access.role !== "GM" && row.author_account_id !== actor.accountId) throw fail("forbidden");
     await tx.update(throws).set({ deleted: true }).where(eq(throws.id, throwId));
-    return { deleted: true, changed: true };
+    return { deleted: true, changed: true, private: row.private, author: row.author_account_id };
   });
   if (result.changed)
-    await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "throws" }));
+    await notifyAfterCommit(() =>
+      events.publishGameEvent(
+        gameId,
+        { type: "throws" },
+        result.private ? result.author : undefined,
+      ),
+    );
   return result;
 }

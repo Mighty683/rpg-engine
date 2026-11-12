@@ -122,7 +122,7 @@ export function makeThrow(
 
   return {
     id: kind,
-    seq: 1,
+    private: false,
     createdAt: characterSummary.createdAt,
     kind,
     role: "GM",

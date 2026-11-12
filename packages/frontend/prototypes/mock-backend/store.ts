@@ -73,7 +73,7 @@ function initialState() {
     tags: structuredClone([
       ...new Map(allNpcs.flatMap((npc) => npc.tags).map((tag) => [tag.name, tag])).values(),
     ]),
-    throws: [makeThrow("weapon-accuracy"), { ...makeThrow("opposed-check"), seq: 2 }],
+    throws: [makeThrow("weapon-accuracy"), makeThrow("opposed-check")],
     members: structuredClone(members),
   };
 }

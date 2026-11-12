@@ -18,7 +18,7 @@ export function createThrowsService(
       input: CreateThrowInput,
       dieSource?: DieSource,
     ) => createThrow({ gameAccessFor, events, database }, actor, gameId, input, dieSource),
-    listThrows: (actor: GameActor, gameId: string, before: number | null, limit: number) =>
+    listThrows: (actor: GameActor, gameId: string, before: string | null, limit: number) =>
       listThrows({ gameAccessFor, database }, actor, gameId, before, limit),
     removeThrow: (actor: GameActor, gameId: string, throwId: string) =>
       removeThrow({ gameAccessFor, events, database }, actor, gameId, throwId),

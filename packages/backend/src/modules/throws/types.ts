@@ -59,6 +59,7 @@ export type AnyThrowSetup = ThrowSetup | NpcThrowSetup;
 
 export type CreateThrowInput = {
   sourceThrowId: string | null;
+  private?: boolean;
   setup: AnyThrowSetup;
 };
 
@@ -115,7 +116,7 @@ export type OutcomeJson = {
 
 export type ThrowRecord = {
   id: string;
-  seq: number;
+  private: boolean;
   createdAt: string;
   kind: ThrowKind;
   role: "GM" | "Player";
@@ -176,6 +177,7 @@ export type ThrowRow = {
   seq: string | number;
   created_at: Date;
   author_account_id: string;
+  private: boolean;
   role: "GM" | "Player";
   character_id: string | null;
   equipment_id: string | null;

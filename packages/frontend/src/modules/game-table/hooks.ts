@@ -1,10 +1,10 @@
 import type { CreateThrowInput, ThrowRecord } from "./types";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { account } from "../auth/session";
 import { useApiServices } from "../../shared/api-services";
 
-import { hasWindowGap, historyPageSize, mergeThrowPages, olderCursor } from "./history.ts";
+import { historyPageSize, mergeThrowPages, olderCursor } from "./history.ts";
 
 const gameKey = (gameId: string) => ["accounts", account.value?.id, "games", gameId];
 export const partyKey = (gameId: string) => [...gameKey(gameId), "party"];
@@ -20,13 +20,13 @@ export function useGamePartyQuery(gameId: string) {
 
 /**
  * Owns the loaded throw-history window: the newest page initially, older pages by an
- * exclusive sequence cursor, and refetches on invalidation hints. The HTTP list is
+ * exclusive throw ID cursor, and refetches on invalidation hints. The HTTP list is
  * authoritative; the in-process event stream only triggers refetches.
  */
 export function useThrowHistory(gameId: string) {
   const { gameTable: api } = useApiServices();
   const client = useQueryClient();
-  const pages = ref<(number | null)[]>([null]);
+  const pages = ref<(string | null)[]>([null]);
   const queries = useQueries({
     queries: computed(() =>
       pages.value.map((before) => ({
@@ -37,28 +37,18 @@ export function useThrowHistory(gameId: string) {
     ),
   });
   const pageData = computed(() =>
-    queries.value.map((query) => (query.data?.throws ?? []) as ThrowRecord[]),
+    queries.value.some((query) => query.isError)
+      ? []
+      : queries.value.map((query) => (query.data?.throws ?? []) as ThrowRecord[]),
   );
   const throws = computed(() => mergeThrowPages(pageData.value));
-  const newestPage = computed(
-    () => queries.value.find((_, index) => pages.value[index] === null)?.data?.throws ?? [],
-  );
   const isLoading = computed(() => queries.value.some((query) => query.isLoading));
   const isError = computed(() => queries.value.some((query) => query.isError));
   const oldestPageFull = computed(() => {
-    let oldest = 0;
-    pages.value.forEach((cursor, index) => {
-      if (cursor !== null && (pages.value[oldest] === null || cursor < pages.value[oldest]!))
-        oldest = index;
-    });
+    const oldest = pages.value.length - 1;
     return (queries.value[oldest]?.data?.throws.length ?? 0) === historyPageSize;
   });
   const hasOlder = computed(() => oldestPageFull.value && throws.value.length > 0);
-
-  watch(throws, (value) => {
-    if (queries.value.some((query) => query.isFetching)) return;
-    if (hasWindowGap(value, newestPage.value) && pages.value.length > 1) pages.value = [null];
-  });
 
   function loadOlder() {
     const cursor = olderCursor(throws.value);
@@ -66,7 +56,7 @@ export function useThrowHistory(gameId: string) {
   }
 
   function refresh() {
-    if (!pages.value.includes(null)) pages.value = [null, ...pages.value];
+    pages.value = [null];
     void client.invalidateQueries({ queryKey: throwsKey(gameId) });
   }
 

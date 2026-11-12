@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { npcAttacks, npcs, throws } from "../../database/schema.ts";
 import type { DatabaseTransaction } from "../../database/types.ts";
 import type { Attribute, Die, DieSource, RolledDie } from "../fabula/types.ts";
@@ -21,6 +21,7 @@ export async function resolveNpcThrow(
   setup: NpcThrowSetup,
   sourceId: string | null,
   source: DieSource,
+  accountId: string,
 ): Promise<ResolvedThrow> {
   if (access.role !== "GM") throw fail("forbidden");
   const [npc] = await tx
@@ -34,7 +35,14 @@ export async function resolveNpcThrow(
     const [row] = await tx
       .select({ setup: throws.setup })
       .from(throws)
-      .where(and(eq(throws.id, sourceId), eq(throws.gameId, gameId), eq(throws.deleted, false)));
+      .where(
+        and(
+          eq(throws.id, sourceId),
+          eq(throws.gameId, gameId),
+          eq(throws.deleted, false),
+          or(eq(throws.private, false), eq(throws.authorAccountId, accountId)),
+        ),
+      );
     if (!row) throw fail("not_found");
     if (row.setup.type !== setup.type || row.setup.npcId !== setup.npcId)
       throw fail("validation", "A reroll keeps the original NPC and roll type", "setup");

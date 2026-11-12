@@ -199,7 +199,9 @@ export function parseCreateRequest(body: unknown): CreateThrowInput {
   if (!body || typeof body !== "object" || Array.isArray(body))
     throw fail("bad_request", "Expected a JSON object");
   const value = body as Record<string, unknown>;
-  exactKeys(value, ["sourceThrowId", "setup"], "");
+  exactKeys(value, ["sourceThrowId", "setup", "private"], "");
+  if (value.private !== undefined && typeof value.private !== "boolean")
+    throw fail("validation", "Invalid privacy setting", "private");
   if (
     value.sourceThrowId !== null &&
     value.sourceThrowId !== undefined &&
@@ -212,26 +214,31 @@ export function parseCreateRequest(body: unknown): CreateThrowInput {
   const record = setup as Record<string, unknown>;
   if (record.type === "npc-attribute")
     return {
+      private: value.private === true,
       sourceThrowId: (value.sourceThrowId as string) ?? null,
       setup: parseNpcAttribute(record),
     };
   if (record.type === "npc-attack")
     return {
+      private: value.private === true,
       sourceThrowId: (value.sourceThrowId as string) ?? null,
       setup: parseNpcAttack(record),
     };
   if (record.type === "attribute")
     return {
+      private: value.private === true,
       sourceThrowId: (value.sourceThrowId as string) ?? null,
       setup: parseAttributeSetup(record),
     };
   if (record.type === "weapon")
     return {
+      private: value.private === true,
       sourceThrowId: (value.sourceThrowId as string) ?? null,
       setup: parseWeaponSetup(record),
     };
   if (record.type === "free")
     return {
+      private: value.private === true,
       sourceThrowId: (value.sourceThrowId as string) ?? null,
       setup: parseFreeSetup(record),
     };

@@ -86,6 +86,7 @@ export type ThrowSetup =
 
 export type CreateThrowInput = {
   sourceThrowId: string | null;
+  private?: boolean;
   setup: ThrowSetup;
 };
 
@@ -144,7 +145,7 @@ export type OutcomeJson = {
 
 export type ThrowRecord = {
   id: string;
-  seq: number;
+  private: boolean;
   createdAt: string;
   kind: ThrowKind;
   role: "GM" | "Player";

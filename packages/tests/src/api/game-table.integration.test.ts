@@ -324,7 +324,7 @@ describe("API game table throws", () => {
       role: "GM",
       characterId: null,
       characterName: "GM",
-      seq: 1,
+      private: false,
       canRemove: true,
     });
     expect(gmRoll.outcome.first.total).toBe(10);
@@ -425,7 +425,7 @@ describe("API game table throws", () => {
     expect((await afterSheetChange.json()).error.code).toBe("stale_revision");
     expect(await throwCount(ids.game)).toBe(0);
     const fresh = await createThrow("gm", ids.game, attributeSetup(ids.gmCharacter, 1));
-    expect(fresh.seq).toBe(1);
+    expect(fresh.private).toBe(false);
 
     expect(
       (
@@ -550,6 +550,37 @@ describe("API game table throws", () => {
     expect(await readPersistedState(fixture)).toEqual(stateBefore);
   });
 
+  it("keeps player and GM private throws visible only to their authors", async () => {
+    const { ids } = fixture;
+    const playerResponse = await postThrow("player", ids.game, {
+      setup: freeSetup(ids.playerCharacter),
+      private: true,
+    });
+    expect(playerResponse.status).toBe(201);
+    const playerPrivate = (await playerResponse.json()).throw as ThrowRecord;
+    const gmResponse = await postThrow("gm", ids.game, { setup: freeSetup("gm"), private: true });
+    expect(gmResponse.status).toBe(201);
+    const gmPrivate = (await gmResponse.json()).throw as ThrowRecord;
+    const publicThrow = await createThrow("gm", ids.game, freeSetup("gm"));
+    expect((await listThrows("gm", ids.game)).map((entry) => entry.id)).toEqual([
+      gmPrivate.id,
+      publicThrow.id,
+    ]);
+    expect((await listThrows("player", ids.game)).map((entry) => entry.id)).toEqual([
+      playerPrivate.id,
+      publicThrow.id,
+    ]);
+    expect((await getThrows("gm", ids.game, `?before=${playerPrivate.id}`)).status).toBe(404);
+    expect((await deleteThrow("gm", ids.game, playerPrivate.id)).status).toBe(404);
+    expect(
+      (await postThrow("gm", ids.game, { setup: freeSetup("gm"), sourceThrowId: playerPrivate.id }))
+        .status,
+    ).toBe(404);
+    expect((await deleteThrow("player", ids.game, playerPrivate.id)).status).toBe(200);
+    expect((await deleteThrow("gm", ids.game, playerPrivate.id)).status).toBe(404);
+    expect((await listThrows("gm", ids.game))[0]).not.toHaveProperty("seq");
+  });
+
   it("API-04: pages history with a stable cursor", async () => {
     const { ids } = fixture;
     const firstSetup = freeSetup("gm", { note: "roll 0" });
@@ -559,17 +590,16 @@ describe("API game table throws", () => {
       rest.push(await createThrow("gm", ids.game, freeSetup("gm", { note: `roll ${index}` })));
 
     const all = await listThrows("gm", ids.game);
-    expect(all.map((entry) => entry.seq)).toEqual([1, 2, 3, 4, 5]);
     expect(all.map((entry) => entry.id)).toEqual([first, ...rest].map((entry) => entry.id));
 
     const page = async (query: string) => listThrows("gm", ids.game, query);
     const page1 = await page("?limit=2");
-    const page2 = await page("?before=4&limit=2");
-    const page3 = await page("?before=2&limit=2");
-    const page4 = await page("?before=1&limit=2");
-    expect(page1.map((entry) => entry.seq)).toEqual([4, 5]);
-    expect(page2.map((entry) => entry.seq)).toEqual([2, 3]);
-    expect(page3.map((entry) => entry.seq)).toEqual([1]);
+    const page2 = await page(`?before=${page1[0]!.id}&limit=2`);
+    const page3 = await page(`?before=${page2[0]!.id}&limit=2`);
+    const page4 = await page(`?before=${page3[0]!.id}&limit=2`);
+    expect(page1.map((entry) => entry.id)).toEqual(rest.slice(2).map((entry) => entry.id));
+    expect(page2.map((entry) => entry.id)).toEqual(rest.slice(0, 2).map((entry) => entry.id));
+    expect(page3.map((entry) => entry.id)).toEqual([first.id]);
     expect(page4).toEqual([]);
     const paged = [...page1, ...page2, ...page3];
     expect(new Set(paged.map((entry) => entry.id)).size).toBe(5);
@@ -578,8 +608,10 @@ describe("API game table throws", () => {
     expect((await deleteThrow("gm", ids.game, rest[3]!.id)).status).toBe(200);
     const repeated = await createThrow("gm", ids.game, firstSetup);
     expect(repeated.id).not.toBe(first.id);
-    expect(repeated.seq).toBe(6);
-    expect((await listThrows("gm", ids.game)).map((entry) => entry.seq)).toEqual([1, 2, 3, 4, 6]);
+    expect(repeated.private).toBe(false);
+    expect((await listThrows("gm", ids.game)).map((entry) => entry.id)).toEqual(
+      [first, ...rest.slice(0, 3), repeated].map((entry) => entry.id),
+    );
   });
 
   it("API-04: keeps historical attribution and setup intact after character and weapon renames", async () => {
@@ -676,7 +708,7 @@ describe("API game table throws", () => {
       { sourceThrowId: source.id },
     );
     expect(reroll.id).not.toBe(source.id);
-    expect(reroll.seq).toBe(2);
+    expect(reroll.private).toBe(false);
     expect(reroll.setup.accuracyDice).toEqual(["DEX", "INS"]);
     expect(reroll.setup.weaponBonus).toBe(2);
     expect(reroll.outcome.first.result).toBe("critical");

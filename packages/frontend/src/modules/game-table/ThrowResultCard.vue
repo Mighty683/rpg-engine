@@ -46,7 +46,9 @@ function dieLabel(die: { label: string | null; size: number }) {
     :data-throw-id="entry.id"
   >
     <div class="flex items-start justify-between gap-small">
-      <p class="font-semibold" data-testid="throw-title">{{ title(entry) }}</p>
+      <p class="font-semibold" data-testid="throw-title">
+        {{ title(entry) }} <span v-if="entry.private" data-testid="private-throw">· Private</span>
+      </p>
       <div class="flex items-center gap-tight">
         <UButton
           color="neutral"

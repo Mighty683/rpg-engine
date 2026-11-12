@@ -250,7 +250,7 @@ describe("NPC API", () => {
       rerollResult.throw.id,
     ]);
     const older = await (
-      await fixture.request(`${throwPath}?limit=2&before=${result.throw.seq}`, "player")
+      await fixture.request(`${throwPath}?limit=2&before=${result.throw.id}`, "player")
     ).json();
     expect(older.throws.map((entry: { id: string }) => entry.id)).toEqual([
       attributeResult.throw.id,

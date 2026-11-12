@@ -24,3 +24,25 @@ it("isolates subscriptions and revocation between event service instances", () =
   first.publishGameEvent("game", { type: "roster" });
   expect(response.write).toHaveBeenCalledOnce();
 });
+
+it("sends private hints only to active sessions of the author in the same game", () => {
+  const events = createGameEvents();
+  const responses = Array.from({ length: 4 }, () => ({
+    write: vi.fn(),
+    end: vi.fn(),
+    destroyed: false,
+    writableEnded: false,
+  }));
+  for (const [index, account, game] of [
+    [0, "author", "game"],
+    [1, "author", "game"],
+    [2, "other", "game"],
+    [3, "author", "other"],
+  ] as const) {
+    events
+      .registerStream(game, account, `session-${index}`, responses[index] as unknown as Response)
+      .start();
+  }
+  events.publishGameEvent("game", { type: "throws" }, "author");
+  expect(responses.map((response) => response.write.mock.calls.length)).toEqual([1, 1, 0, 0]);
+});
