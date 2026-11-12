@@ -1,0 +1,2492 @@
+openapi: 3.1.0
+info:
+  title: RPG Engine API
+  version: 0.0.0
+  description:
+    Browser sessions use the HttpOnly rpg_session cookie. Before a write, obtain a CSRF token from
+    GET /api/auth/csrf and send it as x-csrf-token with the cookies returned by that endpoint. Obtain a fresh
+    token after login, registration, or logout. Write requests must also satisfy the configured Origin policy.
+servers:
+  - { url: / }
+security:
+  - { sessionCookie: [] }
+tags:
+  - { name: Authentication, description: Browser sessions and CSRF tokens. }
+  - { name: Systems, description: Supported role-playing systems. }
+  - { name: Games, description: Games accessible to the signed-in account. }
+  - { name: Characters, description: "Character sheets, control, and the active party." }
+  - { name: NPCs, description: "NPC profiles, visibility, and attacks." }
+  - { name: Throws, description: Resolved dice rolls and history. }
+  - { name: Memberships, description: Game membership and active character selection. }
+  - { name: Invitations, description: "Manage, preview, and accept invitation links." }
+  - { name: Events, description: Live game updates. }
+paths:
+  /api/auth/csrf:
+    get:
+      operationId: issueCsrfToken
+      tags:
+        - Authentication
+      summary: Issue a CSRF token
+      security: []
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            Cache-Control:
+              description: no-store
+              schema: { type: string }
+            Set-Cookie:
+              description:
+                CSRF cookie and, if needed, anonymous identifier cookie. Production uses __Host-rpg_csrf
+                and __Host-rpg_csrf_id; development uses rpg_csrf and rpg_csrf_id.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - csrfToken
+                properties:
+                  csrfToken: { type: string }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/auth/register:
+    post:
+      operationId: registerAccount
+      tags:
+        - Authentication
+      summary: Register an account
+      security:
+        - { csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Registration" }
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Set-Cookie:
+              description: The HttpOnly rpg_session cookie. Secure in production.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - account
+                properties:
+                  account: { $ref: "#/components/schemas/Account" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/ServerError" }
+        "503": { $ref: "#/components/responses/AuthUnavailable" }
+  /api/auth/login:
+    post:
+      operationId: signIn
+      tags:
+        - Authentication
+      summary: Sign in
+      security:
+        - { csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Login" }
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            Set-Cookie:
+              description: The HttpOnly rpg_session cookie. Secure in production.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - account
+                properties:
+                  account: { $ref: "#/components/schemas/Account" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/ServerError" }
+        "503": { $ref: "#/components/responses/AuthUnavailable" }
+  /api/auth/me:
+    get:
+      operationId: getCurrentAccount
+      tags:
+        - Authentication
+      summary: Get the signed-in account
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - account
+                properties:
+                  account: { $ref: "#/components/schemas/Account" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/auth/logout:
+    post:
+      operationId: signOut
+      tags:
+        - Authentication
+      summary: Sign out
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            Set-Cookie:
+              description: Clears the rpg_session cookie.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - ok
+                properties:
+                  ok: { const: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/rpg-systems:
+    get:
+      operationId: listSystems
+      tags:
+        - Systems
+      summary: List supported RPG systems
+      security: []
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - systems
+                properties:
+                  systems:
+                    type: array
+                    items: { $ref: "#/components/schemas/System" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games:
+    get:
+      operationId: listGames
+      tags:
+        - Games
+      summary: List accessible games
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - games
+                properties:
+                  games:
+                    type: array
+                    items: { $ref: "#/components/schemas/Game" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      operationId: createGame
+      tags:
+        - Games
+      summary: Create a game
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - systemId
+              properties:
+                name: { type: string, minLength: 1, maxLength: 20 }
+                systemId: { type: string, const: fabula-ultima }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - game
+                properties:
+                  game: { $ref: "#/components/schemas/Game" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: getGame
+      tags:
+        - Games
+      summary: Get a game
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - game
+                properties:
+                  game: { $ref: "#/components/schemas/Game" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/characters:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: listCharacters
+      tags:
+        - Characters
+      summary: List character summaries
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - characters
+                properties:
+                  characters:
+                    type: array
+                    items: { $ref: "#/components/schemas/CharacterSummary" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      operationId: createCharacter
+      tags:
+        - Characters
+      summary: Create a character
+      description: An identical retry returns 200 with the previously created character.
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - name
+              properties:
+                id: { $ref: "#/components/schemas/Id" }
+                name: { type: string, minLength: 1, maxLength: 100 }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - character
+                properties:
+                  character: { $ref: "#/components/schemas/Character" }
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - character
+                properties:
+                  character: { $ref: "#/components/schemas/Character" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/characters/{characterId}:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/characterId" }
+    get:
+      operationId: getCharacter
+      tags:
+        - Characters
+      summary: Get a character sheet
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - character
+                properties:
+                  character: { $ref: "#/components/schemas/Character" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    patch:
+      operationId: updateCharacter
+      tags:
+        - Characters
+      summary: Update a character sheet
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - expectedRevision
+                - changes
+              properties:
+                expectedRevision: { type: integer, minimum: 0 }
+                changes: { $ref: "#/components/schemas/CharacterChanges" }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - character
+                properties:
+                  character: { $ref: "#/components/schemas/Character" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      operationId: deleteCharacter
+      tags:
+        - Characters
+      summary: Delete a character
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - deleted
+                properties:
+                  deleted: { type: boolean }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/characters/{characterId}/active:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/characterId" }
+    put:
+      operationId: setGmCharacterActive
+      tags:
+        - Characters
+      summary: Set a GM character active
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - active
+              properties:
+                active: { type: boolean }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - character
+                properties:
+                  character: { $ref: "#/components/schemas/CharacterSummary" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/characters/{characterId}/controller:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/characterId" }
+    patch:
+      operationId: assignCharacter
+      tags:
+        - Characters
+      summary: Assign character control
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - membershipId
+              properties:
+                membershipId:
+                  oneOf:
+                    - { $ref: "#/components/schemas/Id" }
+                    - { type: "null" }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - character
+                properties:
+                  character: { $ref: "#/components/schemas/CharacterSummary" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/party:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: listActiveParty
+      tags:
+        - Characters
+      summary: List active party characters
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - characters
+                properties:
+                  characters:
+                    type: array
+                    items: { $ref: "#/components/schemas/PartyCharacter" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/npcs:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: listNpcs
+      tags:
+        - NPCs
+      summary: List visible NPCs
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - npcs
+                properties:
+                  npcs:
+                    type: array
+                    items: { $ref: "#/components/schemas/Npc" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      operationId: createNpc
+      tags:
+        - NPCs
+      summary: Create an NPC
+      description: GM only. An identical retry returns 200 with the previously created NPC.
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - npc
+              properties:
+                id: { $ref: "#/components/schemas/Id" }
+                npc: { $ref: "#/components/schemas/NpcWrite" }
+              additionalProperties: false
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - npc
+                properties:
+                  npc: { $ref: "#/components/schemas/NpcGm" }
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - npc
+                properties:
+                  npc: { $ref: "#/components/schemas/NpcGm" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/npcs/{npcId}:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/npcId" }
+    get:
+      operationId: getNpc
+      tags:
+        - NPCs
+      summary: Get an NPC
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - npc
+                properties:
+                  npc: { $ref: "#/components/schemas/Npc" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    put:
+      operationId: replaceNpc
+      tags:
+        - NPCs
+      summary: Replace an NPC profile
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - expectedRevision
+                - npc
+              properties:
+                expectedRevision: { type: integer, minimum: 0, maximum: 2147483647 }
+                npc: { $ref: "#/components/schemas/NpcWrite" }
+              additionalProperties: false
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - npc
+                properties:
+                  npc: { $ref: "#/components/schemas/NpcGm" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      operationId: deleteNpc
+      tags:
+        - NPCs
+      summary: Delete an NPC
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - expectedRevision
+              properties:
+                expectedRevision: { type: integer, minimum: 0, maximum: 2147483647 }
+              additionalProperties: false
+      responses:
+        "204": { description: Deleted. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/throws:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: listThrows
+      tags:
+        - Throws
+      summary: List recent throws
+      parameters:
+        - name: before
+          in: query
+          schema: { type: integer, minimum: 1 }
+          description: Exclude this sequence and later sequences.
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+          description: Page size. Values are clamped to 1–100.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - throws
+                properties:
+                  throws:
+                    type: array
+                    items: { $ref: "#/components/schemas/Throw" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      operationId: createThrow
+      tags:
+        - Throws
+      summary: Resolve and record a throw
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateThrow" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - throw
+                properties:
+                  throw: { $ref: "#/components/schemas/Throw" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/throws/{throwId}:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/throwId" }
+    delete:
+      operationId: deleteThrow
+      tags:
+        - Throws
+      summary: Delete a throw
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - deleted
+                properties:
+                  deleted: { type: boolean }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/members:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: listMembers
+      tags:
+        - Memberships
+      summary: List accessible memberships
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - members
+                properties:
+                  members:
+                    type: array
+                    items: { $ref: "#/components/schemas/Member" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/members/{membershipId}/active-character:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/membershipId" }
+    put:
+      operationId: setMemberActiveCharacter
+      tags:
+        - Memberships
+      summary: Select a player’s active character as GM
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActiveCharacterSelection" }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - member
+                properties:
+                  member: { $ref: "#/components/schemas/Member" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/active-character:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    put:
+      operationId: setOwnActiveCharacter
+      tags:
+        - Memberships
+      summary: Select your active character as a player
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActiveCharacterSelection" }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - member
+                properties:
+                  member: { $ref: "#/components/schemas/Member" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/members/{membershipId}/remove:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/membershipId" }
+    post:
+      operationId: removeMember
+      tags:
+        - Memberships
+      summary: Remove a membership
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - member
+                properties:
+                  member: { $ref: "#/components/schemas/Member" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/members/{membershipId}/restore:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/membershipId" }
+    post:
+      operationId: restoreMember
+      tags:
+        - Memberships
+      summary: Restore a membership
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - member
+                properties:
+                  member: { $ref: "#/components/schemas/Member" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/invitations:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: listInvitations
+      tags:
+        - Invitations
+      summary: List game invitations
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - invitations
+                properties:
+                  invitations:
+                    type: array
+                    items: { $ref: "#/components/schemas/Invitation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      operationId: createInvitation
+      tags:
+        - Invitations
+      summary: Create an invitation
+      description: Omit the body to get or create the game invitation.
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateInvitation" }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - invitation
+                properties:
+                  invitation: { $ref: "#/components/schemas/Invitation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/invitations/{invitationId}:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/invitationId" }
+    patch:
+      operationId: setInvitationEnabled
+      tags:
+        - Invitations
+      summary: Change invitation availability
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - enabled
+              properties:
+                enabled: { type: boolean }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - invitation
+                properties:
+                  invitation: { $ref: "#/components/schemas/Invitation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/invitations/{invitationId}/rotate:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/invitationId" }
+    post:
+      operationId: rotateInvitation
+      tags:
+        - Invitations
+      summary: Rotate an invitation token
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - invitation
+                properties:
+                  invitation: { $ref: "#/components/schemas/Invitation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/invitations/{token}:
+    parameters:
+      - { $ref: "#/components/parameters/token" }
+    get:
+      operationId: previewInvitation
+      tags:
+        - Invitations
+      summary: Preview an invitation
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            Referrer-Policy:
+              description: no-referrer
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - invitation
+                properties:
+                  invitation: { $ref: "#/components/schemas/InvitationPreview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/invitations/{token}/accept:
+    parameters:
+      - { $ref: "#/components/parameters/token" }
+    post:
+      operationId: acceptInvitation
+      tags:
+        - Invitations
+      summary: Accept an invitation
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                makeActive: { type: boolean, default: true }
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcceptedInvitation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/events:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: subscribeToGameEvents
+      tags:
+        - Events
+      summary: Subscribe to game events
+      description:
+        The stream sends unnamed SSE frames with JSON payloads. Heartbeat comments are sent every
+        15 seconds. The connection closes when the session or game access is revoked.
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            Cache-Control:
+              description: no-cache, no-transform
+              schema: { type: string }
+            X-Accel-Buffering:
+              description: "no"
+              schema: { type: string }
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-sent event frames with JSON in the data field.
+              example: |
+                : connected
+
+                data: {"type":"roster"}
+
+              x-event-data-schema:
+                oneOf:
+                  - type: object
+                    required:
+                      - type
+                    properties:
+                      type: { type: string, const: roster }
+                    additionalProperties: false
+                  - type: object
+                    required:
+                      - type
+                      - characterId
+                    properties:
+                      type: { type: string, const: sheet }
+                      characterId: { $ref: "#/components/schemas/Id" }
+                    additionalProperties: false
+                  - type: object
+                    required:
+                      - type
+                    properties:
+                      type: { type: string, const: throws }
+                    additionalProperties: false
+                  - type: object
+                    required:
+                      - type
+                    properties:
+                      type: { type: string, const: npcs }
+                    additionalProperties: false
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/ServerError" }
+components:
+  securitySchemes:
+    sessionCookie: { type: apiKey, in: cookie, name: rpg_session }
+    csrfToken:
+      type: apiKey
+      in: header
+      name: x-csrf-token
+      description: Use a token issued for the current session or anonymous CSRF cookies.
+  parameters:
+    gameId:
+      name: gameId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Id" }
+    characterId:
+      name: characterId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Id" }
+    npcId:
+      name: npcId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Id" }
+    throwId:
+      name: throwId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Id" }
+    membershipId:
+      name: membershipId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Id" }
+    invitationId:
+      name: invitationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Id" }
+    token:
+      name: token
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[A-Za-z0-9_-]{43}$" }
+  responses:
+    BadRequest:
+      description: Malformed JSON, invalid identifiers, or an invalid request envelope.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: A session is required or credentials were rejected.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: The action is forbidden or the Origin or CSRF check failed.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource unavailable to the current account.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: The request conflicts with current state.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    PayloadTooLarge:
+      description: The JSON body exceeds 96 KiB.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: One or more fields failed validation.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/FieldError" }
+    RateLimited:
+      description: Too many authentication requests.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+      headers:
+        Retry-After:
+          schema: { type: integer, minimum: 0 }
+    ServerError:
+      description: The request could not be completed.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    AuthUnavailable:
+      description: The sign-in service is temporarily busy.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Id:
+      type: string
+      format: uuid
+      pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code: { type: string }
+            message: { type: string }
+            fields:
+              type: object
+              additionalProperties: { type: string }
+    FieldError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - fields
+          properties:
+            code: { type: string, const: validation }
+            message: { type: string }
+            fields:
+              type: object
+              additionalProperties: { type: string }
+    Account:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        username: { type: string }
+    Registration:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username: { type: string, pattern: "^[A-Za-z0-9_.-]{3,32}$" }
+        password:
+          { type: string, format: password, minLength: 8, description: At most 1024 UTF-8 bytes. }
+    Login:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username: { type: string, maxLength: 128 }
+        password: { type: string, format: password, description: At most 1024 UTF-8 bytes. }
+    System:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id: { type: string, const: fabula-ultima }
+        name: { type: string, const: Fabula Ultima }
+    Game:
+      type: object
+      required:
+        - id
+        - name
+        - system
+        - createdAt
+        - role
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        system: { $ref: "#/components/schemas/System" }
+        createdAt: { type: string, format: date-time }
+        role: { type: string, enum: [GM, Player] }
+    Attribute: { type: string, enum: [DEX, INS, MIG, WLP] }
+    Die: { type: integer, enum: [6, 8, 10, 12] }
+    FreeDie: { type: integer, enum: [4, 6, 8, 10, 12, 20] }
+    NamedEntry:
+      type: object
+      required:
+        - id
+        - name
+        - notes
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        notes: { type: string, maxLength: 500 }
+      additionalProperties: false
+    Equipment:
+      oneOf:
+        - type: object
+          required:
+            - id
+            - name
+            - notes
+            - priceZenit
+            - kind
+          properties:
+            id: { $ref: "#/components/schemas/Id" }
+            name: { type: string, minLength: 1, maxLength: 100 }
+            notes: { type: string, maxLength: 500 }
+            priceZenit:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            kind: { type: string, const: other }
+          additionalProperties: false
+        - type: object
+          required:
+            - id
+            - name
+            - notes
+            - priceZenit
+            - kind
+            - equipped
+            - accuracyDice
+            - accuracyBonus
+          properties:
+            id: { $ref: "#/components/schemas/Id" }
+            name: { type: string, minLength: 1, maxLength: 100 }
+            notes: { type: string, maxLength: 500 }
+            priceZenit:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            kind: { type: string, const: weapon }
+            equipped: { type: boolean }
+            accuracyDice:
+              type: array
+              items:
+                oneOf:
+                  - { $ref: "#/components/schemas/Attribute" }
+                  - { type: "null" }
+              minItems: 2
+              maxItems: 2
+            accuracyBonus:
+              oneOf:
+                - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                - { type: "null" }
+          additionalProperties: false
+        - type: object
+          required:
+            - id
+            - name
+            - notes
+            - priceZenit
+            - kind
+            - equipped
+            - fixedDefense
+            - defenseBonus
+            - magicDefenseBonus
+            - initiativeModifier
+          properties:
+            id: { $ref: "#/components/schemas/Id" }
+            name: { type: string, minLength: 1, maxLength: 100 }
+            notes: { type: string, maxLength: 500 }
+            priceZenit:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            kind: { type: string, const: armor }
+            equipped: { type: boolean }
+            fixedDefense:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            defenseBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            magicDefenseBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            initiativeModifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+          additionalProperties: false
+        - type: object
+          required:
+            - id
+            - name
+            - notes
+            - priceZenit
+            - kind
+            - equipped
+            - defenseBonus
+            - magicDefenseBonus
+            - initiativeModifier
+          properties:
+            id: { $ref: "#/components/schemas/Id" }
+            name: { type: string, minLength: 1, maxLength: 100 }
+            notes: { type: string, maxLength: 500 }
+            priceZenit:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            kind: { type: string, const: shield }
+            equipped: { type: boolean }
+            defenseBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            magicDefenseBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            initiativeModifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+          additionalProperties: false
+    CharacterSummary:
+      type: object
+      required:
+        - id
+        - name
+        - level
+        - controllerMembershipId
+        - controllerName
+        - canEdit
+        - active
+        - createdAt
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        level: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        controllerMembershipId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        controllerName:
+          oneOf:
+            - { type: string }
+            - { type: "null" }
+        canEdit: { type: boolean }
+        active: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    CharacterSheet:
+      type: object
+      required:
+        - name
+        - theme
+        - level
+        - baseDice
+        - classes
+        - skills
+        - equipment
+        - resources
+        - overrides
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        theme:
+          oneOf:
+            - { type: string, maxLength: 200 }
+            - { type: "null" }
+        level: { type: integer, minimum: 5, maximum: 50 }
+        baseDice:
+          type: object
+          required:
+            - DEX
+            - INS
+            - MIG
+            - WLP
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+          additionalProperties: false
+        classes:
+          type: array
+          items: { $ref: "#/components/schemas/NamedEntry" }
+          maxItems: 2
+        skills:
+          type: array
+          items: { $ref: "#/components/schemas/NamedEntry" }
+          maxItems: 100
+        equipment:
+          type: array
+          items: { $ref: "#/components/schemas/Equipment" }
+          maxItems: 100
+        resources:
+          type: object
+          required:
+            - hp
+            - mp
+            - ip
+            - fabula
+          properties:
+            hp: { type: integer, minimum: 0, maximum: 2147483647 }
+            mp: { type: integer, minimum: 0, maximum: 2147483647 }
+            ip: { type: integer, minimum: 0, maximum: 2147483647 }
+            fabula: { type: integer, minimum: 0, maximum: 2147483647 }
+          additionalProperties: false
+        overrides:
+          type: object
+          required:
+            - maxHp
+            - maxMp
+            - maxIp
+            - defense
+            - magicDefense
+            - initiative
+          properties:
+            maxHp:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            maxMp:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            maxIp:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            defense:
+              oneOf:
+                - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                - { type: "null" }
+            magicDefense:
+              oneOf:
+                - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                - { type: "null" }
+            initiative:
+              oneOf:
+                - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                - { type: "null" }
+          additionalProperties: false
+      additionalProperties: false
+    CharacterChanges:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        theme:
+          oneOf:
+            - { type: string, maxLength: 200 }
+            - { type: "null" }
+        level: { type: integer, minimum: 5, maximum: 50 }
+        baseDice:
+          type: object
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+          additionalProperties: false
+        classes:
+          type: array
+          items: { $ref: "#/components/schemas/NamedEntry" }
+          maxItems: 2
+        skills:
+          type: array
+          items: { $ref: "#/components/schemas/NamedEntry" }
+          maxItems: 100
+        equipment:
+          type: array
+          items: { $ref: "#/components/schemas/Equipment" }
+          maxItems: 100
+        resources:
+          type: object
+          properties:
+            hp: { type: integer, minimum: 0, maximum: 2147483647 }
+            mp: { type: integer, minimum: 0, maximum: 2147483647 }
+            ip: { type: integer, minimum: 0, maximum: 2147483647 }
+            fabula: { type: integer, minimum: 0, maximum: 2147483647 }
+          additionalProperties: false
+        overrides:
+          type: object
+          properties:
+            maxHp:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            maxMp:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            maxIp:
+              oneOf:
+                - { type: integer, minimum: 0, maximum: 2147483647 }
+                - { type: "null" }
+            defense:
+              oneOf:
+                - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                - { type: "null" }
+            magicDefense:
+              oneOf:
+                - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                - { type: "null" }
+            initiative:
+              oneOf:
+                - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                - { type: "null" }
+          additionalProperties: false
+      additionalProperties: false
+      minProperties: 1
+    CharacterPreview:
+      type: object
+      required:
+        - coverage
+        - maxima
+        - defenses
+      properties:
+        coverage: { type: string, const: partial }
+        maxima:
+          type: object
+          required:
+            - hp
+            - mp
+            - ip
+          properties:
+            hp: { type: integer, minimum: 0, maximum: 2147483647 }
+            mp: { type: integer, minimum: 0, maximum: 2147483647 }
+            ip: { type: integer, minimum: 0, maximum: 2147483647 }
+        defenses:
+          type: object
+          required:
+            - defense
+            - magicDefense
+            - initiative
+          properties:
+            defense: { $ref: "#/components/schemas/CalculatedDefense" }
+            magicDefense: { $ref: "#/components/schemas/CalculatedDefense" }
+            initiative: { $ref: "#/components/schemas/CalculatedDefense" }
+    CalculatedDefense:
+      oneOf:
+        - type: object
+          required:
+            - calculated
+            - contributions
+          properties:
+            calculated: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            contributions:
+              type: array
+              items:
+                type: object
+                required:
+                  - source
+                  - value
+                properties:
+                  source: { type: string, enum: [DEX, INS, MIG, WLP, base, armor, shield] }
+                  entryId: { $ref: "#/components/schemas/Id" }
+                  value: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        - type: object
+          required:
+            - calculated
+            - reason
+          properties:
+            calculated: { type: "null" }
+            reason: { type: string, const: ambiguous_equipment }
+    Character:
+      type: object
+      required:
+        - id
+        - playerId
+        - name
+        - level
+        - createdAt
+        - updatedAt
+        - revision
+        - systemId
+        - sheet
+        - derived
+        - canEdit
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        playerId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        level: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        revision: { type: integer, minimum: 0 }
+        systemId: { type: string, const: fabula-ultima }
+        sheet: { $ref: "#/components/schemas/CharacterSheet" }
+        derived: { $ref: "#/components/schemas/CharacterPreview" }
+        canEdit: { type: boolean }
+    PartyWeapon:
+      type: object
+      required:
+        - id
+        - name
+        - equipped
+        - accuracyDice
+        - accuracyBonus
+        - ready
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        equipped: { type: boolean }
+        accuracyDice:
+          type: array
+          items:
+            oneOf:
+              - { $ref: "#/components/schemas/Attribute" }
+              - { type: "null" }
+          minItems: 2
+          maxItems: 2
+        accuracyBonus:
+          oneOf:
+            - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            - { type: "null" }
+        ready: { type: boolean }
+    PartyCharacter:
+      type: object
+      required:
+        - id
+        - revision
+        - name
+        - classes
+        - baseDice
+        - resources
+        - maxima
+        - defense
+        - magicDefense
+        - weapons
+        - canRoll
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        revision: { type: integer, minimum: 0 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        classes:
+          type: array
+          items: { type: string }
+        baseDice:
+          type: object
+          required:
+            - DEX
+            - INS
+            - MIG
+            - WLP
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+        resources:
+          type: object
+          required:
+            - hp
+            - mp
+            - ip
+            - fabula
+          properties:
+            hp: { type: integer, minimum: 0, maximum: 2147483647 }
+            mp: { type: integer, minimum: 0, maximum: 2147483647 }
+            ip: { type: integer, minimum: 0, maximum: 2147483647 }
+            fabula: { type: integer, minimum: 0, maximum: 2147483647 }
+        maxima:
+          type: object
+          required:
+            - hp
+            - mp
+            - ip
+          properties:
+            hp: { type: integer, minimum: 0, maximum: 2147483647 }
+            mp: { type: integer, minimum: 0, maximum: 2147483647 }
+            ip: { type: integer, minimum: 0, maximum: 2147483647 }
+        defense:
+          oneOf:
+            - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            - { type: "null" }
+        magicDefense:
+          oneOf:
+            - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            - { type: "null" }
+        weapons:
+          type: array
+          items: { $ref: "#/components/schemas/PartyWeapon" }
+        canRoll: { type: boolean }
+    NpcResource:
+      type: object
+      required:
+        - current
+        - max
+      properties:
+        current: { type: integer, minimum: 0, maximum: 2147483647 }
+        max: { type: integer, minimum: 0, maximum: 2147483647 }
+      additionalProperties: false
+      description: Current cannot exceed max.
+    NpcAttack:
+      type: object
+      required:
+        - id
+        - name
+        - reach
+        - attributes
+        - damageBonus
+        - damageType
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        reach: { type: string, enum: [melee, ranged] }
+        attributes:
+          type: array
+          items: { $ref: "#/components/schemas/Attribute" }
+          minItems: 2
+          maxItems: 2
+        damageBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        damageType: { type: string, maxLength: 100 }
+      additionalProperties: false
+    NpcWrite:
+      type: object
+      required:
+        - name
+        - relationship
+        - level
+        - baseDice
+        - hp
+        - mp
+        - defense
+        - magicDefense
+        - attacks
+        - visibility
+        - notes
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        relationship: { type: string, enum: [enemy, neutral, friend] }
+        level: { type: integer, minimum: 5, maximum: 60 }
+        baseDice:
+          type: object
+          required:
+            - DEX
+            - INS
+            - MIG
+            - WLP
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+          additionalProperties: false
+        hp: { $ref: "#/components/schemas/NpcResource" }
+        mp: { $ref: "#/components/schemas/NpcResource" }
+        defense: { type: integer, minimum: 0, maximum: 2147483647 }
+        magicDefense: { type: integer, minimum: 0, maximum: 2147483647 }
+        attacks:
+          type: array
+          items: { $ref: "#/components/schemas/NpcAttack" }
+          maxItems: 100
+        visibility: { type: string, enum: [hidden, visible, known] }
+        notes: { type: string, maxLength: 2000 }
+      additionalProperties: false
+      description: Complete NPC profile. Attack IDs must be distinct.
+    NpcVisible:
+      type: object
+      required:
+        - view
+        - id
+        - name
+        - relationship
+      properties:
+        view: { type: string, const: visible }
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        relationship: { type: string, enum: [enemy, neutral, friend] }
+      additionalProperties: false
+    NpcKnown:
+      type: object
+      required:
+        - view
+        - id
+        - name
+        - relationship
+        - level
+        - baseDice
+        - hp
+        - mp
+        - defense
+        - magicDefense
+        - attacks
+      properties:
+        view: { type: string, const: known }
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        relationship: { type: string, enum: [enemy, neutral, friend] }
+        level: { type: integer, minimum: 5, maximum: 60 }
+        baseDice:
+          type: object
+          required:
+            - DEX
+            - INS
+            - MIG
+            - WLP
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+          additionalProperties: false
+        hp: { $ref: "#/components/schemas/NpcResource" }
+        mp: { $ref: "#/components/schemas/NpcResource" }
+        defense: { type: integer, minimum: 0, maximum: 2147483647 }
+        magicDefense: { type: integer, minimum: 0, maximum: 2147483647 }
+        attacks:
+          type: array
+          items: { $ref: "#/components/schemas/NpcAttack" }
+          maxItems: 100
+      additionalProperties: false
+    NpcGm:
+      type: object
+      required:
+        - view
+        - id
+        - name
+        - relationship
+        - level
+        - baseDice
+        - hp
+        - mp
+        - defense
+        - magicDefense
+        - attacks
+        - visibility
+        - notes
+        - revision
+        - createdAt
+        - updatedAt
+      properties:
+        view: { type: string, const: gm }
+        id: { $ref: "#/components/schemas/Id" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        relationship: { type: string, enum: [enemy, neutral, friend] }
+        level: { type: integer, minimum: 5, maximum: 60 }
+        baseDice:
+          type: object
+          required:
+            - DEX
+            - INS
+            - MIG
+            - WLP
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+          additionalProperties: false
+        hp: { $ref: "#/components/schemas/NpcResource" }
+        mp: { $ref: "#/components/schemas/NpcResource" }
+        defense: { type: integer, minimum: 0, maximum: 2147483647 }
+        magicDefense: { type: integer, minimum: 0, maximum: 2147483647 }
+        attacks:
+          type: array
+          items: { $ref: "#/components/schemas/NpcAttack" }
+          maxItems: 100
+        visibility: { type: string, enum: [hidden, visible, known] }
+        notes: { type: string, maxLength: 2000 }
+        revision: { type: integer, minimum: 0, maximum: 2147483647 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    Npc:
+      oneOf:
+        - { $ref: "#/components/schemas/NpcVisible" }
+        - { $ref: "#/components/schemas/NpcKnown" }
+        - { $ref: "#/components/schemas/NpcGm" }
+    AttributeThrowSetup:
+      type: object
+      required:
+        - type
+        - characterId
+        - expectedRevision
+        - attributes
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
+      properties:
+        type: { type: string, const: attribute }
+        characterId: { $ref: "#/components/schemas/Id" }
+        expectedRevision: { type: integer, minimum: 0 }
+        attributes:
+          type: array
+          items: { $ref: "#/components/schemas/Attribute" }
+          minItems: 1
+          maxItems: 2
+        dice:
+          type: object
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+          additionalProperties: false
+        modifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        note: { type: string, maxLength: 500 }
+        redDice:
+          type: array
+          items: { $ref: "#/components/schemas/Die" }
+          minItems: 0
+          maxItems: 2
+        redModifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+      additionalProperties: false
+    WeaponThrowSetup:
+      type: object
+      required:
+        - type
+        - characterId
+        - equipmentId
+        - expectedRevision
+        - dice
+        - modifier
+        - note
+      properties:
+        type: { type: string, const: weapon }
+        characterId: { $ref: "#/components/schemas/Id" }
+        equipmentId: { $ref: "#/components/schemas/Id" }
+        expectedRevision: { type: integer, minimum: 0 }
+        dice:
+          type: array
+          items: { $ref: "#/components/schemas/Die" }
+          minItems: 2
+          maxItems: 2
+        modifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        note: { type: string, maxLength: 500 }
+      additionalProperties: false
+    FreeThrowSetup:
+      type: object
+      required:
+        - type
+        - characterId
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
+      properties:
+        type: { type: string, const: free }
+        characterId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: string, const: gm }
+          description: Character ID, NPC ID for a GM, or gm.
+        dice:
+          type: array
+          items: { $ref: "#/components/schemas/FreeDie" }
+          minItems: 1
+          maxItems: 2
+        modifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        note: { type: string, maxLength: 500 }
+        redDice:
+          type: array
+          items: { $ref: "#/components/schemas/FreeDie" }
+          minItems: 0
+          maxItems: 2
+        redModifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+      additionalProperties: false
+    NpcAttributeThrowSetup:
+      type: object
+      required:
+        - type
+        - npcId
+        - expectedRevision
+        - attributes
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
+      properties:
+        type: { type: string, const: npc-attribute }
+        npcId: { $ref: "#/components/schemas/Id" }
+        expectedRevision: { type: integer, minimum: 0 }
+        attributes:
+          type: array
+          items: { $ref: "#/components/schemas/Attribute" }
+          minItems: 1
+          maxItems: 2
+        dice:
+          type: object
+          properties:
+            DEX: { $ref: "#/components/schemas/Die" }
+            INS: { $ref: "#/components/schemas/Die" }
+            MIG: { $ref: "#/components/schemas/Die" }
+            WLP: { $ref: "#/components/schemas/Die" }
+          additionalProperties: false
+        modifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        note: { type: string, maxLength: 500 }
+        redDice:
+          type: array
+          items: { $ref: "#/components/schemas/Die" }
+          minItems: 0
+          maxItems: 2
+        redModifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+      additionalProperties: false
+    NpcAttackThrowSetup:
+      type: object
+      required:
+        - type
+        - npcId
+        - attackId
+        - expectedRevision
+        - dice
+        - modifier
+        - note
+      properties:
+        type: { type: string, const: npc-attack }
+        npcId: { $ref: "#/components/schemas/Id" }
+        attackId: { $ref: "#/components/schemas/Id" }
+        expectedRevision: { type: integer, minimum: 0 }
+        dice:
+          type: array
+          items: { $ref: "#/components/schemas/Die" }
+          minItems: 2
+          maxItems: 2
+        modifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        note: { type: string, maxLength: 500 }
+      additionalProperties: false
+    CreateThrow:
+      type: object
+      required:
+        - setup
+      properties:
+        sourceThrowId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        setup:
+          oneOf:
+            - { $ref: "#/components/schemas/AttributeThrowSetup" }
+            - { $ref: "#/components/schemas/WeaponThrowSetup" }
+            - { $ref: "#/components/schemas/FreeThrowSetup" }
+            - { $ref: "#/components/schemas/NpcAttributeThrowSetup" }
+            - { $ref: "#/components/schemas/NpcAttackThrowSetup" }
+      additionalProperties: false
+    ThrowKind:
+      type: string
+      enum:
+        - attribute-check
+        - attribute-roll
+        - weapon-accuracy
+        - free
+        - opposed-check
+        - opposed-roll
+    ResolvedDie:
+      type: object
+      required:
+        - label
+        - size
+      properties:
+        label:
+          oneOf:
+            - { type: string }
+            - { type: "null" }
+        size: { $ref: "#/components/schemas/FreeDie" }
+    ResolvedCharacterThrow:
+      type: object
+      required:
+        - type
+        - characterId
+        - equipmentId
+        - kind
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
+        - weaponBonus
+        - accuracyDice
+      properties:
+        type: { type: string, enum: [attribute, weapon, free] }
+        characterId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        npcId: { $ref: "#/components/schemas/Id" }
+        equipmentId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        kind: { $ref: "#/components/schemas/ThrowKind" }
+        dice:
+          type: array
+          items: { $ref: "#/components/schemas/ResolvedDie" }
+        modifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        note: { type: string, maxLength: 500 }
+        redDice:
+          type: array
+          items: { $ref: "#/components/schemas/ResolvedDie" }
+        redModifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        weaponBonus:
+          oneOf:
+            - { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            - { type: "null" }
+        accuracyDice:
+          oneOf:
+            - type: array
+              items: { $ref: "#/components/schemas/Attribute" }
+              minItems: 2
+              maxItems: 2
+            - { type: "null" }
+    ResolvedNpcThrow:
+      type: object
+      required:
+        - type
+        - npcId
+        - npcName
+        - attributes
+        - kind
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
+        - attack
+      properties:
+        type: { type: string, enum: [npc-attribute, npc-attack] }
+        npcId: { $ref: "#/components/schemas/Id" }
+        npcName: { type: string }
+        attributes:
+          type: array
+          items: { $ref: "#/components/schemas/Attribute" }
+          minItems: 1
+          maxItems: 2
+        kind: { $ref: "#/components/schemas/ThrowKind" }
+        dice:
+          type: array
+          items: { $ref: "#/components/schemas/ResolvedDie" }
+        modifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        note: { type: string, maxLength: 500 }
+        redDice:
+          type: array
+          items: { $ref: "#/components/schemas/ResolvedDie" }
+        redModifier: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+        attack:
+          oneOf:
+            - type: object
+              required:
+                - id
+                - name
+                - accuracyBonus
+                - damageBonus
+                - damageType
+              properties:
+                id: { $ref: "#/components/schemas/Id" }
+                name: { type: string }
+                accuracyBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                damageBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+                damageType: { type: string }
+            - { type: "null" }
+    ThrowSide:
+      type: object
+      required:
+        - dice
+        - modifier
+        - total
+        - result
+      properties:
+        dice:
+          type: array
+          items:
+            type: object
+            required:
+              - label
+              - size
+              - face
+            properties:
+              label:
+                oneOf:
+                  - { type: string }
+                  - { type: "null" }
+              size: { $ref: "#/components/schemas/FreeDie" }
+              face: { type: integer, minimum: 1 }
+        modifier: { type: integer }
+        total: { type: integer }
+        result: { type: string, enum: [fumble, critical, ordinary, none] }
+    ThrowOutcome:
+      type: object
+      required:
+        - first
+      properties:
+        first: { $ref: "#/components/schemas/ThrowSide" }
+        second: { $ref: "#/components/schemas/ThrowSide" }
+        winner: { type: string, enum: [first, second, tie] }
+    Throw:
+      type: object
+      required:
+        - id
+        - seq
+        - createdAt
+        - kind
+        - role
+        - characterId
+        - characterName
+        - equipmentId
+        - equipmentName
+        - setup
+        - outcome
+        - canRemove
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        seq: { type: integer, minimum: 1 }
+        createdAt: { type: string, format: date-time }
+        kind: { $ref: "#/components/schemas/ThrowKind" }
+        role: { type: string, enum: [GM, Player] }
+        characterId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        characterName: { type: string }
+        equipmentId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        equipmentName:
+          oneOf:
+            - { type: string }
+            - { type: "null" }
+        setup:
+          oneOf:
+            - { $ref: "#/components/schemas/ResolvedCharacterThrow" }
+            - { $ref: "#/components/schemas/ResolvedNpcThrow" }
+        outcome: { $ref: "#/components/schemas/ThrowOutcome" }
+        canRemove: { type: boolean }
+    Member:
+      type: object
+      required:
+        - id
+        - accountId
+        - name
+        - removed
+        - activeCharacterId
+        - revision
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        accountId: { $ref: "#/components/schemas/Id" }
+        name: { type: string }
+        removed: { type: boolean }
+        activeCharacterId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        revision: { type: integer, minimum: 0 }
+    ActiveCharacterSelection:
+      type: object
+      required:
+        - expectedRevision
+        - characterId
+      properties:
+        expectedRevision: { type: integer, minimum: 0 }
+        characterId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+    Invitation:
+      type: object
+      required:
+        - id
+        - kind
+        - characterId
+        - enabled
+        - url
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        kind: { type: string, enum: [game, character] }
+        characterId:
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        enabled: { type: boolean }
+        url: { type: string, format: uri-reference }
+    CreateInvitation:
+      oneOf:
+        - type: object
+          required:
+            - kind
+          properties:
+            kind: { type: string, const: game }
+        - type: object
+          required:
+            - kind
+            - characterId
+          properties:
+            kind: { type: string, const: character }
+            characterId: { $ref: "#/components/schemas/Id" }
+    InvitationPreview:
+      oneOf:
+        - type: object
+          required:
+            - kind
+            - gameId
+            - gameName
+            - alreadyMember
+          properties:
+            kind: { type: string, const: game }
+            gameId: { $ref: "#/components/schemas/Id" }
+            gameName: { type: string }
+            alreadyMember: { type: boolean }
+        - type: object
+          required:
+            - kind
+            - gameId
+            - gameName
+            - alreadyMember
+            - characterId
+            - characterName
+          properties:
+            kind: { type: string, const: character }
+            gameId: { $ref: "#/components/schemas/Id" }
+            gameName: { type: string }
+            alreadyMember: { type: boolean }
+            characterId: { $ref: "#/components/schemas/Id" }
+            characterName: { type: string }
+    AcceptedInvitation:
+      oneOf:
+        - type: object
+          required:
+            - gameId
+          properties:
+            gameId: { $ref: "#/components/schemas/Id" }
+          additionalProperties: false
+        - type: object
+          required:
+            - gameId
+            - characterId
+            - active
+          properties:
+            gameId: { $ref: "#/components/schemas/Id" }
+            characterId: { $ref: "#/components/schemas/Id" }
+            active: { type: boolean }
+          additionalProperties: false

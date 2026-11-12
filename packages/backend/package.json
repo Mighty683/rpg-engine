@@ -6,11 +6,13 @@
   "scripts": {
     "lint": "vp lint --no-error-on-unmatched-pattern",
     "check": "vp check --no-error-on-unmatched-pattern",
-    "dev": "node --env-file-if-exists=.env --watch src/server.ts",
+    "dev": "pnpm openapi:bundle && NODE_ENV=development node --env-file-if-exists=.env --watch src/server.ts",
     "start": "node --env-file-if-exists=.env src/server.ts",
     "migrate": "node --env-file-if-exists=.env src/migrate.ts",
     "seed:demo": "node --env-file-if-exists=.env src/seed-demo.ts",
     "build": "tsc --noEmit",
+    "openapi:lint": "redocly lint --extends=minimal openapi/openapi.yaml",
+    "openapi:bundle": "redocly bundle openapi/openapi.yaml --output dist/openapi.json",
     "test:mutation": "stryker run"
   },
   "dependencies": {
@@ -22,15 +24,18 @@
     "express": "5.3.0",
     "express-rate-limit": "^8.7.3",
     "helmet": "^8.3.0",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@redocly/cli": "^2.77.0",
     "@stryker-mutator/core": "^10.1.1",
     "@stryker-mutator/vitest-runner": "^10.1.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "5.0.6",
     "@types/node": "24.19.2",
     "@types/pg": "8.23.1",
+    "@types/swagger-ui-express": "^4.1.8",
     "drizzle-kit": "0.31.11",
     "typescript": "6.0.3"
   }

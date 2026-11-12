@@ -9,9 +9,9 @@
 
 ## Implementation
 
-Write an OpenAPI 3.1 schema in `packages/backend/openapi/`, covering the existing HTTP endpoints, request and response bodies, errors, session cookies, CSRF and the event stream. The schema is maintained explicitly; arrow-express routes do not supply complete schemas automatically.
+The [canonical OpenAPI 3.1 schema](../../../../packages/backend/openapi/openapi.yaml) covers the HTTP endpoints, request and response bodies, errors, session cookies, CSRF and the event stream. The schema is maintained explicitly because arrow-express routes do not supply complete schemas automatically.
 
-Serve the bundled schema and Swagger UI from development-only Express routes. Add schema validation to the repository checks. Keep existing application behavior and security middleware unchanged, and verify that the UI loads under the existing Helmet policy.
+The backend serves the bundled schema at `/openapi.json` and Swagger UI at `/api-docs/` in development mode. The backend dev command builds the bundle before startup. `pnpm check` lints and bundles the schema.
 
 ## Task workflow
 

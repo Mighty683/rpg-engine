@@ -9,7 +9,7 @@
     "preview": "pnpm --filter @rpg-engine/frontend preview",
     "seed:demo": "pnpm --filter @rpg-engine/backend seed:demo",
     "lint": "vp lint",
-    "check": "vp check packages vite.config.ts package.json",
+    "check": "vp check packages vite.config.ts package.json && pnpm --filter @rpg-engine/backend openapi:lint && pnpm --filter @rpg-engine/backend openapi:bundle",
     "test": "vp test --run packages/backend/src packages/frontend/src packages/frontend/prototypes lint --exclude '**/*.integration.test.ts' --exclude '**/migrations.test.ts'",
     "test:integration": ": ${TEST_DATABASE_URL:?Set TEST_DATABASE_URL to a disposable PostgreSQL database} && vp test --run packages/backend/src/migrations.test.ts $(find packages/backend/src -name '*.integration.test.ts') && pnpm --filter @rpg-engine/tests test:api --run && pnpm --filter @rpg-engine/tests test --run",
     "verify": "pnpm check && pnpm --filter @rpg-engine/backend build && pnpm build && pnpm test && pnpm --filter @rpg-engine/frontend test:browser --run && pnpm test:integration",

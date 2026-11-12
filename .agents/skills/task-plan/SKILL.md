@@ -10,6 +10,7 @@ Read the task handover before writing `docs/tasks/<task>/plan.md`. If the handov
 Sequence work around actual dependencies. Each wave should deliver an integrated increment that can be verified. Schedule checks when their dependencies are ready. For parallel work, assign exclusive edit boundaries and one owner for shared contracts and integration. Each wave MUST be implemented by a separate sub agent, one per wave, so waves stay isolated and verifiable; workers must accommodate others' edits and never revert them. Planning does not authorize dispatching agents.
 
 Reuse approved prototype components and wire them to production. Schedule checks against the reviewed design across relevant screen sizes and states.
+Assign one owner to wire the approved shared view into the production route and verify it there as soon as it renders.
 
 ## Example
 

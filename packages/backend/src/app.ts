@@ -33,12 +33,14 @@ import {
 } from "./modules/invitations/controller.ts";
 import { partyController } from "./modules/characters/party-controller.ts";
 import { throwsController } from "./modules/throws/controller.ts";
+import { mountApiDocumentation } from "./openapi.ts";
 
 export function createApp(database: Database, config: Configuration = createConfiguration()) {
   const { issueCsrfToken, csrfProtection, invalidCsrfTokenError } = createCsrfProtection(config);
   const app = express();
   if (config.trustedProxies.length) app.set("trust proxy", config.trustedProxies);
   app.use(helmet());
+  if (config.development) mountApiDocumentation(app);
   app.use(cookieParser());
   app.use(express.json({ limit: "96kb" }));
   app.get("/api/auth/csrf", issueCsrfToken);

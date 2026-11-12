@@ -27,10 +27,12 @@ Requirements: Node.js 22.18 or newer, pnpm (version in `package.json`), and Post
 
 The backend loads `packages/backend/.env`; shell environment variables take precedence. It listens on `127.0.0.1:3000` by default (`PORT` overrides the port), and the frontend dev server proxies `/api` to port 3000.
 
+With `pnpm dev` running, open [Swagger UI](http://127.0.0.1:3000/api-docs/) or the [bundled OpenAPI schema](http://127.0.0.1:3000/openapi.json) on the backend port.
+
 ### Commands
 
 - `pnpm build` — type-check and build the frontend.
-- `pnpm check` — check formatting, lint, and types across both packages.
+- `pnpm check` — check formatting, lint, types, and the OpenAPI schema.
 - `pnpm lint` — check lint and types.
 - `pnpm --filter @rpg-engine/backend build` — type-check the backend.
 - `pnpm --filter @rpg-engine/frontend <command>` or `pnpm --filter @rpg-engine/backend <command>` — run a package command. Root `build` and `preview` target the frontend.

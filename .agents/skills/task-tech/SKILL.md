@@ -9,6 +9,10 @@ Inspect relevant implementation, tests, and architecture guidance. Include contr
 
 UI prototype code should be ready to be reused components from there will be migrated to production app. You can adjust data types in prototype code to match decided architecture.
 
+For UI work, document how the approved view connects to production data, permissions, and persistence. Walk affected entry points and record which flows change. Carry forward agreed decisions and ask only about unresolved choices that materially affect delivery.
+
+For HTTP API changes, prepare a machine-readable OpenAPI 3.1 `openapi.yaml` beside `tech.md` and link it for user review. Cover affected operations and schemas, including authorization and errors. If the HTTP API is unchanged, state that no schema update is needed.
+
 ## Example: `docs/tasks/<task>/tech.md`
 
 ```markdown

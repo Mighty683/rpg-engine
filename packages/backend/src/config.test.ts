@@ -15,3 +15,12 @@ it("captures independent settings and requires an explicit production proxy poli
   expect(first.trustedProxies).toEqual(["127.0.0.1/32"]);
   expect(() => createConfiguration({ NODE_ENV: "production" })).toThrow("TRUSTED_PROXIES");
 });
+
+it("enables development-only routes only in development mode", () => {
+  expect(createConfiguration({ NODE_ENV: "development" }).development).toBe(true);
+  expect(createConfiguration({}).development).toBe(false);
+  expect(createConfiguration({ NODE_ENV: "test" }).development).toBe(false);
+  expect(createConfiguration({ NODE_ENV: "production", TRUSTED_PROXIES: "none" }).development).toBe(
+    false,
+  );
+});

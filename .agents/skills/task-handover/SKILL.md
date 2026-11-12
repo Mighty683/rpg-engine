@@ -9,6 +9,8 @@ Write `docs/tasks/<task>/handover.md` before the implementation plan. Use the st
 
 Limit the handover's test scope to browser E2E and API integration in `packages/tests`. Describe complete browser journeys as Gherkin scenarios and API integration cases with expected outcomes and persisted effects. Follow the package guidance and give each test a stable ID. Decide unit coverage alongside the code during implementation.
 
+For UI work, turn consequential design decisions into checks on the production route. Compare the complete screen with the approved prototype at relevant sizes and states. Record the comparison and required check results for the delivered revision before archiving.
+
 Use the handover for final acceptance. Record checks as pending until they run, then add evidence, failures, and open items. After implementation, set the task summary status to Implemented and move the complete task directory to `docs/tasks/archive/<task>/`; update links to and from the moved documents and preserve outstanding verification and open items.
 
 ## Example

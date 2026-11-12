@@ -7,6 +7,7 @@ export function createConfiguration(env: NodeJS.ProcessEnv = process.env) {
   }
   return {
     production,
+    development: env.NODE_ENV === "development",
     databaseUrl: env.DATABASE_URL,
     port: Number(env.PORT ?? 3000),
     appOrigin: env.APP_ORIGIN,
