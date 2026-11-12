@@ -68,14 +68,28 @@ export type FreeSetup = {
   note: string;
 };
 
-export type ThrowSetup = AttributeSetup | WeaponSetup | FreeSetup;
+export type NpcAttributeSetup = Omit<AttributeSetup, "type" | "characterId"> & {
+  type: "npc-attribute";
+  npcId: string;
+};
+export type NpcAttackSetup = Omit<WeaponSetup, "type" | "characterId" | "equipmentId"> & {
+  type: "npc-attack";
+  npcId: string;
+  attackId: string;
+};
+export type ThrowSetup =
+  | AttributeSetup
+  | WeaponSetup
+  | FreeSetup
+  | NpcAttributeSetup
+  | NpcAttackSetup;
 
 export type CreateThrowInput = {
   sourceThrowId: string | null;
   setup: ThrowSetup;
 };
 
-export type ResolvedSetup = {
+export type CharacterResolvedSetup = {
   type: "attribute" | "weapon" | "free";
   kind: ThrowKind;
   characterId: string | null;
@@ -88,6 +102,31 @@ export type ResolvedSetup = {
   weaponBonus: number | null;
   accuracyDice: [Attribute, Attribute] | null;
 };
+
+export type NpcResolvedSetup = {
+  type: "npc-attribute" | "npc-attack";
+  kind: ThrowKind;
+  npcId: string;
+  npcName: string;
+  attributes: [Attribute, Attribute?];
+  dice: SetupDice[];
+  modifier: number;
+  redDice: SetupDice[];
+  redModifier: number;
+  note: string;
+  attack: null | {
+    id: string;
+    name: string;
+    accuracyBonus: number;
+    damageBonus: number;
+    damageType: string;
+  };
+  characterId?: never;
+  equipmentId?: never;
+  weaponBonus?: never;
+  accuracyDice?: never;
+};
+export type ResolvedSetup = CharacterResolvedSetup | NpcResolvedSetup;
 
 export type SideOutcomeJson = {
   dice: { label: string | null; size: number; face: number }[];

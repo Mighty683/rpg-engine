@@ -17,11 +17,14 @@ const kindLabel: Record<ThrowRecord["kind"], string> = {
 const resultLabel = { fumble: "Fumble", critical: "Critical success", ordinary: "", none: "" };
 
 function title(entry: ThrowRecord) {
-  const actor = entry.characterId
-    ? `${entry.role} · ${entry.characterName}`
-    : entry.role === "GM"
-      ? "GM"
-      : entry.characterName;
+  const actor =
+    entry.setup.type === "npc-attribute" || entry.setup.type === "npc-attack"
+      ? `GM · ${entry.characterName}`
+      : entry.characterId
+        ? `${entry.role} · ${entry.characterName}`
+        : entry.role === "GM"
+          ? "GM"
+          : entry.characterName;
   return [actor, entry.equipmentName ?? kindLabel[entry.kind]].filter(Boolean).join(" · ");
 }
 function outcomeText(entry: ThrowRecord) {

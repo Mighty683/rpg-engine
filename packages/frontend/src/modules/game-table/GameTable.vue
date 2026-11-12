@@ -15,6 +15,9 @@ import { account } from "../auth/session";
 import { useGameCharactersQuery } from "../characters/hooks";
 import { useGameMembersQuery } from "../games/hooks";
 import CharacterView from "../characters/CharacterView.vue";
+import NpcManager from "../npcs/NpcManager.vue";
+import type { GmNpc } from "../npcs/api";
+import type { NpcAttack } from "../npcs/types";
 
 import {
   useCreateThrowMutation,
@@ -28,7 +31,12 @@ import HistoryPanel from "./HistoryPanel.vue";
 import RollDialog from "./RollDialog.vue";
 import FreeRollDialog from "./FreeRollDialog.vue";
 
-const props = defineProps<{ gameId: string; role: "GM" | "Player"; throwsHint: number }>();
+const props = defineProps<{
+  gameId: string;
+  role: "GM" | "Player";
+  throwsHint: number;
+  npcsHint?: number;
+}>();
 const toast = useToast();
 
 const partyQuery = useGamePartyQuery(props.gameId);
@@ -44,6 +52,7 @@ const rosterById = computed(
 );
 
 const sheetOpen = ref(false);
+const npcEditorOpen = ref(false);
 const selectedSheetId = ref("");
 const sheetTabs = computed(() =>
   party.value.map((member) => ({ label: member.name, value: member.id })),
@@ -67,6 +76,39 @@ const rollDraft = ref<RollDraft | null>(null);
 const rollOpponent = ref<OpponentDraft>({ dice: [], modifier: "0" });
 const rollError = ref("");
 const rollSourceId = ref<string | null>(null);
+const npcRoll = ref<GmNpc | null>(null);
+const npcRecords = ref<GmNpc[]>([]);
+function npcCharacter(npc: GmNpc): PartyCharacter {
+  return {
+    id: npc.id,
+    revision: npc.revision,
+    name: npc.name,
+    level: npc.level,
+    classes: [],
+    baseDice: npc.baseDice,
+    resources: { hp: npc.hp.current, mp: npc.mp.current, ip: 0, fabula: 0 },
+    maxima: { hp: npc.hp.max, mp: npc.mp.max, ip: 0 },
+    defense: npc.defense,
+    magicDefense: npc.magicDefense,
+    canRoll: true,
+    weapons: npc.attacks.map((attack) => ({
+      id: attack.id,
+      name: attack.name,
+      equipped: true,
+      accuracyDice: attack.attributes,
+      accuracyBonus: Math.floor(npc.level / 10),
+      ready: true,
+    })),
+  };
+}
+function openNpcAttribute(npc: GmNpc, attribute: Attribute) {
+  openAttributeRoll(npcCharacter(npc), attribute);
+  npcRoll.value = npc;
+}
+function openNpcAttack(npc: GmNpc, attack: NpcAttack) {
+  openWeaponRoll(npcCharacter(npc), attack.id);
+  npcRoll.value = npc;
+}
 
 const freeDraft = ref<FreeDraft | null>(null);
 const freeOpponent = ref<OpponentDraft>({ dice: [], modifier: "0" });
@@ -109,6 +151,7 @@ const rollAsOptions = computed(() => [
 ]);
 
 function openAttributeRoll(character: PartyCharacter, attribute: Attribute) {
+  npcRoll.value = null;
   weaponHint.value = null;
   rollSourceId.value = null;
   rollError.value = "";
@@ -128,6 +171,7 @@ function openAttributeRoll(character: PartyCharacter, attribute: Attribute) {
 }
 
 function openWeaponRoll(character: PartyCharacter, weaponId: string) {
+  npcRoll.value = null;
   const weapon = character.weapons.find((entry) => entry.id === weaponId);
   if (!weapon || !weapon.ready) return;
   weaponHint.value = null;
@@ -156,6 +200,41 @@ function needsWeaponSetup(character: PartyCharacter, weaponId: string) {
 function openReroll(entry: ThrowRecord) {
   rollError.value = "";
   freeError.value = "";
+  if (entry.setup.type === "npc-attribute" || entry.setup.type === "npc-attack") {
+    const setup = entry.setup;
+    const npc = npcRecords.value.find((item) => item.id === setup.npcId);
+    if (!npc || props.role !== "GM") {
+      toast.add({ title: "This NPC roll cannot be rerolled.", color: "error" });
+      return;
+    }
+    if (setup.type === "npc-attack") {
+      const attack = npc.attacks.find((item) => item.id === setup.attack?.id);
+      if (!attack) {
+        toast.add({ title: "The original NPC attack is no longer available.", color: "error" });
+        return;
+      }
+      openNpcAttack(npc, { ...attack, range: attack.reach });
+      if (rollDraft.value) {
+        rollDraft.value.first = setup.attributes[0];
+        rollDraft.value.second = setup.attributes[1] ?? null;
+        rollDraft.value.weaponBonus = setup.attack?.accuracyBonus ?? 0;
+      }
+    } else openNpcAttribute(npc, setup.attributes[0]);
+    if (rollDraft.value) {
+      rollDraft.value.second = setup.attributes[1] ?? null;
+      for (const die of setup.dice)
+        if (die.label && die.label in rollDraft.value.dice)
+          rollDraft.value.dice[die.label as Attribute] = die.size;
+      rollDraft.value.modifier = String(setup.modifier);
+      rollDraft.value.note = setup.note;
+    }
+    rollSourceId.value = entry.id;
+    rollOpponent.value = {
+      dice: setup.redDice.map((die) => die.size),
+      modifier: String(setup.redModifier),
+    };
+    return;
+  }
   const character = party.value.find((member) => member.id === entry.setup.characterId) ?? null;
   if (entry.setup.type === "weapon" && entry.equipmentId) {
     if (!character) {
@@ -296,8 +375,15 @@ function rollSetup(draft: RollDraft): ThrowSetup | null {
 async function submitRoll() {
   const draft = rollDraft.value;
   if (!draft) return;
-  const setup = rollSetup(draft);
+  let setup = rollSetup(draft);
   if (!setup) return;
+  if (npcRoll.value && setup.type === "attribute") {
+    const { characterId, ...rest } = setup;
+    setup = { ...rest, type: "npc-attribute", npcId: characterId };
+  } else if (npcRoll.value && setup.type === "weapon") {
+    const { characterId, equipmentId, ...rest } = setup;
+    setup = { ...rest, type: "npc-attack", npcId: characterId, attackId: equipmentId };
+  }
   rollError.value = "";
   try {
     const result = await createThrow.mutateAsync({ sourceThrowId: rollSourceId.value, setup });
@@ -399,17 +485,30 @@ async function removeEntry(entry: ThrowRecord) {
       :reroll="openReroll"
       :remove-entry="removeEntry"
     >
-      <PartyPanel
-        :party="party"
-        :is-loading="partyQuery.isLoading.value"
-        :is-error="partyQuery.isError.value"
-        :weapon-hint="weaponHint"
-        @retry="partyQuery.refetch"
-        @roll-attribute="openAttributeRoll"
-        @roll-weapon="openWeaponRoll"
-        @needs-weapon-setup="needsWeaponSetup"
-        @open-sheet="openSheet"
-      />
+      <div class="space-y-section">
+        <PartyPanel
+          :party="party"
+          :is-loading="partyQuery.isLoading.value"
+          :is-error="partyQuery.isError.value"
+          :weapon-hint="weaponHint"
+          @retry="partyQuery.refetch"
+          @roll-attribute="openAttributeRoll"
+          @roll-weapon="openWeaponRoll"
+          @needs-weapon-setup="needsWeaponSetup"
+          @open-sheet="openSheet"
+        >
+          <NpcManager
+            :game-id="gameId"
+            :role="role"
+            :hint="npcsHint ?? 0"
+            :panels-blocked="sheetOpen"
+            @editor-open="npcEditorOpen = $event"
+            @changed="npcRecords = $event"
+            @roll-attribute="openNpcAttribute"
+            @roll-attack="openNpcAttack"
+          />
+        </PartyPanel>
+      </div>
       <HistoryPanel
         :throws="history.throws.value"
         :is-loading="history.isLoading.value"
@@ -425,6 +524,7 @@ async function removeEntry(entry: ThrowRecord) {
       <CharacterSheetsDrawer
         v-model:open="sheetOpen"
         v-model:selected-id="selectedSheetId"
+        :show-bookmark="!npcEditorOpen"
         :tabs="sheetTabs"
       >
         <template #sheet="{ characterId }">

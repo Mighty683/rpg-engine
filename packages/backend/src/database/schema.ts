@@ -211,3 +211,50 @@ export function activeCharacterCondition() {
     eq(players.activeCharacterId, characters.id),
   );
 }
+
+export const npcs = pgTable("npcs", {
+  id: uuid("id").primaryKey(),
+  gameId: uuid("game_id").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  relationship: text("relationship", { enum: ["enemy", "neutral", "friend"] })
+    .notNull()
+    .default("neutral"),
+  level: smallint("level").notNull(),
+  visibility: text("visibility", { enum: ["hidden", "visible", "known"] })
+    .notNull()
+    .default("hidden"),
+  dexDie: smallint("dex_die").notNull(),
+  insDie: smallint("ins_die").notNull(),
+  migDie: smallint("mig_die").notNull(),
+  wlpDie: smallint("wlp_die").notNull(),
+  currentHp: integer("current_hp").notNull(),
+  maxHp: integer("max_hp").notNull(),
+  currentMp: integer("current_mp").notNull(),
+  maxMp: integer("max_mp").notNull(),
+  defense: integer("defense").notNull(),
+  magicDefense: integer("magic_defense").notNull(),
+  notes: varchar("notes", { length: 2000 }).notNull().default(""),
+  revision: integer("revision").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const npcAttacks = pgTable("npc_attacks", {
+  id: uuid("id").primaryKey(),
+  npcId: uuid("npc_id").notNull(),
+  position: smallint("position").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  reach: text("reach", { enum: ["melee", "ranged"] }).notNull(),
+  attribute1: text("attribute_1").notNull(),
+  attribute2: text("attribute_2").notNull(),
+  damageBonus: integer("damage_bonus").notNull(),
+  damageType: varchar("damage_type", { length: 100 }).notNull().default(""),
+});
+
+export const npcCreateRequests = pgTable("npc_create_requests", {
+  accountId: uuid("account_id").notNull(),
+  requestId: uuid("request_id").notNull(),
+  gameId: uuid("game_id").notNull(),
+  npcId: uuid("npc_id").notNull(),
+  requestBody: jsonb("request_body").notNull(),
+});

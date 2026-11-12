@@ -30,6 +30,7 @@ import { serverDieSource } from "../fabula/rolls.ts";
 import { sheetSequential } from "../characters/service.ts";
 import { fail, gmActorId } from "./contract.ts";
 import { resolveThrow } from "./resolve.ts";
+import { resolveNpcThrow } from "./npc-resolve.ts";
 
 const present = (row: ThrowRow, actor: GameActor, access: GameAccess): ThrowRecord => ({
   id: row.id,
@@ -160,8 +161,11 @@ export async function createThrow(
 ) {
   const result = await transaction(database, async (tx) => {
     const access = await gameAccessFor(tx).lockGame(actor, gameId);
-    const context = await buildContext(tx, gameId, access, input);
-    const resolved = resolveThrow(input, context, dieSource);
+    const setup = input.setup;
+    const resolved =
+      setup.type === "npc-attribute" || setup.type === "npc-attack"
+        ? await resolveNpcThrow(tx, gameId, access, setup, input.sourceThrowId, dieSource)
+        : resolveThrow(input, await buildContext(tx, gameId, access, input), dieSource);
     const [sequence] = await tx
       .select({ next: sql<string>`COALESCE(MAX(${throws.seq}),0)+1` })
       .from(throws)
@@ -200,6 +204,7 @@ async function buildContext(
   const ownActive =
     access.role === "Player" ? await ownActiveCharacterId(tx, gameId, access.membershipId) : null;
   const setup = input.setup;
+  if (setup.type === "npc-attribute" || setup.type === "npc-attack") throw fail("validation");
   const characterId =
     setup.type === "free" && setup.characterId === gmActorId ? null : setup.characterId;
   const character = characterId ? await loadCharacter(tx, gameId, characterId) : null;

@@ -1,3 +1,4 @@
+import type { api as npcApi } from "../modules/npcs/api";
 import type { Ref } from "vue";
 import type { authApi } from "../modules/auth/api";
 import type { api as charactersApi } from "../modules/characters/api";
@@ -11,6 +12,7 @@ export interface ApiServices {
   auth: typeof authApi;
   characters: typeof charactersApi;
   gameTable: typeof gameTableApi;
+  npcs: typeof npcApi;
   games: typeof gamesApi;
   invitations: typeof invitationApi;
   players: typeof playersApi;

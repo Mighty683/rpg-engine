@@ -23,7 +23,7 @@ const emit = defineEmits<{
 
 <template>
   <ScreenSection :aria-labelledby="headingId" class="p-large">
-    <h2 :id="headingId" class="text-section font-semibold">Active party</h2>
+    <h2 :id="headingId" class="text-section font-semibold">Table</h2>
     <ContentState v-if="isLoading" kind="loading">Loading party…</ContentState>
     <ContentState
       v-else-if="isError"
@@ -31,11 +31,7 @@ const emit = defineEmits<{
       retry-test-id="retry-party"
       @retry="emit('retry')"
     />
-    <ul
-      v-else-if="party.length"
-      class="grid gap-small pt-medium sm:grid-cols-2"
-      data-testid="party-list"
-    >
+    <ul v-else class="relative grid gap-small pt-medium sm:grid-cols-2" data-testid="party-list">
       <PartyCharacterCard
         v-for="member in party"
         :key="member.id"
@@ -44,8 +40,11 @@ const emit = defineEmits<{
         @roll-weapon="emit('rollWeapon', member, $event)"
         @needs-weapon-setup="emit('needsWeaponSetup', member, $event)"
       />
+      <slot />
     </ul>
-    <p v-else class="text-muted" data-testid="party-empty">No active characters.</p>
+    <p v-if="!isLoading && !isError && !party.length" class="text-muted" data-testid="party-empty">
+      No active characters.
+    </p>
     <p v-if="weaponHint" role="alert" class="text-error pt-medium" data-testid="weapon-setup-hint">
       Set both attributes and the accuracy bonus for {{ weaponHint.weaponName }} on the character
       sheet.

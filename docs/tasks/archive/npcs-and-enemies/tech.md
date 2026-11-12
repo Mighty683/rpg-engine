@@ -4,9 +4,9 @@
 
 ## Technical decisions
 
-- Store NPCs in game-scoped tables, separate from character sheets. Persist manual stats as supplied; do not calculate or store fields outside the [agreed scope](ux.md). Follow the [Fabula Ultima rules](../../spec/fabula-ultima/npcs-and-enemies.md) for rolls.
-- Apply visibility projections on the server. The [prototype](../../../packages/frontend/prototypes/npcs-and-enemies/) sends full records and uses shared free rolls; neither contract is suitable for production.
-- Extend the existing throw service with NPC-specific setup and GM-only snapshots. This prevents shared history from exposing NPC data; the audience policy requires confirmation before implementation.
+- Store NPCs in game-scoped tables, separate from character sheets. Persist manual stats as supplied; do not calculate or store fields outside the [agreed scope](ux.md). Follow the [Fabula Ultima rules](../../../spec/fabula-ultima/npcs-and-enemies.md) for rolls.
+- Apply visibility projections on the server. The [prototype](../../../../packages/frontend/prototypes/npcs-and-enemies/) sends full records and uses shared free rolls; neither contract is suitable for production.
+- Extend the existing throw service with NPC-specific setup and shared snapshots. NPC rolls are public to game members, regardless of NPC visibility; their snapshots reveal the NPC and roll details.
 - Use game transaction locks, revision checks and idempotent creation to serialize writes and prevent duplicates or lost updates.
 - NPC rank is not stored or exposed; stats are entered manually. The rules reference remains intact, but rank-based automation is outside this task.
 
@@ -66,10 +66,6 @@ CREATE TABLE npc_create_requests (
   PRIMARY KEY (account_id, request_id)
 );
 
-ALTER TABLE throws ADD COLUMN audience text NOT NULL DEFAULT 'shared'
-  CHECK (audience IN ('shared', 'gm'));
-CREATE INDEX throws_gm_shared_seq_idx ON throws (game_id, seq)
-  WHERE NOT deleted AND audience = 'shared';
 ```
 
 `npc_create_requests.request_id` equals the requested NPC ID. Store the normalized original `NpcWrite` in `request_body`; compare JSONB values on retry. Keep the receipt independently of NPC updates. A receipt and its NPC are inserted in one transaction. A globally colliding NPC ID returns `id_conflict`, without disclosing the owner. Cascade receipts when their game is deleted, matching character creation receipts.
@@ -128,6 +124,7 @@ All paths below start with `/api/games/:gameId/npcs`. Use existing session and w
 | `GET /:npcId` | — | `200 { npc: NpcRead }`. |
 | `POST /` | `{ id: UUID, npc: NpcWrite }` | `201 { npc: GmNpc }`; identical retry returns `200`. |
 | `PUT /:npcId` | `{ expectedRevision: number, npc: NpcWrite }` | `200 { npc: GmNpc }`; replaces the profile and attacks and increments revision. |
+| `DELETE /:npcId` | `{ expectedRevision: number }` | `204`; GM only, rejects a stale revision and preserves historical throw snapshots. |
 
 Only the GM can write. For players, hidden NPCs are omitted and detail returns 404; visible NPCs return `VisibleNpc`; known NPCs return `KnownNpc`, without GM notes. Apply the same projection to list and detail.
 
@@ -186,19 +183,19 @@ type NpcResolvedSetup = {
 };
 ```
 
-For NPC rows, set `audience = 'gm'`, `character_id` and `equipment_id` to null, `character_name` to the NPC snapshot name and `equipment_name` to the attack name or null. Keep the existing `kind` and `outcome` formats; the response's `setup` carries `NpcResolvedSetup`. Update the history renderer and reroll parser to discriminate `setup.type` instead of interpreting these rows as character rolls. No NPC foreign key is required on historical snapshots.
+For NPC rows, set `character_id` and `equipment_id` to null, `character_name` to the NPC snapshot name and `equipment_name` to the attack name or null. Keep the existing `kind` and `outcome` formats; the response's `setup` carries `NpcResolvedSetup`. Update the history renderer and reroll parser to discriminate `setup.type` instead of interpreting these rows as character rolls. No NPC foreign key is required on historical snapshots.
 
-Filter private throws before pagination; also authorize removal and reroll source lookup. Rerolls remain private, verify current NPC/attack eligibility and revision, and retain the original attack attributes, bonus and damage metadata. Existing shared throws remain unchanged. Never put NPC details in shared free-roll notes or broadcast events. Private rows may leave sequence gaps visible to players; confirm whether that metadata is acceptable.
+NPC throws and rerolls use the existing shared history, pagination, events and removal authorization. Only the GM can create or reroll NPC actions; rerolls verify current NPC/attack eligibility and revision and retain the original attack attributes, bonus and damage metadata. Public history exposes the snapshot, including the NPC name and attack details, even when the NPC is hidden or visible rather than known. GM notes are never included. Existing shared throws remain unchanged.
 
 ## Frontend and live updates
 
 - Integrate a dedicated NPC controller and injected API into `GameView`/`GameTable`. Adapt prototype card, sheet and attack views to the production types; production must not import prototype files.
-- Keep drafts separate from query data. Do not replace dirty drafts on refetch; retain them on failed or conflicting writes. Connect navigation guards to the interaction specified in [UX](ux.md).
+- Follow the existing optimistic UI pattern for edits, with no general save button, unsaved-change guard or draft preservation requirement. Handle failed and conflicting writes with actionable feedback and reconcile with server state.
 - Update or invalidate list and detail after save. Publish an ID-free NPC invalidation hint after commit; refetch on hint, reconnect and focus. Clear inaccessible data and prevent stale responses from restoring it.
-- Send NPC throw hints only to the GM. The existing event stream is in-process without replay or cross-instance delivery; immediate cross-instance revocation requires additional infrastructure. HTTP authorization remains authoritative.
+- Send NPC throw hints to game members using the existing shared throw mechanism. The existing event stream is in-process without replay or cross-instance delivery; immediate cross-instance revocation requires additional infrastructure. HTTP authorization remains authoritative.
 
 ## Verification and open decisions
 
-The handover should cover authorization and visibility transitions, cross-game IDs, revoked membership, concurrent updates, create retries, attack ownership, private throw pagination/removal/rerolls, event payloads, draft preservation and card/sheet synchronization. Test server security against PostgreSQL and prototype flows against shared MSW handlers.
+The handover should cover authorization and visibility transitions, cross-game IDs, revoked membership, concurrent updates, create retries, attack ownership, shared throw pagination/removal/rerolls, event payloads, optimistic updates and card/sheet synchronization. Test server security against PostgreSQL and prototype flows against shared MSW handlers.
 
-Before implementation, confirm the throw audience policy and whether sequence gaps are acceptable. Multi-instance live-update requirements determine whether shared event delivery is required.
+Use the existing in-process event delivery for this task.

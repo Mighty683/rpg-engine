@@ -5,6 +5,7 @@ import { authApi } from "../src/modules/auth/api";
 import { api as characters } from "../src/modules/characters/api";
 import { api as games } from "../src/modules/games/api";
 import { api as gameTable } from "../src/modules/game-table/api";
+import { api as npcs } from "../src/modules/npcs/api";
 import { invitationApi } from "../src/modules/invitations/api";
 import { api as players } from "../src/modules/players/api";
 
@@ -18,6 +19,7 @@ export const prototypeApiServices = {
   characters,
   games,
   gameTable,
+  npcs,
   invitations: invitationApi,
   players,
 };

@@ -2,8 +2,20 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    { "idx": 0, "version": "7", "when": 1700000000000, "tag": "001_games", "breakpoints": false },
-    { "idx": 1, "version": "7", "when": 1700000001000, "tag": "002_players", "breakpoints": false },
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1700000000000,
+      "tag": "001_games",
+      "breakpoints": false
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1700000001000,
+      "tag": "002_players",
+      "breakpoints": false
+    },
     {
       "idx": 2,
       "version": "7",
@@ -37,6 +49,13 @@
       "version": "7",
       "when": 1700000006000,
       "tag": "007_throws",
+      "breakpoints": false
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1700000007000,
+      "tag": "008_npcs",
       "breakpoints": false
     }
   ]

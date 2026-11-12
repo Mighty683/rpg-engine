@@ -20,6 +20,8 @@ function outcome(dice: SetupDice[], modifier: number): SideOutcomeJson {
 
 export function createPrototypeThrow(input: CreateThrowInput): ThrowRecord {
   const setup = input.setup;
+  if (setup.type === "npc-attribute" || setup.type === "npc-attack")
+    throw new Error("NPC-specific rolls are not supported by the prototype mock");
   const character = prototypeStore.characters.find((entry) => entry.id === setup.characterId);
   const npc = prototypeStore.npcs.find((entry) => entry.id === setup.characterId);
   const dice: SetupDice[] =

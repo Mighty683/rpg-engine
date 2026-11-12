@@ -4,7 +4,8 @@ import type { createGameEvents } from "./streams.ts";
 export type GameEvent =
   | { type: "roster" }
   | { type: "sheet"; characterId: string }
-  | { type: "throws" };
+  | { type: "throws" }
+  | { type: "npcs" };
 
 export type Subscription = {
   gameId: string;

@@ -11,6 +11,8 @@ import { createAuthService } from "./modules/auth/factory.ts";
 import { createGameAccessService } from "./modules/games/service.ts";
 import { createGamesService } from "./modules/games/factory.ts";
 import { createCharactersService } from "./modules/characters/factory.ts";
+import { createNpcsService } from "./modules/npcs/service.ts";
+import { npcsController } from "./modules/npcs/controller.ts";
 import { createThrowsService } from "./modules/throws/factory.ts";
 import { createMembershipsService } from "./modules/players/factory.ts";
 import { createInvitationsService } from "./modules/invitations/factory.ts";
@@ -53,6 +55,7 @@ export function createApp(database: Database, config: Configuration = createConf
   const auth = createAuthService(database, config, events, sessions);
   const games = createGamesService(database);
   const characters = createCharactersService(database, events, createGameAccessService);
+  const npcs = createNpcsService({ database, events, gameAccessFor: createGameAccessService });
   const throws = createThrowsService(database, events, createGameAccessService);
   const memberships = createMembershipsService(database, events, createGameAccessService);
   const invitations = createInvitationsService(database, config, events, createGameAccessService);
@@ -64,6 +67,7 @@ export function createApp(database: Database, config: Configuration = createConf
       charactersController({ auth, games, characters }),
       partyController({ auth, characters }),
       throwsController({ auth, games, throws }),
+      npcsController({ auth, games, npcs }),
       membershipsController({ auth, games, memberships }),
       activeSelectionController({ auth, games, memberships }),
       gameInvitationsController({ auth, games, invitations }),

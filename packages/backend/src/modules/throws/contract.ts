@@ -95,11 +95,8 @@ function parseAttributeSetup(value: Record<string, unknown>): AttributeSetup {
   const requested = dice as Record<string, unknown>;
   if (Object.keys(requested).some((key) => !attributes.includes(key as Attribute)))
     throw fail("validation", "Unknown attribute die", "dice");
-  for (const attribute of chosen) {
-    if (!attribute) continue;
-    if (requested[attribute] !== undefined && !standardDice.includes(requested[attribute] as Die))
-      throw fail("validation", "Attribute dice use d6, d8, d10 or d12", "dice");
-  }
+  if (Object.values(requested).some((die) => !standardDice.includes(die as Die)))
+    throw fail("validation", "Attribute dice use d6, d8, d10 or d12", "dice");
   return {
     type: "attribute",
     characterId: value.characterId,
@@ -155,6 +152,48 @@ function parseFreeSetup(value: Record<string, unknown>): FreeSetup {
   };
 }
 
+function parseNpcAttribute(record: Record<string, unknown>) {
+  exactKeys(
+    record,
+    [
+      "type",
+      "npcId",
+      "expectedRevision",
+      "attributes",
+      "dice",
+      "modifier",
+      "redDice",
+      "redModifier",
+      "note",
+    ],
+    "setup",
+  );
+  const { npcId, ...rest } = record;
+  if (!isUuid(npcId)) throw fail("validation", "Invalid NPC", "npcId");
+  const parsed = parseAttributeSetup({ ...rest, type: "attribute", characterId: npcId });
+  const { characterId: _characterId, ...setup } = parsed;
+  return { ...setup, type: "npc-attribute" as const, npcId };
+}
+
+function parseNpcAttack(record: Record<string, unknown>) {
+  exactKeys(
+    record,
+    ["type", "npcId", "attackId", "expectedRevision", "dice", "modifier", "note"],
+    "setup",
+  );
+  const { npcId, attackId, ...rest } = record;
+  if (!isUuid(npcId) || !isUuid(attackId))
+    throw fail("validation", "Invalid NPC or attack", "npcId");
+  const parsed = parseWeaponSetup({
+    ...rest,
+    type: "weapon",
+    characterId: npcId,
+    equipmentId: attackId,
+  });
+  const { characterId: _characterId, equipmentId: _equipmentId, ...setup } = parsed;
+  return { ...setup, type: "npc-attack" as const, npcId, attackId };
+}
+
 /** Parses and validates a create request body; rejects any authoritative field. */
 export function parseCreateRequest(body: unknown): CreateThrowInput {
   if (!body || typeof body !== "object" || Array.isArray(body))
@@ -171,6 +210,16 @@ export function parseCreateRequest(body: unknown): CreateThrowInput {
   if (!setup || typeof setup !== "object" || Array.isArray(setup))
     throw fail("validation", "Invalid setup", "setup");
   const record = setup as Record<string, unknown>;
+  if (record.type === "npc-attribute")
+    return {
+      sourceThrowId: (value.sourceThrowId as string) ?? null,
+      setup: parseNpcAttribute(record),
+    };
+  if (record.type === "npc-attack")
+    return {
+      sourceThrowId: (value.sourceThrowId as string) ?? null,
+      setup: parseNpcAttack(record),
+    };
   if (record.type === "attribute")
     return {
       sourceThrowId: (value.sourceThrowId as string) ?? null,

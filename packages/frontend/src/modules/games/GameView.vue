@@ -72,6 +72,7 @@ const pendingId = ref<string | null>(null);
 const pendingName = ref("");
 const heading = ref<HTMLElement>();
 const throwsHint = ref(0);
+const npcsHint = ref(0);
 const { games: gamesApi } = useApiServices();
 let events: ReturnType<typeof gamesApi.openGameEvents> | undefined;
 let eventConnectionFailed = false;
@@ -84,6 +85,7 @@ function refreshGameQueries(characterId?: string) {
   void queryClient.invalidateQueries({ queryKey: [...prefix, "members"] });
   void queryClient.invalidateQueries({ queryKey: partyKey(gameId) });
   throwsHint.value += 1;
+  npcsHint.value += 1;
 }
 onMounted(() => {
   events = gamesApi.openGameEvents(gameId);
@@ -96,6 +98,7 @@ onMounted(() => {
       const hint = JSON.parse(event.data) as { type?: string; characterId?: string };
       if (hint.type === "roster") refreshGameQueries();
       if (hint.type === "sheet" && hint.characterId) refreshGameQueries(hint.characterId);
+      if (hint.type === "npcs") npcsHint.value += 1;
       if (hint.type === "throws") {
         throwsHint.value += 1;
         void queryClient.invalidateQueries({ queryKey: throwsKey(gameId) });
@@ -343,7 +346,12 @@ async function removeCharacter() {
               >Characters management</UButton
             >
           </div>
-          <GameTable :game-id="gameId" :role="gameRecord.role" :throws-hint="throwsHint" />
+          <GameTable
+            :game-id="gameId"
+            :role="gameRecord.role"
+            :throws-hint="throwsHint"
+            :npcs-hint="npcsHint"
+          />
         </template>
       </template>
     </template>
