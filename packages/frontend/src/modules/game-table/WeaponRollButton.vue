@@ -36,8 +36,7 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
         <span
           v-if="reach && damageBonus !== null && damageBonus !== undefined"
           class="text-label text-muted"
-          >{{ reach }} · +{{ damageBonus
-          }}{{ damageType ? ` ${damageType}` : "" }}</span
+          >{{ reach }} · +{{ damageBonus }}{{ damageType ? ` ${damageType}` : "" }}</span
         >
         <span v-if="weapon.accuracyDice.every(Boolean)" class="weapon-dice" aria-hidden="true">
           <span v-for="(attribute, index) in weapon.accuracyDice" :key="index" class="weapon-die">

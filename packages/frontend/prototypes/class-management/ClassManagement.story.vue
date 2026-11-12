@@ -13,7 +13,11 @@ function initialState() {
     </template>
     <template #controls="{ state }">
       <HstSelect v-model="state.context" title="Context" :options="['Library', 'Game']" />
-      <HstSelect v-model="state.screen" title="Screen" :options="['List', 'Editor', 'Copy', 'Removal', 'Character']" />
+      <HstSelect
+        v-model="state.screen"
+        title="Screen"
+        :options="['List', 'Editor', 'Copy', 'Removal', 'Character']"
+      />
     </template>
   </Story>
 </template>
