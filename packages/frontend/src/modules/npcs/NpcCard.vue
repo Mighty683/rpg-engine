@@ -154,7 +154,6 @@ function attackSummary(npc: Npc): string {
                 :reach="attack.range"
                 :damage-bonus="attack.damageBonus"
                 :damage-type="attack.damageType"
-                hide-high-roll
                 @roll="emit('rollAttack', npc, attack)"
               />
             </li>

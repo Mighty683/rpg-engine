@@ -48,7 +48,7 @@ function remove(id: string) {
 </script>
 
 <template>
-  <ul class="entry-list" :class="{ 'entry-list-classes': kind === 'class' }">
+  <ul class="entry-list">
     <li v-for="entry in entries" :key="entry.id">
       <component
         :is="kind === 'class' ? ClassCard : kind === 'skill' ? SkillCard : EquipmentCard"
@@ -79,9 +79,6 @@ function remove(id: string) {
 .entry-list {
   display: grid;
   gap: var(--spacing-small);
-}
-.entry-list-classes {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .entry-add {
   display: flex;
