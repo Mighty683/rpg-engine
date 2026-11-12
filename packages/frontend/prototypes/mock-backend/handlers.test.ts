@@ -34,36 +34,14 @@ describe("prototype backend", () => {
     expect((await fetch(`${url}-missing`)).status).toBe(404);
   });
 
-  it("persists NPC edits, tag catalogue, deletion, and resets scenarios", async () => {
-    const collection = `${root}/prototype/npcs`;
-    const { npcs } = await fetch(collection).then((response) => response.json());
-    const npc = { ...npcs[0], name: "Edited sentry", tags: [{ name: "New", color: "info" }] };
-    const url = `${collection}/${npc.id}`;
-    expect(
-      (await fetch(url, { method: "PUT", body: JSON.stringify({ npc, tags: npc.tags }) })).status,
-    ).toBe(200);
-    expect(await fetch(url).then((response) => response.json())).toEqual({ npc });
-    const { tags } = await fetch(`${root}/prototype/tags`).then((response) => response.json());
-    expect(tags).toContainEqual(npc.tags[0]);
-    await fetch(`${root}/prototype/characters/rowan/tags`, {
-      method: "PUT",
-      body: JSON.stringify({ tags: npc.tags }),
-    });
-    const party = await fetch(`${root}/games/prototype-game/party`).then((response) =>
-      response.json(),
-    );
-    expect(party.characters[0].tags).toEqual(npc.tags);
-    expect((await fetch(url, { method: "DELETE" })).status).toBe(204);
-    expect((await fetch(url)).status).toBe(404);
+  it("applies and resets response scenarios", async () => {
+    const url = `${root}/games/prototype-game/party`;
     setPrototypeScenario("error");
-    expect((await fetch(collection)).status).toBe(500);
+    expect((await fetch(url)).status).toBe(500);
     resetPrototypeBackend("empty");
-    expect(await fetch(collection).then((response) => response.json())).toEqual({
-      npcs: [],
-      tags: [],
-    });
+    expect(await fetch(url).then((response) => response.json())).toEqual({ characters: [] });
     resetPrototypeBackend();
-    expect((await fetch(collection).then((response) => response.json())).npcs).toHaveLength(7);
+    expect((await fetch(url).then((response) => response.json())).characters).toHaveLength(2);
   });
 
   it("records submitted dice and notes and deletes history entries", async () => {

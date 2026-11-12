@@ -23,7 +23,6 @@ export function createPrototypeThrow(input: CreateThrowInput): ThrowRecord {
   if (setup.type === "npc-attribute" || setup.type === "npc-attack")
     throw new Error("NPC-specific rolls are not supported by the prototype mock");
   const character = prototypeStore.characters.find((entry) => entry.id === setup.characterId);
-  const npc = prototypeStore.npcs.find((entry) => entry.id === setup.characterId);
   const dice: SetupDice[] =
     setup.type === "attribute"
       ? setup.attributes.map((attribute) => ({
@@ -50,7 +49,7 @@ export function createPrototypeThrow(input: CreateThrowInput): ThrowRecord {
     private: input.private ?? false,
     kind,
     characterId: setup.characterId,
-    characterName: (character?.sheet.name as string) ?? npc?.name ?? "GM",
+    characterName: (character?.sheet.name as string) ?? "GM",
     equipmentId: setup.type === "weapon" ? setup.equipmentId : null,
     setup: {
       type: setup.type,

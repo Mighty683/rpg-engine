@@ -2,7 +2,6 @@
 import type { Character } from "../../src/modules/characters/types";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
 import type { PartyCharacter } from "../../src/modules/game-table/types";
-import { allNpcs } from "../npcs-and-enemies/fixtures";
 import { makeThrow, members } from "../domain/fixtures";
 import type { PrototypeScenario } from "./types";
 import { projectDefenses } from "./defenses";
@@ -64,15 +63,10 @@ function seedCharacter(id: string, name: string, caster: boolean): Character {
 function initialState() {
   return {
     scenario: "default" as PrototypeScenario,
-    characterTags: {} as Record<string, import("../../src/shared/types").Tag[]>,
     characters: [
       seedCharacter("rowan", "Rowan Ash", false),
       seedCharacter("nera", "Nera Vale", true),
     ],
-    npcs: structuredClone(allNpcs),
-    tags: structuredClone([
-      ...new Map(allNpcs.flatMap((npc) => npc.tags).map((tag) => [tag.name, tag])).values(),
-    ]),
     throws: [makeThrow("weapon-accuracy"), makeThrow("opposed-check")],
     members: structuredClone(members),
   };
@@ -106,7 +100,7 @@ export function projectParty(character: Character): PartyCharacter {
     defense: sheet.overrides.defense ?? projectDefenses(sheet).defense.calculated,
     magicDefense: sheet.overrides.magicDefense ?? projectDefenses(sheet).magicDefense.calculated,
     canRoll: true,
-    tags: prototypeStore.characterTags[character.id] ?? [],
+    tags: [],
     weapons: sheet.equipment
       .filter((item) => item.kind === "weapon")
       .map((item) => ({

@@ -1,8 +1,6 @@
 /** MSW HTTP boundary for offline prototypes, including production character clients. */
 import { delay, http, HttpResponse } from "msw";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
-import type { Npc } from "../npcs-and-enemies/types";
-import type { Tag } from "../../src/shared/types";
 import type { CreateThrowInput } from "../../src/modules/game-table/types";
 import { createPrototypeThrow } from "./throws";
 import { projectCharacter, projectParty, prototypeStore as store } from "./store";
@@ -34,41 +32,6 @@ export const prototypeHandlers = [
         ? {}
         : ((await request.json()) as Record<string, any>);
     const empty = store.scenario === "empty";
-    if (path === "/api/prototype/tags") {
-      if (method === "PUT") store.tags = structuredClone(body.tags as Tag[]);
-      return HttpResponse.json({ tags: empty ? [] : store.tags });
-    }
-    if (path === "/api/prototype/npcs")
-      return HttpResponse.json({ npcs: empty ? [] : store.npcs, tags: empty ? [] : store.tags });
-    const characterTags = path.match(/^\/api\/prototype\/characters\/([^/]+)\/tags$/);
-    if (characterTags && method === "PUT") {
-      const id = decodeURIComponent(characterTags[1]);
-      if (!store.characters.some((character) => character.id === id)) return missing();
-      store.characterTags[id] = structuredClone(body.tags as Tag[]);
-      for (const tag of store.characterTags[id])
-        if (!store.tags.some((saved) => saved.name === tag.name)) store.tags.push(tag);
-      return HttpResponse.json({ tags: store.characterTags[id] });
-    }
-    if (path.startsWith("/api/prototype/npcs/")) {
-      const id = decodeURIComponent(path.split("/").at(-1)!);
-      const index = store.npcs.findIndex((npc) => npc.id === id);
-      if (method === "PUT") {
-        const npc = { ...(body.npc ?? body), id } as Npc;
-        if (index < 0) store.npcs.push(npc);
-        else store.npcs[index] = npc;
-        for (const tag of npc.tags)
-          if (!store.tags.some((saved) => saved.name === tag.name)) store.tags.push(tag);
-        for (const tag of (body.tags ?? []) as Tag[])
-          if (!store.tags.some((saved) => saved.name === tag.name)) store.tags.push(tag);
-        return HttpResponse.json({ npc });
-      }
-      if (index < 0) return missing();
-      if (method === "DELETE") {
-        store.npcs.splice(index, 1);
-        return new HttpResponse(null, { status: 204 });
-      }
-      return HttpResponse.json({ npc: store.npcs[index] });
-    }
     const game = {
       id: "prototype-game",
       name: "The Lantern Road",

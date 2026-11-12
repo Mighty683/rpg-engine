@@ -5,7 +5,7 @@
 ## Technical decisions
 
 - Store NPCs in game-scoped tables, separate from character sheets. Persist manual stats as supplied; do not calculate or store fields outside the [agreed scope](ux.md). Follow the [Fabula Ultima rules](../../../spec/fabula-ultima/npcs-and-enemies.md) for rolls.
-- Apply visibility projections on the server. The [prototype](../../../../packages/frontend/prototypes/npcs-and-enemies/) sends full records and uses shared free rolls; neither contract is suitable for production.
+- Apply visibility projections on the server. The former prototype sent full records and used shared free rolls; neither contract is suitable for production.
 - Extend the existing throw service with NPC-specific setup and shared snapshots. NPC rolls are public to game members, regardless of NPC visibility; their snapshots reveal the NPC and roll details.
 - Use game transaction locks, revision checks and idempotent creation to serialize writes and prevent duplicates or lost updates.
 - NPC rank is not stored or exposed; stats are entered manually. The rules reference remains intact, but rank-based automation is outside this task.

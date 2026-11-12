@@ -3,11 +3,9 @@
 **Created:** 2026-11-11  
 **Status:** Approved as the production visual basis, adapted to optimistic updates.
 
-## Review the prototype
+## Prototype status
 
-Run `pnpm --filter @rpg-engine/frontend prototypes:dev` and open **Prototypes / NPCs and enemies / Game table with NPCs**. The [prototype guide](../../../../packages/frontend/prototypes/npcs-and-enemies/README.md) describes scenarios and reset behavior. Use the story's **View as** control to inspect GM and player views and **Table contents** for fixture states. No production backend is used.
-
-For visibility review, switch **View as** to Player to see seeded visible and known examples of each relationship; hidden examples are absent. New NPCs default to Hidden and Neutral. Prototype data is local to the MSW session and resets on reload.
+The prototype was removed after implementation. The design notes below record the approved visual basis.
 
 ## Table and card
 
@@ -31,6 +29,6 @@ Use labelled controls, keyboard-operable buttons/selects and visible focus style
 - Cover all three visibility levels, transitions and save/reopen; check that hidden NPCs have no player table or tab, visible NPCs expose only allowed information, and known NPCs show saved stats without GM notes.
 - Cover GM create/edit/remove, attack add/edit/remove, player cards, card synchronization, pending and failed updates and optimistic behavior. Test keyboard focus and Escape/close flows.
 - The shared mock API returns full NPC records to the browser regardless of role. Its role selector is only a visual preview; production must authorize and redact at the server boundary, including related endpoints and events, and test those guarantees independently.
-- [Browser regression tests](../../../../packages/frontend/prototypes/npcs-and-enemies/GameTableWithNpcs.browser.ts) exercise the shared MSW flow. Run `pnpm exec vue-tsc --noEmit -p prototypes/tsconfig.json` from `packages/frontend`, the relevant browser tests, and `pnpm --filter @rpg-engine/frontend prototypes:build` before handoff. Actual build and test results should be recorded at handoff.
+- The former prototype browser regression tests exercised the shared MSW flow; production verification is recorded in the handover.
 
 **2026-11-11 review:** Prototype build (including type-check) passed with Histoire setup and router warnings; the NPC browser suite passed all seven tests. This does not verify server-side authorization, production integration or optimistic updates.
