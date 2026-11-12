@@ -3,7 +3,7 @@ import argon2 from "argon2";
 import pg from "pg";
 import { eq, sql } from "drizzle-orm";
 import { databaseFromPool } from "./database/client.ts";
-import { accounts, characters, games, players } from "./database/schema.ts";
+import { accounts, characters, games, npcAttacks, npcs, players } from "./database/schema.ts";
 import { transaction } from "./database/transaction.ts";
 import { defaultSheet } from "./modules/fabula/rules.ts";
 
@@ -88,6 +88,92 @@ try {
       .update(players)
       .set({ activeCharacterId: playerCharacterId, revision: sql`${players.revision}+1` })
       .where(eq(players.id, membershipId));
+    const npcFixtures = [
+      {
+        id: randomUUID(),
+        name: "Captain Vesper",
+        relationship: "enemy" as const,
+        visibility: "known" as const,
+        level: 20,
+        dexDie: 10,
+        insDie: 8,
+        migDie: 10,
+        wlpDie: 8,
+        currentHp: 90,
+        maxHp: 90,
+        currentMp: 40,
+        maxMp: 40,
+        defense: 10,
+        magicDefense: 8,
+        notes: "Commands the raiders on the Lantern Road.",
+        attack: {
+          name: "Saber",
+          reach: "melee" as const,
+          attribute1: "DEX",
+          attribute2: "MIG",
+          damageBonus: 10,
+          damageType: "physical",
+        },
+      },
+      {
+        id: randomUUID(),
+        name: "Mira the Guide",
+        relationship: "friend" as const,
+        visibility: "visible" as const,
+        level: 10,
+        dexDie: 8,
+        insDie: 10,
+        migDie: 6,
+        wlpDie: 8,
+        currentHp: 50,
+        maxHp: 50,
+        currentMp: 30,
+        maxMp: 30,
+        defense: 8,
+        magicDefense: 9,
+        notes: "Knows a safe route through the marsh.",
+        attack: {
+          name: "Shortbow",
+          reach: "ranged" as const,
+          attribute1: "DEX",
+          attribute2: "INS",
+          damageBonus: 6,
+          damageType: "physical",
+        },
+      },
+      {
+        id: randomUUID(),
+        name: "The Masked Patron",
+        relationship: "neutral" as const,
+        visibility: "hidden" as const,
+        level: 15,
+        dexDie: 8,
+        insDie: 10,
+        migDie: 6,
+        wlpDie: 10,
+        currentHp: 60,
+        maxHp: 60,
+        currentMp: 50,
+        maxMp: 50,
+        defense: 8,
+        magicDefense: 10,
+        notes: "Secretly funds both sides of the conflict.",
+        attack: {
+          name: "Arcane Bolt",
+          reach: "ranged" as const,
+          attribute1: "INS",
+          attribute2: "WLP",
+          damageBonus: 8,
+          damageType: "arcane",
+        },
+      },
+    ];
+    for (const { attack, ...npc } of npcFixtures) {
+      await db.insert(npcs).values({ ...npc, gameId: demoGameId });
+      await db
+        .insert(npcAttacks)
+        .values({ ...attack, id: randomUUID(), npcId: npc.id, position: 0 });
+    }
     return "Demo game created. Accounts: demo-gm and demo-player.";
   });
   console.log(message);

@@ -104,6 +104,15 @@ test("a pending roll cannot be submitted twice, and an uncertain response refres
       }),
   );
   try {
+    const tabs = ["open-character-sheets", "edge-tab-npcs", "edge-tab-history"].map((id) =>
+      document.querySelector<HTMLElement>(`[data-testid="${id}"]`),
+    );
+    expect(tabs.every((tab) => tab?.parentElement === tabs[0]?.parentElement)).toBe(true);
+    expect(Number.parseFloat(getComputedStyle(tabs[1]!).marginTop)).toBeLessThan(0);
+    expect(Number.parseFloat(getComputedStyle(tabs[2]!).marginTop)).toBeLessThan(0);
+    await expect.element(page.getByTestId("edge-tab-history")).toBeVisible();
+    await expect.element(page.getByTestId("make-roll")).not.toBeInTheDocument();
+    await page.getByTestId("edge-tab-history").click();
     await page.getByTestId("make-roll").click();
     await page.getByTestId("add-die-d8").click();
     await page.getByTestId("submit-free-roll").click();

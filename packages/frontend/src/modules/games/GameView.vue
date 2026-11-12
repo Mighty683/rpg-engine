@@ -287,7 +287,15 @@ async function removeCharacter() {
             >Return to game</UButton
           >
           <UButton
-            v-else-if="gameRecord.role === 'GM'"
+            v-if="!management && !settings"
+            data-testid="manage-characters"
+            color="neutral"
+            variant="outline"
+            @click="openManagement"
+            >Characters management</UButton
+          >
+          <UButton
+            v-if="!management && !settings && gameRecord.role === 'GM'"
             color="neutral"
             variant="outline"
             data-testid="open-settings"
@@ -315,6 +323,9 @@ async function removeCharacter() {
           />
         </template>
         <template v-else-if="management">
+          <div class="flex justify-end">
+            <UButton data-testid="create-character" @click="openCreate">Create character</UButton>
+          </div>
           <p v-if="membersQuery.isError.value" role="alert">
             <UButton variant="outline" color="neutral" @click="membersQuery.refetch">Retry</UButton>
           </p>
@@ -336,16 +347,6 @@ async function removeCharacter() {
           />
         </template>
         <template v-else>
-          <div class="flex flex-wrap justify-end gap-small">
-            <UButton data-testid="create-character" @click="openCreate">Create character</UButton>
-            <UButton
-              data-testid="manage-characters"
-              color="neutral"
-              variant="outline"
-              @click="openManagement"
-              >Characters management</UButton
-            >
-          </div>
           <GameTable
             :game-id="gameId"
             :role="gameRecord.role"

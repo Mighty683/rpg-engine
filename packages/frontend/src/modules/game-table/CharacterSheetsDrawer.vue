@@ -13,7 +13,7 @@ const selectedId = defineModel<string>("selectedId", { required: true });
 <template>
   <USlideover v-model:open="open" title="Character sheets" :ui="{ content: 'w-full sm:max-w-4xl' }">
     <UButton
-      v-show="showBookmark && !open"
+      v-if="showBookmark && !open"
       class="sheet-bookmark"
       color="primary"
       data-testid="open-character-sheets"
@@ -42,7 +42,7 @@ const selectedId = defineModel<string>("selectedId", { required: true });
 .sheet-bookmark {
   position: fixed;
   right: 0;
-  top: 45%;
+  top: 30%;
   z-index: 20;
   writing-mode: vertical-rl;
   border-radius: var(--radius-panel) 0 0 var(--radius-panel);

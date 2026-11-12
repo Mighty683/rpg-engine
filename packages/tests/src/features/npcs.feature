@@ -1,5 +1,11 @@
 Feature: NPCs at the game table
 
+  Scenario: The GM makes a free roll as an NPC
+    Given the GM has an NPC game open
+    When the GM creates an NPC named "Oracle"
+    And the GM makes a free roll as NPC "Oracle"
+    Then the NPC free roll is attributed to "Oracle"
+
   Scenario: The GM creates and reopens an NPC
     Given the GM has an NPC game open
     When the GM creates an NPC named "Goblin"

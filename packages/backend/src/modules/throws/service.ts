@@ -15,6 +15,7 @@ import {
   activeCharacterCondition,
   characters,
   characterFields,
+  npcs,
   players,
   throws,
   throwFields,
@@ -165,7 +166,7 @@ export async function createThrow(
     const resolved =
       setup.type === "npc-attribute" || setup.type === "npc-attack"
         ? await resolveNpcThrow(tx, gameId, access, setup, input.sourceThrowId, dieSource)
-        : resolveThrow(input, await buildContext(tx, gameId, access, input), dieSource);
+        : await resolveStandardThrow(tx, gameId, access, input, dieSource);
     const [sequence] = await tx
       .select({ next: sql<string>`COALESCE(MAX(${throws.seq}),0)+1` })
       .from(throws)
@@ -192,6 +193,33 @@ export async function createThrow(
   });
   await notifyAfterCommit(() => events.publishGameEvent(gameId, { type: "throws" }));
   return result;
+}
+
+async function resolveStandardThrow(
+  tx: DatabaseTransaction,
+  gameId: string,
+  access: GameAccess,
+  input: CreateThrowInput,
+  dieSource: DieSource,
+) {
+  const setup = input.setup;
+  if (setup.type === "free" && setup.characterId !== gmActorId) {
+    const [npc] = await tx
+      .select({ id: npcs.id, name: npcs.name })
+      .from(npcs)
+      .where(and(eq(npcs.id, setup.characterId), eq(npcs.gameId, gameId)));
+    if (npc) {
+      if (access.role !== "GM") throw fail("forbidden");
+      const gmInput = { ...input, setup: { ...setup, characterId: gmActorId } };
+      const resolved = resolveThrow(
+        gmInput,
+        await buildContext(tx, gameId, access, gmInput),
+        dieSource,
+      );
+      return { ...resolved, characterName: npc.name, setup: { ...resolved.setup, npcId: npc.id } };
+    }
+  }
+  return resolveThrow(input, await buildContext(tx, gameId, access, input), dieSource);
 }
 
 async function buildContext(

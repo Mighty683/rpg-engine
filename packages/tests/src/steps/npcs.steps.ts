@@ -52,6 +52,25 @@ Given("the GM has an NPC game open", async function (this: BrowserWorld) {
 When("the GM creates an NPC named {string}", async function (this: BrowserWorld, name: string) {
   await new NpcsPage(this.page).create(name);
 });
+When("the GM makes a free roll as NPC {string}", async function (this: BrowserWorld, name: string) {
+  await new NpcsPage(this.page).closeEditor();
+  await new GameTablePage(this.page).openHistory();
+  await this.page.getByTestId("make-roll").click();
+  await this.page.getByTestId("roll-as").click();
+  await this.page.getByTestId("roll-as-option-character").filter({ hasText: name }).click();
+  await this.page.getByTestId("add-die-d8").click();
+  await this.page.getByTestId("submit-free-roll").click();
+});
+Then(
+  "the NPC free roll is attributed to {string}",
+  async function (this: BrowserWorld, name: string) {
+    await expect
+      .poll(() =>
+        this.page.getByTestId("throw-entry").last().getByTestId("throw-title").textContent(),
+      )
+      .toContain(name);
+  },
+);
 Then("the NPC card shows {string}", async function (this: BrowserWorld, name: string) {
   await expect.poll(() => new NpcsPage(this.page).card(name).count()).toBe(1);
 });
@@ -144,6 +163,7 @@ Then(
   "the player sees {int} NPC rolls in history",
   async function (this: BrowserWorld, count: number) {
     const player = (this as BrowserWorld & { npcPlayer: Page }).npcPlayer;
+    await new GameTablePage(player).openHistory();
     await expect
       .poll(() => player.getByTestId("throw-entry").filter({ hasText: "Bandit" }).count())
       .toBe(count);

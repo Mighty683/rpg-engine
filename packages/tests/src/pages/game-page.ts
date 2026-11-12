@@ -8,6 +8,8 @@ export class GamePage {
   }
 
   async createCharacter(name: string) {
+    await this.page.getByTestId("manage-characters").waitFor({ state: "visible" });
+    await this.openManagement();
     await this.page.getByTestId("create-character").click();
     await this.page.getByTestId("character-name").fill(name);
     await this.page.getByRole("dialog").getByRole("button", { name: "Create character" }).click();

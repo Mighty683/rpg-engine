@@ -41,7 +41,7 @@ Run `pnpm hooks:install` once per clone to install the pre-push hook. The hook r
 
 ### Demo data
 
-Run `pnpm seed:demo` after migrations to create **The Lantern Road**, a GM account (`demo-gm`), a player account (`demo-player`), and an active character for each. Both accounts use `demo-password` by default; set `DEMO_PASSWORD` to change it.
+Run `pnpm seed:demo` after migrations to create **The Lantern Road**, a GM account (`demo-gm`), a player account (`demo-player`), an active character for each, and three NPCs with attacks covering hidden, visible, and known visibility. Both accounts use `demo-password` by default; set `DEMO_PASSWORD` to change it.
 
 The command refuses to run in production. Reruns leave an existing demo game unchanged; if either username is taken, the transaction fails without changing existing data.
 

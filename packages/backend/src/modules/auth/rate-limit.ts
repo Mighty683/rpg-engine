@@ -6,12 +6,14 @@ import { signInAttempts } from "../../database/schema.ts";
 
 /** PostgreSQL-backed counters stay independent across policies and backend processes. */
 export class PostgresRateStore implements Store {
+  private readonly database: Database;
+  private readonly policy: string;
   private windowMs = 0;
   private nextCleanup = Date.now() + 60 * 60_000;
-  constructor(
-    private readonly database: Database,
-    private readonly policy: string,
-  ) {}
+  constructor(database: Database, policy: string) {
+    this.database = database;
+    this.policy = policy;
+  }
   init(options: Options) {
     this.windowMs = options.windowMs;
   }

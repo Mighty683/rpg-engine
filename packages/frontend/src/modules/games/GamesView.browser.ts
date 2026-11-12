@@ -168,6 +168,7 @@ test("character creation retry reuses the same client id", async () => {
     });
   app.mount(root);
   try {
+    await page.getByTestId("manage-characters").click();
     await page.getByTestId("create-character").click();
     await page.getByTestId("character-name").fill("Camilla");
     const submit = page.getByRole("dialog").getByRole("button", { name: "Create character" });

@@ -144,7 +144,11 @@ onUnmounted(() => {
             ><input v-model="form.name" placeholder="NPC name" data-testid="npc-name"
           /></label>
           <fieldset class="relationship" aria-label="NPC relationship">
-            <label v-for="relationship in relationships" :key="relationship">
+            <label
+              v-for="relationship in relationships"
+              :key="relationship"
+              :data-relationship="relationship"
+            >
               <input
                 v-model="form.relationship"
                 type="radio"
@@ -152,6 +156,22 @@ onUnmounted(() => {
                 :data-testid="`npc-relationship-${relationship}`"
               />
               <span>{{ relationship }}</span>
+            </label>
+          </fieldset>
+          <fieldset
+            v-if="!readOnly"
+            class="relationship"
+            aria-label="Player visibility"
+            data-testid="npc-visibility"
+          >
+            <label v-for="visibility in ['hidden', 'visible', 'known']" :key="visibility">
+              <input
+                v-model="form.visibility"
+                type="radio"
+                :value="visibility"
+                :data-testid="`npc-visibility-${visibility}`"
+              />
+              <span>{{ visibility }}</span>
             </label>
           </fieldset>
         </div>
@@ -165,29 +185,6 @@ onUnmounted(() => {
       </header>
 
       <div class="sheet-sections">
-        <section v-if="!readOnly" class="sheet-panel" aria-label="Player visibility">
-          <SheetSection>
-            <template #heading>PLAYER VISIBILITY</template>
-            <label class="select-field"
-              >Visibility
-              <select v-model="form.visibility" data-testid="npc-visibility">
-                <option value="hidden">Hidden</option>
-                <option value="visible">Visible</option>
-                <option value="known">Known</option>
-              </select>
-            </label>
-            <p class="text-label text-muted">
-              {{
-                form.visibility === "hidden"
-                  ? "Players cannot see this NPC."
-                  : form.visibility === "visible"
-                    ? "Players see only the name and relationship."
-                    : "Players can see stats and attacks."
-              }}
-            </p>
-            <p class="text-label text-muted">Changes are saved automatically.</p>
-          </SheetSection>
-        </section>
         <section class="sheet-panel sheet-split" aria-label="Attributes and resources">
           <SheetSection
             ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
@@ -346,6 +343,18 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--sheet-tight);
+}
+.relationship label[data-relationship="enemy"] {
+  color: var(--ui-error);
+  accent-color: var(--ui-error);
+}
+.relationship label[data-relationship="friend"] {
+  color: var(--ui-success);
+  accent-color: var(--ui-success);
+}
+.relationship label[data-relationship="neutral"] {
+  color: var(--ui-text-highlighted);
+  accent-color: var(--ui-text-highlighted);
 }
 .sheet-name input,
 .text-field,

@@ -7,12 +7,16 @@ import type { GmNpc, NpcRead, NpcWrite } from "./api";
 import type { Npc, NpcAttack } from "./types";
 import NpcCard from "./NpcCard.vue";
 import NpcSheet from "./NpcSheet.vue";
+import CharacterSheetTabs from "../game-table/CharacterSheetTabs.vue";
 
 const props = defineProps<{
   gameId: string;
   role: "GM" | "Player";
   hint: number;
   panelsBlocked?: boolean;
+  externalTabs?: boolean;
+  openRequest?: number;
+  closeRequest?: number;
 }>();
 const emit = defineEmits<{
   rollAttribute: [npc: GmNpc, attribute: Attribute];
@@ -92,6 +96,17 @@ function openEditor(id = "") {
   selected.value = id || records.value.find((npc) => npc.view === "gm")?.id || "";
   panelOpen.value = true;
 }
+watch(
+  () => props.openRequest,
+  (request) => {
+    if (request) openEditor();
+  },
+  { immediate: true },
+);
+watch(
+  () => props.closeRequest,
+  () => void closeEditor(),
+);
 function setPanelOpen(open: boolean) {
   if (open) panelOpen.value = true;
   else void closeEditor();
@@ -246,7 +261,7 @@ onUnmounted(() => {
     @roll-attack="(_, attack) => record.view === 'gm' && emit('rollAttack', record, attack)"
   />
   <UButton
-    v-if="role === 'GM' && !panelOpen && !panelsBlocked"
+    v-if="role === 'GM' && !panelOpen && !panelsBlocked && !externalTabs"
     class="npc-bookmark"
     color="info"
     data-testid="edge-tab-npcs"
@@ -261,22 +276,7 @@ onUnmounted(() => {
   >
     <template #body>
       <div class="space-y-small">
-        <UButton
-          color="neutral"
-          variant="outline"
-          data-testid="close-npc-editor"
-          @click="closeEditor"
-          >Close NPC editor</UButton
-        >
-        <div class="flex flex-wrap items-center gap-small">
-          <UButton
-            v-for="record in records"
-            :key="record.id"
-            :variant="selected === record.id ? 'solid' : 'outline'"
-            :data-testid="`npc-tab-${record.id}`"
-            @click="selected = record.id"
-            >{{ record.name }}</UButton
-          >
+        <div class="flex justify-end">
           <UButton
             color="neutral"
             variant="outline"
@@ -295,15 +295,22 @@ onUnmounted(() => {
         >
           Saving changes…
         </p>
-        <NpcSheet
-          v-if="selectedNpc"
-          :key="selected"
-          :npc="selectedNpc"
-          :reset-token="resetToken"
-          :pending="writing || removing"
-          @save="save"
-          @remove="remove"
-        />
+        <CharacterSheetTabs
+          v-model:selected-id="selected"
+          :tabs="records.map((record) => ({ label: record.name, value: record.id }))"
+        >
+          <template #sheet>
+            <NpcSheet
+              v-if="selectedNpc"
+              :key="selected"
+              :npc="selectedNpc"
+              :reset-token="resetToken"
+              :pending="writing || removing"
+              @save="save"
+              @remove="remove"
+            />
+          </template>
+        </CharacterSheetTabs>
       </div>
     </template>
   </USlideover>
@@ -313,7 +320,7 @@ onUnmounted(() => {
 .npc-bookmark {
   position: fixed;
   right: 0;
-  top: 65%;
+  top: calc(30% + 150px);
   z-index: 20;
   writing-mode: vertical-rl;
   border-radius: var(--radius-panel) 0 0 var(--radius-panel);

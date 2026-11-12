@@ -28,6 +28,7 @@ import {
 import CharacterSheetsDrawer from "./CharacterSheetsDrawer.vue";
 import PartyPanel from "./PartyPanel.vue";
 import HistoryPanel from "./HistoryPanel.vue";
+import EdgeTabs from "../../shared/design-system/EdgeTabs.vue";
 import RollDialog from "./RollDialog.vue";
 import FreeRollDialog from "./FreeRollDialog.vue";
 
@@ -53,6 +54,34 @@ const rosterById = computed(
 
 const sheetOpen = ref(false);
 const npcEditorOpen = ref(false);
+const historyTab = ref<string | null>(null);
+const npcOpenRequest = ref(0);
+const npcCloseRequest = ref(0);
+const edgeTabs = computed(() => [
+  {
+    id: "sheets",
+    label: "Character sheets",
+    color: "primary" as const,
+    testId: "open-character-sheets",
+  },
+  ...(props.role === "GM"
+    ? [{ id: "npcs", label: "NPCs", color: "info" as const, testId: "edge-tab-npcs" }]
+    : []),
+  { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
+]);
+watch(sheetOpen, (open) => {
+  if (open) historyTab.value = "sheets";
+  else if (historyTab.value === "sheets") historyTab.value = null;
+});
+watch(npcEditorOpen, (open) => {
+  if (open) historyTab.value = "npcs";
+  else if (historyTab.value === "npcs") historyTab.value = null;
+});
+function selectEdgeTab(id: string | null) {
+  sheetOpen.value = id === "sheets";
+  if (id === "npcs") npcOpenRequest.value++;
+  else if (npcEditorOpen.value) npcCloseRequest.value++;
+}
 const selectedSheetId = ref("");
 const sheetTabs = computed(() =>
   party.value.map((member) => ({ label: member.name, value: member.id })),
@@ -148,6 +177,7 @@ const playerActiveCharacter = computed(() => {
 const rollAsOptions = computed(() => [
   { label: "GM", value: "gm" },
   ...party.value.map((member) => ({ label: member.name, value: member.id })),
+  ...npcRecords.value.map((npc) => ({ label: npc.name, value: npc.id })),
 ]);
 
 function openAttributeRoll(character: PartyCharacter, attribute: Attribute) {
@@ -304,7 +334,9 @@ function openReroll(entry: ThrowRecord) {
     modifier: String(entry.setup.redModifier),
   };
   const attributed =
-    props.role === "GM" ? (entry.characterId ?? "gm") : (playerActiveCharacter.value?.id ?? "");
+    props.role === "GM"
+      ? (entry.setup.npcId ?? entry.characterId ?? "gm")
+      : (playerActiveCharacter.value?.id ?? "");
   freeDraft.value = {
     characterId: attributed,
     dice: entry.setup.dice.map((die) => die.size),
@@ -389,6 +421,7 @@ async function submitRoll() {
     const result = await createThrow.mutateAsync({ sourceThrowId: rollSourceId.value, setup });
     pendingHighlight.value = result.throw.id;
     rollDraft.value = null;
+    historyTab.value = "history";
   } catch (error) {
     const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload
       ?.error;
@@ -443,6 +476,7 @@ async function submitFreeRoll() {
     const result = await createThrow.mutateAsync({ sourceThrowId: freeSourceId.value, setup });
     pendingHighlight.value = result.throw.id;
     freeDraft.value = null;
+    historyTab.value = "history";
   } catch (error) {
     const payload = (error as { payload?: { error?: { message?: string; code?: string } } }).payload
       ?.error;
@@ -471,7 +505,7 @@ async function removeEntry(entry: ThrowRecord) {
 </script>
 
 <template>
-  <div class="grid gap-section lg:grid-cols-2" data-testid="game-table">
+  <div data-testid="game-table">
     <slot
       name="layout"
       :party="party"
@@ -502,6 +536,9 @@ async function removeEntry(entry: ThrowRecord) {
             :role="role"
             :hint="npcsHint ?? 0"
             :panels-blocked="sheetOpen"
+            external-tabs
+            :open-request="npcOpenRequest"
+            :close-request="npcCloseRequest"
             @editor-open="npcEditorOpen = $event"
             @changed="npcRecords = $event"
             @roll-attribute="openNpcAttribute"
@@ -509,22 +546,35 @@ async function removeEntry(entry: ThrowRecord) {
           />
         </PartyPanel>
       </div>
-      <HistoryPanel
-        :throws="history.throws.value"
-        :is-loading="history.isLoading.value"
-        :is-error="history.isError.value"
-        :has-older="history.hasOlder.value"
-        :highlight-id="highlightId"
-        @reroll="openReroll"
-        @remove="removeEntry"
-        @load-older="history.loadOlder"
-        @retry="history.refresh"
-        @make-roll="openFreeRoll"
-      />
+      <EdgeTabs v-model:open-id="historyTab" :tabs="edgeTabs" tabs-only @open="selectEdgeTab" />
+      <USlideover
+        :open="historyTab === 'history'"
+        title="Throw history"
+        @update:open="
+          (open: boolean) => {
+            if (!open && historyTab === 'history') historyTab = null;
+          }
+        "
+      >
+        <template #body>
+          <HistoryPanel
+            :throws="history.throws.value"
+            :is-loading="history.isLoading.value"
+            :is-error="history.isError.value"
+            :has-older="history.hasOlder.value"
+            :highlight-id="highlightId"
+            @reroll="openReroll"
+            @remove="removeEntry"
+            @load-older="history.loadOlder"
+            @retry="history.refresh"
+            @make-roll="openFreeRoll"
+          />
+        </template>
+      </USlideover>
       <CharacterSheetsDrawer
         v-model:open="sheetOpen"
         v-model:selected-id="selectedSheetId"
-        :show-bookmark="!npcEditorOpen"
+        :show-bookmark="false"
         :tabs="sheetTabs"
       >
         <template #sheet="{ characterId }">

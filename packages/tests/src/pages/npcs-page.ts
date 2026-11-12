@@ -92,9 +92,9 @@ export class NpcsPage {
     return values;
   }
   async closeEditor() {
-    const close = this.page.getByTestId("close-npc-editor");
-    if (await close.isVisible()) await close.click();
-    await close.waitFor({ state: "hidden" });
+    const create = this.page.getByTestId("create-npc");
+    if (await create.isVisible()) await this.page.keyboard.press("Escape");
+    await create.waitFor({ state: "hidden" });
   }
   async attackVisible(name: string) {
     await this.closeEditor();
@@ -187,6 +187,8 @@ export class NpcsPage {
     await history.last().waitFor({ state: "visible" });
     await history.last().getByTestId("reroll-throw").click();
     await this.page.getByTestId("submit-roll").click();
+    await this.page.getByTestId("roll-dialog").waitFor({ state: "hidden" });
+    await this.page.getByTestId("make-roll").waitFor({ state: "visible" });
   }
   async remove(name: string) {
     await this.card(name).getByTestId("edit-npc").click();
@@ -194,19 +196,27 @@ export class NpcsPage {
     await this.page.getByTestId("confirm-remove-npc").click();
   }
   async visibility(value: string) {
+    if (await this.page.getByTestId("make-roll").isVisible()) {
+      await this.page.keyboard.press("Escape");
+      await this.page.getByTestId("make-roll").waitFor({ state: "hidden" });
+    }
     if (!(await this.page.getByTestId("npc-visibility").isVisible()))
       await this.card("Bandit").getByTestId("edit-npc").click();
     const response = this.page.waitForResponse(
       (res) => res.request().method() === "PUT" && res.url().includes("/npcs/"),
     );
-    await this.page.getByTestId("npc-visibility").selectOption(value);
+    await this.page.getByTestId(`npc-visibility-${value}`).check();
     const saved = await response;
     if (!saved.ok()) throw new Error(`NPC update failed: ${saved.status()}`);
   }
   async rollDex(name: string) {
     await this.closeEditor();
+    if (await this.page.getByTestId("throw-history").isVisible())
+      await this.page.keyboard.press("Escape");
     await this.card(name).getByTestId("roll-attribute-DEX").click();
     await this.page.getByTestId("submit-roll").click();
+    await this.page.getByTestId("roll-dialog").waitFor({ state: "hidden" });
+    await this.page.getByTestId("make-roll").waitFor({ state: "visible" });
   }
   card(name: string) {
     return this.page.locator('[data-testid^="npc-card-"]').filter({ hasText: name });

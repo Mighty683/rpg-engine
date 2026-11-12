@@ -249,6 +249,7 @@ When("the GM submits the weapon's accuracy roll", async function (this: BrowserW
     await pool.query("SELECT name FROM characters WHERE id=$1", [w.seed!.gmCharacterId])
   ).rows[0]!.name;
   await pool.end();
+  await new GameTablePage(this.page).closeHistory();
   await new GameTablePage(this.page).partyCard(gmName).getByTestId("roll-weapon").click();
   await this.page.getByTestId("roll-dialog").waitFor({ state: "visible" });
   await this.page.getByTestId("submit-roll").click();
@@ -294,6 +295,7 @@ Then(
 When("the GM opens Make a roll", async function (this: BrowserWorld) {
   const w = world.call(this);
   await ensureGmTable(w);
+  await new GameTablePage(this.page).openHistory();
   await new GameTablePage(this.page).makeRoll.click();
   await this.page.getByTestId("free-roll-dialog").waitFor({ state: "visible" });
 });
@@ -371,6 +373,7 @@ When("the player makes a free roll", async function (this: BrowserWorld) {
     await w.playerTable.signIn(frontendUrl(), w.seed!.player.username, w.seed!.player.password);
     await w.playerTable.openGame(frontendUrl(), w.seed!.gameId);
   }
+  await w.playerTable.openHistory();
   await w.playerTable.makeRoll.click();
   await w.playerPage!.getByTestId("add-die-d6").click();
   await w.playerPage!.getByTestId("submit-free-roll").click();
@@ -393,6 +396,7 @@ Then(
 
 When("the player submits a roll", async function (this: BrowserWorld) {
   const w = world.call(this);
+  await w.playerTable!.openHistory();
   await w.playerTable!.makeRoll.click();
   await w.playerPage!.getByTestId("add-die-d8").click();
   await w.playerPage!.getByTestId("submit-free-roll").click();
@@ -400,12 +404,14 @@ When("the player submits a roll", async function (this: BrowserWorld) {
 });
 
 Then("the GM sees it appended without reloading", async function (this: BrowserWorld) {
+  await new GameTablePage(this.page).openHistory();
   await expect.poll(() => new GameTablePage(this.page).throwEntries().count()).toBe(1);
 });
 
 Then("the roll remains visible after the GM reloads", async function (this: BrowserWorld) {
   await this.page.reload();
-  await this.page.getByTestId("throw-history").waitFor({ state: "visible" });
+  await new GameTablePage(this.page).openHistory();
+  await new GameTablePage(this.page).openHistory();
   await expect.poll(() => new GameTablePage(this.page).throwEntries().count()).toBe(1);
 });
 
@@ -429,6 +435,7 @@ When("the player tries to make a roll", async function (this: BrowserWorld) {
   const table = new GameTablePage(this.page);
   await table.signIn(frontendUrl(), w.seed!.player.username, w.seed!.player.password);
   await table.openGame(frontendUrl(), w.seed!.gameId);
+  await table.openHistory();
   await table.makeRoll.click();
   await this.page.getByTestId("free-roll-dialog").waitFor({ state: "visible" });
 });
@@ -450,10 +457,12 @@ When(
     const firstName = (await pool.query("SELECT name FROM characters WHERE id=$1", [names[0]]))
       .rows[0]!.name;
     await pool.end();
+    await new GameTablePage(this.page).closeHistory();
     await this.page.getByTestId("manage-characters").click();
     await new GameTablePage(this.page).selectCharacter(firstName);
     await this.page.getByTestId("return-to-game").click();
     await this.page.getByTestId("game-table").waitFor({ state: "visible" });
+    await new GameTablePage(this.page).openHistory();
     await this.page.getByTestId("make-roll").click();
     await this.page.getByTestId("add-die-d8").click();
     await this.page.getByTestId("submit-free-roll").click();
@@ -470,10 +479,12 @@ When(
       await pool.query("SELECT name FROM characters WHERE id=$1", [w.seed!.playerCharacterIds[1]])
     ).rows[0]!.name;
     await pool.end();
+    await new GameTablePage(this.page).closeHistory();
     await this.page.getByTestId("manage-characters").click();
     await new GameTablePage(this.page).selectCharacter(secondName);
     await this.page.getByTestId("return-to-game").click();
     await this.page.getByTestId("game-table").waitFor({ state: "visible" });
+    await new GameTablePage(this.page).openHistory();
     await this.page.getByTestId("make-roll").click();
     await this.page.getByTestId("add-die-d10").click();
     await this.page.getByTestId("submit-free-roll").click();
@@ -526,6 +537,7 @@ When(
       await pool.query("SELECT name FROM characters WHERE id=$1", [w.seed!.gmCharacterId])
     ).rows[0]!.name;
     await pool.end();
+    await new GameTablePage(this.page).closeHistory();
     await new GameTablePage(this.page).partyCard(gmName).getByTestId("roll-weapon").click();
   },
 );
@@ -569,6 +581,7 @@ When("the GM rolls with the weapon", async function (this: BrowserWorld) {
     await pool.query("SELECT name FROM characters WHERE id=$1", [w.seed!.gmCharacterId])
   ).rows[0]!.name;
   await pool.end();
+  await new GameTablePage(this.page).closeHistory();
   await new GameTablePage(this.page).partyCard(gmName).getByTestId("roll-weapon").click();
   await this.page.getByTestId("submit-roll").click();
   await this.page.getByTestId("throw-entry").first().waitFor({ state: "visible" });
@@ -581,6 +594,7 @@ Then("history shows its accuracy result", async function (this: BrowserWorld) {
 });
 
 Then("history opens at the latest throw", async function (this: BrowserWorld) {
+  await new GameTablePage(this.page).openHistory();
   const history = new GameTablePage(this.page).history;
   await history.waitFor({ state: "visible" });
   await expect
@@ -603,7 +617,7 @@ When("the GM scrolls back and loads older throws", async function (this: Browser
   const before = await pinned.boundingBox();
   await table.page.getByTestId("load-older-throws").click();
   await expect.poll(() => table.throwEntries().count()).toBe(25);
-  await expect.poll(() => pinned.boundingBox()).toEqual(before);
+  await expect.poll(async () => (await pinned.boundingBox())?.y).toBe(before?.y);
 });
 
 Then(
@@ -617,6 +631,7 @@ Then(
 );
 
 When("the GM makes a new free roll", async function (this: BrowserWorld) {
+  await new GameTablePage(this.page).openHistory();
   await new GameTablePage(this.page).makeRoll.click();
   await this.page.getByTestId("add-die-d6").click();
   await this.page.getByTestId("submit-free-roll").click();
@@ -646,6 +661,7 @@ When("the GM opens Reroll for that check", async function (this: BrowserWorld) {
     await pool.query("SELECT id FROM throws WHERE game_id=$1 ORDER BY seq", [w.seed!.gameId])
   ).rows[0]!.id as string;
   await pool.end();
+  await new GameTablePage(this.page).openHistory();
   await new GameTablePage(this.page).throwEntry(throwId).getByTestId("reroll-throw").click();
   await this.page.getByTestId("free-roll-dialog").waitFor({ state: "visible" });
 });

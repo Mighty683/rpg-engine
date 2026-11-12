@@ -31,6 +31,16 @@ export class GameTablePage {
     await this.table.waitFor({ state: "visible" });
   }
 
+  async openHistory() {
+    if (!(await this.makeRoll.isVisible())) await this.page.getByTestId("edge-tab-history").click();
+    await this.makeRoll.waitFor({ state: "visible" });
+  }
+
+  async closeHistory() {
+    if (await this.makeRoll.isVisible()) await this.page.keyboard.press("Escape");
+    await this.makeRoll.waitFor({ state: "hidden" });
+  }
+
   async selectCharacter(name: string) {
     await this.page
       .getByTestId("character-control-tile")

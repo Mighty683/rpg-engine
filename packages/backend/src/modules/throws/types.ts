@@ -66,6 +66,7 @@ export type CharacterResolvedSetup = {
   type: "attribute" | "weapon" | "free";
   kind: ThrowKind;
   characterId: string | null;
+  npcId?: string;
   equipmentId: string | null;
   dice: SetupDice[];
   modifier: number;

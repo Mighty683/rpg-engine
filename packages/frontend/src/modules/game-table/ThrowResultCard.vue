@@ -18,7 +18,7 @@ const resultLabel = { fumble: "Fumble", critical: "Critical success", ordinary: 
 
 function title(entry: ThrowRecord) {
   const actor =
-    entry.setup.type === "npc-attribute" || entry.setup.type === "npc-attack"
+    entry.setup.type === "npc-attribute" || entry.setup.type === "npc-attack" || entry.setup.npcId
       ? `GM · ${entry.characterName}`
       : entry.characterId
         ? `${entry.role} · ${entry.characterName}`

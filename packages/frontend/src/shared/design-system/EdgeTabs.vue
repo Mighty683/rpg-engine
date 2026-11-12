@@ -9,9 +9,12 @@ export type EdgeTab = {
   width?: "medium" | "wide";
 };
 
-const props = withDefaults(defineProps<{ tabs: EdgeTab[]; overlap?: number }>(), {
-  overlap: 0.6,
-});
+const props = withDefaults(
+  defineProps<{ tabs: EdgeTab[]; overlap?: number; tabsOnly?: boolean }>(),
+  {
+    overlap: 0.6,
+  },
+);
 const emit = defineEmits<{ open: [id: string | null] }>();
 
 const openId = defineModel<string | null>("openId", { default: null });
@@ -19,8 +22,9 @@ const activeTab = computed(() => props.tabs.find((tab) => tab.id === openId.valu
 const visibleTabs = computed(() => (activeTab.value ? [activeTab.value] : props.tabs));
 
 function select(id: string) {
-  openId.value = openId.value === id ? null : id;
-  emit("open", openId.value);
+  const nextId = openId.value === id ? null : id;
+  openId.value = nextId;
+  emit("open", nextId);
 }
 </script>
 
@@ -40,6 +44,7 @@ function select(id: string) {
     >
   </div>
   <USlideover
+    v-if="!tabsOnly"
     :open="openId !== null"
     :title="activeTab?.label ?? ''"
     :ui="{ content: activeTab?.width === 'wide' ? 'w-full sm:max-w-4xl' : 'w-full sm:max-w-xl' }"
@@ -60,7 +65,7 @@ function select(id: string) {
   position: fixed;
   right: 0;
   top: 45%;
-  z-index: 60;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: flex-end;

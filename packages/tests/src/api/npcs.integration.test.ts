@@ -96,6 +96,36 @@ describe("NPC API", () => {
     expect(knownResult.npc).not.toHaveProperty("notes");
     expect(knownResult.npc).not.toHaveProperty("visibility");
     const throwPath = `/games/${fixture.ids.game}/throws`;
+    const freeNpc = {
+      sourceThrowId: null,
+      setup: {
+        type: "free",
+        characterId: id,
+        dice: [8],
+        modifier: 0,
+        redDice: [],
+        redModifier: 0,
+        note: "",
+      },
+    };
+    expect((await fixture.request(throwPath, "player", "POST", freeNpc)).status).toBe(403);
+    const npcFreeResponse = await fixture.request(throwPath, "gm", "POST", freeNpc);
+    expect(npcFreeResponse.status).toBe(201);
+    const npcFree = (await npcFreeResponse.json()).throw;
+    expect(npcFree).toMatchObject({
+      characterId: null,
+      characterName: npc.name,
+      setup: { type: "free", npcId: id },
+    });
+    const npcFreeReroll = await fixture.request(throwPath, "gm", "POST", {
+      ...freeNpc,
+      sourceThrowId: npcFree.id,
+    });
+    expect(npcFreeReroll.status).toBe(201);
+    expect((await npcFreeReroll.json()).throw).toMatchObject({
+      characterName: npc.name,
+      setup: { npcId: id },
+    });
     const attributeSetup = {
       type: "npc-attribute",
       npcId: id,
