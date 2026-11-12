@@ -2,6 +2,8 @@
 import PartyPanel from "../../../src/modules/game-table/PartyPanel.vue";
 import type { PartyCharacter } from "../../../src/modules/game-table/types";
 import { partyMember, sword } from "../fixtures";
+import NpcCard from "../../../src/modules/npcs/NpcCard.vue";
+import { npc } from "../npcs/fixtures";
 
 const secondMember: PartyCharacter = {
   ...partyMember,
@@ -41,7 +43,9 @@ function initialState() {
             @retry="state.view = 'Populated'"
             @needs-weapon-setup="state.showWeaponHint = true"
             @open-sheet="state.showWeaponHint = false"
-          />
+          >
+            <NpcCard v-if="state.view === 'Populated'" :npc="npc" />
+          </PartyPanel>
         </div>
       </UApp>
     </template>

@@ -2,6 +2,8 @@
 import type { Attribute, PartyCharacter } from "./types";
 import AttributeRollButton from "./AttributeRollButton.vue";
 import WeaponRollButton from "./WeaponRollButton.vue";
+import ResourceBar from "../../shared/design-system/ResourceBar.vue";
+import InfoTooltip from "../../shared/design-system/InfoTooltip.vue";
 
 const props = withDefaults(defineProps<{ member: PartyCharacter; canEdit?: boolean }>(), {
   canEdit: false,
@@ -53,6 +55,21 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
         </div>
         <p class="text-label text-muted">{{ member.classes.join(", ") || "No classes" }}</p>
       </div>
+      <div class="vital-resources">
+        <div v-for="resource in ['hp', 'mp'] as const" :key="resource" class="vital-resource">
+          <strong>{{ resource.toUpperCase() }}</strong>
+          <ResourceBar
+            :label="resource.toUpperCase()"
+            :value="member.resources[resource]"
+            :maximum="member.maxima[resource]"
+            :color="resource"
+          >
+            <span :data-testid="resource === 'hp' ? 'party-hp' : undefined">
+              {{ member.resources[resource] }} / {{ member.maxima[resource] }}
+            </span>
+          </ResourceBar>
+        </div>
+      </div>
       <div class="attribute-row" aria-label="Attributes">
         <AttributeRollButton
           v-for="attribute in attributes"
@@ -65,35 +82,27 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
         />
       </div>
       <dl class="grid grid-cols-2 gap-small text-label tabular-nums">
-        <div class="mini-resource">
-          <dt>HP</dt>
-          <dd data-testid="party-hp">
-            {{ member.resources.hp }}<span> / {{ member.maxima.hp }}</span>
-          </dd>
+        <div class="mini-card">
+          <div class="mini-resource">
+            <dt>IP <InfoTooltip label="Inventory Points" text="Inventory Points" /></dt>
+            <dd>
+              {{ member.resources.ip }}<span> / {{ member.maxima.ip }}</span>
+            </dd>
+          </div>
+          <div class="mini-resource">
+            <dt>FP <InfoTooltip label="Fabula Points" text="Fabula Points" /></dt>
+            <dd>{{ member.resources.fabula }}</dd>
+          </div>
         </div>
-        <div class="mini-resource">
-          <dt>MP</dt>
-          <dd>
-            {{ member.resources.mp }}<span> / {{ member.maxima.mp }}</span>
-          </dd>
-        </div>
-        <div class="mini-resource">
-          <dt>IP</dt>
-          <dd>
-            {{ member.resources.ip }}<span> / {{ member.maxima.ip }}</span>
-          </dd>
-        </div>
-        <div class="mini-resource">
-          <dt>Fabula Points</dt>
-          <dd>{{ member.resources.fabula }}</dd>
-        </div>
-        <div class="mini-resource">
-          <dt>DEF</dt>
-          <dd>{{ member.defense ?? "—" }}</dd>
-        </div>
-        <div class="mini-resource">
-          <dt>MAG DEF</dt>
-          <dd>{{ member.magicDefense ?? "—" }}</dd>
+        <div class="mini-card">
+          <div class="mini-resource">
+            <dt>DEF</dt>
+            <dd>{{ member.defense ?? "—" }}</dd>
+          </div>
+          <div class="mini-resource">
+            <dt>MAG DEF</dt>
+            <dd>{{ member.magicDefense ?? "—" }}</dd>
+          </div>
         </div>
       </dl>
       <dl class="space-y-small pt-small text-label">
@@ -120,6 +129,21 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 </template>
 
 <style scoped>
+.vital-resources {
+  display: grid;
+  gap: var(--spacing-small);
+}
+.vital-resource {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--spacing-small);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+.vital-resource strong {
+  color: var(--ui-text-muted);
+}
 .attribute-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -131,11 +155,21 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
   gap: 0.125rem;
   padding: 0.25rem;
   text-align: center;
+}
+.mini-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-tight);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
 }
 .mini-resource dt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-tight);
   color: var(--ui-text-muted);
   font-size: 0.6875rem;
   font-weight: 700;

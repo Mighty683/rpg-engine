@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import AttributeRollButton from "../game-table/AttributeRollButton.vue";
 import WeaponRollButton from "../game-table/WeaponRollButton.vue";
+import ResourceBar from "../../shared/design-system/ResourceBar.vue";
 import type { Attribute, PartyWeapon } from "../game-table/types";
 import type { Npc, NpcAttack } from "./types";
 
@@ -92,6 +93,21 @@ function attackSummary(npc: Npc): string {
         <p class="text-label text-muted">Attacks: ???</p>
       </template>
       <template v-else>
+        <div class="vital-resources">
+          <div v-for="resource in ['hp', 'mp'] as const" :key="resource" class="vital-resource">
+            <strong>{{ resource.toUpperCase() }}</strong>
+            <ResourceBar
+              :label="resource.toUpperCase()"
+              :value="npc[resource].current"
+              :maximum="npc[resource].max"
+              :color="resource"
+            >
+              <span :data-testid="resource === 'hp' ? 'npc-hp' : undefined">
+                {{ npc[resource].current }} / {{ npc[resource].max }}
+              </span>
+            </ResourceBar>
+          </div>
+        </div>
         <div class="attribute-row" aria-label="Attributes">
           <AttributeRollButton
             v-for="attribute in attributes"
@@ -104,19 +120,7 @@ function attackSummary(npc: Npc): string {
           />
         </div>
 
-        <dl class="grid grid-cols-2 gap-small text-label tabular-nums">
-          <div class="mini-resource">
-            <dt>HP</dt>
-            <dd data-testid="npc-hp">
-              {{ npc.hp.current }}<span> / {{ npc.hp.max }}</span>
-            </dd>
-          </div>
-          <div class="mini-resource">
-            <dt>MP</dt>
-            <dd>
-              {{ npc.mp.current }}<span> / {{ npc.mp.max }}</span>
-            </dd>
-          </div>
+        <dl class="defense-card text-label tabular-nums">
           <div class="mini-resource">
             <dt>DEF</dt>
             <dd>{{ npc.defense }}</dd>
@@ -170,6 +174,21 @@ function attackSummary(npc: Npc): string {
 </template>
 
 <style scoped>
+.vital-resources {
+  display: grid;
+  gap: var(--spacing-small);
+}
+.vital-resource {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--spacing-small);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+.vital-resource strong {
+  color: var(--ui-text-muted);
+}
 article[data-relationship="enemy"] {
   border-color: var(--ui-error);
 }
@@ -200,6 +219,18 @@ article[data-relationship="neutral"] .npc-name {
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
+}
+.defense-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-tight);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-panel);
+  background: var(--ui-bg-muted);
+}
+.defense-card .mini-resource {
+  border: 0;
+  background: transparent;
 }
 .mini-resource dt {
   color: var(--ui-text-muted);

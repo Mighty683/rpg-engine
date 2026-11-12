@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ResourceBar from "../../../../shared/design-system/ResourceBar.vue";
+import InfoTooltip from "../../../../shared/design-system/InfoTooltip.vue";
 withDefaults(
   defineProps<{
     label: string;
@@ -6,6 +8,9 @@ withDefaults(
     maximumOverride?: number | null;
     allowCalculated?: boolean;
     disabled?: boolean;
+    bar?: boolean;
+    compact?: boolean;
+    help?: string;
   }>(),
   { allowCalculated: true },
 );
@@ -24,9 +29,12 @@ function updateMaximum(event: Event) {
 </script>
 
 <template>
-  <div class="resource">
-    <strong>{{ label }}</strong
-    ><span v-if="maximum !== undefined" class="resource-values"
+  <div class="resource" :class="{ 'resource-bar': bar, 'resource-compact': compact }">
+    <div class="resource-label">
+      <strong>{{ label }}</strong
+      ><InfoTooltip v-if="help" :label="help" :text="help" />
+    </div>
+    <span v-if="maximum !== undefined" class="resource-values"
       ><input
         type="number"
         min="0"
@@ -83,6 +91,13 @@ function updateMaximum(event: Event) {
       :value="value"
       @input="update"
     />
+    <ResourceBar
+      v-if="bar && maximum !== undefined"
+      :label="label"
+      :value="value ?? maximum"
+      :maximum="maximum"
+      :color="label === 'HP' ? 'hp' : 'mp'"
+    />
   </div>
 </template>
 
@@ -101,6 +116,15 @@ strong {
   font-size: var(--sheet-label-size);
   font-weight: 700;
   letter-spacing: 0.05em;
+}
+.resource-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sheet-tight);
+}
+.resource-compact .resource-label {
+  justify-content: start;
 }
 .resource input {
   width: 4ch;
@@ -157,5 +181,32 @@ strong {
 .resource-values:focus-within {
   outline: 2px solid var(--ui-primary);
   outline-offset: 1px;
+}
+.resource-bar {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-small);
+  text-align: left;
+}
+.resource-bar .resource-values {
+  grid-column: 3;
+  grid-row: 1;
+  width: 8ch;
+}
+.resource-bar :deep(.resource-bar) {
+  grid-column: 2;
+  grid-row: 1;
+}
+.resource-compact {
+  grid-template-columns: minmax(0, 1fr) 8ch;
+  align-items: center;
+  gap: var(--spacing-small);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.resource-compact > input {
+  width: 100%;
 }
 </style>

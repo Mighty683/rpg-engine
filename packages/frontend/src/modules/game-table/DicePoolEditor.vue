@@ -8,6 +8,7 @@ const props = withDefaults(
     opposing?: boolean;
     showPool?: boolean;
     opposingDice?: readonly number[];
+    hasPoolPrefix?: boolean;
   }>(),
   { showPool: true },
 );
@@ -65,7 +66,11 @@ function remove(index: number) {
     <slot />
     <div v-if="showPool">
       <p class="mb-small text-sm font-medium">Dice pool</p>
-      <div v-if="dice.length || opposingDice?.length" class="flex flex-wrap gap-small">
+      <div
+        v-if="dice.length || opposingDice?.length || hasPoolPrefix"
+        class="flex flex-wrap gap-small"
+      >
+        <slot name="pool-prefix" />
         <DieButton
           v-for="(size, index) in dice"
           :key="`pool-${index}`"

@@ -30,6 +30,10 @@ const usedAttributes = computed(() =>
   [props.draft.first, props.draft.second].filter((value): value is Attribute => value !== null),
 );
 function toggleSecond(attribute: Attribute) {
+  const previous = props.draft.second;
+  if (previous && previous !== props.draft.first) {
+    props.draft.dice[previous] = props.draft.character.baseDice[previous];
+  }
   props.draft.second = props.draft.second === attribute ? null : attribute;
 }
 </script>
@@ -54,7 +58,7 @@ function toggleSecond(attribute: Attribute) {
             <template v-for="(attribute, index) in usedAttributes" :key="`${attribute}-${index}`">
               <div class="flex flex-wrap items-end gap-medium">
                 <fieldset>
-                  <legend class="mb-small text-sm font-medium">
+                  <legend :class="index === 0 ? 'mb-small text-sm font-medium' : 'sr-only'">
                     {{ attribute }} die<span v-if="index === 1 && attribute === draft.first">
                       (same size as first)</span
                     >
@@ -79,15 +83,15 @@ function toggleSecond(attribute: Attribute) {
                     </label>
                   </div>
                 </fieldset>
-                <UFormField v-if="index === 0" label="Check modifier" class="w-28">
-                  <UInput
+                <label v-if="index === 0" class="modifier-card">
+                  <span>Check modifier</span>
+                  <input
                     v-model="draft.modifier"
                     type="number"
                     step="1"
-                    class="w-full"
                     data-testid="check-modifier"
                   />
-                </UFormField>
+                </label>
               </div>
               <fieldset v-if="index === 0 && draft.mode === 'attribute'">
                 <legend class="mb-small text-sm font-medium">
@@ -103,7 +107,7 @@ function toggleSecond(attribute: Attribute) {
                     :aria-pressed="draft.second === choice"
                     @click="toggleSecond(choice)"
                   >
-                    {{ choice }}
+                    <DieIcon :sides="draft.character.baseDice[choice]" /> {{ choice }}
                   </button>
                 </div>
               </fieldset>
@@ -118,6 +122,7 @@ function toggleSecond(attribute: Attribute) {
           <OpposedSetup
             v-if="draft.mode === 'attribute'"
             :model-value="opponent"
+            :friendly-dice="usedAttributes.map((attribute) => draft.dice[attribute])"
             @update:model-value="emit('update:opponent', $event)"
           />
           <UFormField label="Note" hint="Optional"
@@ -156,14 +161,42 @@ function toggleSecond(attribute: Attribute) {
   cursor: pointer;
 }
 .die-choice-content {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.5rem;
+  min-width: 2.75rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.375rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-panel);
+  background: var(--ui-bg-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+.modifier-card {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.375rem;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-panel);
+  background: var(--ui-bg-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+.modifier-card input {
+  width: 3rem;
+  appearance: textfield;
+  text-align: center;
+  color: var(--ui-text-highlighted);
   border: 1px solid var(--ui-border-accented);
   border-radius: var(--radius-panel);
   background: var(--ui-bg);
-  font-size: 0.875rem;
+}
+.modifier-card input::-webkit-inner-spin-button,
+.modifier-card input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
 }
 .die-choice-content :deep(.die-icon) {
   width: 1.25rem;

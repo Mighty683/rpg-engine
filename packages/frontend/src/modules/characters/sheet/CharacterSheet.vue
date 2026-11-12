@@ -7,6 +7,7 @@ import CharacterLevelField from "./identity/CharacterLevelField.vue";
 import EditingLockButton from "./identity/EditingLockButton.vue";
 import AttributesSection from "./attributes/AttributesSection.vue";
 import ResourcesSection from "./resources/ResourcesSection.vue";
+import ResourceField from "./resources/ResourceField.vue";
 import ClassesSection from "./entries/ClassesSection.vue";
 import SkillsSection from "./entries/SkillsSection.vue";
 import EquipmentSection from "./equipment/EquipmentSection.vue";
@@ -95,13 +96,28 @@ function warnIfEditingLocked(event: PointerEvent) {
         <CharacterLevelField :level="level" @change="setLevel" />
       </fieldset>
       <EditingLockButton v-if="!readOnly" v-model="character.editingLocked" />
+      <fieldset :disabled="editingLocked" class="vital-resources">
+        <ResourceField
+          v-for="resource in ['HP', 'MP'] as const"
+          :key="resource"
+          v-model="current[resource]"
+          :label="resource"
+          :maximum="maximum[resource]"
+          :maximum-override="maximumOverrides[resource]"
+          bar
+          @override="updateMaximum(resource, $event)"
+        />
+      </fieldset>
     </header>
     <p v-if="!readOnly" class="text-sm text-muted">
       Lock editing prevents accidental changes in this browser only. It does not lock the sheet for
       other people.
     </p>
     <fieldset :disabled="editingLocked" class="sheet-sections">
-      <section class="sheet-panel sheet-split" aria-label="Attributes and resources">
+      <section
+        class="sheet-panel sheet-split attributes-resources"
+        aria-label="Attributes and resources"
+      >
         <AttributesSection :attributes="attributes" /><ResourcesSection
           :current="current"
           :maximum="maximum"
@@ -139,6 +155,13 @@ function warnIfEditingLocked(event: PointerEvent) {
   gap: var(--spacing-small);
   align-items: stretch;
 }
+.vital-resources {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-small);
+  min-width: 0;
+}
 .is-locked :deep(fieldset :is(input, select, textarea, button)) {
   pointer-events: none;
 }
@@ -160,10 +183,16 @@ function warnIfEditingLocked(event: PointerEvent) {
   .sheet-split {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .attributes-resources {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
 }
 @media (max-width: 640px) {
   .sheet-header {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .vital-resources {
+    grid-template-columns: 1fr;
   }
 }
 </style>

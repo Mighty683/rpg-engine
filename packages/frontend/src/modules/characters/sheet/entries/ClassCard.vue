@@ -23,7 +23,6 @@ const draft = useEditableEntry(
     :remove-description="`Remove ${draft.name} from this character?`"
     :locked="locked"
     :open="open"
-    remove-below
     @update:open="emit('update:open', $event)"
     @remove="emit('remove')"
     ><div class="entry-details"><EntryNotesField v-model="draft.notes" :name="draft.name" /></div
@@ -32,5 +31,8 @@ const draft = useEditableEntry(
 <style scoped>
 .entry-details {
   padding-top: var(--spacing-small);
+}
+:deep(.card-row > button) {
+  align-self: flex-start;
 }
 </style>

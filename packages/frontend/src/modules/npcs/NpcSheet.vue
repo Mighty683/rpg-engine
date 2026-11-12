@@ -182,10 +182,33 @@ onUnmounted(() => {
           test-id="npc-level"
           @change="form.level = ($event.target as HTMLInputElement).valueAsNumber"
         />
+        <div class="vital-resources">
+          <ResourceField
+            v-for="resource in ['hp', 'mp'] as const"
+            :key="resource"
+            :model-value="form[resource].current"
+            :label="resource.toUpperCase()"
+            :maximum="form[resource].max"
+            :maximum-override="form[resource].max"
+            :allow-calculated="false"
+            :disabled="readOnly || pending"
+            bar
+            @update:model-value="
+              (value) => {
+                if (value !== null) form[resource].current = value;
+              }
+            "
+            @override="
+              (value) => {
+                if (value !== null) form[resource].max = value;
+              }
+            "
+          />
+        </div>
       </header>
 
       <div class="sheet-sections">
-        <section class="sheet-panel sheet-split" aria-label="Attributes and resources">
+        <section class="sheet-panel" aria-label="Attributes">
           <SheetSection
             ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
             <div class="stat-grid">
@@ -197,31 +220,6 @@ onUnmounted(() => {
                 :help="attributeHelp[attribute]"
                 :disabled="readOnly || pending"
                 @update:model-value="form.baseDice[attribute] = Number($event)"
-              />
-            </div>
-          </SheetSection>
-          <SheetSection>
-            <template #heading>✚ RESOURCES</template><template #hint>CURRENT / MAX</template>
-            <div class="stat-grid">
-              <ResourceField
-                v-for="resource in ['hp', 'mp'] as const"
-                :key="resource"
-                :model-value="form[resource].current"
-                :label="resource.toUpperCase()"
-                :maximum="form[resource].max"
-                :maximum-override="form[resource].max"
-                :allow-calculated="false"
-                :disabled="readOnly || pending"
-                @update:model-value="
-                  (value) => {
-                    if (value !== null) form[resource].current = value;
-                  }
-                "
-                @override="
-                  (value) => {
-                    if (value !== null) form[resource].max = value;
-                  }
-                "
               />
             </div>
           </SheetSection>
@@ -244,6 +242,7 @@ onUnmounted(() => {
                 :calculated="null"
                 :contributions="[]"
                 manual
+                compact
                 @update:model-value="
                   (value) => {
                     if (value !== null) form[stat] = value;
@@ -307,6 +306,17 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.vital-resources {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-small);
+}
+@media (max-width: 640px) {
+  .vital-resources {
+    grid-template-columns: 1fr;
+  }
+}
 .sheet {
   --sheet-label-size: 0.75rem;
   --sheet-meta-size: 0.625rem;
@@ -395,6 +405,10 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-small);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-panel);
+  background: var(--ui-bg-muted);
+  padding: var(--sheet-tight) var(--spacing-small);
 }
 .sheet-split {
   display: grid;

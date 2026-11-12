@@ -15,30 +15,30 @@ const emit = defineEmits<{ override: [resource: Resource, value: number | null] 
 
 <template>
   <SheetSection
-    ><template #heading>✚ RESOURCES</template><template #hint>CURRENT / MAX</template>
-    <div class="grid">
+    ><template #heading>✚ RESOURCES</template>
+    <div class="resource-card">
       <ResourceField
-        v-for="resource in ['HP', 'MP', 'IP'] as const"
+        v-for="resource in ['IP'] as const"
         :key="resource"
         v-model="current[resource]"
         :label="resource"
         :maximum="maximum[resource]"
         :maximum-override="maximumOverrides[resource]"
+        help="Inventory Points"
+        compact
         @override="emit('override', resource, $event)"
-      /><ResourceField v-model="current.Fabula" label="FABULA" /></div
+      /><ResourceField v-model="current.Fabula" label="FP" help="Fabula Points" compact /></div
   ></SheetSection>
 </template>
 
 <style scoped>
-.grid {
+.resource-card {
   display: grid;
   gap: var(--spacing-small);
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: var(--sheet-tight);
-}
-@media (max-width: 420px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  padding: var(--spacing-small);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--radius-panel);
+  background: var(--ui-bg-muted);
 }
 </style>

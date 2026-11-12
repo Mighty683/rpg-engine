@@ -6,6 +6,7 @@ defineProps<{
   calculated: number | null;
   contributions: { name: string; value: number; modifier?: boolean }[];
   manual?: boolean;
+  compact?: boolean;
 }>();
 const value = defineModel<number | null>({ required: true });
 function update(event: Event) {
@@ -15,7 +16,7 @@ function update(event: Event) {
 </script>
 
 <template>
-  <div class="defense-stat" :data-testid="`defense-card-${label}`">
+  <div class="defense-stat" :class="{ compact }" :data-testid="`defense-card-${label}`">
     <div class="stat-label">
       <span>{{ label }}</span
       ><InfoTooltip :label="`About ${label}`" :text="help" />
@@ -61,6 +62,11 @@ function update(event: Event) {
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
   padding: var(--sheet-tight) var(--spacing-small);
+}
+.defense-stat.compact {
+  border: 0;
+  background: transparent;
+  padding: 0;
 }
 .stat-label {
   display: flex;

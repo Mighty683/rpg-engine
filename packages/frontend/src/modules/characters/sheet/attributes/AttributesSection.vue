@@ -12,7 +12,7 @@ const help = {
 </script>
 
 <template>
-  <SheetSection
+  <SheetSection class="attributes"
     ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
     <div class="grid">
       <AttributeField
@@ -26,8 +26,13 @@ const help = {
 </template>
 
 <style scoped>
+.attributes {
+  display: flex;
+  flex-direction: column;
+}
 .grid {
   display: grid;
+  flex: 1;
   gap: var(--spacing-small);
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: var(--sheet-tight);
