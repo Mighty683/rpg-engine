@@ -6,6 +6,9 @@ info:
     Browser sessions use the HttpOnly rpg_session cookie. Before a write, obtain a CSRF token from
     GET /api/auth/csrf and send it as x-csrf-token with the cookies returned by that endpoint. Obtain a fresh
     token after login, registration, or logout. Write requests must also satisfy the configured Origin policy.
+    Responses include a server-generated X-Request-Id for diagnostics. Game and invitation mutations share
+    a default limit of 60 requests per account per minute across sessions and games. Rejections return 429
+    with Retry-After. Database statement and lock deadlines return 503 with code database_busy.
 servers:
   - { url: / }
 security:
@@ -138,6 +141,7 @@ paths:
                 properties:
                   account: { $ref: "#/components/schemas/Account" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/auth/logout:
     post:
@@ -164,6 +168,7 @@ paths:
                   ok: { const: true }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/rpg-systems:
     get:
@@ -206,6 +211,7 @@ paths:
                     type: array
                     items: { $ref: "#/components/schemas/Game" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createGame
@@ -242,6 +248,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}:
     parameters:
@@ -265,6 +273,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/characters:
     parameters:
@@ -290,6 +299,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createCharacter
@@ -339,6 +349,8 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/characters/{characterId}:
     parameters:
@@ -363,6 +375,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     patch:
       operationId: updateCharacter
@@ -401,6 +414,8 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     delete:
       operationId: deleteCharacter
@@ -424,6 +439,8 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/characters/{characterId}/active:
     parameters:
@@ -462,6 +479,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/characters/{characterId}/controller:
     parameters:
@@ -503,6 +522,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/party:
     parameters:
@@ -528,6 +549,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/npcs:
     parameters:
@@ -553,6 +575,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createNpc
@@ -603,6 +626,8 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/npcs/{npcId}:
     parameters:
@@ -627,6 +652,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     put:
       operationId: replaceNpc
@@ -666,6 +692,8 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     delete:
       operationId: deleteNpc
@@ -693,6 +721,8 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/throws:
     parameters:
@@ -727,6 +757,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createThrow
@@ -758,6 +789,8 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/throws/{throwId}:
     parameters:
@@ -785,6 +818,8 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/members:
     parameters:
@@ -810,6 +845,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/members/{membershipId}/active-character:
     parameters:
@@ -844,6 +880,8 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/active-character:
     parameters:
@@ -877,6 +915,8 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/members/{membershipId}/remove:
     parameters:
@@ -904,6 +944,8 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/members/{membershipId}/restore:
     parameters:
@@ -931,6 +973,8 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/invitations:
     parameters:
@@ -957,6 +1001,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createInvitation
@@ -987,6 +1032,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/invitations/{invitationId}:
     parameters:
@@ -1025,6 +1072,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/invitations/{invitationId}/rotate:
     parameters:
@@ -1052,6 +1101,8 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/invitations/{token}:
     parameters:
@@ -1078,6 +1129,7 @@ paths:
                   invitation: { $ref: "#/components/schemas/InvitationPreview" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/invitations/{token}/accept:
     parameters:
@@ -1108,6 +1160,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/events:
     parameters:
@@ -1183,7 +1237,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
         "503":
-          description: The event service is shutting down; code server_stopping.
+          description: The event service is shutting down or the database is busy; code server_stopping or database_busy.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -1269,7 +1323,7 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/FieldError" }
     RateLimited:
-      description: Too many authentication requests.
+      description: Too many authentication requests or authenticated mutations; code rate_limited.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -1281,8 +1335,13 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    DatabaseUnavailable:
+      description: A database statement or lock deadline was exceeded; code database_busy.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
     AuthUnavailable:
-      description: The sign-in service is temporarily busy.
+      description: The sign-in service or database is temporarily busy; code auth_busy or database_busy.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }

@@ -56,6 +56,8 @@ describe("API game table throws", () => {
 
   beforeEach(async () => {
     const { pool, ids } = fixture;
+    // Each scenario starts with a fresh budget; rate-limit behavior has its own API suite.
+    await pool.query("DELETE FROM sign_in_attempts");
     await pool.query(
       "UPDATE characters SET gm_active=true,name='GM sheet',revision=0 WHERE id=$1",
       [ids.gmCharacter],

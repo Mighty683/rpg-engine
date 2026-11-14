@@ -9,7 +9,10 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { createCsrfProtection } from "./modules/auth/csrf.ts";
 import { PostgresRateStore, authenticationLimiters } from "./modules/auth/rate-limit.ts";
-import { Application, ExpressAdapter } from "arrow-express";
+import { Application } from "arrow-express";
+import { mountRoutes } from "./shared/http/routes.ts";
+import { errorBoundary, requestIdentity } from "./shared/http/error-boundary.ts";
+import { mutationLimiter } from "./shared/http/mutation-limit.ts";
 import type { Database } from "./database/types.ts";
 import { createGameEvents, eventStreamOptions } from "./modules/events/streams.ts";
 import { createSessionService } from "./modules/auth/sessions.ts";
@@ -59,6 +62,7 @@ export function createApplication(
   const { issueCsrfToken, csrfProtection, invalidCsrfTokenError } = createCsrfProtection(config);
   const app = express();
   if (config.trustedProxies.length) app.set("trust proxy", config.trustedProxies);
+  app.use(requestIdentity);
   app.use(helmet());
   if (config.development) mountApiDocumentation(app);
   app.use(cookieParser());
@@ -75,6 +79,15 @@ export function createApplication(
   const events = createGameEvents(streamOptions);
   const sessions = createSessionService(database);
   const auth = createAuthService(database, config, events, sessions);
+  const limitMutations = mutationLimiter(
+    async (request) => {
+      auth.requireWriteOrigin(request);
+      return auth.requireActor(request);
+    },
+    new PostgresRateStore(database, "account-mutations"),
+    options.mutationLimits,
+  );
+  app.use(["/api/games", "/api/invitations"], limitMutations);
   const games = createGamesService(database);
   const ownership = createOwnershipWorkflows({
     database,
@@ -126,37 +139,7 @@ export function createApplication(
       gameEventsController({ auth, games, events }, streamOptions),
       rpgSystemsController(),
     );
-  ExpressAdapter(app, routes).configure(false);
-  app.use(
-    (
-      error: Error & { status?: number },
-      _request: express.Request,
-      response: express.Response,
-      _next: express.NextFunction,
-    ) => {
-      if ((error as Error & { code?: string }).code === "auth_busy") {
-        response
-          .status(503)
-          .json({ error: { code: "auth_busy", message: "Sign-in service busy. Try again." } });
-        return;
-      }
-      if (error === invalidCsrfTokenError) {
-        response
-          .status(403)
-          .json({ error: { code: "invalid_csrf", message: "Invalid CSRF token." } });
-        return;
-      }
-      if (error.status === 400 || error.status === 413) {
-        response.status(error.status).json({
-          error: {
-            code: error.status === 413 ? "payload_too_large" : "bad_request",
-            message: error.status === 413 ? "Request body is too large." : "Malformed JSON.",
-          },
-        });
-        return;
-      }
-      response.status(500).json({ error: { code: "server_error", message: "Request failed." } });
-    },
-  );
+  mountRoutes(app, routes);
+  app.use(errorBoundary(invalidCsrfTokenError, options.errorLogger));
   return { app, dispose: () => events.dispose() };
 }

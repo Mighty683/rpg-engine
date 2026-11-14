@@ -5,3 +5,14 @@ export type InputErrorBody = {
   message: string;
   fields?: ValidationFields;
 };
+
+/** Deliberately excludes URLs, bodies, cookies, SQL, and exception messages. */
+export type HttpErrorRecord = {
+  requestId: string;
+  method: string;
+  route: string;
+  status: number;
+  databaseCode?: string;
+};
+export type HttpErrorLogger = (record: HttpErrorRecord) => void;
+export type MutationLimitOptions = { windowMs: number; limit: number };

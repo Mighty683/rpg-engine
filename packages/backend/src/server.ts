@@ -1,4 +1,4 @@
-import pg from "pg";
+import { createRuntimePool } from "./database/pool.ts";
 import { databaseFromPool } from "./database/client.ts";
 import { createApplication } from "./app.ts";
 import { createConfiguration } from "./config.ts";
@@ -7,7 +7,7 @@ import { createShutdown } from "./lifecycle.ts";
 const config = createConfiguration();
 const connectionString = config.databaseUrl;
 if (!connectionString) throw new Error("DATABASE_URL is required");
-const pool = new pg.Pool({ connectionString });
+const pool = createRuntimePool(connectionString, config.databaseTimeouts);
 const port = config.port;
 const application = createApplication(databaseFromPool(pool), config);
 const server = application.app.listen(port, "127.0.0.1", () =>

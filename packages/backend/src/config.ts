@@ -30,6 +30,10 @@ export function validateConfiguration(config: Configuration) {
     if (!["http:", "https:"].includes(url.protocol) || url.origin !== config.appOrigin)
       throw new Error("APP_ORIGIN must be an exact HTTP(S) origin");
   }
+  for (const [name, value] of Object.entries(config.databaseTimeouts)) {
+    if (!Number.isSafeInteger(value) || value <= 0 || value > 2147483647)
+      throw new Error(`Invalid database timeout: ${name}`);
+  }
   if (!config.production) return;
   for (const [name, value] of [
     ["CSRF_SECRET", config.csrfSecret],
@@ -54,6 +58,12 @@ export function createConfiguration(env: NodeJS.ProcessEnv = process.env): Confi
     production,
     development: env.NODE_ENV === "development",
     databaseUrl: env.DATABASE_URL,
+    databaseTimeouts: {
+      connectionMs: Number(env.DB_CONNECTION_TIMEOUT_MS ?? 5000),
+      statementMs: Number(env.DB_STATEMENT_TIMEOUT_MS ?? 10000),
+      lockMs: Number(env.DB_LOCK_TIMEOUT_MS ?? 2000),
+      idleTransactionMs: Number(env.DB_IDLE_TRANSACTION_TIMEOUT_MS ?? 10000),
+    },
     port: Number(env.PORT ?? 3000),
     appOrigin: env.APP_ORIGIN,
     trustedProxies,

@@ -1,5 +1,5 @@
 import { expect, it } from "vite-plus/test";
-import { createConfiguration } from "./config.ts";
+import { createConfiguration, validateConfiguration } from "./config.ts";
 
 it("captures independent settings and requires an explicit production proxy policy", () => {
   const env = {
@@ -69,4 +69,18 @@ it("preserves optional development origin/secrets and accepts explicit IP proxy 
   expect(createConfiguration({ ...production, CSRF_SECRET: "😀".repeat(8) }).csrfSecret).toBe(
     "😀".repeat(8),
   );
+});
+
+it.each([
+  "DB_CONNECTION_TIMEOUT_MS",
+  "DB_STATEMENT_TIMEOUT_MS",
+  "DB_LOCK_TIMEOUT_MS",
+  "DB_IDLE_TRANSACTION_TIMEOUT_MS",
+])("validates %s before startup", (name) => {
+  for (const value of ["0", "-1", "1.5", "invalid", "2147483648"])
+    expect(() => createConfiguration({ [name]: value })).toThrow("database timeout");
+  const config = createConfiguration({ [name]: "250" });
+  expect(Object.values(config.databaseTimeouts)).toContain(250);
+  config.databaseTimeouts.lockMs = 0;
+  expect(() => validateConfiguration(config)).toThrow("database timeout");
 });

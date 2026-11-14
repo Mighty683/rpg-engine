@@ -1,3 +1,5 @@
+import type { DatabaseTimeouts } from "./database/types.ts";
+import type { HttpErrorLogger, MutationLimitOptions } from "./shared/http/types.ts";
 import type { Express } from "express";
 import type { EventStreamOptions } from "./modules/events/types.ts";
 
@@ -6,6 +8,7 @@ export interface Configuration {
   production: boolean;
   development: boolean;
   databaseUrl: string | undefined;
+  databaseTimeouts: DatabaseTimeouts;
   port: number;
   appOrigin: string | undefined;
   trustedProxies: string[];
@@ -13,7 +16,11 @@ export interface Configuration {
   invitationSecret: string | undefined;
 }
 
-export type ApplicationOptions = { eventStreams?: Partial<EventStreamOptions> };
+export type ApplicationOptions = {
+  eventStreams?: Partial<EventStreamOptions>;
+  mutationLimits?: Partial<MutationLimitOptions>;
+  errorLogger?: HttpErrorLogger;
+};
 
 /** The runtime wave exposes this alongside the backwards-compatible createApp function. */
 export interface ApplicationRuntime {
