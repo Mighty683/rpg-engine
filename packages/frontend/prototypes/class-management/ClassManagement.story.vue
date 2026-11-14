@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ClassManagementPreview from "../../src/modules/class-management/ClassManagementPreview.vue";
+import ClassManagementController from "./ClassManagementController.vue";
 
 function initialState() {
   return { screen: "List", context: "Library" };
@@ -9,14 +9,19 @@ function initialState() {
 <template>
   <Story title="Prototypes/Class management" :init-state="initialState">
     <template #default="{ state }">
-      <UApp><ClassManagementPreview :screen="state.screen" :context="state.context" /></UApp>
+      <UApp
+        ><ClassManagementController
+          :screen="state.screen"
+          :context="state.context"
+          @navigate="state.screen = $event"
+      /></UApp>
     </template>
     <template #controls="{ state }">
       <HstSelect v-model="state.context" title="Context" :options="['Library', 'Game']" />
       <HstSelect
         v-model="state.screen"
         title="Screen"
-        :options="['List', 'Editor', 'Copy', 'Removal', 'Character']"
+        :options="['List', 'Details', 'Create', 'Copy', 'Removal', 'Character']"
       />
     </template>
   </Story>
