@@ -5,7 +5,8 @@ import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
 import pg, { type Pool } from "pg";
 import { vi } from "vite-plus/test";
-import { createApp } from "../../../backend/src/app.ts";
+import { createApplication } from "../../../backend/src/app.ts";
+import type { ApplicationOptions } from "../../../backend/src/types.ts";
 import { applyMigrations } from "../../../backend/src/migrations.ts";
 import { createSession } from "../../../backend/src/modules/auth/sessions.ts";
 import { createWorkspaceCharacter } from "../../../backend/src/modules/characters/workspace-service.ts";
@@ -157,7 +158,7 @@ export async function csrfHeaders(origin: string, cookie = "") {
  */
 export async function createApiFixture(
   suite: string,
-  options: { appOrigin?: string } = {},
+  options: { appOrigin?: string; application?: ApplicationOptions } = {},
 ): Promise<ApiFixture> {
   const url = process.env.TEST_DATABASE_URL;
   if (!url)
@@ -171,7 +172,8 @@ export async function createApiFixture(
   vi.stubEnv("APP_ORIGIN", options.appOrigin ?? "");
   await admin.query(`CREATE SCHEMA "${schema}"`);
   await applyMigrations(pool);
-  const server = createApp(databaseFromPool(pool)).listen(0, "127.0.0.1");
+  const application = createApplication(databaseFromPool(pool), undefined, options.application);
+  const server = application.app.listen(0, "127.0.0.1");
   await new Promise<void>((resolve, reject) => {
     server.once("listening", resolve);
     server.once("error", reject);
@@ -200,6 +202,7 @@ export async function createApiFixture(
     });
   };
   const cleanup = async () => {
+    application.dispose();
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
     );

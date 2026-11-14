@@ -5,3 +5,5 @@ import type { GameAccess } from "../games/types.ts";
 export type MembershipsService = ReturnType<typeof createMembershipsService>;
 
 export type GameContext = { actor: Actor; gameId: string; access: GameAccess };
+
+export type ActiveCharacterInput = { expectedRevision: number; characterId: string | null };

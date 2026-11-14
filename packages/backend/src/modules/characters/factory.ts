@@ -1,5 +1,5 @@
 import type { GameActor, GameAccessFactory } from "../games/types.ts";
-import type { FabulaSheet } from "../fabula/types.ts";
+import type { SheetChanges } from "../fabula/types.ts";
 import type { GameEvents } from "../events/types.ts";
 
 import {
@@ -37,7 +37,7 @@ export function createCharactersService(
       actor: GameActor,
       id: string,
       expected: number,
-      changes: Partial<FabulaSheet>,
+      changes: SheetChanges,
     ) =>
       updateWorkspaceCharacter(
         { gameAccessFor, events, database },

@@ -4,7 +4,7 @@ import type { Response } from "express";
 
 import type { Configuration } from "../../types.ts";
 
-import { validateCredentials } from "./service.ts";
+import { validateCredentials, parseLoginCredentials } from "./contract.ts";
 
 const sessionDuration = 30 * 24 * 60 * 60 * 1000;
 
@@ -92,13 +92,7 @@ export function authController(services: { auth: AuthService; config: Configurat
         .method("post")
         .path("login")
         .handler(async (request, response) => {
-          const body = request.body && typeof request.body === "object" ? request.body : {};
-          const username =
-            typeof body.username === "string" ? body.username.trim().slice(0, 128) : "";
-          const password =
-            typeof body.password === "string" && Buffer.byteLength(body.password, "utf8") <= 1024
-              ? body.password
-              : "";
+          const { username, password } = parseLoginCredentials(request.body);
           const result = await withAvailabilityResponse(() =>
             services.auth.authenticateAccount(username, password),
           );

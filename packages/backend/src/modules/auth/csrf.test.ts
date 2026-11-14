@@ -7,6 +7,8 @@ afterEach(() => vi.unstubAllEnvs());
 describe("CSRF configuration", () => {
   it("requires a sufficiently long secret in production", () => {
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "https://app.example");
+    vi.stubEnv("INVITATION_SECRET", "production-test-secret-with-32-bytes");
     vi.stubEnv("TRUSTED_PROXIES", "none");
     vi.stubEnv("CSRF_SECRET", "short");
     expect(() => verifyCsrfConfiguration(createConfiguration())).toThrow("CSRF_SECRET");

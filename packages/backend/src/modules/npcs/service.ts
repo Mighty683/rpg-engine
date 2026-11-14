@@ -4,7 +4,7 @@ import { transaction } from "../../database/transaction.ts";
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import type { GameAccessFactory, GameActor } from "../games/types.ts";
 import type { GameEvents } from "../events/types.ts";
-import type { NpcWrite } from "./contract.ts";
+import type { NpcWrite } from "./types.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
 type Row = typeof npcs.$inferSelect;

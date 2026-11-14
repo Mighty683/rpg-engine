@@ -1,6 +1,21 @@
 import type { GameActor, GameAccess } from "../games/types.ts";
 import type { createCharactersService } from "./factory.ts";
-import type { Attribute, FabulaSheet } from "../fabula/types.ts";
+import type { Attribute, FabulaSheet, SheetChanges } from "../fabula/types.ts";
+import type { characterEquipment } from "../../database/schema.ts";
+
+export type CreateCharacterInput = { id: string; name: string };
+export type UpdateCharacterInput = { expectedRevision: number; changes: SheetChanges };
+export type CharacterActiveInput = { active: boolean };
+export type CharacterControllerInput = { membershipId: string | null };
+
+/** Loaded collections accepted by both single-sheet and batched projection assembly. */
+export type SheetCollections = {
+  classes: Pick<NamedRow, "id" | "name" | "notes">[];
+  skills: Pick<NamedRow, "id" | "name" | "notes">[];
+  equipment: EquipmentRow[];
+};
+
+export type EquipmentInsert = typeof characterEquipment.$inferInsert;
 
 export type CharacterContext = { actor: GameActor; gameId: string; access: GameAccess };
 

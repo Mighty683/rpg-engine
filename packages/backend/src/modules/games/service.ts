@@ -11,17 +11,7 @@ import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { games, players } from "../../database/schema.ts";
 import { findSystem } from "../rpg-systems/catalog.ts";
 
-export function validateGame(input: unknown) {
-  const value =
-    typeof input === "object" && input !== null ? (input as Record<string, unknown>) : {};
-  const name = typeof value.name === "string" ? value.name.trim() : "";
-  const systemId = typeof value.systemId === "string" ? value.systemId : "";
-  const fields: Record<string, string> = {};
-  if (!name) fields.name = "Enter a game name";
-  else if (Array.from(name).length > 20) fields.name = "Use 20 characters or fewer";
-  if (!findSystem(systemId)) fields.systemId = "Select an RPG system";
-  return { name, systemId, fields };
-}
+export { validateGame } from "./contract.ts";
 
 function presentGame(row: GameRow) {
   const system = findSystem(row.systemId);

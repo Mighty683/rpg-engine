@@ -11,20 +11,7 @@ import type { revokeSession } from "./sessions.ts";
 
 const dummyHash = argon2.hash(randomBytes(32));
 
-export function validateCredentials(input: unknown) {
-  const value =
-    input && typeof input === "object" && !Array.isArray(input)
-      ? (input as Record<string, unknown>)
-      : {};
-  const username = typeof value.username === "string" ? value.username.trim() : "";
-  const password = typeof value.password === "string" ? value.password : "";
-  const fields: Record<string, string> = {};
-  if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username))
-    fields.username = "Use 3–32 letters, numbers, dots, underscores, or hyphens.";
-  if (password.length < 8 || Buffer.byteLength(password, "utf8") > 1024)
-    fields.password = "Use at least 8 characters and at most 1024 bytes.";
-  return { username, password, fields };
-}
+export { validateCredentials } from "./contract.ts";
 
 export async function registerAccount(database: Database, username: string, password: string) {
   const hash = await withPasswordHashCapacity(() => argon2.hash(password));

@@ -3,7 +3,13 @@ import type { AuthService } from "../auth/types.ts";
 import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 
-import { routeId } from "../games/controller.ts";
+import { routeId } from "../../shared/http/route-id.ts";
+import {
+  parseCreateCharacter,
+  parseUpdateCharacter,
+  parseCharacterActive,
+  parseCharacterController,
+} from "./contract.ts";
 
 function requestError(error: unknown): never {
   const e = error as { code?: string; message?: string; field?: string };
@@ -21,16 +27,6 @@ function requestError(error: unknown): never {
     });
   throw error;
 }
-function badRequest(): never {
-  throw new RequestError(400, { error: { code: "bad_request", message: "Invalid request." } });
-}
-function validId(id: unknown): id is string {
-  return (
-    typeof id === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
-  );
-}
-
 export function charactersController(services: {
   auth: AuthService;
   games: GamesService;
@@ -86,25 +82,13 @@ export function charactersController(services: {
         .method("post")
         .path("")
         .handler(async (request, response, context) => {
-          const body = request.body;
-          if (!body || typeof body !== "object" || Array.isArray(body) || !validId(body.id))
-            badRequest();
-          const name = typeof body.name === "string" ? body.name.trim() : "";
-          if (!name || Array.from(name).length > 100) {
-            throw new RequestError(422, {
-              error: {
-                code: "validation",
-                message: "Check the fields.",
-                fields: { name: "Enter a character name of at most 100 characters." },
-              },
-            });
-          }
+          const body = parseCreateCharacter(request.body);
           try {
             const created = await services.characters.createWorkspaceCharacter(
               context.actor,
               context.gameId,
               body.id,
-              name,
+              body.name,
             );
             response.status(created.created ? 201 : 200);
             return { character: created.record };
@@ -132,18 +116,7 @@ export function charactersController(services: {
         .method("patch")
         .path(":characterId")
         .handler(async (request, _response, context) => {
-          const body = request.body;
-          if (
-            !body ||
-            typeof body !== "object" ||
-            Array.isArray(body) ||
-            !Number.isInteger(body.expectedRevision) ||
-            body.expectedRevision < 0 ||
-            !body.changes ||
-            typeof body.changes !== "object" ||
-            Array.isArray(body.changes)
-          )
-            badRequest();
+          const body = parseUpdateCharacter(request.body);
           try {
             return {
               character: await services.characters.updateWorkspaceCharacter(
@@ -162,14 +135,14 @@ export function charactersController(services: {
         .method("put")
         .path(":characterId/active")
         .handler(async (request, _response, context) => {
-          if (!request.body || typeof request.body.active !== "boolean") badRequest();
+          const body = parseCharacterActive(request.body);
           try {
             return {
               character: await services.characters.setGmCharacterActive(
                 context.actor,
                 context.gameId,
                 routeId(request.params.characterId),
-                request.body.active,
+                body.active,
               ),
             };
           } catch (error) {
@@ -180,13 +153,7 @@ export function charactersController(services: {
         .method("patch")
         .path(":characterId/controller")
         .handler(async (request, _response, context) => {
-          const body = request.body;
-          if (
-            !body ||
-            typeof body !== "object" ||
-            !(body.membershipId === null || validId(body.membershipId))
-          )
-            badRequest();
+          const body = parseCharacterController(request.body);
           try {
             return {
               character: await services.characters.assignCharacter(

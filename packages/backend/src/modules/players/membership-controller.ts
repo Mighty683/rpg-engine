@@ -4,11 +4,7 @@ import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 import type { Request } from "express";
 
-const uuid = (value: unknown): value is string =>
-  typeof value === "string" &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-const bad = () =>
-  new RequestError(400, { error: { code: "bad_request", message: "Invalid request." } });
+import { parseActiveCharacter, parseMemberId } from "./contract.ts";
 const deny = (code: string) =>
   new RequestError(code === "forbidden" ? 403 : code === "stale_revision" ? 409 : 404, {
     error: {
@@ -24,8 +20,7 @@ async function guard(
 ) {
   if (request.method !== "GET") services.auth.requireWriteOrigin(request);
   const actor = await services.auth.requireActor(request);
-  const gameId = param(request.params.gameId);
-  if (!uuid(gameId)) throw bad();
+  const gameId = parseMemberId(param(request.params.gameId));
   const access = await services.games.gameAccess(actor, gameId);
   if (!access) throw deny("not_found");
   return { actor, gameId, access };
@@ -61,16 +56,8 @@ export function membershipsController(services: {
         .path(":membershipId/active-character")
         .handler(async (request, _response, context) => {
           if (context.access.role !== "GM") throw deny("forbidden");
-          const id = param(request.params.membershipId);
-          const body = request.body;
-          if (
-            !uuid(id) ||
-            !body ||
-            !Number.isInteger(body.expectedRevision) ||
-            body.expectedRevision < 0 ||
-            (body.characterId !== null && !uuid(body.characterId))
-          )
-            throw bad();
+          const id = parseMemberId(param(request.params.membershipId));
+          const body = parseActiveCharacter(request.body);
           return {
             member: await handle(() =>
               services.memberships.selectPlayerCharacter(
@@ -88,8 +75,7 @@ export function membershipsController(services: {
         .path(":membershipId/remove")
         .handler(async (request, _response, context) => {
           if (context.access.role !== "GM") throw deny("forbidden");
-          const id = param(request.params.membershipId);
-          if (!uuid(id)) throw bad();
+          const id = parseMemberId(param(request.params.membershipId));
           return {
             member: await handle(() =>
               services.memberships.setMemberRemoved(context.actor, context.gameId, id, true),
@@ -101,8 +87,7 @@ export function membershipsController(services: {
         .path(":membershipId/restore")
         .handler(async (request, _response, context) => {
           if (context.access.role !== "GM") throw deny("forbidden");
-          const id = param(request.params.membershipId);
-          if (!uuid(id)) throw bad();
+          const id = parseMemberId(param(request.params.membershipId));
           return {
             member: await handle(() =>
               services.memberships.setMemberRemoved(context.actor, context.gameId, id, false),
@@ -126,14 +111,7 @@ export function activeSelectionController(services: {
         .path("")
         .handler(async (request, _response, context) => {
           if (context.access.role !== "Player") throw deny("forbidden");
-          const body = request.body;
-          if (
-            !body ||
-            !Number.isInteger(body.expectedRevision) ||
-            body.expectedRevision < 0 ||
-            (body.characterId !== null && !uuid(body.characterId))
-          )
-            throw bad();
+          const body = parseActiveCharacter(request.body);
           return {
             member: await handle(() =>
               services.memberships.selectPlayerCharacter(

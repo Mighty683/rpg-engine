@@ -1119,7 +1119,9 @@ paths:
       summary: Subscribe to game events
       description:
         The stream sends unnamed SSE frames with JSON payloads. Heartbeat comments are sent every
-        15 seconds. The connection closes when the session or game access is revoked.
+        15 seconds after the previous authorization check completes. The connection closes when
+        the session or game access is revoked, the consumer cannot keep up, or the server shuts down.
+        Pending and active streams count toward per-account and global connection limits.
       responses:
         "200":
           description: Successful response.
@@ -1171,6 +1173,20 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "429":
+          description: Stream capacity reached; rejected before SSE headers with code stream_capacity.
+          headers:
+            Retry-After:
+              description: Seconds before retrying; 15 by default.
+              schema: { type: integer, minimum: 1 }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: The event service is shutting down; code server_stopping.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
         "500": { $ref: "#/components/responses/ServerError" }
 components:
   securitySchemes:

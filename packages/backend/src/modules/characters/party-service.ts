@@ -1,5 +1,5 @@
-import type { EquipmentRow, PartyCharacter, PartyWeapon, Row } from "./types.ts";
-import type { Attribute, FabulaSheet } from "../fabula/types.ts";
+import type { PartyCharacter, PartyWeapon, Row } from "./types.ts";
+import type { FabulaSheet } from "../fabula/types.ts";
 import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
 import { transaction } from "../../database/transaction.ts";
 import { and, eq, inArray } from "drizzle-orm";
@@ -17,44 +17,10 @@ import {
 // criteria match the roster: GM-controlled characters need gm_active, player-
 // controlled characters must be the member's current active choice.
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
-import { preview, validateSheet } from "../fabula/rules.ts";
+import { preview } from "../fabula/rules.ts";
+import { assembleSheet } from "./mapping.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
-
-function equipmentEntry(row: EquipmentRow) {
-  const base = { id: row.id, name: row.name, notes: row.notes, priceZenit: row.price_zenit };
-  if (row.kind === "weapon")
-    return {
-      ...base,
-      kind: "weapon" as const,
-      equipped: Boolean(row.equipped),
-      accuracyDice: [row.accuracy_attribute_1, row.accuracy_attribute_2] as [
-        Attribute | null,
-        Attribute | null,
-      ],
-      accuracyBonus: row.accuracy_bonus,
-    };
-  if (row.kind === "armor")
-    return {
-      ...base,
-      kind: "armor" as const,
-      equipped: Boolean(row.equipped),
-      fixedDefense: row.fixed_defense,
-      defenseBonus: row.defense_bonus ?? 0,
-      magicDefenseBonus: row.magic_defense_bonus ?? 0,
-      initiativeModifier: row.initiative_modifier ?? 0,
-    };
-  if (row.kind === "shield")
-    return {
-      ...base,
-      kind: "shield" as const,
-      equipped: Boolean(row.equipped),
-      defenseBonus: row.defense_bonus ?? 0,
-      magicDefenseBonus: row.magic_defense_bonus ?? 0,
-      initiativeModifier: row.initiative_modifier ?? 0,
-    };
-  return { ...base, kind: "other" as const };
-}
 
 async function batchedSheets(
   tx: DatabaseTransaction,
@@ -90,28 +56,10 @@ async function batchedSheets(
   const equipmentMap = byCharacter(equipment);
   return new Map(
     rows.map((row) => {
-      const sheet = validateSheet({
-        name: row.name,
-        theme: row.theme,
-        level: row.level,
-        baseDice: { DEX: row.dex_die, INS: row.ins_die, MIG: row.mig_die, WLP: row.wlp_die },
-        classes: (classMap.get(row.id) ?? []).map(({ id, name, notes }) => ({ id, name, notes })),
+      const sheet = assembleSheet(row, {
+        classes: classMap.get(row.id) ?? [],
         skills: [],
-        equipment: (equipmentMap.get(row.id) ?? []).map(equipmentEntry),
-        resources: {
-          hp: row.current_hp,
-          mp: row.current_mp,
-          ip: row.current_ip,
-          fabula: row.fabula_points,
-        },
-        overrides: {
-          maxHp: row.max_hp_override,
-          maxMp: row.max_mp_override,
-          maxIp: row.max_ip_override,
-          defense: row.defense_override,
-          magicDefense: row.magic_defense_override,
-          initiative: row.initiative_override,
-        },
+        equipment: equipmentMap.get(row.id) ?? [],
       });
       return [row.id, sheet] as const;
     }),

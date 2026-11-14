@@ -7,6 +7,8 @@ afterEach(() => vi.unstubAllEnvs());
 describe("production security configuration", () => {
   it("requires an explicit trusted proxy policy", () => {
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "https://app.example");
+    vi.stubEnv("INVITATION_SECRET", "production-test-secret-with-32-bytes");
     vi.stubEnv("CSRF_SECRET", "production-test-secret-with-32-bytes");
     vi.stubEnv("TRUSTED_PROXIES", "");
     expect(() => createApp({} as Database)).toThrow("TRUSTED_PROXIES");

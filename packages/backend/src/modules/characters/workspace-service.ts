@@ -1,5 +1,5 @@
 import type { SummaryRow } from "./types.ts";
-import type { FabulaSheet } from "../fabula/types.ts";
+import type { FabulaSheet, SheetChanges } from "../fabula/types.ts";
 import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
 import type { GameEvents } from "../events/types.ts";
 import { transaction } from "../../database/transaction.ts";
@@ -20,6 +20,7 @@ import { defaultSheet, mergeSheet } from "../fabula/rules.ts";
 
 import { present, sheetSequential } from "./service.ts";
 import { canEditCharacter } from "./access.ts";
+import { equipmentToRow } from "./mapping.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
 
@@ -224,6 +225,23 @@ export async function setGmCharacterActive(
   });
 }
 
+async function replaceNamedEntries(
+  tx: DatabaseTransaction,
+  table: typeof characterClasses | typeof characterSkills,
+  characterId: string,
+  entries: FabulaSheet["classes"],
+) {
+  await tx.delete(table).where(eq(table.characterId, characterId));
+  for (const [index, entry] of entries.entries())
+    await tx.insert(table).values({
+      id: entry.id,
+      name: entry.name,
+      notes: entry.notes,
+      characterId,
+      position: index + 1,
+    });
+}
+
 export async function updateWorkspaceCharacter(
   {
     gameAccessFor,
@@ -234,7 +252,7 @@ export async function updateWorkspaceCharacter(
   actor: GameActor,
   id: string,
   expected: number,
-  changes: Partial<FabulaSheet>,
+  changes: SheetChanges,
 ) {
   return transaction(database, async (c, afterCommit) => {
     const access = await gameAccessFor(c).lockGame(actor, gameId);
@@ -250,7 +268,7 @@ export async function updateWorkspaceCharacter(
     if (!canEditCharacter(access, r.player_id)) throw fail("forbidden");
     if (r.revision !== expected) throw fail("stale_revision");
     const current = await sheetSequential(c, r);
-    const s = mergeSheet(current, changes as any);
+    const s = mergeSheet(current, changes);
     if (JSON.stringify(s) === JSON.stringify(current)) {
       return { ...present(r, current), canEdit: true };
     }
@@ -284,80 +302,12 @@ export async function updateWorkspaceCharacter(
           eq(characters.revision, expected),
         ),
       );
-    const lists: ["character_classes" | "character_skills" | "character_equipment", any[]][] = [];
-    if ("classes" in changes) lists.push(["character_classes", s.classes]);
-    if ("skills" in changes) lists.push(["character_skills", s.skills]);
-    if ("equipment" in changes) lists.push(["character_equipment", s.equipment]);
-    for (const [table, entries] of lists) {
-      if (table === "character_classes")
-        await c.delete(characterClasses).where(eq(characterClasses.characterId, id));
-      else if (table === "character_skills")
-        await c.delete(characterSkills).where(eq(characterSkills.characterId, id));
-      else await c.delete(characterEquipment).where(eq(characterEquipment.characterId, id));
-      for (const [i, x] of entries.entries()) {
-        if (table === "character_classes")
-          await c
-            .insert(characterClasses)
-            .values({ id: x.id, characterId: id, name: x.name, notes: x.notes, position: i + 1 });
-        else if (table === "character_skills")
-          await c
-            .insert(characterSkills)
-            .values({ id: x.id, characterId: id, name: x.name, notes: x.notes, position: i + 1 });
-        else {
-          const z =
-            x.kind === "weapon"
-              ? [
-                  x.equipped,
-                  x.accuracyDice[0],
-                  x.accuracyDice[1],
-                  x.accuracyBonus,
-                  null,
-                  null,
-                  null,
-                  null,
-                ]
-              : x.kind === "armor"
-                ? [
-                    x.equipped,
-                    null,
-                    null,
-                    null,
-                    x.fixedDefense,
-                    x.defenseBonus,
-                    x.magicDefenseBonus,
-                    x.initiativeModifier,
-                  ]
-                : x.kind === "shield"
-                  ? [
-                      x.equipped,
-                      null,
-                      null,
-                      null,
-                      null,
-                      x.defenseBonus,
-                      x.magicDefenseBonus,
-                      x.initiativeModifier,
-                    ]
-                  : [null, null, null, null, null, null, null, null];
-          await c.insert(characterEquipment).values({
-            id: x.id,
-            characterId: id,
-            name: x.name,
-            notes: x.notes,
-            position: i + 1,
-            kind: x.kind,
-            priceZenit: x.priceZenit,
-            equipped: z[0],
-            accuracyAttribute1: z[1],
-            accuracyAttribute2: z[2],
-            accuracyBonus: z[3],
-            fixedDefense: z[4],
-            defenseBonus: z[5],
-            magicDefenseBonus: z[6],
-            initiativeModifier: z[7],
-          });
-        }
-      }
+    if ("classes" in changes) await replaceNamedEntries(c, characterClasses, id, s.classes);
+    if ("skills" in changes) await replaceNamedEntries(c, characterSkills, id, s.skills);
+    if ("equipment" in changes) {
+      await c.delete(characterEquipment).where(eq(characterEquipment.characterId, id));
+      for (const [index, entry] of s.equipment.entries())
+        await c.insert(characterEquipment).values(equipmentToRow(id, index + 1, entry));
     }
     const out = present({ ...r, revision: r.revision + 1, updated_at: new Date() }, s);
     afterCommit(() => events.publishGameEvent(gameId, { type: "sheet", characterId: id }));

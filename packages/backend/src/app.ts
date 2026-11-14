@@ -5,7 +5,7 @@ import { createCsrfProtection } from "./modules/auth/csrf.ts";
 import { PostgresRateStore, authenticationLimiters } from "./modules/auth/rate-limit.ts";
 import { Application, ExpressAdapter } from "arrow-express";
 import type { Database } from "./database/types.ts";
-import { createGameEvents } from "./modules/events/streams.ts";
+import { createGameEvents, eventStreamOptions } from "./modules/events/streams.ts";
 import { createSessionService } from "./modules/auth/sessions.ts";
 import { createAuthService } from "./modules/auth/factory.ts";
 import { createGameAccessService } from "./modules/games/service.ts";
@@ -16,8 +16,8 @@ import { npcsController } from "./modules/npcs/controller.ts";
 import { createThrowsService } from "./modules/throws/factory.ts";
 import { createMembershipsService } from "./modules/players/factory.ts";
 import { createInvitationsService } from "./modules/invitations/factory.ts";
-import { createConfiguration } from "./config.ts";
-import type { Configuration } from "./types.ts";
+import { createConfiguration, validateConfiguration } from "./config.ts";
+import type { Configuration, ApplicationOptions, ApplicationRuntime } from "./types.ts";
 import { gamesController } from "./modules/games/controller.ts";
 import { rpgSystemsController } from "./modules/rpg-systems/controller.ts";
 import { authController } from "./modules/auth/controller.ts";
@@ -35,7 +35,21 @@ import { partyController } from "./modules/characters/party-controller.ts";
 import { throwsController } from "./modules/throws/controller.ts";
 import { mountApiDocumentation } from "./openapi.ts";
 
-export function createApp(database: Database, config: Configuration = createConfiguration()) {
+export function createApp(
+  database: Database,
+  config: Configuration = createConfiguration(),
+  options: ApplicationOptions = {},
+) {
+  return createApplication(database, config, options).app;
+}
+
+export function createApplication(
+  database: Database,
+  config: Configuration = createConfiguration(),
+  options: ApplicationOptions = {},
+): ApplicationRuntime {
+  validateConfiguration(config);
+  const streamOptions = eventStreamOptions(options.eventStreams);
   const { issueCsrfToken, csrfProtection, invalidCsrfTokenError } = createCsrfProtection(config);
   const app = express();
   if (config.trustedProxies.length) app.set("trust proxy", config.trustedProxies);
@@ -52,7 +66,7 @@ export function createApp(database: Database, config: Configuration = createConf
   });
   app.post("/api/auth/login", limits.loginAddress, limits.loginAccount);
   app.post("/api/auth/register", limits.registration);
-  const events = createGameEvents();
+  const events = createGameEvents(streamOptions);
   const sessions = createSessionService(database);
   const auth = createAuthService(database, config, events, sessions);
   const games = createGamesService(database);
@@ -74,7 +88,7 @@ export function createApp(database: Database, config: Configuration = createConf
       activeSelectionController({ auth, games, memberships }),
       gameInvitationsController({ auth, games, invitations }),
       invitationController({ auth, invitations }),
-      gameEventsController({ auth, games, events }),
+      gameEventsController({ auth, games, events }, streamOptions),
       rpgSystemsController(),
     );
   ExpressAdapter(app, routes).configure(false);
@@ -109,5 +123,5 @@ export function createApp(database: Database, config: Configuration = createConf
       response.status(500).json({ error: { code: "server_error", message: "Request failed." } });
     },
   );
-  return app;
+  return { app, dispose: () => events.dispose() };
 }

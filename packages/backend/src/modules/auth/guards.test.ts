@@ -41,6 +41,8 @@ describe("write origin", () => {
   it("requires the configured origin when set, and in production", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("TRUSTED_PROXIES", "none");
+    vi.stubEnv("CSRF_SECRET", "production-test-secret-with-32-bytes");
+    vi.stubEnv("INVITATION_SECRET", "production-test-secret-with-32-bytes");
     vi.stubEnv("APP_ORIGIN", undefined);
     expect(() =>
       requireWriteOrigin(createConfiguration(), request("http://localhost:5175", "localhost:5175")),

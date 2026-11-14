@@ -1,6 +1,10 @@
 import type { createGamesService } from "./factory.ts";
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import type { createGameAccessService } from "./service.ts";
+import type { ValidationFields } from "../../shared/validation/types.ts";
+
+export type CreateGameInput = { name: string; systemId: string };
+export type GameValidation = CreateGameInput & { fields: ValidationFields };
 
 export type GamesService = ReturnType<typeof createGamesService>;
 

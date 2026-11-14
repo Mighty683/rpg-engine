@@ -131,6 +131,9 @@ export type ThrowRecord = {
 
 export type ThrowContext = { actor: GameActor; gameId: string };
 
+/** Parsed pagination; raw query defaults and clamping remain an HTTP-boundary concern. */
+export type ThrowListQuery = { before: string | null; limit: number };
+
 export type ThrowsService = ReturnType<typeof createThrowsService>;
 
 export type RollCharacter = {

@@ -4,11 +4,12 @@ import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 import type { Request } from "express";
 
-const uuid = (value: unknown): value is string =>
-  typeof value === "string" &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-const bad = () =>
-  new RequestError(400, { error: { code: "bad_request", message: "Invalid request." } });
+import {
+  parseInvitationId,
+  parseCreateInvitation,
+  parseUpdateInvitation,
+  parseAcceptInvitation,
+} from "./contract.ts";
 const deny = (code: string) =>
   new RequestError(code === "forbidden" ? 403 : code === "conflict" ? 409 : 404, {
     error: { code, message: "Invitation unavailable." },
@@ -21,8 +22,7 @@ async function manageGuard(
 ) {
   if (request.method !== "GET") services.auth.requireWriteOrigin(request);
   const actor = await services.auth.requireActor(request);
-  const gameId = param(request.params.gameId);
-  if (!uuid(gameId)) throw bad();
+  const gameId = parseInvitationId(param(request.params.gameId));
   const access = await services.games.gameAccess(actor, gameId);
   if (!access) throw deny("not_found");
   if (access.role !== "GM") throw deny("forbidden");
@@ -58,14 +58,13 @@ export function gameInvitationsController(services: {
         .method("post")
         .path("")
         .handler(async (request, _response, context) => {
-          const body = request.body;
-          if (!body || body.kind === "game")
+          const body = parseCreateInvitation(request.body);
+          if (body.kind === "game")
             return {
               invitation: await handle(() =>
                 services.invitations.ensureGameInvitation(context.actor, context.gameId),
               ),
             };
-          if (body.kind !== "character" || !uuid(body.characterId)) throw bad();
           return {
             invitation: await handle(() =>
               services.invitations.createCharacterInvitation(
@@ -80,12 +79,12 @@ export function gameInvitationsController(services: {
         .method("patch")
         .path(":invitationId")
         .handler(async (request, _response, context) => {
-          const id = param(request.params.invitationId);
-          if (!uuid(id) || typeof request.body?.enabled !== "boolean") throw bad();
+          const id = parseInvitationId(param(request.params.invitationId));
+          const body = parseUpdateInvitation(request.body);
           return {
             invitation: await handle(() =>
               services.invitations.updateInvitation(context.actor, context.gameId, id, {
-                enabled: request.body.enabled,
+                enabled: body.enabled,
               }),
             ),
           };
@@ -94,8 +93,7 @@ export function gameInvitationsController(services: {
         .method("post")
         .path(":invitationId/rotate")
         .handler(async (request, _response, context) => {
-          const id = param(request.params.invitationId);
-          if (!uuid(id)) throw bad();
+          const id = parseInvitationId(param(request.params.invitationId));
           return {
             invitation: await handle(() =>
               services.invitations.updateInvitation(context.actor, context.gameId, id, {
@@ -136,8 +134,7 @@ export function invitationController(services: {
         .method("post")
         .path("accept")
         .handler(async (request, _response, context) => {
-          const makeActive = request.body?.makeActive ?? true;
-          if (typeof makeActive !== "boolean") throw bad();
+          const { makeActive } = parseAcceptInvitation(request.body);
           return handle(() =>
             services.invitations.acceptInvitation(context.actor, context.token, makeActive),
           );

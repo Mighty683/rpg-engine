@@ -2,7 +2,8 @@ import type { AuthService } from "../auth/types.ts";
 import type { GamesService, GameActor } from "./types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 
-import { validateGame } from "./service.ts";
+import { validateGame, parseGameEnvelope } from "./contract.ts";
+import { routeId } from "../../shared/http/route-id.ts";
 
 export function gamesController(services: { auth: AuthService; games: GamesService }) {
   return Controller()
@@ -22,12 +23,8 @@ export function gamesController(services: { auth: AuthService; games: GamesServi
         .method("post")
         .path("")
         .handler(async (request, response, actor) => {
-          if (!request.body || typeof request.body !== "object" || Array.isArray(request.body)) {
-            throw new RequestError(400, {
-              error: { code: "bad_request", message: "Expected a JSON object." },
-            });
-          }
-          const { name, systemId, fields } = validateGame(request.body);
+          const body = parseGameEnvelope(request.body);
+          const { name, systemId, fields } = validateGame(body);
           if (Object.keys(fields).length) {
             throw new RequestError(422, {
               error: { code: "validation", message: "Check the fields.", fields },
@@ -52,13 +49,4 @@ export function gamesController(services: { auth: AuthService; games: GamesServi
     );
 }
 
-export function routeId(value: string | string[]) {
-  const id = Array.isArray(value) ? value[0] : value;
-  if (
-    !id ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
-  ) {
-    throw new RequestError(400, { error: { code: "bad_request", message: "Invalid identifier." } });
-  }
-  return id;
-}
+export { routeId } from "../../shared/http/route-id.ts";

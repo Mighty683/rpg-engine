@@ -1,14 +1,17 @@
 import { Controller, RequestError, Route } from "arrow-express";
 import type { AuthService } from "../auth/types.ts";
 import type { GamesService, GameActor } from "../games/types.ts";
-import { routeId } from "../games/controller.ts";
-import { parseNpcWrite } from "./contract.ts";
+import { routeId } from "../../shared/http/route-id.ts";
+import {
+  parseNpcWrite,
+  parseNpcCreateEnvelope,
+  parseNpcUpdateEnvelope,
+  parseNpcRemoveEnvelope,
+  parseNpcRevision,
+} from "./contract.ts";
 import type { createNpcsService } from "./service.ts";
 
 type Context = { actor: GameActor; gameId: string };
-function badRequest(): never {
-  throw new RequestError(400, { error: { code: "bad_request", message: "Invalid request." } });
-}
 function requestError(error: unknown): never {
   const e = error as { code?: string; field?: string; message?: string };
   if (e.code === "not_found")
@@ -28,18 +31,6 @@ function requestError(error: unknown): never {
       },
     });
   throw error;
-}
-function bodyObject(value: unknown, keys: string[]): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return badRequest();
-  const body = value as Record<string, unknown>;
-  if (Object.keys(body).length !== keys.length || keys.some((key) => !(key in body)))
-    return badRequest();
-  return body;
-}
-function revision(value: unknown): number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 2147483647)
-    return badRequest();
-  return value;
 }
 export function npcsController(services: {
   auth: AuthService;
@@ -86,13 +77,12 @@ export function npcsController(services: {
         .method("post")
         .path("")
         .handler(async (request, response, context) => {
-          const body = bodyObject(request.body, ["id", "npc"]);
-          if (typeof body.id !== "string") badRequest();
+          const body = parseNpcCreateEnvelope(request.body);
           try {
             const result = await services.npcs.write(
               context.actor,
               context.gameId,
-              routeId(body.id),
+              routeId(body.id as string),
               parseNpcWrite(body.npc),
             );
             response.status(result.created ? 201 : 200);
@@ -105,14 +95,14 @@ export function npcsController(services: {
         .method("put")
         .path(":npcId")
         .handler(async (request, _response, context) => {
-          const body = bodyObject(request.body, ["expectedRevision", "npc"]);
+          const body = parseNpcUpdateEnvelope(request.body);
           try {
             const result = await services.npcs.write(
               context.actor,
               context.gameId,
               routeId(request.params.npcId),
               parseNpcWrite(body.npc),
-              revision(body.expectedRevision),
+              parseNpcRevision(body.expectedRevision),
             );
             return { npc: result.npc };
           } catch (error) {
@@ -123,13 +113,13 @@ export function npcsController(services: {
         .method("delete")
         .path(":npcId")
         .handler(async (request, response, context) => {
-          const body = bodyObject(request.body, ["expectedRevision"]);
+          const body = parseNpcRemoveEnvelope(request.body);
           try {
             await services.npcs.remove(
               context.actor,
               context.gameId,
               routeId(request.params.npcId),
-              revision(body.expectedRevision),
+              parseNpcRevision(body.expectedRevision),
             );
             response.status(204);
             return;

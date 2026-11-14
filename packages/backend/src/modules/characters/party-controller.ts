@@ -2,7 +2,7 @@ import type { AuthService } from "../auth/types.ts";
 import type { CharactersService } from "./types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 
-import { routeId } from "../games/controller.ts";
+import { routeId } from "../../shared/http/route-id.ts";
 
 export function partyController(services: { auth: AuthService; characters: CharactersService }) {
   return Controller()

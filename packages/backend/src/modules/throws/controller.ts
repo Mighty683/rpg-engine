@@ -3,20 +3,9 @@ import type { AuthService } from "../auth/types.ts";
 import type { GamesService } from "../games/types.ts";
 import { Controller, RequestError, Route } from "arrow-express";
 
-import { routeId } from "../games/controller.ts";
+import { routeId } from "../../shared/http/route-id.ts";
 
-import { fail, isUuid, parseCreateRequest } from "./contract.ts";
-
-const pageLimit = (value: unknown) => {
-  const limit = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : 20;
-  return Math.min(Math.max(limit, 1), 100);
-};
-
-const cursor = (value: unknown): string | null => {
-  if (value === undefined || value === null || value === "") return null;
-  if (!isUuid(value)) throw fail("bad_request", "Invalid cursor.");
-  return value;
-};
+import { fail, parseCreateRequest, parseThrowListQuery } from "./contract.ts";
 
 function requestError(error: unknown): never {
   const e = error as { code?: string; message?: string; field?: string };
@@ -79,12 +68,8 @@ export function throwsController(services: {
         .handler(async (request, _response, context) => {
           const query = request.query as Record<string, unknown>;
           try {
-            return await services.throws.listThrows(
-              context.actor,
-              context.gameId,
-              cursor(query.before),
-              pageLimit(query.limit),
-            );
+            const { before, limit } = parseThrowListQuery(query);
+            return await services.throws.listThrows(context.actor, context.gameId, before, limit);
           } catch (error) {
             requestError(error);
           }
