@@ -1,12 +1,11 @@
 import type { InvitationRow } from "./types.ts";
 import type { Actor } from "../auth/types.ts";
 import type { GameAccessFactory } from "../games/types.ts";
-import type { GameEvents } from "../events/types.ts";
-import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
+import { transaction } from "../../database/transaction.ts";
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
-import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
-import { accounts, characters, games, invitations, players } from "../../database/schema.ts";
+import { and, eq, isNotNull, isNull, or } from "drizzle-orm";
+import { characters, games, invitations, players } from "../../database/schema.ts";
 
 import type { Configuration } from "../../types.ts";
 
@@ -213,104 +212,4 @@ export async function previewInvitation(database: Database, actor: Actor, token:
         characterId: row.characterId!,
         characterName: row.characterName!,
       };
-}
-
-export async function acceptInvitation(
-  { events, database }: { events: GameEvents; database: Database },
-  actor: Actor,
-  token: string,
-  makeActive = true,
-) {
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw failure("not_found");
-  const outcome = await transaction(database, async (tx) => {
-    const db = tx;
-    const [found] = await db
-      .select({ gameId: invitations.gameId })
-      .from(invitations)
-      .where(eq(invitations.tokenDigest, digest(token)));
-    if (!found) throw failure("not_found");
-    const gameId = found.gameId;
-    const [game] = await db
-      .select({ gmAccountId: games.gmAccountId })
-      .from(games)
-      .where(eq(games.id, gameId))
-      .for("update");
-    const [link] = await db
-      .select({ kind: invitations.kind, characterId: invitations.characterId })
-      .from(invitations)
-      .where(
-        and(
-          eq(invitations.gameId, gameId),
-          eq(invitations.tokenDigest, digest(token)),
-          eq(invitations.enabled, true),
-        ),
-      );
-    if (!game || !link) throw failure("not_found");
-    if (game.gmAccountId === actor.accountId) {
-      if (link.kind === "character") throw failure("forbidden");
-      return { gameId, changed: false };
-    }
-    const [membership] = await db
-      .select({ id: players.id, removed: players.removed })
-      .from(players)
-      .where(and(eq(players.gameId, gameId), eq(players.accountId, actor.accountId)));
-    if (membership?.removed) throw failure("not_found");
-    if (link.kind === "character") {
-      if (!link.characterId) throw failure("not_found");
-      const [target] = await db
-        .select({ id: characters.id })
-        .from(characters)
-        .where(
-          and(
-            eq(characters.gameId, gameId),
-            eq(characters.id, link.characterId),
-            isNull(characters.playerId),
-          ),
-        );
-      if (!target) throw failure("not_found");
-    }
-    let membershipId = membership?.id;
-    if (!membershipId) {
-      membershipId = randomUUID();
-      const [account] = await db
-        .select({ name: sql<string>`left(${accounts.username},20)` })
-        .from(accounts)
-        .where(eq(accounts.id, actor.accountId));
-      if (!account) throw failure("not_found");
-      await db
-        .insert(players)
-        .values({ id: membershipId, gameId, accountId: actor.accountId, name: account.name });
-    }
-    if (link.kind === "game") return { gameId, changed: !membership };
-    if (!link.characterId) throw failure("not_found");
-    await db
-      .update(characters)
-      .set({ playerId: membershipId, gmActive: false })
-      .where(and(eq(characters.gameId, gameId), eq(characters.id, link.characterId)));
-    if (makeActive)
-      await db
-        .update(players)
-        .set({ activeCharacterId: link.characterId, revision: sql`${players.revision}+1` })
-        .where(
-          and(
-            eq(players.id, membershipId),
-            sql`${players.activeCharacterId} IS DISTINCT FROM ${link.characterId}`,
-          ),
-        );
-    await db
-      .delete(invitations)
-      .where(
-        and(
-          eq(invitations.gameId, gameId),
-          eq(invitations.characterId, link.characterId),
-          eq(invitations.kind, "character"),
-        ),
-      );
-    return { gameId, changed: true, characterId: link.characterId, active: makeActive };
-  });
-  if (outcome.changed)
-    await notifyAfterCommit(() => events.publishGameEvent(outcome.gameId, { type: "roster" }));
-  if (outcome.characterId)
-    return { gameId: outcome.gameId, characterId: outcome.characterId, active: outcome.active! };
-  return { gameId: outcome.gameId };
 }

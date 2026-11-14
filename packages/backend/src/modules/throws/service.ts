@@ -1,3 +1,4 @@
+import type { ThrowReaders, ThrowReaderFactory } from "./types.ts";
 import type {
   ThrowRow,
   CreateThrowInput,
@@ -11,15 +12,7 @@ import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts
 import type { GameEvents } from "../events/types.ts";
 import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
 import { and, desc, eq, lt, or, sql } from "drizzle-orm";
-import {
-  activeCharacterCondition,
-  characters,
-  characterFields,
-  npcs,
-  players,
-  throws,
-  throwFields,
-} from "../../database/schema.ts";
+import { throws, throwFields } from "../../database/schema.ts";
 // Game Table throw history: immutable roll snapshots with server-assigned per-game
 // sequence and authorship-based removal. Every write
 // takes the per-game transaction lock before resolving access, so stale selections
@@ -28,7 +21,6 @@ import { randomUUID } from "node:crypto";
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import { serverDieSource } from "../fabula/rolls.ts";
 
-import { sheetSequential } from "../characters/service.ts";
 import { fail, gmActorId } from "./contract.ts";
 import { resolveThrow } from "./resolve.ts";
 import { resolveNpcThrow } from "./npc-resolve.ts";
@@ -56,42 +48,6 @@ async function readTransaction<T>(
     isolationLevel: "repeatable read",
     accessMode: "read only",
   });
-}
-
-async function activeCharacterIds(tx: DatabaseTransaction, gameId: string) {
-  const result = await tx
-    .select({ id: characters.id })
-    .from(characters)
-    .leftJoin(
-      players,
-      and(eq(players.id, characters.playerId), eq(players.gameId, characters.gameId)),
-    )
-    .where(and(eq(characters.gameId, gameId), activeCharacterCondition()));
-  return result.map((row) => row.id);
-}
-
-async function ownActiveCharacterId(tx: DatabaseTransaction, gameId: string, membershipId: string) {
-  const [result] = await tx
-    .select({ activeCharacterId: players.activeCharacterId })
-    .from(players)
-    .where(
-      and(eq(players.id, membershipId), eq(players.gameId, gameId), eq(players.removed, false)),
-    );
-  return result?.activeCharacterId ?? null;
-}
-
-async function loadCharacter(
-  tx: DatabaseTransaction,
-  gameId: string,
-  characterId: string,
-): Promise<RollCharacter | null> {
-  const [row] = await tx
-    .select(characterFields)
-    .from(characters)
-    .where(and(eq(characters.gameId, gameId), eq(characters.id, characterId)));
-  if (!row) return null;
-  const sheet = await sheetSequential(tx, row);
-  return { id: row.id, playerId: row.player_id, revision: row.revision, name: sheet.name, sheet };
 }
 
 async function loadSource(
@@ -173,7 +129,13 @@ export async function createThrow(
     gameAccessFor,
     events,
     database,
-  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+    readersFor,
+  }: {
+    gameAccessFor: GameAccessFactory;
+    events: GameEvents;
+    database: Database;
+    readersFor: ThrowReaderFactory;
+  },
   actor: GameActor,
   gameId: string,
   input: CreateThrowInput,
@@ -182,10 +144,12 @@ export async function createThrow(
   const result = await transaction(database, async (tx) => {
     const access = await gameAccessFor(tx).lockGame(actor, gameId);
     const setup = input.setup;
+    const readers = readersFor(tx);
     const resolved =
       setup.type === "npc-attribute" || setup.type === "npc-attack"
         ? await resolveNpcThrow(
             tx,
+            readers.npcs,
             gameId,
             access,
             setup,
@@ -193,7 +157,15 @@ export async function createThrow(
             dieSource,
             actor.accountId,
           )
-        : await resolveStandardThrow(tx, gameId, access, input, dieSource, actor.accountId);
+        : await resolveStandardThrow(
+            tx,
+            readers,
+            gameId,
+            access,
+            input,
+            dieSource,
+            actor.accountId,
+          );
     const [sequence] = await tx
       .select({ next: sql<string>`COALESCE(MAX(${throws.seq}),0)+1` })
       .from(throws)
@@ -231,6 +203,7 @@ export async function createThrow(
 
 async function resolveStandardThrow(
   tx: DatabaseTransaction,
+  readers: ThrowReaders,
   gameId: string,
   access: GameAccess,
   input: CreateThrowInput,
@@ -239,39 +212,43 @@ async function resolveStandardThrow(
 ) {
   const setup = input.setup;
   if (setup.type === "free" && setup.characterId !== gmActorId) {
-    const [npc] = await tx
-      .select({ id: npcs.id, name: npcs.name })
-      .from(npcs)
-      .where(and(eq(npcs.id, setup.characterId), eq(npcs.gameId, gameId)));
+    const npc = await readers.npcs.profile(gameId, setup.characterId);
     if (npc) {
       if (access.role !== "GM") throw fail("forbidden");
       const gmInput = { ...input, setup: { ...setup, characterId: gmActorId } };
       const resolved = resolveThrow(
         gmInput,
-        await buildContext(tx, gameId, access, gmInput, accountId),
+        await buildContext(tx, readers, gameId, access, gmInput, accountId),
         dieSource,
       );
       return { ...resolved, characterName: npc.name, setup: { ...resolved.setup, npcId: npc.id } };
     }
   }
-  return resolveThrow(input, await buildContext(tx, gameId, access, input, accountId), dieSource);
+  return resolveThrow(
+    input,
+    await buildContext(tx, readers, gameId, access, input, accountId),
+    dieSource,
+  );
 }
 
 async function buildContext(
   tx: DatabaseTransaction,
+  readers: ThrowReaders,
   gameId: string,
   access: GameAccess,
   input: CreateThrowInput,
   accountId: string,
 ): Promise<ResolutionContext> {
-  const active = await activeCharacterIds(tx, gameId);
+  const active = await readers.characters.activeIds(gameId);
   const ownActive =
-    access.role === "Player" ? await ownActiveCharacterId(tx, gameId, access.membershipId) : null;
+    access.role === "Player"
+      ? await readers.characters.ownActiveId(gameId, access.membershipId)
+      : null;
   const setup = input.setup;
   if (setup.type === "npc-attribute" || setup.type === "npc-attack") throw fail("validation");
   const characterId =
     setup.type === "free" && setup.characterId === gmActorId ? null : setup.characterId;
-  const character = characterId ? await loadCharacter(tx, gameId, characterId) : null;
+  const character = characterId ? await readers.characters.load(gameId, characterId) : null;
   const weapon =
     setup.type === "weapon" && character
       ? ((character.sheet.equipment.find(

@@ -1,3 +1,4 @@
+import { createMembershipOwnership } from "./ownership.ts";
 import { createGameAccessService } from "../games/service.ts";
 import { createGameEvents } from "../events/streams.ts";
 import { databaseFromPool } from "../../database/client.ts";
@@ -52,6 +53,7 @@ describe.skipIf(!url)("player active character selection", () => {
     const otherCharacter = randomUUID();
     await createWorkspaceCharacter(
       {
+        membershipsFor: createMembershipOwnership,
         gameAccessFor: createGameAccessService,
         events: createGameEvents(),
         database: databaseFromPool(pool!),
@@ -63,6 +65,7 @@ describe.skipIf(!url)("player active character selection", () => {
     );
     await createWorkspaceCharacter(
       {
+        membershipsFor: createMembershipOwnership,
         gameAccessFor: createGameAccessService,
         events: createGameEvents(),
         database: databaseFromPool(pool!),
@@ -74,6 +77,7 @@ describe.skipIf(!url)("player active character selection", () => {
     );
     await createWorkspaceCharacter(
       {
+        membershipsFor: createMembershipOwnership,
         gameAccessFor: createGameAccessService,
         events: createGameEvents(),
         database: databaseFromPool(pool!),
@@ -176,6 +180,7 @@ describe.skipIf(!url)("player active character selection", () => {
     const characterId = randomUUID();
     await createWorkspaceCharacter(
       {
+        membershipsFor: createMembershipOwnership,
         gameAccessFor: createGameAccessService,
         events: createGameEvents(),
         database: databaseFromPool(pool!),

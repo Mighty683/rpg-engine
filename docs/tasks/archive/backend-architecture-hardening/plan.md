@@ -1,7 +1,7 @@
 # Backend architecture hardening — multi-agent implementation plan
 
 **Created:** 2026-11-14
-**Status:** Waves 0–3 complete and reviewed; waves 4–6 not dispatched
+**Status:** All waves complete; final acceptance verified
 **Acceptance:** [Handover](handover.md)
 
 ## Coordination and isolation
@@ -140,3 +140,13 @@ Final commands: `pnpm check`, `pnpm --filter @rpg-engine/backend build`, `pnpm t
 ## Conditional follow-up — shared multi-process events
 
 The coordinator tracks shared delivery/revocation as a separate task before deployment uses multiple backend processes. It needs its own topology, delivery/reconnect contract, and two-process revocation and missed-event recovery tests. Do not introduce a broker or promise durable delivery during this hardening task. Keep the single-process deployment restriction explicit until that follow-up is verified.
+
+## Completion dispatch — 2026-11-14
+
+Resumed from clean committed revision `b737a515da85f17834239c1ec3ac4e0b78d3113c`. A fresh wave 4 agent owns the listed domain paths. Explicit additional transfers: `modules/auth/sessions.ts` and `modules/games/service.ts` for factory interface annotations. Waves 5 and 6 remain sequential barriers. A separate disposable PostgreSQL container `rpg-engine-finish-test` on localhost port 55432 supplies final acceptance checks.
+
+Wave 4 accepted and released: explicit service interfaces, transaction-bound owner operations, application workflows, authoritative roll readers, and five acceptance tests. Additional exclusive transfers covered API fixtures, API permissions/game-table tests, browser seed and game-table steps for dependency injection. Backend build, `pnpm check`, 48 API tests and 183 backend/lint/database tests passed. Wave 5 now owns its listed paths and manifests/lockfile for direct `yaml` development dependency; auth/game service and game controller files transfer solely for unused compatibility-export cleanup.
+
+Wave 5 accepted and released: 28 boundary fixtures, 12 canonical-schema parity cases, explicit drift checks, and deployment/architecture guidance. Temporary compatibility exports removed; their two test consumers transferred and updated. `pnpm check`, backend build, 76 focused tests, focused lint and diff checks passed. Wave 6 now owns final handover evidence and runs `pnpm verify` against the isolated database. No implementation owner remains active.
+
+Final wave 6 completed successfully: `pnpm verify` passed with 227 unit/lint, 30 browser component, 9 database, 48 API, and 17 browser E2E tests. Implementation hashes were unchanged during verification. The disposable container was stopped and removed after verification. See the handover for exact evidence and reviewed static-analysis warnings.

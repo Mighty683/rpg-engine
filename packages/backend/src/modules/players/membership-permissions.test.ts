@@ -1,3 +1,4 @@
+import type { MembershipsService } from "./types.ts";
 import type { GameAccessRepository } from "../games/types.ts";
 import { randomUUID } from "node:crypto";
 import type { Server } from "node:http";
@@ -34,21 +35,21 @@ vi.mock("../games/service.ts", async (importOriginal) => {
 
 vi.mock("./membership.ts", () => ({
   listMembers: async () => [...state.members.values()],
-  setMemberRemoved: async (
-    _dependencies: unknown,
-    _actor: unknown,
-    gameId: string,
-    memberId: string,
-    removed: boolean,
-  ) => {
-    const member = state.members.get(memberId);
-    if (!member || member.gameId !== gameId)
-      throw Object.assign(new Error("not_found"), { code: "not_found" });
-    member.removed = removed;
-    return member;
-  },
   selectPlayerCharacter: vi.fn(),
 }));
+
+const setMemberRemoved: MembershipsService["setMemberRemoved"] = async (
+  _actor: unknown,
+  gameId: string,
+  memberId: string,
+  removed: boolean,
+) => {
+  const member = state.members.get(memberId);
+  if (!member || member.gameId !== gameId)
+    throw Object.assign(new Error("not_found"), { code: "not_found" });
+  member.removed = removed;
+  return { ...member, name: "Player", activeCharacterId: null, revision: 0 };
+};
 
 const repository: GameAccessRepository = {
   async findGameAccess(gameId, accountId) {
@@ -96,6 +97,7 @@ describe("membership API permissions with in-memory access repository", () => {
               {} as Database,
               createGameEvents(),
               createGameAccessService,
+              setMemberRemoved,
             ),
           }),
         ),

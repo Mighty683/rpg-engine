@@ -1,15 +1,17 @@
+import type { MembershipsService } from "./types.ts";
 import type { Actor } from "../auth/types.ts";
 import type { GameAccessFactory } from "../games/types.ts";
 import type { GameEvents } from "../events/types.ts";
 
-import { listMembers, selectPlayerCharacter, setMemberRemoved } from "./membership.ts";
+import { listMembers, selectPlayerCharacter } from "./membership.ts";
 import type { Database } from "../../database/types.ts";
 
 export function createMembershipsService(
   database: Database,
   events: GameEvents,
   gameAccessFor: GameAccessFactory,
-) {
+  setMemberRemoved: MembershipsService["setMemberRemoved"],
+): MembershipsService {
   return {
     listMembers: (actor: Actor, gameId: string) => listMembers(database, actor, gameId),
     selectPlayerCharacter: (
@@ -27,7 +29,6 @@ export function createMembershipsService(
         characterId,
         targetMembershipId,
       ),
-    setMemberRemoved: (actor: Actor, gameId: string, membershipId: string, removed: boolean) =>
-      setMemberRemoved({ gameAccessFor, events, database }, actor, gameId, membershipId, removed),
+    setMemberRemoved,
   };
 }

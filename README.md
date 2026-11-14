@@ -37,7 +37,7 @@ With `pnpm dev` running, open [Swagger UI](http://127.0.0.1:3000/api-docs/) or t
 - `pnpm --filter @rpg-engine/backend build` — type-check the backend.
 - `pnpm --filter @rpg-engine/frontend <command>` or `pnpm --filter @rpg-engine/backend <command>` — run a package command. Root `build` and `preview` target the frontend.
 
-Shared Oxlint rules are in the root `vite.config.ts`, including a maximum block nesting depth of 6.
+Shared Oxlint rules are in the root `vite.config.ts`, including a maximum block nesting depth of 6. Backend import and table-write ownership rules enforce module boundaries; the [code conventions](docs/spec/code-conventions.md) describe their scope and review requirements. Unit tests compare normalized runtime request schemas against canonical OpenAPI, including draft-07/OpenAPI 3.1 tuple conversion and explicit semantic exceptions.
 
 Run `pnpm hooks:install` once per clone to install the pre-push hook. The hook runs `pnpm verify`, the same checks as CI: formatting, lint, type checks, builds, unit and integration tests, browser component tests, and end-to-end tests. Install Chromium with `pnpm --filter @rpg-engine/tests exec playwright install chromium` and export `TEST_DATABASE_URL` pointing to a disposable PostgreSQL database whose user can create schemas before running these checks or pushing. See the local PostgreSQL instructions below.
 
@@ -105,7 +105,10 @@ The migration setup starts from a fresh database and does not import the former 
 - Set `INVITATION_SECRET` to a unique secret of at least 32 bytes and keep it stable across restarts. Losing or changing it makes stored invitation tokens unreadable. The example value is for local development only.
 - Set `CSRF_SECRET` to a unique cryptographically random secret of at least 32 bytes, shared by all backend instances. Browser writes use session-bound CSRF tokens as well as origin checks.
 - Set `NODE_ENV=production` and use HTTPS. Session cookies are `HttpOnly`, `SameSite=Lax`, and `Secure` in production. Keep production secrets outside the repository.
-- Configure the proxy to stream `/api` server-sent events without buffering or premature timeouts. Run one backend process until shared event delivery is implemented; event delivery and stream revocation are currently in memory.
+- Configure the proxy to stream `/api` server-sent events without buffering or premature timeouts. **Run one backend process** until shared event delivery and revocation are implemented and verified across two processes; the current registry is in memory.
+- SSE capacity defaults to 8 pending/active connections per account and 256 total, across sessions and games. Capacity rejection returns JSON `429` with `Retry-After: 15` before SSE headers. Heartbeats run every 15 seconds without overlapping reauthorization. Slow or failed writers are disconnected instead of accumulating an unbounded queue; clients must reconnect and refresh authoritative state.
+- SIGTERM/SIGINT stops accepting connections, disposes streams/heartbeats, drains HTTP requests, and closes the database pool. HTTP drain has a 10-second deadline before remaining sockets are destroyed. Give the process enough termination grace for that deadline and pool cleanup.
+- Startup rejects invalid port, origin, and proxy settings before listening, and production also requires both secrets to contain at least 32 bytes. `PORT` must be an integer from 1 through 65535. Named proxy ranges are accepted, but prefer narrowly scoped trusted addresses/CIDRs.
 - Set `TRUSTED_PROXIES` to comma-separated exact trusted addresses or CIDR ranges, such as `127.0.0.1/32`, and ensure those proxies overwrite forwarded headers. In production it is required; use `none` only for direct access. Untrusted forwarded addresses make users behind a proxy share its rate limit. Do not trust unverified clients or use an unrestricted proxy setting.
 - Configure security headers and an appropriate CSP on the frontend server. Helmet sets headers on API responses.
 

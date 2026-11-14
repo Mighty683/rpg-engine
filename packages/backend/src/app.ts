@@ -1,3 +1,9 @@
+import { createCharacterRollReader } from "./modules/characters/roll-reader.ts";
+import { createNpcRollReader } from "./modules/npcs/roll-reader.ts";
+import { createOwnershipWorkflows } from "./application/ownership.ts";
+import { createCharacterOwnership } from "./modules/characters/ownership.ts";
+import { createMembershipOwnership } from "./modules/players/ownership.ts";
+import { createInvitationOwnership } from "./modules/invitations/ownership.ts";
 import express from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
@@ -70,11 +76,40 @@ export function createApplication(
   const sessions = createSessionService(database);
   const auth = createAuthService(database, config, events, sessions);
   const games = createGamesService(database);
-  const characters = createCharactersService(database, events, createGameAccessService);
+  const ownership = createOwnershipWorkflows({
+    database,
+    events,
+    gameAccessFor: createGameAccessService,
+    storesFor: (tx) => ({
+      characters: createCharacterOwnership(tx),
+      memberships: createMembershipOwnership(tx),
+      invitations: createInvitationOwnership(tx),
+    }),
+  });
+  const characters = createCharactersService(
+    database,
+    events,
+    createGameAccessService,
+    ownership.assignCharacter,
+    createMembershipOwnership,
+  );
   const npcs = createNpcsService({ database, events, gameAccessFor: createGameAccessService });
-  const throws = createThrowsService(database, events, createGameAccessService);
-  const memberships = createMembershipsService(database, events, createGameAccessService);
-  const invitations = createInvitationsService(database, config, events, createGameAccessService);
+  const throws = createThrowsService(database, events, createGameAccessService, (tx) => ({
+    characters: createCharacterRollReader(tx),
+    npcs: createNpcRollReader(tx),
+  }));
+  const memberships = createMembershipsService(
+    database,
+    events,
+    createGameAccessService,
+    ownership.setMemberRemoved,
+  );
+  const invitations = createInvitationsService(
+    database,
+    config,
+    createGameAccessService,
+    ownership.acceptInvitation,
+  );
   const routes = Application()
     .prefix("api")
     .registerControllers(

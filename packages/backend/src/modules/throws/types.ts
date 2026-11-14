@@ -1,6 +1,10 @@
-import type { Attribute, Die, FabulaSheet, EquipmentEntry } from "../fabula/types.ts";
+import type { DatabaseTransaction } from "../../database/types.ts";
+import type { CharacterRollReader, RollCharacter } from "../characters/types.ts";
+import type { NpcRollReader } from "../npcs/types.ts";
+export type { RollCharacter } from "../characters/types.ts";
+import type { DieSource } from "../fabula/types.ts";
+import type { Attribute, Die, EquipmentEntry } from "../fabula/types.ts";
 import type { GameActor } from "../games/types.ts";
-import type { createThrowsService } from "./factory.ts";
 
 export type ThrowKind =
   | "attribute-check"
@@ -134,15 +138,25 @@ export type ThrowContext = { actor: GameActor; gameId: string };
 /** Parsed pagination; raw query defaults and clamping remain an HTTP-boundary concern. */
 export type ThrowListQuery = { before: string | null; limit: number };
 
-export type ThrowsService = ReturnType<typeof createThrowsService>;
-
-export type RollCharacter = {
-  id: string;
-  playerId: string | null;
-  revision: number;
-  name: string;
-  sheet: FabulaSheet;
-};
+export interface ThrowsService {
+  createThrow(
+    actor: GameActor,
+    gameId: string,
+    input: CreateThrowInput,
+    dieSource?: DieSource,
+  ): Promise<{ record: ThrowRecord }>;
+  listThrows(
+    actor: GameActor,
+    gameId: string,
+    before: string | null,
+    limit: number,
+  ): Promise<{ throws: ThrowRecord[] }>;
+  removeThrow(
+    actor: GameActor,
+    gameId: string,
+    throwId: string,
+  ): Promise<{ deleted: boolean; changed: boolean }>;
+}
 
 export type SourceThrow = {
   kind: ThrowKind;
@@ -191,3 +205,6 @@ export type ThrowRow = {
   outcome: OutcomeJson;
   deleted: boolean;
 };
+
+export type ThrowReaders = { characters: CharacterRollReader; npcs: NpcRollReader };
+export type ThrowReaderFactory = (tx: DatabaseTransaction) => ThrowReaders;

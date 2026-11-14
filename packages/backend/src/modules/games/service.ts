@@ -1,3 +1,4 @@
+import type { GameAccessService } from "./types.ts";
 import type {
   GameRow,
   GameAccessRepository,
@@ -10,8 +11,6 @@ import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import { and, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { games, players } from "../../database/schema.ts";
 import { findSystem } from "../rpg-systems/catalog.ts";
-
-export { validateGame } from "./contract.ts";
 
 function presentGame(row: GameRow) {
   const system = findSystem(row.systemId);
@@ -68,7 +67,7 @@ export async function lockGame(db: DatabaseTransaction, actor: GameActor, gameId
 }
 
 /** Binds authorization to the executor for the current transaction. */
-export function createGameAccessService(db: DatabaseTransaction) {
+export function createGameAccessService(db: DatabaseTransaction): GameAccessService {
   return {
     gameAccess: (actor: GameActor, gameId: string) => gameAccess(db, actor, gameId),
     lockGame: (actor: GameActor, gameId: string) => lockGame(db, actor, gameId),

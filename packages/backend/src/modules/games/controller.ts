@@ -48,5 +48,3 @@ export function gamesController(services: { auth: AuthService; games: GamesServi
         }),
     );
 }
-
-export { routeId } from "../../shared/http/route-id.ts";

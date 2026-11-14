@@ -1,3 +1,4 @@
+import { createMembershipOwnership } from "../players/ownership.ts";
 import { createGameAccessService } from "../games/service.ts";
 import { createGameEvents } from "../events/streams.ts";
 import { databaseFromPool } from "../../database/client.ts";
@@ -47,6 +48,7 @@ describe.skipIf(!url)("character workspace persistence", () => {
     const id = randomUUID();
     const created = await createWorkspaceCharacter(
       {
+        membershipsFor: createMembershipOwnership,
         gameAccessFor: createGameAccessService,
         events: createGameEvents(),
         database: databaseFromPool(pool!),
@@ -61,6 +63,7 @@ describe.skipIf(!url)("character workspace persistence", () => {
       (
         await createWorkspaceCharacter(
           {
+            membershipsFor: createMembershipOwnership,
             gameAccessFor: createGameAccessService,
             events: createGameEvents(),
             database: databaseFromPool(pool!),
@@ -126,6 +129,7 @@ describe.skipIf(!url)("character workspace persistence", () => {
     const id = randomUUID();
     await createWorkspaceCharacter(
       {
+        membershipsFor: createMembershipOwnership,
         gameAccessFor: createGameAccessService,
         events: createGameEvents(),
         database: databaseFromPool(pool!),
@@ -147,6 +151,7 @@ describe.skipIf(!url)("character workspace persistence", () => {
     await expect(
       createWorkspaceCharacter(
         {
+          membershipsFor: createMembershipOwnership,
           gameAccessFor: createGameAccessService,
           events: createGameEvents(),
           database: databaseFromPool(pool!),

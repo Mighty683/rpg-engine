@@ -484,7 +484,7 @@ paths:
                 - membershipId
               properties:
                 membershipId:
-                  oneOf:
+                  anyOf:
                     - { $ref: "#/components/schemas/Id" }
                     - { type: "null" }
       responses:
@@ -1340,7 +1340,11 @@ components:
       properties:
         username: { type: string, pattern: "^[A-Za-z0-9_.-]{3,32}$" }
         password:
-          { type: string, format: password, minLength: 8, description: At most 1024 UTF-8 bytes. }
+          {
+            type: string,
+            format: password,
+            description: At least 8 UTF-16 code units and at most 1024 UTF-8 bytes.,
+          }
     Login:
       type: object
       required:
@@ -1879,7 +1883,9 @@ components:
         reach: { type: string, enum: [melee, ranged] }
         attributes:
           type: array
-          items: { $ref: "#/components/schemas/Attribute" }
+          prefixItems:
+            - { $ref: "#/components/schemas/Attribute" }
+            - { $ref: "#/components/schemas/Attribute" }
           minItems: 2
           maxItems: 2
         damageBonus: { type: integer, minimum: -2147483648, maximum: 2147483647 }
@@ -2205,7 +2211,7 @@ components:
             description: "When true, only the author can see the roll.",
           }
         sourceThrowId:
-          oneOf:
+          anyOf:
             - { $ref: "#/components/schemas/Id" }
             - { type: "null" }
         setup:
@@ -2253,7 +2259,7 @@ components:
       properties:
         type: { type: string, enum: [attribute, weapon, free] }
         characterId:
-          oneOf:
+          anyOf:
             - { $ref: "#/components/schemas/Id" }
             - { type: "null" }
         npcId: { $ref: "#/components/schemas/Id" }
@@ -2387,7 +2393,7 @@ components:
         kind: { $ref: "#/components/schemas/ThrowKind" }
         role: { type: string, enum: [GM, Player] }
         characterId:
-          oneOf:
+          anyOf:
             - { $ref: "#/components/schemas/Id" }
             - { type: "null" }
         characterName: { type: string }
@@ -2432,7 +2438,7 @@ components:
       properties:
         expectedRevision: { type: integer, minimum: 0 }
         characterId:
-          oneOf:
+          anyOf:
             - { $ref: "#/components/schemas/Id" }
             - { type: "null" }
     Invitation:
@@ -2447,24 +2453,20 @@ components:
         id: { $ref: "#/components/schemas/Id" }
         kind: { type: string, enum: [game, character] }
         characterId:
-          oneOf:
+          anyOf:
             - { $ref: "#/components/schemas/Id" }
             - { type: "null" }
         enabled: { type: boolean }
         url: { type: string, format: uri-reference }
     CreateInvitation:
-      oneOf:
-        - type: object
-          required:
-            - kind
+      type: object
+      anyOf:
+        - required: [kind]
           properties:
-            kind: { type: string, const: game }
-        - type: object
-          required:
-            - kind
-            - characterId
+            kind: { const: game }
+        - required: [kind, characterId]
           properties:
-            kind: { type: string, const: character }
+            kind: { const: character }
             characterId: { $ref: "#/components/schemas/Id" }
     InvitationPreview:
       oneOf:

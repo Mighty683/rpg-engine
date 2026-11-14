@@ -1,9 +1,10 @@
+import type { MembershipOwnershipFactory } from "../players/types.ts";
+import type { CharactersService } from "./types.ts";
 import type { GameActor, GameAccessFactory } from "../games/types.ts";
 import type { SheetChanges } from "../fabula/types.ts";
 import type { GameEvents } from "../events/types.ts";
 
 import {
-  assignCharacter,
   createWorkspaceCharacter,
   deleteWorkspaceCharacter,
   getWorkspaceCharacter,
@@ -18,14 +19,26 @@ export function createCharactersService(
   database: Database,
   events: GameEvents,
   gameAccessFor: GameAccessFactory,
-) {
+  assignCharacter: CharactersService["assignCharacter"],
+  membershipsFor: MembershipOwnershipFactory,
+): CharactersService {
   return {
-    assignCharacter: (actor: GameActor, gameId: string, id: string, membershipId: string | null) =>
-      assignCharacter({ gameAccessFor, events, database }, actor, gameId, id, membershipId),
+    assignCharacter,
     createWorkspaceCharacter: (actor: GameActor, gameId: string, id: string, name: string) =>
-      createWorkspaceCharacter({ gameAccessFor, events, database }, actor, gameId, id, name),
+      createWorkspaceCharacter(
+        { gameAccessFor, events, database, membershipsFor },
+        actor,
+        gameId,
+        id,
+        name,
+      ),
     deleteWorkspaceCharacter: (actor: GameActor, gameId: string, id: string) =>
-      deleteWorkspaceCharacter({ gameAccessFor, events, database }, actor, gameId, id),
+      deleteWorkspaceCharacter(
+        { gameAccessFor, events, database, membershipsFor },
+        actor,
+        gameId,
+        id,
+      ),
     getWorkspaceCharacter: (actor: GameActor, gameId: string, id: string) =>
       getWorkspaceCharacter({ gameAccessFor, database }, actor, gameId, id),
     listWorkspaceCharacters: (actor: GameActor, gameId: string) =>

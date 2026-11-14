@@ -1,3 +1,4 @@
+import { createMembershipOwnership } from "../../../backend/src/modules/players/ownership.ts";
 import { createGameAccessService } from "../../../backend/src/modules/games/service.ts";
 import { createGameEvents } from "../../../backend/src/modules/events/streams.ts";
 import { databaseFromPool } from "../../../backend/src/database/client.ts";
@@ -75,6 +76,7 @@ async function seedStandardFixture(pool: Pool) {
   };
   await createWorkspaceCharacter(
     {
+      membershipsFor: createMembershipOwnership,
       gameAccessFor: createGameAccessService,
       events: createGameEvents(),
       database: databaseFromPool(pool),
@@ -86,6 +88,7 @@ async function seedStandardFixture(pool: Pool) {
   );
   await createWorkspaceCharacter(
     {
+      membershipsFor: createMembershipOwnership,
       gameAccessFor: createGameAccessService,
       events: createGameEvents(),
       database: databaseFromPool(pool),
@@ -97,6 +100,7 @@ async function seedStandardFixture(pool: Pool) {
   );
   await createWorkspaceCharacter(
     {
+      membershipsFor: createMembershipOwnership,
       gameAccessFor: createGameAccessService,
       events: createGameEvents(),
       database: databaseFromPool(pool),

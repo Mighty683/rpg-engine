@@ -39,6 +39,22 @@
 - Inject configuration, event delivery, and the service dependencies required by authorization and event handlers through the same composition path.
 - Bind transaction-scoped services to the current transaction so authorization and mutations share the same database context.
 
+### Backend module ownership
+
+- Declare public service and transaction-bound capability interfaces in the owning module's `types.ts`; factories implement those interfaces explicitly. Do not derive public services from factory return types.
+- Modules import sibling capabilities with `import type` from `types.ts`. Concrete factories, owner operations, and roll readers are assembled in `app.ts`; `application/` coordinates cross-module workflows with injected capabilities. Domain modules must not import application orchestration.
+- Pure Fabula rules/rolls and the RPG system catalog are deliberate shared domain dependencies. Other sibling implementation imports are rejected. Controllers must not import another controller, including within the same module; reuse `shared/http` helpers.
+- Each module owns writes to its tables. Ownership changes, membership changes, and invitation invalidation use owner operations bound to the same transaction and game lock. Publish notifications after commit only.
+- Cross-domain read projections remain allowed: character roster/party/roll readers join membership/account data; membership queries inspect game and character state; game authorization reads membership state; invitations preview game/character/account data. These joins must not become foreign-table writes or bypass authoritative authorization checks.
+- `backend-boundaries` lint rules enforce relative imports and direct `insert`/`update`/`delete` calls on schema imports, including import aliases and namespace access. They are not alias/taint analysis: variable indirection, helper arguments, dynamic module paths, SQL text, database cascades, and unusual query APIs require review. Application workflows also cannot directly write owner tables. Test composition and seed/migration entry points are outside this ownership rule; review them separately.
+
+### Request schema parity
+
+- Compile request JSON Schemas with Ajv without changing frameworks. Keep HTTP envelopes, normalized fields, and transaction-time domain checks distinct so their existing error precedence remains stable.
+- `schema-contract.test.ts` reads the canonical OpenAPI YAML and compares the supported structural vocabulary after resolving schema references. Draft-07 tuple `items` becomes OpenAPI 3.1 `prefixItems`; unsupported keywords fail rather than being silently ignored. The checker compares types, required keys, extra-key policies, enums/constants, patterns, numeric/string/array bounds, and composed request schemas. Its negative fixtures prove that bounds and extra-key drift fail.
+- This is structural comparison of normalized input, not proof of all JSON Schema equivalences or HTTP behavior. Annotations (including `format`) are excluded; UUID validation is captured by the shared pattern. General conditional schemas and arbitrary reference composition require extending the checker and tests.
+- Explicit semantic exceptions: registration password minimum counts UTF-16 code units and maximum counts UTF-8 bytes; login trims/clamps usernames and maps malformed credentials to authentication failure; game system IDs are checked against the catalog; character patches are merged and domain-validated inside the transaction. NPC resource relationships and distinct attack IDs remain semantic checks. Invitation creation preserves the absent/falsy-body default, acceptance defaults nullish `makeActive` to true, and throws preserve sequential field/error checks and explicit query default/clamping. Trimming occurs before applicable name/note bounds. Existing contract/API tests verify these behaviors; do not add conflicting structural constraints to OpenAPI.
+
 ## Database query security
 
 - Pass all data values to PostgreSQL as query parameters. Never concatenate or interpolate request data into SQL, including values that were validated earlier.

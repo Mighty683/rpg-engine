@@ -11,8 +11,6 @@ import type { revokeSession } from "./sessions.ts";
 
 const dummyHash = argon2.hash(randomBytes(32));
 
-export { validateCredentials } from "./contract.ts";
-
 export async function registerAccount(database: Database, username: string, password: string) {
   const hash = await withPasswordHashCapacity(() => argon2.hash(password));
   const result = await database

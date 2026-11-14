@@ -1,9 +1,8 @@
+import type { InvitationsService } from "./types.ts";
 import type { Actor } from "../auth/types.ts";
 import type { GameAccessFactory } from "../games/types.ts";
-import type { GameEvents } from "../events/types.ts";
 
 import {
-  acceptInvitation,
   createCharacterInvitation,
   ensureGameInvitation,
   listInvitations,
@@ -16,12 +15,11 @@ import type { Configuration } from "../../types.ts";
 export function createInvitationsService(
   database: Database,
   config: Configuration,
-  events: GameEvents,
   gameAccessFor: GameAccessFactory,
-) {
+  acceptInvitation: InvitationsService["acceptInvitation"],
+): InvitationsService {
   return {
-    acceptInvitation: (actor: Actor, token: string, makeActive?: boolean) =>
-      acceptInvitation({ events, database }, actor, token, makeActive),
+    acceptInvitation,
     createCharacterInvitation: (actor: Actor, gameId: string, characterId: string) =>
       createCharacterInvitation({ gameAccessFor, config, database }, actor, gameId, characterId),
     ensureGameInvitation: (actor: Actor, gameId: string) =>

@@ -1,5 +1,5 @@
+import type { FabulaPreview } from "../fabula/types.ts";
 import type { GameActor, GameAccess } from "../games/types.ts";
-import type { createCharactersService } from "./factory.ts";
 import type { Attribute, FabulaSheet, SheetChanges } from "../fabula/types.ts";
 import type { characterEquipment } from "../../database/schema.ts";
 
@@ -19,7 +19,60 @@ export type EquipmentInsert = typeof characterEquipment.$inferInsert;
 
 export type CharacterContext = { actor: GameActor; gameId: string; access: GameAccess };
 
-export type CharactersService = ReturnType<typeof createCharactersService>;
+export type CharacterSummary = {
+  id: string;
+  name: string;
+  level: number;
+  controllerMembershipId: string | null;
+  controllerName: string | null;
+  canEdit: boolean;
+  active: boolean;
+  createdAt: string;
+};
+export type CharacterRecord = {
+  id: string;
+  playerId: string | null;
+  name: string;
+  level: number;
+  createdAt: string;
+  updatedAt: string;
+  revision: number;
+  systemId: "fabula-ultima";
+  sheet: FabulaSheet;
+  derived: FabulaPreview;
+  canEdit: boolean;
+};
+export interface CharactersService {
+  assignCharacter(
+    actor: GameActor,
+    gameId: string,
+    id: string,
+    membershipId: string | null,
+  ): Promise<CharacterSummary>;
+  createWorkspaceCharacter(
+    actor: GameActor,
+    gameId: string,
+    id: string,
+    name: string,
+  ): Promise<{ record: CharacterRecord; created: boolean }>;
+  deleteWorkspaceCharacter(actor: GameActor, gameId: string, id: string): Promise<void>;
+  getWorkspaceCharacter(actor: GameActor, gameId: string, id: string): Promise<CharacterRecord>;
+  listWorkspaceCharacters(actor: GameActor, gameId: string): Promise<CharacterSummary[]>;
+  setGmCharacterActive(
+    actor: GameActor,
+    gameId: string,
+    id: string,
+    active: boolean,
+  ): Promise<CharacterSummary>;
+  updateWorkspaceCharacter(
+    gameId: string,
+    actor: GameActor,
+    id: string,
+    expected: number,
+    changes: SheetChanges,
+  ): Promise<CharacterRecord>;
+  listActiveParty(actor: GameActor, gameId: string): Promise<{ characters: PartyCharacter[] }>;
+}
 
 export type NamedRow = {
   id: string;
@@ -101,3 +154,25 @@ export type SummaryRow = {
   active: boolean;
   created_at: Date;
 };
+
+export interface CharacterOwnership {
+  lock(gameId: string, id: string): Promise<Row | null>;
+  unowned(gameId: string, id: string): Promise<boolean>;
+  ownedIds(gameId: string, membershipId: string): Promise<string[]>;
+  assign(gameId: string, id: string, membershipId: string | null): Promise<void>;
+  release(gameId: string, ids: string[]): Promise<void>;
+  summary(gameId: string, id: string, access: GameAccess): Promise<CharacterSummary>;
+}
+export type RollCharacter = {
+  id: string;
+  playerId: string | null;
+  revision: number;
+  name: string;
+  sheet: FabulaSheet;
+};
+
+export interface CharacterRollReader {
+  activeIds(gameId: string): Promise<string[]>;
+  ownActiveId(gameId: string, membershipId: string): Promise<string | null>;
+  load(gameId: string, id: string): Promise<RollCharacter | null>;
+}

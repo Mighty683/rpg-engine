@@ -1,12 +1,22 @@
-import type { createGamesService } from "./factory.ts";
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
-import type { createGameAccessService } from "./service.ts";
 import type { ValidationFields } from "../../shared/validation/types.ts";
 
 export type CreateGameInput = { name: string; systemId: string };
 export type GameValidation = CreateGameInput & { fields: ValidationFields };
 
-export type GamesService = ReturnType<typeof createGamesService>;
+export type GameRecord = {
+  id: string;
+  name: string;
+  system: { id: string; name: string };
+  createdAt: string;
+  role: "GM" | "Player";
+};
+export interface GamesService {
+  gameAccess(actor: GameActor, gameId: string): Promise<GameAccess | null>;
+  createActorGame(actor: GameActor, name: string, systemId: string): Promise<GameRecord>;
+  getActorGame(actor: GameActor, gameId: string): Promise<GameRecord | null>;
+  listActorGames(actor: GameActor): Promise<GameRecord[]>;
+}
 
 export type GameRow = { id: string; name: string; systemId: string; createdAt: Date };
 
@@ -25,6 +35,8 @@ export interface GameAccessRepository {
   findGameAccess(gameId: string, accountId: string): Promise<GameAccessRecord | null>;
 }
 
-export type GameAccessFactory = (
-  tx: DatabaseTransaction,
-) => ReturnType<typeof createGameAccessService>;
+export interface GameAccessService {
+  gameAccess(actor: GameActor, gameId: string): Promise<GameAccess | null>;
+  lockGame(actor: GameActor, gameId: string): Promise<GameAccess>;
+}
+export type GameAccessFactory = (tx: DatabaseTransaction) => GameAccessService;

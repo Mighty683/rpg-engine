@@ -1,3 +1,4 @@
+import type { SessionService } from "./types.ts";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
 import type { Database } from "../../database/types.ts";
@@ -32,7 +33,7 @@ export async function revokeSession(database: Database, sessionId: string) {
 }
 
 /** Session persistence bound to the application's database. */
-export function createSessionService(database: Database) {
+export function createSessionService(database: Database): SessionService {
   return {
     create: (accountId: string, expiresAt: Date) => createSession(database, accountId, expiresAt),
     resolve: (token: string) => resolveSession(database, token),

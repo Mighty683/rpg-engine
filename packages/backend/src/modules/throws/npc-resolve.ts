@@ -1,5 +1,6 @@
+import type { NpcRollReader } from "../npcs/types.ts";
 import { and, eq, or } from "drizzle-orm";
-import { npcAttacks, npcs, throws } from "../../database/schema.ts";
+import { throws } from "../../database/schema.ts";
 import type { DatabaseTransaction } from "../../database/types.ts";
 import type { Attribute, Die, DieSource, RolledDie } from "../fabula/types.ts";
 import { checkSide, effectiveDie, genericSide, opposedOutcome, rollDie } from "../fabula/rolls.ts";
@@ -16,6 +17,7 @@ import type {
 /** Resolve NPC rolls from authoritative saved stats and immutable source snapshots. */
 export async function resolveNpcThrow(
   tx: DatabaseTransaction,
+  reader: NpcRollReader,
   gameId: string,
   access: GameAccess,
   setup: NpcThrowSetup,
@@ -24,10 +26,7 @@ export async function resolveNpcThrow(
   accountId: string,
 ): Promise<ResolvedThrow> {
   if (access.role !== "GM") throw fail("forbidden");
-  const [npc] = await tx
-    .select()
-    .from(npcs)
-    .where(and(eq(npcs.id, setup.npcId), eq(npcs.gameId, gameId)));
+  const npc = await reader.profile(gameId, setup.npcId);
   if (!npc) throw fail("not_found");
   if (npc.revision !== setup.expectedRevision) throw fail("stale_revision");
   let previous: NpcResolvedSetup | null = null;
@@ -56,10 +55,7 @@ export async function resolveNpcThrow(
   let dice: RolledDie[];
   let attack: NpcResolvedSetup["attack"] = null;
   if (setup.type === "npc-attack") {
-    const [saved] = await tx
-      .select()
-      .from(npcAttacks)
-      .where(and(eq(npcAttacks.id, setup.attackId), eq(npcAttacks.npcId, npc.id)));
+    const saved = await reader.attack(npc.id, setup.attackId);
     if (!saved) throw fail("not_found");
     if (previous && previous.attack?.id !== setup.attackId)
       throw fail("validation", "A reroll keeps the original attack", "attackId");

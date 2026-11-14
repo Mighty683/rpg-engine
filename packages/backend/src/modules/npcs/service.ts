@@ -1,15 +1,11 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { npcAttacks, npcCreateRequests, npcs } from "../../database/schema.ts";
 import { transaction } from "../../database/transaction.ts";
-import type { Database, DatabaseTransaction } from "../../database/types.ts";
-import type { GameAccessFactory, GameActor } from "../games/types.ts";
-import type { GameEvents } from "../events/types.ts";
-import type { NpcWrite } from "./types.ts";
+import type { DatabaseTransaction } from "../../database/types.ts";
+import type { GameActor } from "../games/types.ts";
+import type { NpcWrite, NpcsService, NpcRow, NpcAttackRow, NpcDependencies } from "./types.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
-type Row = typeof npcs.$inferSelect;
-type AttackRow = typeof npcAttacks.$inferSelect;
-type Dependencies = { database: Database; gameAccessFor: GameAccessFactory; events: GameEvents };
 
 function values(npc: NpcWrite) {
   return {
@@ -30,7 +26,7 @@ function values(npc: NpcWrite) {
     notes: npc.notes,
   };
 }
-function present(row: Row, attacks: AttackRow[], role: "GM" | "Player") {
+function present(row: NpcRow, attacks: NpcAttackRow[], role: "GM" | "Player") {
   if (role === "Player" && row.visibility === "hidden") return null;
   const visible = { id: row.id, name: row.name, relationship: row.relationship };
   if (role === "Player" && row.visibility === "visible")
@@ -125,7 +121,11 @@ function sameBody(a: unknown, b: NpcWrite) {
     );
   return canonical(a) === canonical(b);
 }
-export function createNpcsService({ database, gameAccessFor, events }: Dependencies) {
+export function createNpcsService({
+  database,
+  gameAccessFor,
+  events,
+}: NpcDependencies): NpcsService {
   async function read(actor: GameActor, gameId: string, id?: string) {
     return transaction(
       database,

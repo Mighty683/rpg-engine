@@ -1,3 +1,4 @@
+import type { AuthService } from "./types.ts";
 import type { SessionService } from "./types.ts";
 import type { GameEvents } from "../events/types.ts";
 import type { Request } from "express";
@@ -12,7 +13,7 @@ export function createAuthService(
   config: Configuration,
   events: GameEvents,
   sessions: SessionService,
-) {
+): AuthService {
   return {
     requireActor: (request: Request) => requireActor(sessions.resolve, request),
     requireWriteOrigin: (request: Request) => requireWriteOrigin(config, request),

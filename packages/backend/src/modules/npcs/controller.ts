@@ -9,7 +9,7 @@ import {
   parseNpcRemoveEnvelope,
   parseNpcRevision,
 } from "./contract.ts";
-import type { createNpcsService } from "./service.ts";
+import type { NpcsService } from "./types.ts";
 
 type Context = { actor: GameActor; gameId: string };
 function requestError(error: unknown): never {
@@ -35,7 +35,7 @@ function requestError(error: unknown): never {
 export function npcsController(services: {
   auth: AuthService;
   games: GamesService;
-  npcs: ReturnType<typeof createNpcsService>;
+  npcs: NpcsService;
 }) {
   return Controller()
     .prefix("games/:gameId/npcs")

@@ -1,3 +1,5 @@
+import { createCharacterRollReader } from "../../../backend/src/modules/characters/roll-reader.ts";
+import { createNpcRollReader } from "../../../backend/src/modules/npcs/roll-reader.ts";
 import { createGameAccessService } from "../../../backend/src/modules/games/service.ts";
 import { createGameEvents } from "../../../backend/src/modules/events/streams.ts";
 import { databaseFromPool } from "../../../backend/src/database/client.ts";
@@ -28,6 +30,10 @@ async function postThrow(game: SeededGame, setup: Record<string, unknown>) {
     const result = await createThrow(
       {
         gameAccessFor: createGameAccessService,
+        readersFor: (tx) => ({
+          characters: createCharacterRollReader(tx),
+          npcs: createNpcRollReader(tx),
+        }),
         events: createGameEvents(),
         database: databaseFromPool(pool),
       },

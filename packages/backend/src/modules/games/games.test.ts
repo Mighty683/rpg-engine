@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { validateGame } from "./service.ts";
+import { validateGame } from "./contract.ts";
 
 describe("game input", () => {
   it.each([

@@ -1,15 +1,12 @@
-import type { SummaryRow } from "./types.ts";
+import type { MembershipOwnershipFactory } from "../players/types.ts";
 import type { FabulaSheet, SheetChanges } from "../fabula/types.ts";
-import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts";
+import type { GameAccessFactory, GameActor } from "../games/types.ts";
 import type { GameEvents } from "../events/types.ts";
 import { transaction } from "../../database/transaction.ts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import {
   characters,
-  accounts,
   characterCreateRequests,
-  players,
-  invitations,
   characterClasses,
   characterSkills,
   characterEquipment,
@@ -20,41 +17,10 @@ import { defaultSheet, mergeSheet } from "../fabula/rules.ts";
 
 import { present, sheetSequential } from "./service.ts";
 import { canEditCharacter } from "./access.ts";
+import { characterSummaries, summary } from "./ownership.ts";
 import { equipmentToRow } from "./mapping.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
-
-const summary = (row: SummaryRow, access: GameAccess) => ({
-  id: row.id,
-  name: row.name,
-  level: row.level,
-  controllerMembershipId: row.player_id,
-  controllerName: row.controller_name,
-  canEdit: canEditCharacter(access, row.player_id),
-  active: row.active,
-  createdAt: new Date(row.created_at).toISOString(),
-});
-
-function characterSummaries(tx: DatabaseTransaction, gameId: string, id?: string) {
-  return tx
-    .select({
-      id: characters.id,
-      name: characters.name,
-      level: characters.level,
-      player_id: characters.playerId,
-      created_at: characters.createdAt,
-      controller_name: accounts.username,
-      active: sql<boolean>`CASE WHEN ${characters.playerId} IS NULL THEN ${characters.gmActive} ELSE COALESCE(${players.activeCharacterId}=${characters.id}, false) END`,
-    })
-    .from(characters)
-    .leftJoin(
-      players,
-      and(eq(players.id, characters.playerId), eq(players.gameId, characters.gameId)),
-    )
-    .leftJoin(accounts, eq(accounts.id, players.accountId))
-    .where(and(eq(characters.gameId, gameId), id ? eq(characters.id, id) : undefined))
-    .orderBy(characters.createdAt, characters.id);
-}
 
 async function requireReadAccess(
   gameAccessFor: GameAccessFactory,
@@ -116,7 +82,13 @@ export async function createWorkspaceCharacter(
     gameAccessFor,
     events,
     database,
-  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+    membershipsFor,
+  }: {
+    gameAccessFor: GameAccessFactory;
+    events: GameEvents;
+    database: Database;
+    membershipsFor: MembershipOwnershipFactory;
+  },
   actor: GameActor,
   gameId: string,
   id: string,
@@ -184,10 +156,7 @@ export async function createWorkspaceCharacter(
       name: sheet.name,
     });
     if (access.role === "Player")
-      await tx
-        .update(players)
-        .set({ activeCharacterId: id, revision: sql`${players.revision}+1` })
-        .where(and(eq(players.id, access.membershipId), isNull(players.activeCharacterId)));
+      await membershipsFor(tx).select(gameId, access.membershipId!, id, true);
     afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
     return { record: { ...present(inserted[0], sheet), canEdit: true }, created: true };
   });
@@ -316,76 +285,19 @@ export async function updateWorkspaceCharacter(
   });
 }
 
-async function clearActiveCharacter(tx: DatabaseTransaction, gameId: string, id: string) {
-  await tx
-    .update(players)
-    .set({ activeCharacterId: null, revision: sql`${players.revision}+1` })
-    .where(and(eq(players.gameId, gameId), eq(players.activeCharacterId, id)));
-}
-
-/** Changes control under the game lock and invalidates all outstanding character links. */
-export async function assignCharacter(
-  {
-    gameAccessFor,
-    events,
-    database,
-  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
-  actor: GameActor,
-  gameId: string,
-  id: string,
-  membershipId: string | null,
-) {
-  return transaction(database, async (tx, afterCommit) => {
-    const access = await gameAccessFor(tx).lockGame(actor, gameId);
-    if (access.role !== "GM") throw fail("forbidden");
-    const existing = {
-      rows: await tx
-        .select(characterFields)
-        .from(characters)
-        .where(and(eq(characters.gameId, gameId), eq(characters.id, id)))
-        .for("update"),
-    };
-    const character = existing.rows[0];
-    if (!character) throw fail("not_found");
-    if (membershipId) {
-      const target = await tx
-        .select({ id: players.id })
-        .from(players)
-        .where(
-          and(eq(players.id, membershipId), eq(players.gameId, gameId), eq(players.removed, false)),
-        );
-      if (!target.length) throw fail("not_found");
-    }
-    if (character.player_id !== membershipId) {
-      await clearActiveCharacter(tx, gameId, id);
-      await tx
-        .delete(invitations)
-        .where(
-          and(
-            eq(invitations.gameId, gameId),
-            eq(invitations.characterId, id),
-            eq(invitations.kind, "character"),
-          ),
-        );
-      await tx
-        .update(characters)
-        .set({ playerId: membershipId, gmActive: false })
-        .where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
-    }
-    const result = await characterSummaries(tx, gameId, id);
-    if (character.player_id !== membershipId)
-      afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
-    return summary(result[0]!, access);
-  });
-}
-
 /** Permanently deletes a sheet while preserving its create-request receipt. */
 export async function deleteWorkspaceCharacter(
   {
     gameAccessFor,
     events,
     database,
-  }: { gameAccessFor: GameAccessFactory; events: GameEvents; database: Database },
+    membershipsFor,
+  }: {
+    gameAccessFor: GameAccessFactory;
+    events: GameEvents;
+    database: Database;
+    membershipsFor: MembershipOwnershipFactory;
+  },
   actor: GameActor,
   gameId: string,
   id: string,
@@ -402,7 +314,7 @@ export async function deleteWorkspaceCharacter(
     const character = existing.rows[0];
     if (!character) throw fail("not_found");
     if (!canEditCharacter(access, character.player_id)) throw fail("forbidden");
-    await clearActiveCharacter(tx, gameId, id);
+    await membershipsFor(tx).clearCharacter(gameId, id);
     await tx.delete(characters).where(and(eq(characters.gameId, gameId), eq(characters.id, id)));
     afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
   });

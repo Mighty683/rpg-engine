@@ -1,8 +1,8 @@
 # Backend architecture hardening — handover
 
 **Created:** 2026-11-14
-**Status:** Waves 0–3 verified; domain ownership, architecture enforcement, and final verification pending
-**Sources:** Backend architecture review and follow-up decisions in the planning chat; [code conventions](../../spec/code-conventions.md); [testing conventions](../../spec/testing.md); [API test guidance](../../../packages/tests/AGENTS.md).
+**Status:** All acceptance goals verified; implementation complete
+**Sources:** Backend architecture review and follow-up decisions in the planning chat; [code conventions](../../../spec/code-conventions.md); [testing conventions](../../../spec/testing.md); [API test guidance](../../../../packages/tests/AGENTS.md).
 
 ## Acceptance goals
 
@@ -39,7 +39,7 @@ No new UI flow is introduced. Run the existing browser journeys for game managem
 
 ## Verification evidence
 
-The preceding NPC Ajv slice passed 109 selected backend/lint tests, backend type-check, focused lint, and OpenAPI validation on 2026-11-14. That is baseline evidence only. The wave-specific evidence below records subsequent verification; API-EVENT-01–03, API-VAL-01–04, and API-MAP-01 now pass. API-DOM-01–04, architecture/schema parity enforcement, and final browser regression remain pending.
+The preceding NPC Ajv slice passed 109 selected backend/lint tests, backend type-check, focused lint, and OpenAPI validation on 2026-11-14. That is baseline evidence only. The wave-specific evidence below records subsequent verification. All API-EVENT, API-VAL, API-MAP, and API-DOM acceptance checks, architecture/schema parity enforcement, and final browser regression now pass. Historical pending states below describe earlier deliveries and are superseded by the final wave 6 evidence.
 
 Record the tested revision, commands, results, failures, and remaining work here after each delivery. Do not mark the task Implemented or archive it until acceptance is verified.
 
@@ -87,3 +87,38 @@ Coordinator reviewed the runtime lifecycle/resource behavior, schema compatibili
 The quality scan is **not clean**: it reports modification-frequency warnings, increased event-factory aggregate complexity (14 to 24), OpenAPI response-description growth, small parser-wrapper duplication, and deliberate transport-error isolation. These were reviewed; transport branches are covered by targeted tests, the factory keeps shared subscription state together, and the additional OpenAPI responses describe new behavior. No quality-warning suppression was added. Further architecture enforcement and consolidation belong to waves 4–5; this evidence does not claim zero static findings.
 
 API-EVENT-01–03, API-VAL-01–04, and API-MAP-01 are verified for this delivery. API-DOM-01–04 remain pending the ownership refactor and its dedicated tests. The existing browser regression suite and final end-to-end task gate remain scheduled for wave 6. Waves 4–6 have not been dispatched; the task is not Implemented or archived.
+
+
+### Waves 4–5 — ownership and enforcement, 2026-11-14
+
+The domain ownership agent introduced explicit public service interfaces, transaction-bound character/membership/invitation operations, application workflows under one game lock, and authoritative character/NPC roll readers. Character creation/deletion also use owner-provided membership selection operations. API-DOM-01–04 now exercise unauthorized/cross-game mutations, invitation concurrency, full rollback after a deliberately failing owner operation, absence of success notifications on rollback, stale/inactive/private roll sources, and immutable authoritative NPC snapshots. Test-only fault injection remains in test composition.
+
+Wave 4 passed the backend build, `pnpm check`, 48 API tests in 14 files, and 183 backend/lint/database tests in 31 files. A final type check covered subsequent type-only relocation and browser-step dependency wiring. The final wave 6 run below retested the integrated result.
+
+Wave 5 added dependency-boundary lint with positive/negative fixtures, direct foreign-table write detection, and runtime/OpenAPI schema parity. Canonical OpenAPI is compared with draft-07 runtime schemas using an explicit dialect conversion; deliberately mismatched fixture constraints confirm drift detection. Semantic normalization and transactional validation are documented exceptions, including password UTF-16/UTF-8 limits, login behavior, partial character changes, and query normalization. Deployment guidance documents startup requirements, stream capacity, shutdown, and the single-process restriction. Wave 5 passed 76 focused tests (including 28 boundary fixtures and 12 schema cases), the backend build, and `pnpm check` including OpenAPI lint/bundle. Temporary compatibility exports were removed after consumer migration.
+
+### Wave 6 — final integrated acceptance, 2026-11-14
+
+Verified base revision `b737a515da85f17834239c1ec3ac4e0b78d3113c` plus all uncommitted wave 4–5 implementation changes. Before execution, captured tracked diff/status at `/tmp/backend-hardening-final-start.patch` and `/tmp/backend-hardening-final-start.status`, and a SHA-256 manifest of 429 tracked/untracked non-documentation files at `/tmp/backend-hardening-final-source-manifest.json`. Manifest SHA-256: `da2e9de0a9f349b8ea4843dbb3d5a79f419ebb450fbe0abbde691fb97b8fe8a4`. Recomputing the file hashes after verification found no implementation changes. Handover evidence and task archival are documentation-only follow-up work.
+
+Ran `TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55432/rpg_engine_test pnpm verify` against the coordinator's disposable PostgreSQL container `rpg-engine-finish-test`. This complete command exited 0. It includes every final command required by the plan, plus the frontend production build and browser component suite.
+
+| Check | Final result |
+| --- | --- |
+| `pnpm check` | Passed: 379 files formatted; 362 files without lint warnings/errors or type errors; canonical OpenAPI lint and bundle passed |
+| `pnpm --filter @rpg-engine/backend build` | Passed |
+| `pnpm build` | Frontend production build passed |
+| `pnpm test` | 227 tests passed in 35 files |
+| `pnpm --filter @rpg-engine/frontend test:browser --run` | 30 tests passed in 15 files |
+| `pnpm test:integration` — backend PostgreSQL | 9 tests passed in 4 files |
+| `pnpm test:integration` — API | 48 tests passed in 14 files; includes all API-EVENT, API-VAL, API-MAP, and API-DOM acceptance coverage |
+| `pnpm test:integration` — browser E2E | 17 tests passed in 4 feature files, covering existing game management, character control, invitations/live collaboration, and NPC journeys |
+| Implementation hash comparison | No source, test, manifest, lockfile, or lint/config changes during verification |
+
+The first sandboxed attempt passed check/build but could not bind localhost (`listen EPERM`) in the lifecycle and membership tests; the lifecycle test then timed out. An approved rerun outside the sandbox passed the entire verification command without source changes. This was an environment restriction, not a passing test result. Full logs: `/tmp/backend-hardening-final-verify.log` (sandbox failure) and `/tmp/backend-hardening-final-verify-escalated.log` (successful complete run).
+
+The successful run emitted the existing frontend bundle-size advisory and Node localStorage experimental warning. Neither failed verification. Runtime startup and open-SSE SIGTERM smoke evidence remains recorded under waves 1–3; the final unit suite also reran lifecycle/configuration regressions against the delivered implementation.
+
+Static quality scan is **not clean**: the coordinator's final scan reported 77 rows, including 36 minor and 9 gating warnings. The gating warnings concern three factory-binding similarities, four modification-frequency findings, and increased `createApplication`/`createThrow` verbosity. Reviewed as deliberate dependency-injection bindings, explicit composition, and edit frequency; no suppression was added. New aggregate complexity in the three-workflow factory, schema comparator, and import rule is covered by acceptance/fixture tests. Import/write lint is a focused guardrail, not general SQL or alias taint analysis; indirect writes still require code review.
+
+All task acceptance goals are verified; no implementation or verification blockers remain. Shared multi-process delivery/revocation remains a separately tracked deployment prerequisite, not a guarantee provided by this task. Keep one backend process until that follow-up is designed and verified.
