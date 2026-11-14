@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Stat } from "../types";
 
-import SheetSection from "../../../../shared/design-system/SheetSection.vue";
+import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import DefenseField from "./DefenseField.vue";
 import type { Character } from "../types";
 

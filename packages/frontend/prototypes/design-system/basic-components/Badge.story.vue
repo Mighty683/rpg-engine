@@ -1,6 +1,6 @@
 <script setup lang="ts"></script>
 <template>
-  <Story title="Design system/Basic components/Badge">
+  <Story title="Design system/Base/Badge">
     <template #default>
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

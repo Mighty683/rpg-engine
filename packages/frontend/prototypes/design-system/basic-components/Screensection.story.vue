@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import ScreenSection from "../../../src/shared/design-system/ScreenSection.vue";
+import ScreenSection from "../../../src/shared/design-system/base/ScreenSection.vue";
 </script>
 <template>
-  <Story title="Design system/Basic components/Screen section">
+  <Story title="Design system/Base/Screen section">
     <template #default>
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

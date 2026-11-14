@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ResourceBar from "../../../src/shared/design-system/ResourceBar.vue";
+import ResourceBar from "../../../src/shared/design-system/domain/ResourceBar.vue";
 
 function initialState() {
   return { value: 28, maximum: 35, showValue: true };
@@ -7,7 +7,7 @@ function initialState() {
 </script>
 
 <template>
-  <Story title="Design system/Basic components/Resource bar" :init-state="initialState">
+  <Story title="Domain/Fabula Ultima/Resource bar" :init-state="initialState">
     <template #default="{ state }">
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

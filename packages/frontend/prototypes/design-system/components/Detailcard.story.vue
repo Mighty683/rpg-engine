@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DetailCard from "../../../src/shared/design-system/DetailCard.vue";
+import DetailCard from "../../../src/shared/design-system/base/DetailCard.vue";
 import { ref } from "vue";
 const notes = ref("A short description.");
 function initialState() {
@@ -7,7 +7,7 @@ function initialState() {
 }
 </script>
 <template>
-  <Story title="Design system/Components/Detail card" :init-state="initialState">
+  <Story title="Design system/Base/Detail card" :init-state="initialState">
     <template #default="{ state }">
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

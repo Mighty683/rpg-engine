@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import InfoTooltip from "../../../../shared/design-system/InfoTooltip.vue";
+import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
 defineProps<{
   label: string;
   help: string;

@@ -4,7 +4,7 @@ function initialState() {
 }
 </script>
 <template>
-  <Story title="Design system/Components/Disclosure group" :init-state="initialState">
+  <Story title="Design system/Base/Disclosure group" :init-state="initialState">
     <template #default="{ state }">
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

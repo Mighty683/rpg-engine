@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Attribute } from "./types";
-import DieIcon from "../../shared/design-system/DieIcon.vue";
+import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 
 defineProps<{ attribute: Attribute; sides: number; characterName: string; canRoll: boolean }>();
 defineEmits<{ roll: [] }>();

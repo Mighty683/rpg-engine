@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import FormActions from "../../shared/design-system/base/FormActions.vue";
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { RollDraft, Attribute, OpponentDraft } from "./types";
 
 import { computed } from "vue";
 
-import DieIcon from "../../shared/design-system/DieIcon.vue";
+import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 import OpposedSetup from "./OpposedSetup.vue";
 
 const props = defineProps<{
@@ -41,10 +43,12 @@ function toggleSecond(attribute: Attribute) {
 <template>
   <UModal
     :open="true"
+    :close="!pending"
+    :dismissible="!pending"
     :title="title"
     @update:open="
       (open: boolean) => {
-        if (!open) emit('cancel');
+        if (!open && !pending) emit('cancel');
       }
     "
   >
@@ -125,9 +129,7 @@ function toggleSecond(attribute: Attribute) {
             :friendly-dice="usedAttributes.map((attribute) => draft.dice[attribute])"
             @update:model-value="emit('update:opponent', $event)"
           />
-          <UFormField label="Note" hint="Optional"
-            ><UInput v-model="draft.note" class="w-full" data-testid="roll-note"
-          /></UFormField>
+          <LabeledInput label="Note" hint="Optional" v-model="draft.note" data-testid="roll-note" />
           <UCheckbox
             :model-value="privateRoll"
             label="Private roll"
@@ -137,19 +139,13 @@ function toggleSecond(attribute: Attribute) {
             @update:model-value="emit('update:privateRoll', $event === true)"
           />
           <p v-if="error" role="alert" class="text-error" data-testid="roll-error">{{ error }}</p>
-          <div class="flex justify-end gap-small">
-            <UButton
-              type="button"
-              color="neutral"
-              variant="outline"
-              data-testid="cancel-roll"
-              @click="emit('cancel')"
-              >Cancel</UButton
-            >
-            <UButton type="submit" :loading="pending" :disabled="pending" data-testid="submit-roll"
-              >Roll</UButton
-            >
-          </div>
+          <FormActions
+            submit-label="Roll"
+            :pending="pending"
+            submit-test-id="submit-roll"
+            cancel-test-id="cancel-roll"
+            @cancel="emit('cancel')"
+          />
         </fieldset>
       </form>
     </template>

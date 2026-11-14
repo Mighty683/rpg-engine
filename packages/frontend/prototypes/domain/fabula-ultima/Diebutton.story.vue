@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import DieButton from "../../../src/shared/design-system/DieButton.vue";
+import DieButton from "../../../src/shared/design-system/domain/DieButton.vue";
 
 function initialState() {
   return { sides: 8, opposing: false, disabled: false };
 }
 </script>
 <template>
-  <Story title="Design system/Basic components/Die button" :init-state="initialState">
+  <Story title="Domain/Fabula Ultima/Die button" :init-state="initialState">
     <template #default="{ state }">
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

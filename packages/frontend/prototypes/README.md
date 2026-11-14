@@ -8,9 +8,9 @@ For a new prototype, create a task folder and a `*.story.vue` file with a `Proto
 
 The design-system stories document the tokens in `../src/tokens.css` and examples of shared components. Tailwind theme tokens and Nuxt UI color roles reference `--value-*` primitives directly. Use semantic utilities such as `gap-small`, `text-heading`, `rounded-panel`, and `bg-default` in components.
 
-Design-system stories are organized under **Primitives**, **Basic components**, and **Components**. Each component or pattern has its own story; use its controls to inspect the available states.
+Design-system stories are organized under **Primitives** and **Base**. Base components live in `src/shared/design-system/base` and have no RPG dependencies. Each component or pattern has its own story; use its controls to inspect the available states.
 
-**Domain** has individual stories for **Characters**, **Rolls**, and **Game management**. These stories render components from the application modules with local fixtures.
+**Domain** has individual stories for **Characters**, **Rolls**, and **Game management**, plus reusable **Fabula Ultima** controls from `src/shared/design-system/domain`. Domain controls may compose base components; base components must not import domain controls. These stories render components from the application modules with local fixtures.
 
 ## Shared mock backend
 

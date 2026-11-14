@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import EdgeTabs from "../../../src/shared/design-system/EdgeTabs.vue";
-import type { EdgeTab } from "../../../src/shared/design-system/EdgeTabs.vue";
+import EdgeTabs from "../../../src/shared/design-system/base/EdgeTabs.vue";
+import type { EdgeTab } from "../../../src/shared/design-system/base/EdgeTabs.vue";
 
 const tabs: EdgeTab[] = [
   { id: "sheets", label: "Character sheets", color: "primary" },
@@ -14,7 +14,7 @@ function initialState() {
 </script>
 
 <template>
-  <Story title="Design system/Components/Edge tabs" :init-state="initialState">
+  <Story title="Design system/Base/Edge tabs" :init-state="initialState">
     <template #default="{ state }">
       <UApp>
         <div class="min-h-screen bg-default p-section text-default">

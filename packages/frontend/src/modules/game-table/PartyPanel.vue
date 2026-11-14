@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useId } from "vue";
-import ContentState from "../../shared/design-system/ContentState.vue";
-import ScreenSection from "../../shared/design-system/ScreenSection.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
+import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import type { Attribute, PartyCharacter } from "./types";
 import PartyCharacterCard from "./PartyCharacterCard.vue";
 

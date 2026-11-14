@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { InvitationPreview } from "./types";
-import ContentState from "../../shared/design-system/ContentState.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -36,6 +36,7 @@ onMounted(async () => {
   }
 });
 async function accept() {
+  if (accepting.value) return;
   accepting.value = true;
   try {
     const result = await invitationApi.accept(token, makeActive.value);
@@ -73,7 +74,12 @@ async function accept() {
         You have been invited to join <strong>{{ invitation.gameName }}</strong
         >.
       </p>
-      <UCheckbox v-if="isCharacter" v-model="makeActive" label="Make this character active" />
+      <UCheckbox
+        v-if="isCharacter"
+        v-model="makeActive"
+        :disabled="accepting"
+        label="Make this character active"
+      />
       <div class="flex flex-wrap gap-small">
         <UButton :loading="accepting" data-testid="accept-invitation" @click="accept">{{
           isCharacter ? "Accept character" : "Join game"

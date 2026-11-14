@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ScreenSection from "../../../shared/design-system/base/ScreenSection.vue";
 import { computed, ref } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import CharacterNameField from "./identity/CharacterNameField.vue";
@@ -114,30 +115,27 @@ function warnIfEditingLocked(event: PointerEvent) {
       other people.
     </p>
     <fieldset :disabled="editingLocked" class="sheet-sections">
-      <section
-        class="sheet-panel sheet-split attributes-resources"
-        aria-label="Attributes and resources"
-      >
+      <ScreenSection class="sheet-split attributes-resources" aria-label="Attributes and resources">
         <AttributesSection :attributes="attributes" /><ResourcesSection
           :current="current"
           :maximum="maximum"
           :maximum-overrides="maximumOverrides"
           @override="updateMaximum"
         />
-      </section>
-      <section class="sheet-panel sheet-split" aria-label="Classes and skills">
+      </ScreenSection>
+      <ScreenSection class="sheet-split" aria-label="Classes and skills">
         <ClassesSection :entries="classes" :locked="editingLocked" /><SkillsSection
           :entries="skills"
           :locked="editingLocked"
         />
-      </section>
-      <section class="sheet-panel sheet-split" aria-label="Equipment and defense">
+      </ScreenSection>
+      <ScreenSection class="sheet-split" aria-label="Equipment and defense">
         <EquipmentSection :entries="equipment" :locked="editingLocked" /><DefenseSection
           :overrides="overrides"
           :calculated="baseDefense"
           :details="defenseDetails"
         />
-      </section>
+      </ScreenSection>
     </fieldset>
   </main>
 </template>
@@ -168,12 +166,6 @@ function warnIfEditingLocked(event: PointerEvent) {
 .sheet-sections {
   display: grid;
   gap: var(--spacing-small);
-}
-.sheet-panel {
-  border: 1px solid var(--ui-border);
-  border-radius: var(--radius-panel);
-  padding: var(--spacing-small);
-  min-width: 0;
 }
 .sheet-split {
   display: grid;

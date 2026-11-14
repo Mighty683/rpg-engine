@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import SheetSection from "../../shared/design-system/SheetSection.vue";
+import EditorFieldGrid from "../../shared/design-system/base/EditorFieldGrid.vue";
+import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
+import SheetSection from "../../shared/design-system/domain/SheetSection.vue";
+import AttributePairSelect from "../../shared/design-system/domain/AttributePairSelect.vue";
 import type { NpcAttack } from "./types";
 
 const props = defineProps<{ attacks: NpcAttack[] }>();
-const attributes = ["DEX", "INS", "MIG", "WLP"];
 
 function addAttack() {
   props.attacks.push({
@@ -28,7 +31,12 @@ function addAttack() {
       :data-testid="`attack-editor-${index}`"
     >
       <div class="attack-header">
-        <label>Name<input v-model="attack.name" :data-testid="`attack-name-${index}`" /></label>
+        <LabeledInput
+          label="Name"
+          v-model="attack.name"
+          class="min-w-0 flex-1"
+          :data-testid="`attack-name-${index}`"
+        />
         <UButton
           color="error"
           variant="outline"
@@ -39,36 +47,39 @@ function addAttack() {
           >Remove</UButton
         >
       </div>
-      <div class="attack-fields">
-        <label
-          >Reach<select v-model="attack.range" :data-testid="`attack-range-${index}`">
-            <option value="melee">Melee</option>
-            <option value="ranged">Ranged</option>
-          </select></label
-        >
-        <label v-for="attributeIndex in [0, 1] as const" :key="attributeIndex"
-          >Attribute {{ attributeIndex + 1
-          }}<select
-            v-model="attack.attributes[attributeIndex]"
-            :data-testid="`attack-attribute-${index}-${attributeIndex}`"
-          >
-            <option v-for="attribute in attributes" :key="attribute" :value="attribute">
-              {{ attribute }}
-            </option>
-          </select></label
-        >
-        <label
-          >Damage bonus<input
-            v-model.number="attack.damageBonus"
-            type="number"
-            :data-testid="`attack-damage-${index}`"
-        /></label>
-        <label
-          >Damage type<input
-            v-model="attack.damageType"
-            :data-testid="`attack-damage-type-${index}`"
-        /></label>
-      </div>
+      <EditorFieldGrid class="mt-small">
+        <LabeledSelect
+          label="Reach"
+          v-model="attack.range"
+          :items="[
+            { label: 'Melee', value: 'melee' },
+            { label: 'Ranged', value: 'ranged' },
+          ]"
+          :data-testid="`attack-range-${index}`"
+        />
+        <AttributePairSelect
+          class="col-span-full"
+          :attributes="attack.attributes"
+          :context="attack.name"
+          :test-ids="[`attack-attribute-${index}-0`, `attack-attribute-${index}-1`]"
+          @change="
+            (attributeIndex, value) => {
+              if (value) attack.attributes[attributeIndex] = value;
+            }
+          "
+        />
+        <LabeledInput
+          label="Damage bonus"
+          v-model.number="attack.damageBonus"
+          type="number"
+          :data-testid="`attack-damage-${index}`"
+        />
+        <LabeledInput
+          label="Damage type"
+          v-model="attack.damageType"
+          :data-testid="`attack-damage-type-${index}`"
+        />
+      </EditorFieldGrid>
     </div>
     <UButton
       class="mt-small"
@@ -94,32 +105,5 @@ function addAttack() {
   display: flex;
   align-items: end;
   gap: var(--spacing-small);
-}
-.attack-header label {
-  flex: 1;
-}
-.attack-fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-  gap: var(--spacing-small);
-  margin-top: var(--spacing-small);
-}
-label {
-  display: grid;
-  gap: var(--sheet-tight);
-  min-width: 0;
-  font-size: var(--sheet-label-size);
-  color: var(--ui-text-muted);
-}
-input,
-select {
-  width: 100%;
-  min-width: 0;
-  color: var(--ui-text);
-  background: var(--ui-bg);
-  border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
-  padding: var(--sheet-tight) var(--spacing-small);
-  font-size: 0.875rem;
 }
 </style>

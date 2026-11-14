@@ -51,7 +51,8 @@ export class GameTablePage {
 
   async configureWeapon() {
     await this.page.getByTestId("open-entry-details").first().click();
-    await this.page.getByTestId("weapon-attribute-2").selectOption("INS");
+    await this.page.getByTestId("weapon-attribute-2").click();
+    await this.page.getByTestId("weapon-attribute-2-option-INS").click();
     await this.page.getByTestId("weapon-accuracy-bonus").fill("1");
   }
 

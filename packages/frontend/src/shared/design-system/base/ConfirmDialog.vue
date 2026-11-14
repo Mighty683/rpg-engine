@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormActions from "./FormActions.vue";
 withDefaults(
   defineProps<{
     open: boolean;
@@ -22,7 +23,8 @@ defineEmits<{ confirm: []; cancel: [] }>();
     :open="open"
     :title="title"
     :description="description"
-    :close="close"
+    :close="close && !pending"
+    :dismissible="!pending"
     @update:open="
       (value: boolean) => {
         if (!value && !pending) $emit('cancel');
@@ -32,24 +34,17 @@ defineEmits<{ confirm: []; cancel: [] }>();
     <template #body>
       <div class="space-y-medium">
         <slot />
-        <div class="flex flex-wrap justify-end gap-small">
-          <UButton
-            color="neutral"
-            variant="outline"
-            :disabled="pending"
-            :data-testid="cancelTestId"
-            @click="$emit('cancel')"
-            >{{ cancelLabel }}</UButton
-          >
-          <UButton
-            :color="destructive ? 'error' : 'primary'"
-            :loading="pending"
-            :disabled="pending"
-            :data-testid="confirmTestId"
-            @click="$emit('confirm')"
-            >{{ confirmLabel }}</UButton
-          >
-        </div>
+        <FormActions
+          :submit-label="confirmLabel"
+          :cancel-label="cancelLabel"
+          :pending="pending"
+          :destructive="destructive"
+          submit-type="button"
+          :submit-test-id="confirmTestId"
+          :cancel-test-id="cancelTestId"
+          @cancel="$emit('cancel')"
+          @confirm="$emit('confirm')"
+        />
       </div>
     </template>
   </UModal>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import DetailCard from "../../src/shared/design-system/DetailCard.vue";
-import DieIcon from "../../src/shared/design-system/DieIcon.vue";
-import EquipmentIcon from "../../src/shared/design-system/EquipmentIcon.vue";
-import WeaponIcon from "../../src/shared/design-system/WeaponIcon.vue";
-import ZenitIcon from "../../src/shared/design-system/ZenitIcon.vue";
+import DetailCard from "../../src/shared/design-system/base/DetailCard.vue";
+import DieIcon from "../../src/shared/design-system/domain/DieIcon.vue";
+import EquipmentIcon from "../../src/shared/design-system/domain/EquipmentIcon.vue";
+import WeaponIcon from "../../src/shared/design-system/domain/WeaponIcon.vue";
+import ZenitIcon from "../../src/shared/design-system/domain/ZenitIcon.vue";
 defineProps<{ section?: "buttons" | "colors" | "icons" | "card" | "spacing" | "typography" }>();
 const palettes = [
   {
@@ -55,7 +55,17 @@ const palettes = [
   },
 ];
 const cardNotes = ref("A versatile adventurer.");
-const spacing = ["small", "medium", "large", "field", "section", "page", "page-wide"];
+const spacing = [
+  "tight",
+  "input-label",
+  "small",
+  "medium",
+  "large",
+  "field",
+  "section",
+  "page",
+  "page-wide",
+];
 </script>
 
 <template>

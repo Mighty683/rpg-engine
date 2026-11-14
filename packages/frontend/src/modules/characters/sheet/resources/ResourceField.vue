@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import ResourceBar from "../../../../shared/design-system/ResourceBar.vue";
-import InfoTooltip from "../../../../shared/design-system/InfoTooltip.vue";
+import ResourceBar from "../../../../shared/design-system/domain/ResourceBar.vue";
+import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
 withDefaults(
   defineProps<{
     label: string;

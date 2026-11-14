@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 defineProps<{ title: string; url: string; enabled: boolean; pending?: boolean }>();
 defineEmits<{ copy: []; toggle: []; rotate: [] }>();
 </script>
@@ -9,14 +10,7 @@ defineEmits<{ copy: []; toggle: []; rotate: [] }>();
       <strong>{{ title }}</strong>
       <UBadge color="neutral" variant="subtle">{{ enabled ? "Enabled" : "Disabled" }}</UBadge>
     </div>
-    <label class="block text-sm text-muted">
-      Invitation link
-      <input
-        readonly
-        :value="url"
-        class="block w-full rounded border border-default bg-default p-small text-default"
-      />
-    </label>
+    <LabeledInput label="Invitation link" :model-value="url" readonly />
     <div class="flex flex-wrap gap-small">
       <UButton color="neutral" variant="outline" @click="$emit('copy')">Copy</UButton>
       <UButton color="neutral" variant="outline" :disabled="pending" @click="$emit('toggle')">{{

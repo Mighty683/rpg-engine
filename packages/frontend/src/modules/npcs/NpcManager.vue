@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useApiServices } from "../../shared/api-services";
@@ -244,7 +245,7 @@ onUnmounted(() => {
     role="status"
     data-testid="npc-loading"
   >
-    Loading NPCs…
+    <ContentState kind="loading">Loading NPCs…</ContentState>
   </li>
   <NpcCard
     v-for="record in records"
@@ -295,6 +296,9 @@ onUnmounted(() => {
         >
           Saving changes…
         </p>
+        <ContentState v-if="!loading && !records.length" kind="empty"
+          >No NPCs yet. Create an NPC to get started.</ContentState
+        >
         <CharacterSheetTabs
           v-model:selected-id="selected"
           :tabs="records.map((record) => ({ label: record.name, value: record.id }))"

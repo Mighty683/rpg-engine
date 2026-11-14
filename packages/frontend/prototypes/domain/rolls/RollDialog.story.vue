@@ -23,6 +23,7 @@ function initialState() {
     mode: "attribute",
     open: false,
     pending: false,
+    privateRoll: false,
     error: "",
     attribute: makeDraft("attribute"),
     weapon: makeDraft("weapon"),
@@ -41,6 +42,7 @@ function initialState() {
             v-if="state.open"
             :draft="state.mode === 'weapon' ? state.weapon : state.attribute"
             v-model:opponent="state.opponent"
+            v-model:private-roll="state.privateRoll"
             :pending="state.pending"
             :error="state.error"
             @cancel="state.open = false"

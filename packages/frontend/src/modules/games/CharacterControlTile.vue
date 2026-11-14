@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import type { GameCharacterSummary } from "../characters/types";
 import type { GameMember } from "./types";
 
 import { computed, ref, watch } from "vue";
 
-import ScreenSection from "../../shared/design-system/ScreenSection.vue";
+import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 
 const props = defineProps<{
   character: GameCharacterSummary;
@@ -54,11 +55,15 @@ watch(
     <form
       v-if="role === 'GM'"
       class="space-y-medium"
-      @submit.prevent="changed && emit('assign', controller === gm ? null : controller)"
+      @submit.prevent="!pending && changed && emit('assign', controller === gm ? null : controller)"
     >
-      <UFormField :label="`Assign control for ${character.name}`">
-        <USelect v-model="controller" :items="choices" value-key="value" class="w-full" />
-      </UFormField>
+      <LabeledSelect
+        :label="`Assign control for ${character.name}`"
+        v-model="controller"
+        :disabled="pending"
+        :items="choices"
+        class="w-full"
+      />
       <UButton
         type="submit"
         :disabled="!changed || pending"

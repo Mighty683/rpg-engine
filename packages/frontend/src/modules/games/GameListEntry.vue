@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import InteractiveCard from "../../shared/design-system/InteractiveCard.vue";
+import InteractiveCard from "../../shared/design-system/base/InteractiveCard.vue";
 import type { Game } from "./types";
 
 defineProps<{ game: Game; systemLabel: string }>();

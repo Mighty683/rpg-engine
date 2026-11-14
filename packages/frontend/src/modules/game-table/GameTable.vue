@@ -28,7 +28,7 @@ import {
 import CharacterSheetsDrawer from "./CharacterSheetsDrawer.vue";
 import PartyPanel from "./PartyPanel.vue";
 import HistoryPanel from "./HistoryPanel.vue";
-import EdgeTabs from "../../shared/design-system/EdgeTabs.vue";
+import EdgeTabs from "../../shared/design-system/base/EdgeTabs.vue";
 import RollDialog from "./RollDialog.vue";
 import FreeRollDialog from "./FreeRollDialog.vue";
 

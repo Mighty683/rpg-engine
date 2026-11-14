@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import EquipmentIcon from "../../../../shared/design-system/EquipmentIcon.vue";
-import WeaponIcon from "../../../../shared/design-system/WeaponIcon.vue";
+import EquipmentIcon from "../../../../shared/design-system/domain/EquipmentIcon.vue";
+import WeaponIcon from "../../../../shared/design-system/domain/WeaponIcon.vue";
 import type { NamedEntry } from "../types";
 defineProps<{ entry: NamedEntry }>();
 defineEmits<{ select: [type: "other" | "weapon" | "armor"] }>();

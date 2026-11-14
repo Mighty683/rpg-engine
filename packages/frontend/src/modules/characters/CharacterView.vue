@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Snapshot } from "./types";
 import type { Sheet } from "./sheet/types";
-import ContentState from "../../shared/design-system/ContentState.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, ref, watch } from "vue";

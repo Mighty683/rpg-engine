@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import FormActions from "../../shared/design-system/base/FormActions.vue";
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import { useApiServices } from "../../shared/api-services";
-import ConfirmDialog from "../../shared/design-system/ConfirmDialog.vue";
-import ContentState from "../../shared/design-system/ContentState.vue";
+import ConfirmDialog from "../../shared/design-system/base/ConfirmDialog.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
@@ -356,19 +358,26 @@ async function removeCharacter() {
         </template>
       </template>
     </template>
-    <UModal v-model:open="createOpen" title="Create a character">
+    <UModal
+      v-model:open="createOpen"
+      title="Create a character"
+      :close="!createCharacter.isPending.value"
+      :dismissible="!createCharacter.isPending.value"
+    >
       <template #body>
         <form class="space-y-medium" @submit.prevent="submitCharacter">
-          <UFormField label="Character name" :error="createError"
-            ><UInput v-model="characterName" data-testid="character-name" class="w-full"
-          /></UFormField>
-          <div class="flex flex-wrap justify-end gap-small">
-            <UButton type="button" variant="outline" color="neutral" @click="createOpen = false"
-              >Cancel</UButton
-            ><UButton type="submit" :loading="createCharacter.isPending.value"
-              >Create character</UButton
-            >
-          </div>
+          <LabeledInput
+            label="Character name"
+            :error="createError"
+            v-model="characterName"
+            :disabled="createCharacter.isPending.value"
+            data-testid="character-name"
+          />
+          <FormActions
+            submit-label="Create character"
+            :pending="createCharacter.isPending.value"
+            @cancel="createOpen = false"
+          />
         </form>
       </template>
     </UModal>

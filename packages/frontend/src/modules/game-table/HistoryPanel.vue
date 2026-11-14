@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ThrowRecord } from "./types";
-import ContentState from "../../shared/design-system/ContentState.vue";
-import ScreenSection from "../../shared/design-system/ScreenSection.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
+import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import { nextTick, onMounted, ref, watch } from "vue";
 import ThrowResultCard from "./ThrowResultCard.vue";
 

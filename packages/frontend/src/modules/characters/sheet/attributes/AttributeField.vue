@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import InfoTooltip from "../../../../shared/design-system/InfoTooltip.vue";
-import DieIcon from "../../../../shared/design-system/DieIcon.vue";
+import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
+import DieIcon from "../../../../shared/design-system/domain/DieIcon.vue";
 defineProps<{ label: string; help: string; disabled?: boolean }>();
 const value = defineModel<string>({ required: true });
 const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: size }));

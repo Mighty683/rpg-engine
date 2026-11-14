@@ -7,6 +7,7 @@ function initialState() {
     role: "GM" as "GM" | "Player",
     open: false,
     pending: false,
+    privateRoll: false,
     error: "",
     playerHasActive: true,
     draft: { characterId: "gm", dice: [8], modifier: "0", note: "" },
@@ -25,6 +26,7 @@ function initialState() {
             v-if="state.open"
             :draft="state.draft"
             v-model:opponent="state.opponent"
+            v-model:private-roll="state.privateRoll"
             :role="state.role"
             :roll-as-options="[
               { label: 'GM', value: 'gm' },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ConfirmDialog from "../../../src/shared/design-system/ConfirmDialog.vue";
+import ConfirmDialog from "../../../src/shared/design-system/base/ConfirmDialog.vue";
 import { ref } from "vue";
 const open = ref(false);
 function initialState() {
@@ -7,7 +7,7 @@ function initialState() {
 }
 </script>
 <template>
-  <Story title="Design system/Components/Confirmation dialog" :init-state="initialState">
+  <Story title="Design system/Base/Confirmation dialog" :init-state="initialState">
     <template #default="{ state }">
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

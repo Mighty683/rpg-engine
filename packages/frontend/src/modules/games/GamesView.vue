@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import FormActions from "../../shared/design-system/base/FormActions.vue";
+import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { ApiError, Game, System } from "./types";
 
 import { h, nextTick, onMounted, ref } from "vue";
-import ContentState from "../../shared/design-system/ContentState.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import GameListEntry from "./GameListEntry.vue";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
@@ -217,48 +220,38 @@ onMounted(() => {
       <h1 class="text-heading font-semibold">{{ t("games.create") }}</h1>
       <form class="space-y-section" novalidate @submit="submit">
         <fieldset :disabled="saving || discarding" class="space-y-field">
-          <UFormField
-            data-testid="game-name-field"
-            :label="t('games.name')"
-            name="name"
-            required
-            :error="fields.name"
-            :hint="t('games.nameHint')"
-          >
-            <UInput
+          <div data-testid="game-name-field">
+            <LabeledInput
+              :label="t('games.name')"
+              name="name"
+              required
+              :error="fields.name"
+              :hint="t('games.nameHint')"
               id="game-name"
               data-testid="game-name"
               ref="nameInput"
               v-model="name"
-              required
-              class="w-full"
               @update:model-value="setErrors({ name: undefined })"
             />
-          </UFormField>
-          <UFormField
+          </div>
+          <LabeledSelect
             :label="t('games.system')"
             name="systemId"
             required
             :error="fields.systemId"
             :description="t('games.systemDescription')"
+            id="system"
+            data-testid="game-system"
+            ref="systemInput"
+            v-model="systemId"
+            :items="systems.map((system) => ({ label: system.name, value: system.id }))"
+            :placeholder="t('games.systemPlaceholder')"
+            :disabled="saving || systemState !== 'ready' || !systems.length"
+            @update:model-value="setErrors({ systemId: undefined })"
           >
-            <USelect
-              id="system"
-              data-testid="game-system"
-              ref="systemInput"
-              v-model="systemId"
-              :items="systems"
-              label-key="name"
-              value-key="id"
-              :placeholder="t('games.systemPlaceholder')"
-              class="w-full"
-              :disabled="systemState !== 'ready' || !systems.length"
-              @update:model-value="setErrors({ systemId: undefined })"
-            >
-              <template #item-label="{ item }">
-                <span :data-testid="`game-system-option-${item.id}`">{{ item.name }}</span>
-              </template>
-            </USelect>
+            <template #item-label="{ item }">
+              <span :data-testid="`game-system-option-${item.value}`">{{ item.label }}</span>
+            </template>
             <div aria-live="polite" class="mt-small">
               <p v-if="systemState === 'loading'">{{ t("games.systemsLoading") }}</p>
               <div v-else-if="systemState === 'error'" class="space-y-small">
@@ -268,7 +261,7 @@ onMounted(() => {
               </div>
               <p v-else-if="!systems.length">{{ t("games.systemsEmpty") }}</p>
             </div>
-          </UFormField>
+          </LabeledSelect>
           <div role="status" aria-live="polite">
             <p v-if="saving">{{ t("games.creating") }}</p>
             <div v-else-if="outcome === 'unknown'" class="space-y-small">
@@ -277,17 +270,14 @@ onMounted(() => {
               }}</UButton>
             </div>
           </div>
-          <div class="flex flex-wrap gap-medium">
-            <UButton
-              type="submit"
-              data-testid="submit-game"
-              :disabled="systemState !== 'ready' || !systemId"
-              >{{ t("games.create") }}</UButton
-            >
-            <UButton type="button" color="neutral" variant="outline" @click="cancel">{{
-              t("games.cancel")
-            }}</UButton>
-          </div>
+          <FormActions
+            :submit-label="t('games.create')"
+            :cancel-label="t('games.cancel')"
+            :pending="saving"
+            :blocked="systemState !== 'ready' || !systems.length"
+            submit-test-id="submit-game"
+            @cancel="cancel"
+          />
         </fieldset>
       </form>
       <UModal v-model:open="discarding" :title="t('games.discardTitle')" :close="false">

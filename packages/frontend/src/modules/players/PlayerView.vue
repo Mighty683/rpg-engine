@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import ContentState from "../../shared/design-system/ContentState.vue";
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, ref } from "vue";
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { usePlayerQuery } from "./hooks";
-import InteractiveCard from "../../shared/design-system/InteractiveCard.vue";
+import InteractiveCard from "../../shared/design-system/base/InteractiveCard.vue";
 import {
   useCharactersQuery,
   useCreateCharacterMutation,
@@ -123,11 +124,11 @@ async function setActive(id: string) {
         </li>
         <li class="rounded-panel border border-default p-large">
           <form class="flex h-full flex-col gap-small" @submit.prevent="createCharacter">
-            <UInput
+            <LabeledInput
+              label="Character name"
               v-model="name"
               class="w-full min-w-0"
               placeholder="Character name"
-              aria-label="Character name"
               data-testid="character-name-input"
             />
             <UButton

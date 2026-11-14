@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import type { GameCharacterSummary } from "../characters/types";
 import type { GameInvitation } from "../invitations/types";
 import type { GameMember } from "./types";
@@ -9,11 +10,11 @@ import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { account } from "../auth/session";
 import { useApiServices } from "../../shared/api-services";
-import ConfirmDialog from "../../shared/design-system/ConfirmDialog.vue";
-import ContentState from "../../shared/design-system/ContentState.vue";
+import ConfirmDialog from "../../shared/design-system/base/ConfirmDialog.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import PlayerAccessRow from "./PlayerAccessRow.vue";
 import InvitationLinkCard from "../invitations/InvitationLinkCard.vue";
-import ScreenSection from "../../shared/design-system/ScreenSection.vue";
+import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 
 const props = defineProps<{
   gameId: string;
@@ -40,6 +41,7 @@ const selectedCharacterId = ref("");
 const removingMember = ref<GameMember | null>(null);
 const pending = ref(false);
 async function perform(action: () => Promise<unknown>, success: string) {
+  if (pending.value) return;
   pending.value = true;
   try {
     await action();
@@ -61,7 +63,10 @@ async function perform(action: () => Promise<unknown>, success: string) {
   }
 }
 function create(kind: "game" | "character") {
-  if (kind === "character" && !selectedCharacterId.value) return;
+  if (kind === "character" && !selectedCharacterId.value) {
+    toast.add({ title: "Select a character to create an invitation link.", color: "error" });
+    return;
+  }
   void perform(
     () =>
       invitationApi.createGameInvitation(props.gameId, {
@@ -114,7 +119,9 @@ function characterName(id: string | null) {
   <div class="space-y-section">
     <ScreenSection class="space-y-medium p-large">
       <h2 class="text-section font-semibold">Players</h2>
-      <p v-if="!members.length" class="text-muted">No players have joined this game yet.</p>
+      <ContentState v-if="!members.length" kind="empty"
+        >No players have joined this game yet.</ContentState
+      >
       <ul v-else class="space-y-small">
         <PlayerAccessRow
           v-for="member in members"
@@ -162,14 +169,19 @@ function characterName(id: string | null) {
           />
         </ul>
         <form class="flex flex-wrap items-end gap-small" @submit.prevent="create('character')">
-          <UFormField label="Create character link"
-            ><USelect
-              v-model="selectedCharacterId"
-              :items="availableCharacters"
-              value-key="value"
-              placeholder="Select character"
-          /></UFormField>
-          <UButton type="submit" :disabled="pending || !selectedCharacterId">Create link</UButton>
+          <LabeledSelect
+            label="Create character link"
+            v-model="selectedCharacterId"
+            :items="availableCharacters"
+            :disabled="pending || !availableCharacters.length"
+            placeholder="Select character"
+          />
+          <UButton
+            type="submit"
+            :disabled="pending || !availableCharacters.length"
+            :loading="pending"
+            >Create link</UButton
+          >
         </form>
       </template>
     </ScreenSection>

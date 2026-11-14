@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import type { GameCharacterSummary } from "../characters/types";
 import type { GameMember } from "./types";
 
@@ -36,7 +37,9 @@ const groups = computed(() => {
 </script>
 
 <template>
-  <p v-if="!groups.length" class="text-muted">There are no characters to manage yet.</p>
+  <ContentState v-if="!groups.length" kind="empty"
+    >There are no characters to manage yet.</ContentState
+  >
   <div v-else class="space-y-medium">
     <details
       v-for="group in groups"

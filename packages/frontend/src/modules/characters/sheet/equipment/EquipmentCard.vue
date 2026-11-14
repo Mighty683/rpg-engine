@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import EquipmentIcon from "../../../../shared/design-system/EquipmentIcon.vue";
-import WeaponIcon from "../../../../shared/design-system/WeaponIcon.vue";
-import ZenitIcon from "../../../../shared/design-system/ZenitIcon.vue";
-import DetailCard from "../../../../shared/design-system/DetailCard.vue";
+import EquipmentIcon from "../../../../shared/design-system/domain/EquipmentIcon.vue";
+import WeaponIcon from "../../../../shared/design-system/domain/WeaponIcon.vue";
+import ZenitIcon from "../../../../shared/design-system/domain/ZenitIcon.vue";
+import DetailCard from "../../../../shared/design-system/base/DetailCard.vue";
 import EntryNotesField from "../entries/EntryNotesField.vue";
 import EquipmentEditor from "./EquipmentEditor.vue";
 import { useEditableEntry } from "../entries/useEditableEntry";

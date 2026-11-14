@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Attribute, PartyWeapon } from "./types";
-import DieIcon from "../../shared/design-system/DieIcon.vue";
+import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 
 defineProps<{
   weapon: PartyWeapon;

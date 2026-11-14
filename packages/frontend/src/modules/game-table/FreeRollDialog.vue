@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
+import FormActions from "../../shared/design-system/base/FormActions.vue";
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { FreeDraft, OpponentDraft } from "./types";
 import DicePoolEditor from "./DicePoolEditor.vue";
 import OpposedSetup from "./OpposedSetup.vue";
@@ -28,32 +31,34 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
 <template>
   <UModal
     :open="true"
+    :close="!pending"
+    :dismissible="!pending"
     title="Make a roll"
     description="Choose dice and an optional modifier."
     @update:open="
       (open: boolean) => {
-        if (!open) emit('cancel');
+        if (!open && !pending) emit('cancel');
       }
     "
   >
     <template #body>
       <form class="space-y-medium" data-testid="free-roll-dialog" @submit.prevent="emit('submit')">
         <fieldset :disabled="pending" class="space-y-medium">
-          <UFormField v-if="role === 'GM'" label="Roll as">
-            <USelect
-              :model-value="draft.characterId"
-              :items="rollAsOptions"
-              class="w-full"
-              data-testid="roll-as"
-              @update:model-value="emit('update:character', String($event))"
-            >
-              <template #item-label="{ item }">
-                <span :data-testid="`roll-as-option-${item.value === 'gm' ? 'gm' : 'character'}`">{{
-                  item.label
-                }}</span>
-              </template>
-            </USelect>
-          </UFormField>
+          <LabeledSelect
+            v-if="role === 'GM'"
+            label="Roll as"
+            :model-value="draft.characterId"
+            :items="rollAsOptions"
+            class="w-full"
+            data-testid="roll-as"
+            @update:model-value="emit('update:character', String($event))"
+          >
+            <template #item-label="{ item }">
+              <span :data-testid="`roll-as-option-${item.value === 'gm' ? 'gm' : 'character'}`">{{
+                item.label
+              }}</span>
+            </template>
+          </LabeledSelect>
           <p v-else class="text-sm text-muted" data-testid="player-roll-as">
             <template v-if="playerHasActive">Rolling as {{ playerActiveName }}.</template>
             <template v-else
@@ -79,9 +84,7 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
               @update:model-value="emit('update:opponent', $event)"
             />
           </DicePoolEditor>
-          <UFormField label="Note" hint="Optional"
-            ><UInput v-model="draft.note" class="w-full" data-testid="free-note"
-          /></UFormField>
+          <LabeledInput label="Note" hint="Optional" v-model="draft.note" data-testid="free-note" />
           <UCheckbox
             :model-value="privateRoll"
             label="Private roll"
@@ -91,23 +94,14 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
             @update:model-value="emit('update:privateRoll', $event === true)"
           />
           <p v-if="error" role="alert" class="text-error" data-testid="free-error">{{ error }}</p>
-          <div class="flex justify-end gap-small">
-            <UButton
-              type="button"
-              color="neutral"
-              variant="outline"
-              data-testid="cancel-free-roll"
-              @click="emit('cancel')"
-              >Cancel</UButton
-            >
-            <UButton
-              type="submit"
-              :loading="pending"
-              :disabled="pending || (role === 'Player' && !playerHasActive)"
-              data-testid="submit-free-roll"
-              >Roll</UButton
-            >
-          </div>
+          <FormActions
+            submit-label="Roll"
+            :pending="pending"
+            :blocked="role === 'Player' && !playerHasActive"
+            submit-test-id="submit-free-roll"
+            cancel-test-id="cancel-free-roll"
+            @cancel="emit('cancel')"
+          />
         </fieldset>
       </form>
     </template>

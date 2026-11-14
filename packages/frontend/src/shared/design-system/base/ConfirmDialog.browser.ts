@@ -4,7 +4,7 @@ import { createApp, defineComponent, h, ref } from "vue";
 import ui from "@nuxt/ui/vue-plugin";
 import UApp from "@nuxt/ui/components/App.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
-import "../../style.css";
+import "../../../style.css";
 
 test("confirmation can be cancelled or accepted", async () => {
   const root = document.createElement("div");

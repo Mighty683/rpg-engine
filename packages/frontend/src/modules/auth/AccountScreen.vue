@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { Account } from "./types";
 
 import { useToast } from "@nuxt/ui/composables";
@@ -39,40 +40,44 @@ async function submit() {
 <template>
   <main class="min-h-screen bg-default text-default flex items-center justify-center p-large">
     <section class="w-full max-w-md space-y-large">
-      <h1 class="text-2xl font-semibold">
+      <h1 class="text-section font-semibold">
         {{ mode === "login" ? "Sign in" : "Create an account" }}
       </h1>
       <form class="space-y-medium" @submit.prevent="submit">
-        <div class="space-y-small">
-          <label for="username" class="block">Username</label>
-          <UInput
-            id="username"
-            v-model="username"
-            name="username"
-            autocomplete="username"
-            required
-            class="w-full"
-            data-testid="auth-username"
-          />
-        </div>
-        <div class="space-y-small">
-          <label for="password" class="block">Password</label>
-          <UInput
-            id="password"
-            v-model="password"
-            name="password"
-            type="password"
-            :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
-            required
-            class="w-full"
-            data-testid="auth-password"
-          />
-        </div>
+        <LabeledInput
+          label="Username"
+          id="username"
+          v-model="username"
+          name="username"
+          autocomplete="username"
+          required
+          :disabled="busy"
+          class="w-full"
+          data-testid="auth-username"
+        />
+        <LabeledInput
+          label="Password"
+          id="password"
+          v-model="password"
+          name="password"
+          type="password"
+          :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+          required
+          :disabled="busy"
+          class="w-full"
+          data-testid="auth-password"
+        />
         <UButton type="submit" :loading="busy" data-testid="auth-submit">{{
           mode === "login" ? "Sign in" : "Create account"
         }}</UButton>
       </form>
-      <UButton variant="link" @click="mode = mode === 'login' ? 'register' : 'login'">
+      <UButton
+        color="neutral"
+        variant="subtle"
+        :disabled="busy"
+        data-testid="auth-mode"
+        @click="mode = mode === 'login' ? 'register' : 'login'"
+      >
         {{ mode === "login" ? "Create an account" : "Already have an account? Sign in" }}
       </UButton>
     </section>

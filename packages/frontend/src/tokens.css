@@ -62,6 +62,7 @@
 @theme static {
   --spacing-small: var(--value-s8);
   --spacing-tight: var(--value-s4);
+  --spacing-input-label: var(--value-s4);
   --spacing-medium: var(--value-s12);
   --spacing-large: var(--value-s16);
   --spacing-field: var(--value-s20);

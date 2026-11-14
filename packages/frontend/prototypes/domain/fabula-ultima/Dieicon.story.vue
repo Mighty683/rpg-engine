@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import DieIcon from "../../../src/shared/design-system/DieIcon.vue";
+import DieIcon from "../../../src/shared/design-system/domain/DieIcon.vue";
 
 function initialState() {
   return { sides: 8 };
 }
 </script>
 <template>
-  <Story title="Design system/Basic components/Die icon" :init-state="initialState">
+  <Story title="Domain/Fabula Ultima/Die icon" :init-state="initialState">
     <template #default="{ state }">
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

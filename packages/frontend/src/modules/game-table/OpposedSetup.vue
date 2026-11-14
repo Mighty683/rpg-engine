@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { OpponentDraft } from "./types";
 import DicePoolEditor from "./DicePoolEditor.vue";
-import DieIcon from "../../shared/design-system/DieIcon.vue";
+import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 
 const props = withDefaults(
   defineProps<{

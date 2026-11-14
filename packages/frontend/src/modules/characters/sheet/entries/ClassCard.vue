@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DetailCard from "../../../../shared/design-system/DetailCard.vue";
+import DetailCard from "../../../../shared/design-system/base/DetailCard.vue";
 import EntryNotesField from "./EntryNotesField.vue";
 import { useEditableEntry } from "./useEditableEntry";
 import type { NamedEntry } from "../types";

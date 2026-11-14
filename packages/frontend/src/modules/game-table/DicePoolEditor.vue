@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import DieButton from "../../shared/design-system/DieButton.vue";
+import DieButton from "../../shared/design-system/domain/DieButton.vue";
 
 const props = withDefaults(
   defineProps<{

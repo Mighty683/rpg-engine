@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import ConfirmDialog from "../../shared/design-system/base/ConfirmDialog.vue";
+import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import { computed, ref, watch, onUnmounted } from "vue";
-import SheetSection from "../../shared/design-system/SheetSection.vue";
+import SheetSection from "../../shared/design-system/domain/SheetSection.vue";
 import AttributeField from "../characters/sheet/attributes/AttributeField.vue";
 import ResourceField from "../characters/sheet/resources/ResourceField.vue";
 import DefenseField from "../characters/sheet/defense/DefenseField.vue";
@@ -208,7 +210,7 @@ onUnmounted(() => {
       </header>
 
       <div class="sheet-sections">
-        <section class="sheet-panel" aria-label="Attributes">
+        <ScreenSection aria-label="Attributes">
           <SheetSection
             ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
             <div class="stat-grid">
@@ -223,8 +225,8 @@ onUnmounted(() => {
               />
             </div>
           </SheetSection>
-        </section>
-        <section class="sheet-panel" aria-label="Defenses">
+        </ScreenSection>
+        <ScreenSection aria-label="Defenses">
           <SheetSection>
             <template #heading>◈ DEFENSES</template><template #hint>EDIT VALUES MANUALLY</template>
             <div class="defense-grid">
@@ -255,11 +257,11 @@ onUnmounted(() => {
               their maximum. Attacks require a name and a whole-number damage bonus.
             </p>
           </SheetSection>
-        </section>
-        <section class="sheet-panel" aria-label="Attacks">
+        </ScreenSection>
+        <ScreenSection aria-label="Attacks">
           <NpcAttacksEditor :attacks="form.attacks" />
-        </section>
-        <section v-if="!readOnly" class="sheet-panel" aria-label="Notes">
+        </ScreenSection>
+        <ScreenSection v-if="!readOnly" aria-label="Notes">
           <SheetSection
             ><template #heading>✎ NOTES</template><template #hint>GM ONLY</template>
             <textarea
@@ -271,37 +273,34 @@ onUnmounted(() => {
               data-testid="npc-notes-field"
             ></textarea>
           </SheetSection>
-        </section>
+        </ScreenSection>
       </div>
 
       <div
         class="flex flex-wrap items-center justify-end gap-small border-t border-default pt-small"
       >
-        <template v-if="!readOnly && npc">
-          <UButton
-            v-if="!confirmingRemoval"
-            color="error"
-            variant="outline"
-            data-testid="remove-npc"
-            @click="confirmingRemoval = true"
-            >Remove NPC</UButton
-          >
-          <template v-else>
-            <span>Remove {{ npc.name }}?</span>
-            <UButton
-              color="neutral"
-              variant="outline"
-              data-testid="cancel-remove-npc"
-              @click="confirmingRemoval = false"
-              >Cancel</UButton
-            >
-            <UButton color="error" data-testid="confirm-remove-npc" @click="removeNpc(npc.id)"
-              >Confirm removal</UButton
-            >
-          </template>
-        </template>
+        <UButton
+          v-if="!readOnly && npc"
+          color="error"
+          variant="outline"
+          data-testid="remove-npc"
+          @click="confirmingRemoval = true"
+          >Remove NPC</UButton
+        >
       </div>
     </fieldset>
+    <ConfirmDialog
+      :open="confirmingRemoval && !readOnly && Boolean(npc)"
+      :title="`Remove ${npc?.name ?? 'NPC'}?`"
+      description="This permanently removes the NPC from the game."
+      confirm-label="Remove NPC"
+      destructive
+      :pending="pending"
+      confirm-test-id="confirm-remove-npc"
+      cancel-test-id="cancel-remove-npc"
+      @cancel="confirmingRemoval = false"
+      @confirm="npc && removeNpc(npc.id)"
+    />
   </main>
 </template>
 
@@ -388,12 +387,6 @@ onUnmounted(() => {
 .sheet-sections {
   display: grid;
   gap: var(--spacing-small);
-}
-.sheet-panel {
-  border: 1px solid var(--ui-border);
-  border-radius: var(--radius-panel);
-  padding: var(--spacing-small);
-  min-width: 0;
 }
 .stat-grid {
   display: grid;

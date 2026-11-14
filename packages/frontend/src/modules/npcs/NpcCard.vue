@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import AttributeRollButton from "../game-table/AttributeRollButton.vue";
 import WeaponRollButton from "../game-table/WeaponRollButton.vue";
-import ResourceBar from "../../shared/design-system/ResourceBar.vue";
+import ResourceBar from "../../shared/design-system/domain/ResourceBar.vue";
 import type { Attribute, PartyWeapon } from "../game-table/types";
 import type { Npc, NpcAttack } from "./types";
 

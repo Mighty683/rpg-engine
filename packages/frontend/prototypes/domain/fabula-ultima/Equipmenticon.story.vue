@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import EquipmentIcon from "../../../src/shared/design-system/EquipmentIcon.vue";
+import EquipmentIcon from "../../../src/shared/design-system/domain/EquipmentIcon.vue";
 
 function initialState() {
   return { kind: "armor" as "armor" | "other" | "equipped" };
 }
 </script>
 <template>
-  <Story title="Design system/Basic components/Equipment icon" :init-state="initialState">
+  <Story title="Domain/Fabula Ultima/Equipment icon" :init-state="initialState">
     <template #default="{ state }">
       <UApp
         ><div class="min-h-screen bg-default p-section text-default">

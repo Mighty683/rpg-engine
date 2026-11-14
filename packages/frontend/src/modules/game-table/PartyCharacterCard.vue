@@ -2,8 +2,8 @@
 import type { Attribute, PartyCharacter } from "./types";
 import AttributeRollButton from "./AttributeRollButton.vue";
 import WeaponRollButton from "./WeaponRollButton.vue";
-import ResourceBar from "../../shared/design-system/ResourceBar.vue";
-import InfoTooltip from "../../shared/design-system/InfoTooltip.vue";
+import ResourceBar from "../../shared/design-system/domain/ResourceBar.vue";
+import InfoTooltip from "../../shared/design-system/base/InfoTooltip.vue";
 
 const props = withDefaults(defineProps<{ member: PartyCharacter; canEdit?: boolean }>(), {
   canEdit: false,
