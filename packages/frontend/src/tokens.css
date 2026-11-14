@@ -29,6 +29,12 @@
   --value-s48: 3rem;
   --value-s80: 5rem;
   --value-font-sans: ui-sans-serif, system-ui, sans-serif;
+  --value-font-10: 0.625rem;
+  --value-font-14: 0.875rem;
+  --value-focus-2: 2px;
+  --value-line-body: 1.5;
+  --value-line-label: 1.3333;
+  --value-radius-6: 0.375rem;
   --value-font-16: 1rem;
   --value-font-12: 0.75rem;
   --value-font-24: 1.5rem;
@@ -41,6 +47,11 @@
 /* The application currently uses one dark palette. */
 :root {
   color-scheme: dark;
+  --ui-text-dimmed: var(--value-slate-500);
+  --ui-text-toned: var(--value-slate-300);
+  --ui-text-inverted: var(--value-slate-900);
+  --ui-bg-inverted: var(--value-white);
+  --ui-border-inverted: var(--value-white);
   --ui-text: var(--value-slate-200);
   --ui-text-muted: var(--value-slate-400);
   --ui-text-highlighted: var(--value-white);
@@ -56,6 +67,11 @@
   --ui-error: var(--value-red-400);
   --ui-warning: var(--value-amber-400);
   --ui-info: var(--value-blue-400);
+  --focus-ring-color: var(--ui-primary);
+  --focus-ring-width: var(--value-focus-2);
+  --focus-ring-offset: var(--value-focus-2);
+  /* Nuxt UI derives rounded-md (its control radius) as 1.5 times --ui-radius. */
+  --ui-radius: calc(var(--radius-control) / 1.5);
 }
 
 /* Keep semantic variables available to the gallery even without a matching utility. */
@@ -70,6 +86,12 @@
   --spacing-page: var(--value-s48);
   --spacing-page-wide: var(--value-s80);
   --font-sans: var(--value-font-sans);
+  --text-small: var(--value-font-14);
+  --text-small--line-height: var(--value-line-body);
+  --text-meta: var(--value-font-10);
+  --text-body--line-height: var(--value-line-body);
+  --text-label--line-height: var(--value-line-label);
+  --radius-control: var(--value-radius-6);
   --text-body: var(--value-font-16);
   --text-label: var(--value-font-12);
   --text-section: var(--value-font-24);
@@ -77,4 +99,14 @@
   --text-heading: var(--value-font-30);
   --text-heading--line-height: var(--value-line-36);
   --radius-panel: var(--value-radius-8);
+}
+
+/* Bridge Nuxt UI's built-in typography utilities to our semantic scale. */
+@theme inline {
+  --text-xs: var(--text-label);
+  --text-xs--line-height: var(--text-label--line-height);
+  --text-sm: var(--text-small);
+  --text-sm--line-height: var(--text-small--line-height);
+  --text-base: var(--text-body);
+  --text-base--line-height: var(--text-body--line-height);
 }

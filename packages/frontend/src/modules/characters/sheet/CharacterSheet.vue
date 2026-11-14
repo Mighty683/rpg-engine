@@ -110,7 +110,7 @@ function warnIfEditingLocked(event: PointerEvent) {
         />
       </fieldset>
     </header>
-    <p v-if="!readOnly" class="text-sm text-muted">
+    <p v-if="!readOnly" class="text-small text-muted">
       Lock editing prevents accidental changes in this browser only. It does not lock the sheet for
       other people.
     </p>
@@ -142,9 +142,6 @@ function warnIfEditingLocked(event: PointerEvent) {
 
 <style scoped>
 .sheet {
-  --sheet-label-size: 0.75rem;
-  --sheet-meta-size: 0.625rem;
-  --sheet-tight: 0.25rem;
   border-color: var(--ui-border-accented);
 }
 .sheet-header {

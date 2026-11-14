@@ -11,5 +11,18 @@ export default defineConfig({
       },
     },
   },
-  plugins: lazyPlugins(() => [vue(), ui()]),
+  plugins: lazyPlugins(() => [
+    vue(),
+    ui({
+      colorMode: false,
+      ui: {
+        button: {
+          slots: {
+            // Nuxt variant classes also set outlines; keep the application focus tokens authoritative.
+            base: "focus-visible:outline-(length:--focus-ring-width)! focus-visible:outline-(color:--focus-ring-color)! focus-visible:outline-offset-(length:--focus-ring-offset)!",
+          },
+        },
+      },
+    }),
+  ]),
 });

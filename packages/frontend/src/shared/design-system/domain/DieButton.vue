@@ -14,12 +14,12 @@ withDefaults(defineProps<{ sides: number; opposing?: boolean }>(), { opposing: f
   min-width: 2.75rem;
   display: grid;
   justify-items: center;
-  gap: 0.125rem;
-  padding: 0.25rem 0.375rem;
+  gap: var(--dice-control-gap);
+  padding: var(--dice-control-padding);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  font-size: 0.65rem;
+  font-size: var(--dice-label-size);
   font-weight: 700;
   cursor: pointer;
 }
@@ -37,8 +37,8 @@ withDefaults(defineProps<{ sides: number; opposing?: boolean }>(), { opposing: f
   border-color: var(--ui-error);
 }
 .die-button:focus-visible {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 .die-button.opposing:focus-visible {
   outline-color: var(--ui-error);

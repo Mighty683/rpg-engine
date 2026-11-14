@@ -20,12 +20,17 @@ const palettes = [
       "bg-muted",
       "bg-elevated",
       "bg-accented",
+      "bg-inverted",
       "text",
       "text-muted",
+      "text-dimmed",
+      "text-toned",
+      "text-inverted",
       "text-highlighted",
       "border",
       "border-muted",
       "border-accented",
+      "border-inverted",
     ],
   },
   {
@@ -186,6 +191,18 @@ const spacing = [
       <p class="text-heading font-semibold">Heading · sans</p>
       <p class="text-section font-semibold">Section · sans</p>
       <p class="text-body">Body · system sans</p>
+      <p class="text-small">Supporting copy · 14px</p>
+      <p class="text-label">Label · 12px</p>
+      <p class="text-meta">Metadata only · 10px</p>
+      <div class="flex flex-wrap gap-medium">
+        <div class="rounded-control border border-default p-medium">Control radius · 6px</div>
+        <div class="rounded-panel border border-default p-medium">Panel radius · 8px</div>
+      </div>
+      <p class="text-small text-muted">
+        Keyboard focus uses the shared color, width and offset tokens. Tab to the button to inspect
+        it.
+      </p>
+      <UButton>Focus example</UButton>
     </section>
   </UContainer>
 </template>

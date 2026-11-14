@@ -6,6 +6,7 @@ import { providePrototypeApiServices } from "./api";
 
 export const setupVue3 = defineSetupVue3(async ({ app }) => {
   if (typeof process === "undefined" || !process.versions?.node) {
+    document.documentElement.classList.add("dark");
     const { startPrototypeBackend } = await import("./mock-backend/browser");
     await startPrototypeBackend();
   }

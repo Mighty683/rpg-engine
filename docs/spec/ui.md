@@ -8,7 +8,10 @@
 - Display every API error as a toast notification, including validation and request failures. Do not render API error messages as red text in the page or beside fields. Use clear, actionable wording and preserve the user's input when possible.
 - While a form is saving, disable its fields and submit action until the save finishes.
 
-- Use the dark application palette; theme switching is not currently supported.
+- Use the dark application palette; theme switching is not currently supported. Nuxt UI automatic color mode is disabled. Production HTML and the gallery preview use the dark class; application color aliases are fixed independently of OS preference.
+- Base tokens live in `src/tokens.css`; RPG aliases live in `src/shared/design-system/domain/tokens.css`. Do not define sheet typography locally or couple resource/relationship colors to feedback colors.
+- Use `text-small` for supporting copy, `text-label` for labels, and `text-meta` only for dense, nonessential metadata. Dice labels use the shared domain size. Nuxt UI's xs/sm/base typography and control radius map to the base scale without removing its remaining theme defaults.
+- Custom keyboard focus uses `--focus-ring-color`, `--focus-ring-width`, and `--focus-ring-offset`. Nuxt UI buttons use the same outline tokens; inputs retain Nuxt UI's focus-ring behavior. Use `--radius-control` for control geometry and `--radius-panel` for containers.
 
 ## Form fields
 

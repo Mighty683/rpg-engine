@@ -1,0 +1,17 @@
+/* RPG presentation aliases; base controls must not depend on these tokens. */
+@theme static {
+  --color-resource-hp: var(--value-red-400);
+  --color-resource-mp: var(--value-blue-400);
+  --color-relationship-enemy: var(--value-red-400);
+  --color-relationship-friend: var(--value-green-400);
+  --color-relationship-neutral: var(--ui-text-highlighted);
+}
+
+:root {
+  --sheet-label-size: var(--text-label);
+  --sheet-meta-size: var(--text-meta);
+  --sheet-tight: var(--spacing-tight);
+  --dice-label-size: var(--text-label);
+  --dice-control-gap: var(--spacing-tight);
+  --dice-control-padding: var(--spacing-tight) var(--spacing-small);
+}

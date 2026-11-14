@@ -29,7 +29,7 @@ defineEmits<{ select: [type: "other" | "weapon" | "armor"] }>();
 </template>
 <style scoped>
 .item-type {
-  font-size: 0.75rem;
+  font-size: var(--text-label);
   color: var(--ui-text-muted);
 }
 .type-options {
@@ -42,7 +42,7 @@ defineEmits<{ select: [type: "other" | "weapon" | "armor"] }>();
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
   min-width: 0;
   padding: var(--spacing-small);
   border: 1px solid var(--ui-border-accented);
@@ -60,7 +60,7 @@ defineEmits<{ select: [type: "other" | "weapon" | "armor"] }>();
   opacity: 0;
 }
 .type-option:has(input:focus-visible) {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 </style>

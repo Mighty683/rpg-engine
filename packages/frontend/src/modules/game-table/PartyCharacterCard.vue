@@ -147,13 +147,13 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 .attribute-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
 }
 .mini-resource {
   min-width: 0;
   display: grid;
-  gap: 0.125rem;
-  padding: 0.25rem;
+  gap: var(--dice-control-gap);
+  padding: var(--spacing-tight);
   text-align: center;
 }
 .mini-card {
@@ -171,7 +171,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
   align-items: center;
   gap: var(--spacing-tight);
   color: var(--ui-text-muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-label);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -180,7 +180,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
   align-self: end;
   cursor: default;
   color: var(--ui-text-highlighted);
-  font-size: 0.875rem;
+  font-size: var(--text-small);
   font-weight: 700;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);

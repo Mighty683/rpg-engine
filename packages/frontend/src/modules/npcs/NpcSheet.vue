@@ -317,9 +317,6 @@ onUnmounted(() => {
   }
 }
 .sheet {
-  --sheet-label-size: 0.75rem;
-  --sheet-meta-size: 0.625rem;
-  --sheet-tight: 0.25rem;
   border-color: var(--ui-border-accented);
 }
 .sheet-header {
@@ -354,16 +351,16 @@ onUnmounted(() => {
   gap: var(--sheet-tight);
 }
 .relationship label[data-relationship="enemy"] {
-  color: var(--ui-error);
-  accent-color: var(--ui-error);
+  color: var(--color-relationship-enemy);
+  accent-color: var(--color-relationship-enemy);
 }
 .relationship label[data-relationship="friend"] {
-  color: var(--ui-success);
-  accent-color: var(--ui-success);
+  color: var(--color-relationship-friend);
+  accent-color: var(--color-relationship-friend);
 }
 .relationship label[data-relationship="neutral"] {
-  color: var(--ui-text-highlighted);
-  accent-color: var(--ui-text-highlighted);
+  color: var(--color-relationship-neutral);
+  accent-color: var(--color-relationship-neutral);
 }
 .sheet-name input,
 .text-field,
@@ -375,10 +372,10 @@ onUnmounted(() => {
   color: var(--ui-text-highlighted);
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   padding: var(--sheet-tight) var(--spacing-small);
   font-size: var(--text-body);
-  line-height: 1.5rem;
+  line-height: var(--text-body--line-height);
 }
 .sheet-name input::placeholder,
 .text-field::placeholder {

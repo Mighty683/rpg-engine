@@ -59,7 +59,7 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
               }}</span>
             </template>
           </LabeledSelect>
-          <p v-else class="text-sm text-muted" data-testid="player-roll-as">
+          <p v-else class="text-small text-muted" data-testid="player-roll-as">
             <template v-if="playerHasActive">Rolling as {{ playerActiveName }}.</template>
             <template v-else
               >Select an active character in character management before rolling.</template

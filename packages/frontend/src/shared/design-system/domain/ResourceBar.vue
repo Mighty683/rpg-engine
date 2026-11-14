@@ -51,9 +51,9 @@ const percentage = computed(() =>
   height: var(--spacing-field);
 }
 .hp .fill {
-  background: var(--ui-error);
+  background: var(--color-resource-hp);
 }
 .mp .fill {
-  background: var(--ui-info);
+  background: var(--color-resource-mp);
 }
 </style>

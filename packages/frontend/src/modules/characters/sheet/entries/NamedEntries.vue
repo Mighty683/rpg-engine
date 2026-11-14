@@ -92,9 +92,9 @@ function remove(id: string) {
   flex: 1;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   color: var(--ui-text);
   padding: var(--spacing-small);
-  font-size: 0.875rem;
+  font-size: var(--text-small);
 }
 </style>

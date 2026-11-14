@@ -107,7 +107,7 @@ function updateMaximum(event: Event) {
   display: grid;
   text-align: center;
   border: 1px solid var(--ui-border);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   background: var(--ui-bg-muted);
   padding: var(--sheet-tight) var(--spacing-small);
 }
@@ -134,7 +134,7 @@ strong {
   text-align: center;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   color: var(--ui-text-highlighted);
   font-weight: 700;
 }
@@ -179,8 +179,8 @@ strong {
   text-align: left;
 }
 .resource-values:focus-within {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 1px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 .resource-bar {
   grid-template-columns: auto minmax(0, 1fr) auto;

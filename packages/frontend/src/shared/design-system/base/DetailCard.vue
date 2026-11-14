@@ -150,7 +150,7 @@ function confirmRemove() {
 }
 .card-notes {
   color: var(--ui-text-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-small);
 }
 .card-trailing {
   display: inline-flex;
@@ -160,11 +160,11 @@ function confirmRemove() {
   padding: var(--spacing-small);
   border-left: 1px solid var(--ui-border-accented);
   color: var(--ui-text-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-small);
   white-space: nowrap;
 }
 .detail-card-compact .card-trigger {
-  font-size: 0.875rem;
+  font-size: var(--text-small);
 }
 .card-footer {
   display: flex;
@@ -173,7 +173,7 @@ function confirmRemove() {
   margin-top: var(--spacing-small);
   padding-top: var(--spacing-small);
   color: var(--ui-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-label);
 }
 .card-editor {
   position: relative;

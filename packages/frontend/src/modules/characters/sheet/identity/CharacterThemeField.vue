@@ -25,10 +25,10 @@ input {
   color: var(--ui-text-highlighted);
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   padding: var(--sheet-tight) var(--spacing-small);
   font-size: var(--text-body);
-  line-height: 1.5rem;
+  line-height: var(--text-body--line-height);
   font-weight: 400;
   letter-spacing: normal;
 }

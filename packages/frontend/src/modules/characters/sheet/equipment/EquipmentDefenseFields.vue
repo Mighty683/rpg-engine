@@ -64,7 +64,7 @@ function setEquipped(event: Event) {
 .defense-settings label {
   display: block;
   min-width: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-label);
   color: var(--ui-text-muted);
 }
 .defense-settings select,
@@ -74,10 +74,10 @@ function setEquipped(event: Event) {
   min-width: 0;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   color: var(--ui-text);
   padding: var(--spacing-small);
-  font-size: 0.875rem;
+  font-size: var(--text-small);
 }
 .defense-settings .equipped {
   display: flex;
@@ -88,7 +88,7 @@ function setEquipped(event: Event) {
   color: var(--ui-text);
 }
 .hint {
-  font-size: 0.75rem;
+  font-size: var(--text-label);
   color: var(--ui-text-muted);
 }
 </style>

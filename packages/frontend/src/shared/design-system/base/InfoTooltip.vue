@@ -32,8 +32,8 @@ defineProps<{ label: string; text: string }>();
   height: 0.875rem;
 }
 .info:focus-visible {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
   border-radius: 50%;
 }
 </style>

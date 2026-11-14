@@ -105,13 +105,13 @@ function dieLabel(die: { label: string | null; size: number }) {
       </span>
       <strong
         v-if="entry.outcome.first.modifier !== 0"
-        class="text-sm text-highlighted"
+        class="text-small text-highlighted"
         data-testid="throw-modifier"
         >{{ entry.outcome.first.modifier < 0 ? "−" : "+" }}
         {{ Math.abs(entry.outcome.first.modifier) }}</strong
       >
       <template v-if="entry.outcome.second">
-        <span class="text-sm text-muted" aria-hidden="true">vs</span>
+        <span class="text-small text-muted" aria-hidden="true">vs</span>
         <span
           v-for="(die, dieIndex) in entry.outcome.second.dice"
           :key="`opponent-${dieIndex}`"
@@ -125,7 +125,7 @@ function dieLabel(die: { label: string | null; size: number }) {
         </span>
         <strong
           v-if="entry.outcome.second.modifier !== 0"
-          class="text-sm"
+          class="text-small"
           data-testid="throw-opponent-modifier"
           >{{ entry.outcome.second.modifier < 0 ? "−" : "+" }}
           {{ Math.abs(entry.outcome.second.modifier) }}</strong
@@ -145,7 +145,7 @@ function dieLabel(die: { label: string | null; size: number }) {
         · <span data-testid="throw-outcome">{{ outcomeText(entry) }}</span></template
       >
     </p>
-    <p v-if="entry.setup.note" class="text-sm text-muted" data-testid="throw-note">
+    <p v-if="entry.setup.note" class="text-small text-muted" data-testid="throw-note">
       {{ entry.setup.note }}
     </p>
   </li>
@@ -187,11 +187,11 @@ function dieLabel(die: { label: string | null; size: number }) {
 .throw-die {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: var(--spacing-small);
 }
 .throw-dice {
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--spacing-medium);
   margin: 0.375rem 0;
 }
 .throw-die :deep(.die-icon) {
@@ -201,11 +201,11 @@ function dieLabel(die: { label: string | null; size: number }) {
 .throw-die-symbol {
   display: grid;
   justify-items: center;
-  gap: 0.125rem;
+  gap: var(--dice-control-gap);
 }
 .throw-die-label {
   color: var(--ui-text-muted);
-  font-size: 0.625rem;
+  font-size: var(--text-meta);
   font-weight: 600;
   line-height: 1;
 }
@@ -218,6 +218,6 @@ function dieLabel(die: { label: string | null; size: number }) {
   background: var(--ui-bg-elevated);
   clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: var(--text-small);
 }
 </style>

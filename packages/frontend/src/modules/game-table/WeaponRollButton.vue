@@ -56,8 +56,8 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: var(--spacing-small);
+  padding: var(--spacing-small);
   border: 1px solid var(--ui-border-accented);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
@@ -68,21 +68,21 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
 .weapon-die {
   display: inline-flex;
   align-items: center;
-  gap: 0.125rem;
+  gap: var(--dice-control-gap);
 }
 .weapon-dice {
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
 }
 .weapon-die {
-  font-size: 0.625rem;
+  font-size: var(--dice-label-size);
   font-weight: 700;
 }
 .weapon-card:hover:not(:disabled) {
   border-color: var(--ui-primary);
 }
 .weapon-card:focus-visible {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 .weapon-card:disabled {
   opacity: 0.6;

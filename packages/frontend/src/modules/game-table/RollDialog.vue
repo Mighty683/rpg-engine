@@ -62,7 +62,7 @@ function toggleSecond(attribute: Attribute) {
             <template v-for="(attribute, index) in usedAttributes" :key="`${attribute}-${index}`">
               <div class="flex flex-wrap items-end gap-medium">
                 <fieldset>
-                  <legend :class="index === 0 ? 'mb-small text-sm font-medium' : 'sr-only'">
+                  <legend :class="index === 0 ? 'mb-small text-small font-medium' : 'sr-only'">
                     {{ attribute }} die<span v-if="index === 1 && attribute === draft.first">
                       (same size as first)</span
                     >
@@ -98,7 +98,7 @@ function toggleSecond(attribute: Attribute) {
                 </label>
               </div>
               <fieldset v-if="index === 0 && draft.mode === 'attribute'">
-                <legend class="mb-small text-sm font-medium">
+                <legend class="mb-small text-small font-medium">
                   Second attribute <span class="text-muted">(optional)</span>
                 </legend>
                 <div class="flex flex-wrap gap-small">
@@ -160,24 +160,24 @@ function toggleSecond(attribute: Attribute) {
   min-width: 2.75rem;
   display: grid;
   justify-items: center;
-  gap: 0.125rem;
-  padding: 0.25rem 0.375rem;
+  gap: var(--dice-control-gap);
+  padding: var(--dice-control-padding);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  font-size: 0.65rem;
+  font-size: var(--dice-label-size);
   font-weight: 700;
 }
 .modifier-card {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 0.125rem;
-  padding: 0.25rem 0.375rem;
+  gap: var(--dice-control-gap);
+  padding: var(--dice-control-padding);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  font-size: 0.65rem;
+  font-size: var(--dice-label-size);
   font-weight: 700;
 }
 .modifier-card input {
@@ -186,7 +186,7 @@ function toggleSecond(attribute: Attribute) {
   text-align: center;
   color: var(--ui-text-highlighted);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   background: var(--ui-bg);
 }
 .modifier-card input::-webkit-inner-spin-button,
@@ -203,15 +203,15 @@ function toggleSecond(attribute: Attribute) {
   background: var(--ui-bg-elevated);
 }
 .die-choice input:focus-visible + .die-choice-content {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 .attribute-choice[aria-pressed="true"] {
   border-color: var(--ui-primary);
   background: var(--ui-bg-elevated);
 }
 .attribute-choice:focus-visible {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 </style>

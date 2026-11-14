@@ -72,7 +72,7 @@ function update(event: Event) {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
   color: var(--ui-text-muted);
   font-size: var(--sheet-label-size);
   font-weight: 700;
@@ -86,7 +86,7 @@ input {
   text-align: center;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   color: var(--ui-text-highlighted);
   font-weight: 700;
 }
@@ -104,7 +104,7 @@ input::-webkit-inner-spin-button {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
   text-align: left;
 }
 .defense-calculation span,

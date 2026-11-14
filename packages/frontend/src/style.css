@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 @import "./tokens.css";
+@import "./shared/design-system/domain/tokens.css";
 
 @source ".";

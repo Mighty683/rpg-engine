@@ -29,7 +29,7 @@ function remove(index: number) {
 
 <template>
   <div :class="opposing ? 'space-y-small' : 'space-y-medium'">
-    <p class="text-sm font-medium">{{ opposing ? "Opposing dice" : "Friendly dice" }}</p>
+    <p class="text-small font-medium">{{ opposing ? "Opposing dice" : "Friendly dice" }}</p>
     <div
       class="flex flex-wrap items-center gap-small"
       :aria-label="opposing ? undefined : 'Add dice and modifier'"
@@ -65,7 +65,7 @@ function remove(index: number) {
     </div>
     <slot />
     <div v-if="showPool">
-      <p class="mb-small text-sm font-medium">Dice pool</p>
+      <p class="mb-small text-small font-medium">Dice pool</p>
       <div
         v-if="dice.length || opposingDice?.length || hasPoolPrefix"
         class="flex flex-wrap gap-small"
@@ -90,7 +90,7 @@ function remove(index: number) {
           @click="emit('removeOpposing', index)"
         />
       </div>
-      <p v-else class="text-sm text-muted" :data-testid="opposing ? undefined : 'pool-empty'">
+      <p v-else class="text-small text-muted" :data-testid="opposing ? undefined : 'pool-empty'">
         Select dice to add them to the pool.
       </p>
     </div>
@@ -105,8 +105,8 @@ function remove(index: number) {
   pointer-events: none;
 }
 .dice-trigger:focus-visible {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
   border-radius: var(--radius-panel);
 }
 .dice-trigger.opposing:focus-visible {
@@ -117,12 +117,12 @@ function remove(index: number) {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 0.125rem;
-  padding: 0.25rem 0.375rem;
+  gap: var(--dice-control-gap);
+  padding: var(--dice-control-padding);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  font-size: 0.65rem;
+  font-size: var(--dice-label-size);
   font-weight: 700;
 }
 .modifier-card.opposing {
@@ -136,7 +136,7 @@ function remove(index: number) {
   text-align: center;
   color: var(--ui-text-highlighted);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   background: var(--ui-bg);
 }
 .modifier-card input::-webkit-inner-spin-button,

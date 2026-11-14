@@ -191,7 +191,7 @@ onMounted(() => {
       <p v-if="checking" role="status">
         {{ t("games.setupAvailable") }}
       </p>
-      <p class="text-sm text-muted">{{ t("games.joinHint") }}</p>
+      <p class="text-small text-muted">{{ t("games.joinHint") }}</p>
       <div aria-live="polite">
         <ContentState v-if="listState === 'loading'" kind="loading">{{
           t("games.loading")

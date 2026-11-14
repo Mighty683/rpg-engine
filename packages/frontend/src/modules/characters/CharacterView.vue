@@ -218,7 +218,7 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
     <p
       v-if="draft && rosterCharacter"
       data-testid="character-controller"
-      class="text-sm text-muted"
+      class="text-small text-muted"
     >
       {{
         rosterCharacter.controllerMembershipId
@@ -263,7 +263,7 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
     </div>
     <p
       v-else-if="draft && !effectiveReadOnly"
-      class="text-sm text-muted"
+      class="text-small text-muted"
       data-testid="save-status"
       role="status"
     >

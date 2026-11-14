@@ -189,31 +189,31 @@ function attackSummary(npc: Npc): string {
   color: var(--ui-text-muted);
 }
 article[data-relationship="enemy"] {
-  border-color: var(--ui-error);
+  border-color: var(--color-relationship-enemy);
 }
 article[data-relationship="enemy"] .npc-name {
-  color: var(--ui-error);
+  color: var(--color-relationship-enemy);
 }
 article[data-relationship="friend"] {
-  border-color: var(--ui-success);
+  border-color: var(--color-relationship-friend);
 }
 article[data-relationship="friend"] .npc-name {
-  color: var(--ui-success);
+  color: var(--color-relationship-friend);
 }
 article[data-relationship="neutral"] .npc-name {
-  color: var(--ui-text-highlighted);
+  color: var(--color-relationship-neutral);
 }
 .attribute-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
 }
 
 .mini-resource {
   min-width: 0;
   display: grid;
-  gap: 0.125rem;
-  padding: 0.25rem;
+  gap: var(--dice-control-gap);
+  padding: var(--spacing-tight);
   text-align: center;
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
@@ -233,7 +233,7 @@ article[data-relationship="neutral"] .npc-name {
 }
 .mini-resource dt {
   color: var(--ui-text-muted);
-  font-size: 0.6875rem;
+  font-size: var(--text-label);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -241,7 +241,7 @@ article[data-relationship="neutral"] .npc-name {
 .mini-resource dd {
   align-self: end;
   color: var(--ui-text-highlighted);
-  font-size: 0.875rem;
+  font-size: var(--text-small);
   font-weight: 700;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);

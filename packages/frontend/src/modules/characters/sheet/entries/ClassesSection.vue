@@ -20,6 +20,6 @@ defineProps<{ entries: NamedEntry[]; locked: boolean }>();
 .heading-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
 }
 </style>

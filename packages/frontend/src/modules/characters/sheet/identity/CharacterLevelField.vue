@@ -25,7 +25,7 @@ defineEmits<{ change: [event: Event] }>();
   display: grid;
   text-align: center;
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   padding: var(--spacing-small) var(--spacing-medium);
   line-height: 1;
   color: var(--ui-text-muted);
@@ -42,7 +42,7 @@ input {
   font-size: var(--text-body);
   line-height: normal;
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   background: var(--ui-bg);
 }
 input::-webkit-inner-spin-button {

@@ -10,7 +10,7 @@ defineProps<{ game: Game; systemLabel: string }>();
     <InteractiveCard :to="`/games/${game.id}`" data-testid="game-row-link">
       <span class="flex min-w-0 flex-col">
         <span data-testid="game-row-name" class="font-medium">{{ game.name }}</span>
-        <span data-testid="game-row-system" class="text-sm text-muted"
+        <span data-testid="game-row-system" class="text-small text-muted"
           >{{ systemLabel }} · {{ game.role }}</span
         >
       </span>

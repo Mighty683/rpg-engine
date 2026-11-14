@@ -47,7 +47,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--spacing-tight);
   color: var(--ui-text-muted);
   font-size: var(--sheet-label-size);
   font-weight: 700;

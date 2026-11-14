@@ -10,7 +10,7 @@ defineExpose({ focus: () => heading.value?.focus() });
   <div class="name-field min-w-0">
     <div class="flex flex-wrap items-baseline justify-between gap-x-small">
       <p class="sheet-kicker">FABULA ULTIMA <span> / CHARACTER SHEET</span></p>
-      <p v-if="controller" class="text-xs text-muted">Controlled by {{ controller }}.</p>
+      <p v-if="controller" class="text-label text-muted">Controlled by {{ controller }}.</p>
     </div>
     <h1 ref="heading" tabindex="-1" class="sr-only">Character sheet</h1>
     <div class="flex min-w-0 items-center gap-small">
@@ -42,10 +42,10 @@ input {
   color: var(--ui-text-highlighted);
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-control);
   padding: var(--sheet-tight) var(--spacing-small);
   font-size: var(--text-body);
-  line-height: 1.5rem;
+  line-height: var(--text-body--line-height);
   font-weight: 400;
   letter-spacing: normal;
 }
