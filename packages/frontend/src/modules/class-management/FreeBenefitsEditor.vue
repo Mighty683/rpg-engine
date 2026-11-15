@@ -4,12 +4,16 @@ import { ref } from "vue";
 import SurfaceCard from "../../shared/design-system/base/SurfaceCard.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { BenefitDraft } from "./types";
+import { classModifierLabels, isDieModifier } from "../../shared/fabula/classModifiers";
 
-defineProps<{ benefits: BenefitDraft[] }>();
+withDefaults(defineProps<{ benefits: BenefitDraft[]; title?: string; description?: string }>(), {
+  title: "Free benefits",
+  description: "Granted once when the class is acquired.",
+});
 const emit = defineEmits<{
   add: [name: string];
-  remove: [id: number];
-  update: [id: number, change: Partial<BenefitDraft>];
+  remove: [id: string];
+  update: [id: string, change: Partial<BenefitDraft>];
 }>();
 const newName = ref("");
 function addBenefit() {
@@ -22,25 +26,15 @@ const types = [
   { label: "Text effect", value: "text" },
   { label: "Stat modifier", value: "modifier" },
 ];
-const stats = [
-  { label: "Maximum HP", value: "maxHp" },
-  { label: "Maximum MP", value: "maxMp" },
-  { label: "Maximum IP", value: "maxIp" },
-  { label: "Defense", value: "defense" },
-  { label: "Magic Defense", value: "magicDefense" },
-  { label: "DEX die", value: "dieDex" },
-  { label: "INS die", value: "dieIns" },
-  { label: "MIG die", value: "dieMig" },
-  { label: "WLP die", value: "dieWlp" },
-];
+const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ label, value }));
 </script>
 
 <template>
   <SurfaceCard>
     <div class="flex flex-wrap items-start justify-between gap-medium">
       <div>
-        <h2 class="text-section font-semibold">Free benefits</h2>
-        <p class="text-muted">Granted once when the class is acquired.</p>
+        <h2 class="text-section font-semibold">{{ title }}</h2>
+        <p class="text-muted">{{ description }}</p>
       </div>
     </div>
     <p v-if="benefits.length === 0" class="mt-medium text-muted">
@@ -107,11 +101,11 @@ const stats = [
               >
             </LabeledSelect>
             <LabeledInput
-              :label="benefit.stat.startsWith('die') ? 'Die steps' : 'Modifier'"
+              :label="isDieModifier(benefit.stat) ? 'Die steps' : 'Modifier'"
               type="number"
               class="w-24"
               :model-value="benefit.amount"
-              :placeholder="benefit.stat.startsWith('die') ? 'e.g. 1' : 'e.g. 5'"
+              :placeholder="isDieModifier(benefit.stat) ? 'e.g. 1' : 'e.g. 5'"
               :data-testid="`benefit-amount-${benefit.id}`"
               @update:model-value="emit('update', benefit.id, { amount: String($event) })"
             />
@@ -130,7 +124,7 @@ const stats = [
         <p v-if="benefit.kind === 'text'" class="mt-small text-muted">
           Text effects are interpreted during play.
         </p>
-        <p v-else-if="benefit.stat.startsWith('die')" class="mt-small text-muted">
+        <p v-else-if="isDieModifier(benefit.stat)" class="mt-small text-muted">
           Enter die steps: +1 changes a d8 to a d10; −1 changes a d8 to a d6. Dice stay between d6
           and d12.
         </p>
@@ -145,7 +139,7 @@ const stats = [
         data-testid="new-benefit-name"
         required
       />
-      <UButton type="submit" color="primary" variant="outline" data-testid="add-benefit"
+      <UButton type="submit" color="neutral" variant="outline" data-testid="add-benefit"
         >Add benefit</UButton
       >
     </form>

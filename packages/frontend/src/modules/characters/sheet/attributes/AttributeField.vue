@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
 import DieIcon from "../../../../shared/design-system/domain/DieIcon.vue";
-defineProps<{ label: string; help: string; disabled?: boolean }>();
+defineProps<{ label: string; help: string; disabled?: boolean; currentDie?: number }>();
 const value = defineModel<string>({ required: true });
 const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: size }));
 </script>
@@ -13,7 +13,12 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
       ><InfoTooltip :label="`About ${label}`" :text="help" />
     </div>
     <div class="die-value">
-      <DieIcon :sides="value" /><USelect
+      <DieIcon :sides="currentDie ?? value" />
+      <span v-if="currentDie !== undefined" :data-testid="`attribute-die-${label}`"
+        >d{{ currentDie }}</span
+      >
+      <USelect
+        v-else
         v-model="value"
         :items="dice"
         value-key="value"
@@ -30,6 +35,12 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
         >
       </USelect>
     </div>
+    <p
+      v-if="currentDie !== undefined && currentDie !== Number(value)"
+      class="text-small text-muted"
+    >
+      Base d{{ value }}
+    </p>
   </div>
 </template>
 

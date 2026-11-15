@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import AttributeField from "./AttributeField.vue";
-import type { Character } from "../types";
-defineProps<{ attributes: Character["attributes"] }>();
+import type { Attribute, Character } from "../types";
+defineProps<{ attributes: Character["attributes"]; currentDice?: Record<Attribute, number> }>();
 const help = {
   DEX: "Dexterity measures agility and is the usual base for Defense.",
   INS: "Insight measures awareness and is the base for Magic Defense.",
@@ -13,13 +13,15 @@ const help = {
 
 <template>
   <SheetSection class="attributes"
-    ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
+    ><template #heading>◈ ATTRIBUTES</template
+    ><template #hint>{{ currentDice ? "CURRENT DICE" : "BASE DICE" }}</template>
     <div class="grid">
       <AttributeField
         v-for="attribute in ['DEX', 'INS', 'MIG', 'WLP'] as const"
         :key="attribute"
         v-model="attributes[attribute]"
         :label="attribute"
+        :current-die="currentDice?.[attribute]"
         :help="help[attribute]"
       /></div
   ></SheetSection>

@@ -5,7 +5,7 @@ description: Define task acceptance criteria and required tests before implement
 
 # Task Handover
 
-Write `docs/tasks/<task>/handover.md` before the implementation plan. Use the story, UX, UI, and technical design as sources. The handover must stand on its own. Group tests by test level and product behavior.
+Write `docs/tasks/<task>/handover.md` before the implementation plan. Use the story, task UX (including screen design and prototype decisions), and technical design as sources. The handover must stand on its own. Group tests by test level and product behavior.
 
 Limit the handover's test scope to browser E2E and API integration in `packages/tests`. Describe complete browser journeys as Gherkin scenarios and API integration cases with expected outcomes and persisted effects. Follow the package guidance and give each test a stable ID. Decide unit coverage alongside the code during implementation.
 
@@ -19,7 +19,7 @@ Use the handover for final acceptance. Record checks as pending until they run, 
 # Game creation — handover
 
 **Updated:** 2026-11-06
-**Sources:** [Story](story.md) · [UI](ui.md) · [Tech](tech.md)
+**Sources:** [Story](story.md) · [UX and prototype design](ux.md) · [Tech](tech.md)
 
 ## Goals
 

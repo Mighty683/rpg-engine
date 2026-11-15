@@ -1,10 +1,12 @@
+import { seedGameClasses } from "./class-catalog-seed";
 /** Deterministic in-memory prototype data. All HTTP projections share these sheets. */
 import type { Character } from "../../src/modules/characters/types";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
 import type { PartyCharacter } from "../../src/modules/game-table/types";
 import { makeThrow, members } from "../domain/fixtures";
 import type { PrototypeScenario } from "./types";
-import { projectDefenses } from "./defenses";
+import { seedProgressionRanks, progressionCatalog } from "./progression-seed";
+import { projectDefenses } from "../../src/modules/characters/sheet/defense/model";
 
 const timestamp = "2026-01-01T00:00:00Z";
 
@@ -63,6 +65,25 @@ function seedCharacter(id: string, name: string, caster: boolean): Character {
 function initialState() {
   return {
     scenario: "default" as PrototypeScenario,
+    gameClasses: seedGameClasses(),
+    libraryClasses: [] as ReturnType<typeof seedGameClasses>,
+    progressionRanks: seedProgressionRanks(),
+    progressionLevels: Object.fromEntries(
+      Object.entries(seedProgressionRanks()).map(([id, ranks]) => [
+        id,
+        Object.fromEntries(
+          progressionCatalog.map((entry) => [
+            entry.id,
+            entry.skills.reduce((sum, skill) => sum + (ranks[skill.id] ?? 0), 0),
+          ]),
+        ),
+      ]),
+    ),
+    progressionCharacters: [
+      seedCharacter("catalog-rowan", "Rowan Ash", false),
+      seedCharacter("catalog-nera", "Nera Vale", true),
+      seedCharacter("catalog-new", "New adventurer", false),
+    ],
     characters: [
       seedCharacter("rowan", "Rowan Ash", false),
       seedCharacter("nera", "Nera Vale", true),

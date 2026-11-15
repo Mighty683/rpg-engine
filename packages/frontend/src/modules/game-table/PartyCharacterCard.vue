@@ -53,7 +53,9 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
             @click="emit('edit')"
           />
         </div>
-        <p class="text-label text-muted">{{ member.classes.join(", ") || "No classes" }}</p>
+        <p v-if="!$slots['class-progression']" class="text-label text-muted">
+          {{ member.classes.join(", ") || "No classes" }}
+        </p>
       </div>
       <div class="vital-resources">
         <div v-for="resource in ['hp', 'mp'] as const" :key="resource" class="vital-resource">
@@ -75,7 +77,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           v-for="attribute in attributes"
           :key="attribute"
           :attribute="attribute"
-          :sides="member.baseDice[attribute]"
+          :sides="(member.currentDice ?? member.baseDice)[attribute]"
           :character-name="member.name"
           :can-roll="member.canRoll"
           @roll="emit('rollAttribute', attribute)"
@@ -105,14 +107,15 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           </div>
         </div>
       </dl>
-      <dl class="space-y-small pt-small text-label">
+      <slot name="class-progression" />
+      <dl class="space-y-small pt-small text-label" data-testid="party-weapons">
         <div>
           <dt class="font-semibold text-muted">Weapons</dt>
           <dd v-if="!member.weapons.length">None</dd>
           <dd v-for="weapon in member.weapons" :key="weapon.id" class="mt-small">
             <WeaponRollButton
               :weapon="weapon"
-              :base-dice="member.baseDice"
+              :base-dice="member.currentDice ?? member.baseDice"
               :character-name="member.name"
               :can-roll="member.canRoll"
               :reach="weapon.reach ?? null"
@@ -124,6 +127,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           </dd>
         </div>
       </dl>
+      <slot name="actions" />
     </div>
   </li>
 </template>

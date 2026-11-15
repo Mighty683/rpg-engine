@@ -9,9 +9,7 @@ defineProps<{ entries: NamedEntry[]; locked: boolean }>();
   <SheetSection
     ><template #heading>◇ EQUIPMENT</template
     ><NamedEntries :entries="entries" :locked="locked" kind="item" />
-    <p class="note">
-      Equipped armor and shield modify defense. Other effects are not calculated.
-    </p></SheetSection
+    <p class="note">Equipped armor and shields contribute to defense.</p></SheetSection
   >
 </template>
 

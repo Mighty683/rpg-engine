@@ -6,6 +6,7 @@ import DefenseField from "./DefenseField.vue";
 import type { Character } from "../types";
 
 defineProps<{
+  includesClassEffects?: boolean;
   overrides: Character["overrides"];
   calculated: Record<Stat, number | null>;
   details: Record<Stat, { name: string; value: number; modifier?: boolean }[]>;
@@ -41,7 +42,9 @@ const help = {
         :contributions="details.INIT"
       />
     </div>
-    <p class="note">Skill and other effects are not included.</p></SheetSection
+    <p v-if="!includesClassEffects" class="note">
+      Skill and other effects are not included.
+    </p></SheetSection
   >
 </template>
 

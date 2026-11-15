@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-defineProps<{ readOnly?: boolean; controller?: string }>();
+defineProps<{ showReadOnlyBadge?: boolean; controller?: string }>();
 const value = defineModel<string>({ required: true });
 const heading = ref<HTMLElement>();
 defineExpose({ focus: () => heading.value?.focus() });
@@ -18,7 +18,14 @@ defineExpose({ focus: () => heading.value?.focus() });
         ><span class="sr-only">Character name</span
         ><input data-testid="character-name" v-model="value" placeholder="Character name"
       /></label>
-      <UBadge v-if="readOnly" color="neutral" variant="subtle">Read-only</UBadge>
+      <UBadge
+        v-if="showReadOnlyBadge"
+        color="neutral"
+        variant="subtle"
+        class="whitespace-normal"
+        data-testid="sheet-editability"
+        >Read-only</UBadge
+      >
     </div>
   </div>
 </template>

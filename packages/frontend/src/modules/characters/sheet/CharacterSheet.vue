@@ -13,12 +13,14 @@ import ClassesSection from "./entries/ClassesSection.vue";
 import SkillsSection from "./entries/SkillsSection.vue";
 import EquipmentSection from "./equipment/EquipmentSection.vue";
 import DefenseSection from "./defense/DefenseSection.vue";
-import type { Character } from "./types";
+import type { Attribute, Character } from "./types";
 
 const props = defineProps<{
   character: Character;
   controller?: string;
   readOnly?: boolean;
+  hideReadOnlyBadge?: boolean;
+  currentDice?: Record<Attribute, number>;
   maximum: Record<"HP" | "MP" | "IP", number>;
   maximumOverrides: Record<"HP" | "MP" | "IP", number | null>;
   baseDefense: Record<"DEF" | "MAG DEF" | "INIT", number | null>;
@@ -90,7 +92,7 @@ function warnIfEditingLocked(event: PointerEvent) {
         <CharacterNameField
           ref="nameField"
           v-model="identity.name"
-          :read-only="readOnly"
+          :show-read-only-badge="readOnly && !hideReadOnlyBadge"
           :controller="controller"
         />
         <CharacterThemeField v-model="identity.theme" />
@@ -114,16 +116,21 @@ function warnIfEditingLocked(event: PointerEvent) {
       Lock editing prevents accidental changes in this browser only. It does not lock the sheet for
       other people.
     </p>
+    <slot name="class-progression" />
     <fieldset :disabled="editingLocked" class="sheet-sections">
       <ScreenSection class="sheet-split attributes-resources" aria-label="Attributes and resources">
-        <AttributesSection :attributes="attributes" /><ResourcesSection
+        <AttributesSection :attributes="attributes" :current-dice="currentDice" /><ResourcesSection
           :current="current"
           :maximum="maximum"
           :maximum-overrides="maximumOverrides"
           @override="updateMaximum"
         />
       </ScreenSection>
-      <ScreenSection class="sheet-split" aria-label="Classes and skills">
+      <ScreenSection
+        v-if="!$slots['class-progression']"
+        class="sheet-split"
+        aria-label="Classes and skills"
+      >
         <ClassesSection :entries="classes" :locked="editingLocked" /><SkillsSection
           :entries="skills"
           :locked="editingLocked"
@@ -134,6 +141,7 @@ function warnIfEditingLocked(event: PointerEvent) {
           :overrides="overrides"
           :calculated="baseDefense"
           :details="defenseDetails"
+          :includes-class-effects="!!$slots['class-progression']"
         />
       </ScreenSection>
     </fieldset>

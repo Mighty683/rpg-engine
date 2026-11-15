@@ -40,6 +40,12 @@ The table below is **only an example** showing a few classes and their shapes â€
 
 **Important:** Class _free benefits_ and class _skill effects_ are different sources. For example, a Guardian receives +5 HP merely for taking the class, while a separately purchased skill may increase HP further. Do not apply a class-free bonus per class level. Ritualism permission does **not** automatically grant every school-specific ritual: school-specific capabilities come from appropriate skills.
 
+### Benefit sources and scaling
+
+Benefits have no independent levels. Free class benefits apply once upon acquisition. Skill effects use the source skill's rank only when their definition requires it; fixed and conditional effects follow their own definitions. Removing a source removes its benefits.
+
+Show levels and ranks on class and skill cards. The class Benefits section contains only free class benefits. Skill effects stay on skill cards; do not duplicate them as benefit cards or repeat their ranks and progress bars.
+
 ## 3. Attributes and permitted starting arrays
 
 Choose exactly one array, then permute its dice across the four attributes:

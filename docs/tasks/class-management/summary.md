@@ -1,11 +1,9 @@
 # Class management
 
 **Created:** 2026-11-12  
-**Status:** UI
+**Status:** UX
 
 ## Task documents
 
 1. [User story](story.md)
-2. [UX journey](ux.md)
-3. [UI solution](ui.md)
-4. [Simulated GM and player reviews](../../research/interviews/class-management/README.md)
+2. [UX and prototype design](ux.md)

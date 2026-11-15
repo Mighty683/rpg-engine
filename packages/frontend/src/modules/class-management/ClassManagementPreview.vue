@@ -1,214 +1,219 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import SurfaceCard from "../../shared/design-system/base/SurfaceCard.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
-defineProps<{ screen: string; context: string; className: string; classDescription: string }>();
+import type { ClassDefinition } from "./types";
+
+defineProps<{
+  screen: string;
+  context: string;
+  entries: ClassDefinition[];
+  current?: ClassDefinition;
+  editable: boolean;
+}>();
 defineEmits<{
   navigate: [screen: string];
-  updateClassName: [value: string];
-  updateClassDescription: [value: string];
+  switchContext: [context: string];
+  open: [id: string];
+  create: [name: string];
+  copy: [id: string];
+  removeClass: [id: string];
+  updateClass: [change: Partial<Pick<ClassDefinition, "name" | "description">>];
 }>();
+
+const activeTab = ref("details");
+const newName = ref("");
+const editorTabs = [
+  { label: "Class details", value: "details", slot: "details" },
+  { label: "Free benefits", value: "benefits", slot: "benefits" },
+  { label: "Skills", value: "skills", slot: "skills" },
+];
 </script>
 
 <template>
   <main class="min-h-screen bg-default p-section text-default">
     <div class="mx-auto flex max-w-5xl flex-col gap-section">
-      <p class="text-label text-muted">
-        {{ context === "Library" ? "LIBRARY" : "GAME / THE CRYSTAL ROAD" }} · FABULA ULTIMA
-      </p>
       <header class="flex flex-wrap items-start justify-between gap-medium">
         <div>
-          <p class="text-primary">
-            {{ context === "Library" ? "Library / Classes" : "The Crystal Road / Classes" }}
+          <p class="text-label text-muted">
+            {{ context === "Library" ? "LIBRARY" : "GAME / THE CRYSTAL ROAD" }} · FABULA ULTIMA
           </p>
           <h1 class="text-heading font-semibold">
             {{
-              screen === "List"
-                ? "Classes"
-                : screen === "Create"
-                  ? "Create class"
-                  : screen === "Copy"
-                    ? "Copy from library"
-                    : screen === "Removal"
-                      ? "Remove skill"
-                      : screen === "Character"
-                        ? "Character benefits"
-                        : className
+              {
+                List: "Classes",
+                Create: "Create class",
+                Copy: "Copy from library",
+                Character: "Characters",
+              }[screen] ??
+              current?.name ??
+              "Class details"
             }}
           </h1>
-          <p class="text-muted">
-            {{
-              context === "Library"
-                ? "Reusable classes outside your games"
-                : "Classes for The Crystal Road"
-            }}
-          </p>
         </div>
-        <div v-if="screen === 'List'" class="flex gap-small">
-          <UButton v-if="context !== 'Library'" color="neutral" variant="outline"
-            >Copy from library</UButton
+        <div class="flex flex-wrap gap-small">
+          <UButton
+            v-if="screen === 'List' || screen === 'Copy'"
+            color="neutral"
+            variant="outline"
+            data-testid="switch-class-context"
+            @click="$emit('switchContext', context === 'Library' ? 'Game' : 'Library')"
+            >{{ context === "Library" ? "Game classes" : "Class library" }}</UButton
           >
-          <UButton @click="$emit('navigate', 'Create')">Create class</UButton>
-        </div>
-        <div v-else-if="screen === 'Details' || screen === 'Create'" class="flex gap-small">
-          <UButton color="neutral" variant="outline" @click="$emit('navigate', 'List')"
-            >Back to classes</UButton
+          <UButton
+            v-if="screen === 'List' && context === 'Library'"
+            data-testid="create-class"
+            :disabled="!editable"
+            @click="$emit('navigate', 'Create')"
+            >Create class</UButton
           >
-        </div>
-        <p v-if="screen === 'Details'" class="w-full text-muted">
-          Changes are a temporary draft and reset on reload. Saving and editing skills are not
-          available yet.
-        </p>
-      </header>
-
-      <template v-if="screen === 'List'">
-        <SurfaceCard>
-          <div class="flex items-center justify-between gap-medium">
-            <div>
-              <h2 class="text-section font-semibold">Guardian</h2>
-              <p class="text-muted">Fabula Ultima · 1 sample skill · 2 benefits</p>
-            </div>
+          <template v-else-if="screen === 'List'">
+            <UButton
+              data-testid="copy-from-library"
+              :disabled="!editable"
+              @click="$emit('navigate', 'Copy')"
+              >Copy from library</UButton
+            >
             <UButton
               color="neutral"
-              variant="subtle"
-              data-testid="view-class"
-              @click="$emit('navigate', 'Details')"
-              >View class</UButton
+              variant="outline"
+              data-testid="view-characters"
+              @click="$emit('navigate', 'Character')"
+              >Characters</UButton
             >
-          </div>
-          <p class="mt-medium text-muted">
-            A defender who protects allies and stands firm in danger.
-          </p>
-        </SurfaceCard>
-        <p class="text-muted">
+          </template>
+          <UButton
+            v-else
+            color="neutral"
+            variant="outline"
+            data-testid="back-to-classes"
+            @click="$emit('navigate', 'List')"
+          >
+            Back to classes
+          </UButton>
+        </div>
+      </header>
+
+      <template v-if="screen === 'List' || screen === 'Copy'">
+        <p v-if="screen === 'Copy'" class="text-muted">
+          Copy into The Crystal Road. The game copy is independent of the library.
+        </p>
+        <p v-if="!entries.length" class="text-muted" data-testid="empty-class-list">
           {{
-            context === "Library"
-              ? "Edits here will not change classes already copied into games."
-              : "Game copies are edited independently of the library."
+            screen === "Copy"
+              ? "Create a class in the library before copying it into this game."
+              : "No classes yet."
           }}
         </p>
-      </template>
-
-      <template v-else-if="screen === 'Create'">
-        <SurfaceCard>
-          <h2 class="text-section font-semibold">Class details</h2>
-          <p class="text-muted">
-            {{
-              context === "Library"
-                ? "Create a reusable library class."
-                : "Create a class for The Crystal Road."
-            }}
-          </p>
-          <LabeledInput class="mt-medium" label="Name" placeholder="Class name" readonly />
-          <LabeledInput
-            class="mt-medium"
-            label="Description"
-            placeholder="Describe the class"
-            readonly
-            multiline
-          />
-        </SurfaceCard>
-        <slot name="free-benefits" />
-        <SurfaceCard>
-          <h2 class="text-section font-semibold">Skills</h2>
-          <p class="text-muted">Define each skill's description, rank limit and benefits.</p>
-          <p class="mt-medium text-muted">No skills added yet.</p>
-        </SurfaceCard>
-        <p class="text-muted">
-          Benefit edits are a temporary draft and reset on reload. Class details, saving, and adding
-          skills are not available yet.
-        </p>
-      </template>
-
-      <template v-else-if="screen === 'Details'">
-        <SurfaceCard>
-          <h2 class="text-section font-semibold">Class details</h2>
-          <p class="text-muted">
-            {{
-              context === "Library"
-                ? "Editing the library version; existing game copies will not change."
-                : "Editing this game’s copy; the library and other games will not change."
-            }}
-          </p>
-          <LabeledInput
-            class="mt-medium max-w-xs"
-            label="Name"
-            :model-value="className"
-            data-testid="class-name"
-            @update:model-value="$emit('updateClassName', String($event))"
-          />
-          <LabeledInput
-            class="mt-medium"
-            label="Description"
-            multiline
-            :model-value="classDescription"
-            data-testid="class-description"
-            @update:model-value="$emit('updateClassDescription', String($event))"
-          />
-        </SurfaceCard>
-        <slot name="free-benefits" />
-        <SurfaceCard>
-          <div class="flex items-center justify-between">
+        <SurfaceCard v-for="entry in entries" :key="entry.id">
+          <div class="flex flex-wrap items-center justify-between gap-medium">
             <div>
-              <h2 class="text-section font-semibold">Skills</h2>
-              <p class="text-muted">Define skill effects, ranks and benefits.</p>
+              <h2 class="text-section font-semibold">{{ entry.name }}</h2>
+              <p v-if="entry.description" class="text-muted">{{ entry.description }}</p>
             </div>
-          </div>
-          <div class="mt-large flex items-center justify-between gap-medium">
-            <div>
-              <strong>Protect</strong>
-              <p class="text-muted">Maximum rank 5 · Text effect</p>
+            <div class="flex flex-wrap gap-small">
+              <UButton
+                v-if="screen === 'Copy'"
+                :disabled="!editable"
+                :data-testid="`copy-class-${entry.id}`"
+                @click="$emit('copy', entry.id)"
+                >Copy class</UButton
+              >
+              <template v-else>
+                <UButton
+                  color="neutral"
+                  variant="subtle"
+                  :data-testid="`view-class-${entry.id}`"
+                  @click="
+                    activeTab = 'details';
+                    $emit('open', entry.id);
+                  "
+                  >View class</UButton
+                >
+                <UButton
+                  v-if="context === 'Game'"
+                  color="error"
+                  variant="outline"
+                  :disabled="!editable"
+                  :data-testid="`remove-class-${entry.id}`"
+                  @click="$emit('removeClass', entry.id)"
+                  >Remove class</UButton
+                >
+              </template>
             </div>
           </div>
         </SurfaceCard>
       </template>
 
-      <SurfaceCard v-else-if="screen === 'Copy'">
-        <h2 class="text-section font-semibold">Choose a class</h2>
-        <p class="text-muted">
-          Copy into The Crystal Road. Later library edits will not update this game copy.
-        </p>
-        <div class="mt-large flex items-center justify-between gap-medium">
-          <div>
-            <strong>Guardian</strong>
-            <p class="text-muted">Fabula Ultima · 1 sample skill · 2 benefits</p>
-          </div>
-          <UButton>Copy class</UButton>
-        </div>
-      </SurfaceCard>
-      <SurfaceCard v-else-if="screen === 'Removal'" class="max-w-xl">
-        <h2 class="text-section font-semibold">Remove Protect?</h2>
-        <p class="mt-medium">
-          This removes Protect from The Crystal Road and from these characters:
-        </p>
-        <ul class="mt-medium list-disc pl-section">
-          <li>Rowan Ash</li>
-          <li>Nera Vale</li>
-        </ul>
-        <div class="mt-section flex gap-small">
-          <UButton color="error" variant="solid">Remove skill</UButton
-          ><UButton color="neutral" variant="outline">Cancel</UButton>
-        </div>
-      </SurfaceCard>
-      <SurfaceCard v-else>
-        <h2 class="text-section font-semibold">Rowan Ash · Benefits</h2>
-        <p class="text-muted">
-          Applied modifiers change your stats. Text benefits describe effects to interpret during
-          play.
-        </p>
-        <div class="mt-large flex flex-col gap-medium">
-          <p>
-            <strong>Maximum HP +5</strong> · Applied<br /><span class="text-muted"
-              >Guardian · Free benefit</span
-            >
-          </p>
-          <p>
-            <strong>Martial armor and shields</strong> · Text<br /><span class="text-muted"
-              >Guardian · Free benefit</span
-            >
-          </p>
-        </div>
-        <p class="mt-large text-muted">Maximum HP: 45 → 50</p>
-      </SurfaceCard>
+      <form
+        v-else-if="screen === 'Create'"
+        class="flex flex-wrap items-end gap-small"
+        @submit.prevent="
+          $emit('create', newName.trim());
+          newName = '';
+          activeTab = 'details';
+        "
+      >
+        <LabeledInput
+          v-model="newName"
+          label="Class name"
+          data-testid="create-class-name"
+          maxlength="100"
+        />
+        <UButton
+          type="submit"
+          :disabled="!editable || !newName.trim()"
+          data-testid="add-library-class"
+          >Add class</UButton
+        >
+      </form>
+
+      <UTabs
+        v-else-if="screen === 'Details' && current"
+        v-model="activeTab"
+        :items="editorTabs"
+        :ui="{ content: 'mt-medium' }"
+      >
+        <template #default="{ item }"
+          ><span :data-testid="`class-tab-${item.value}`">{{ item.label }}</span></template
+        >
+        <template #details>
+          <SurfaceCard>
+            <p class="text-muted">
+              {{
+                context === "Library"
+                  ? "Library changes do not update existing game copies."
+                  : "You are editing this game’s copy."
+              }}
+            </p>
+            <LabeledInput
+              :key="current.id"
+              class="mt-medium max-w-xs"
+              label="Name"
+              :model-value="current.name"
+              :readonly="!editable"
+              data-testid="class-name"
+              @update:model-value="
+                String($event).trim() && $emit('updateClass', { name: String($event) })
+              "
+            />
+            <LabeledInput
+              :key="`${current.id}-description`"
+              class="mt-medium"
+              label="Description"
+              multiline
+              :model-value="current.description"
+              :readonly="!editable"
+              data-testid="class-description"
+              @update:model-value="$emit('updateClass', { description: String($event) })"
+            />
+          </SurfaceCard>
+        </template>
+        <template #benefits><slot name="free-benefits" /></template>
+        <template #skills><slot name="skills" /></template>
+      </UTabs>
+
+      <slot v-else-if="screen === 'Character'" name="characters" />
     </div>
   </main>
 </template>
