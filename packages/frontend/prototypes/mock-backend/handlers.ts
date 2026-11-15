@@ -1,4 +1,5 @@
 import { handleClassCatalog } from "./class-catalog";
+import { classGamePath, gameClassesPath, libraryPath } from "../class-management/contract";
 /** MSW HTTP boundary for offline prototypes, including production character clients. */
 import { delay, http, HttpResponse } from "msw";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
@@ -29,13 +30,20 @@ export const prototypeHandlers = [
       return HttpResponse.json({ error: { code: "prototype_error" } }, { status: 500 });
     const path = new URL(request.url).pathname;
     const method = request.method;
-    const body =
-      method === "GET" || method === "DELETE"
+    const body = request.headers.get("content-type")?.includes("application/json")
+      ? ((await request.json()) as Record<string, any>)
+      : method === "GET" || method === "DELETE"
         ? {}
         : ((await request.json()) as Record<string, any>);
-    if (path === "/api/prototype/class-catalog") return handleClassCatalog(method, body);
-    if (path.startsWith("/api/prototype/class-progression"))
-      return handleProgression(path, method, body);
+    const player = request.headers.get("x-prototype-character");
+    if (
+      path === libraryPath ||
+      path.startsWith(`${libraryPath}/`) ||
+      path === gameClassesPath ||
+      path.startsWith(`${gameClassesPath}/`)
+    )
+      return handleClassCatalog(path, method, body, Boolean(player));
+    if (path.startsWith(`${classGamePath}/`)) return handleProgression(path, method, body, player);
     const empty = store.scenario === "empty";
     const game = {
       id: "prototype-game",

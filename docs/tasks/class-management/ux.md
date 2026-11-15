@@ -69,8 +69,6 @@ Show the destination game before copying. Copies stay independent, including rep
 
 ### Save a game class to the library
 
-Proposed flow.
-
 ```mermaid
 flowchart TD
     Class["Game class definition"] --> Choice{"Save to library"}

@@ -27,6 +27,7 @@ export function applyCatalogChange(
           {
             ...source,
             id: change.id,
+            revision: 0,
             benefits: source.benefits.map((benefit) => ({ ...benefit })),
             skills: source.skills.map((skill) => ({
               ...skill,
@@ -37,22 +38,5 @@ export function applyCatalogChange(
         ],
       };
     }
-    case "remove-class":
-      return { ...catalog, game: catalog.game.filter(({ id }) => id !== change.id) };
-    case "remove-skill":
-      return {
-        ...catalog,
-        game: catalog.game.map((entry) =>
-          entry.id === change.classId
-            ? { ...entry, skills: entry.skills.filter(({ id }) => id !== change.skillId) }
-            : entry,
-        ),
-        characters: catalog.characters.map((character) => {
-          if (!(change.skillId in character.ranks)) return character;
-          const ranks = { ...character.ranks };
-          delete ranks[change.skillId];
-          return { ...character, ranks };
-        }),
-      };
   }
 }

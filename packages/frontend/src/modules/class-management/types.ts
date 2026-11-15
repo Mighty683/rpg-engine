@@ -20,32 +20,38 @@ export interface SkillDraft {
 
 export interface ClassDefinition {
   id: string;
+  revision?: number;
   name: string;
   description: string;
   benefits: BenefitDraft[];
   skills: SkillDraft[];
 }
 
-export interface ClassUsage {
-  id: string;
-  name: string;
-  levels: Record<string, number>;
-  ranks: Record<string, number>;
-}
-
 export interface ClassCatalog {
   library: ClassDefinition[];
   game: ClassDefinition[];
-  characters: ClassUsage[];
 }
 
 export type ClassCatalogChange =
   | { kind: "put"; scope: "library" | "game"; entry: ClassDefinition }
-  | { kind: "copy"; from: string; id: string }
-  | { kind: "remove-class"; id: string }
-  | { kind: "remove-skill"; classId: string; skillId: string; confirmedCharacters: string[] };
+  | { kind: "copy"; from: string; id: string };
+
+export type RemovalImpact = {
+  skillId: string;
+  characters: { id: string; name: string; rank: number }[];
+}[];
+export type SaveLibraryChoice =
+  | { mode: "new"; id: string; name: string }
+  | { mode: "update"; templateId: string };
 
 export interface ClassCatalogApi {
   load(): Promise<ClassCatalog>;
-  save(changes: ClassCatalogChange[]): Promise<ClassCatalog>;
+  save(base: ClassCatalog, changes: ClassCatalogChange[]): Promise<ClassCatalog>;
+  updateGameClass(
+    base: ClassCatalog,
+    entry: ClassDefinition,
+    impact?: RemovalImpact,
+  ): Promise<ClassCatalog>;
+  removeGameClass(base: ClassCatalog, id: string): Promise<ClassCatalog>;
+  saveToLibrary(base: ClassCatalog, id: string, choice: SaveLibraryChoice): Promise<ClassCatalog>;
 }

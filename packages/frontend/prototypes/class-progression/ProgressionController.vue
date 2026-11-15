@@ -16,6 +16,8 @@ import {
   withProgressionRanks,
 } from "../../src/modules/class-progression/model";
 import ProgressionWorkspace from "../../src/modules/class-progression/ProgressionWorkspace.vue";
+import { ContractError } from "../class-management/contract";
+import LabeledInput from "../../src/shared/design-system/base/LabeledInput.vue";
 import LabeledSelect from "../../src/shared/design-system/base/LabeledSelect.vue";
 import { resetPrototypeBackend, setPrototypeScenario } from "../api";
 import type { PrototypeScenario } from "../api";
@@ -23,36 +25,59 @@ import type { PrototypeScenario } from "../api";
 const props = defineProps<{ readOnly?: boolean; playerCharacterId?: string }>();
 const api = useProgressionApi();
 const toast = useToast();
-const optimistic = useOptimisticSave<ProgressionSnapshot, Record<string, ProgressionAllocation>>({
-  apply: (base, changes) => ({
+function replaceCharacter(
+  base: ProgressionSnapshot,
+  character: ProgressionSnapshot["characters"][number],
+): ProgressionSnapshot {
+  return {
     ...base,
-    characters: base.characters.map((character) => {
+    characters: base.characters.map((entry) => (entry.id === character.id ? character : entry)),
+    party: base.party.map((entry) => (entry.id === character.id ? character.party : entry)),
+  };
+}
+
+const optimistic = useOptimisticSave<ProgressionSnapshot, Record<string, ProgressionAllocation>>({
+  apply: (base, changes) =>
+    base.characters.reduce((snapshot, character) => {
       const change = changes[character.id];
-      if (!change) return character;
-      return withProgressionRanks(
-        base.catalog,
-        {
-          ...character,
-          sheet: { ...character.sheet, level: change.level },
-          experience: change.experience,
-        },
-        change.ranks,
-        change.levels,
+      if (!change) return snapshot;
+      return replaceCharacter(
+        snapshot,
+        withProgressionRanks(
+          base.catalog,
+          {
+            ...character,
+            sheet: { ...character.sheet, level: change.level },
+            experience: change.experience,
+          },
+          change.ranks,
+          change.levels,
+        ),
       );
-    }),
-  }),
+    }, base),
   merge: (previous, next) => ({ ...previous, ...next }),
   save: async (base, changes) => {
     let result = base;
-    for (const [id, allocation] of Object.entries(changes)) {
-      const character = result.characters.find((entry) => entry.id === id)!;
-      result = await api.save(id, { expectedRevision: character.revision, ...allocation });
+    try {
+      for (const [id, allocation] of Object.entries(changes)) {
+        const character = result.characters.find((entry) => entry.id === id)!;
+        const saved = await api.save(character, {
+          expectedRevision: character.revision,
+          ...allocation,
+        });
+        result = replaceCharacter(result, saved);
+      }
+    } catch (error) {
+      if (result === base) throw error;
+      throw new ContractError(409, "partial_save", "Some changes were saved. Refresh saved data.");
     }
     return result;
   },
   refresh: () => api.load(),
 });
-const snapshot = computed(() => optimistic.displayed.value ?? { catalog: [], characters: [] });
+const snapshot = computed(
+  () => optimistic.displayed.value ?? { catalog: [], characters: [], party: [] },
+);
 watch(optimistic.error, (error) => {
   if (!error) return;
   const refreshAction = {
@@ -102,7 +127,6 @@ async function load() {
 const levels = computed(() => selected.value?.levels ?? {});
 function submit(changes: Partial<ProgressionAllocation>) {
   if (!selected.value || props.readOnly || optimistic.paused.value) return;
-  if (props.playerCharacterId && selected.value.id !== props.playerCharacterId) return;
   const { sheet, levels, ranks, experience } = selected.value;
   const allocation = { level: sheet.level, levels, ranks, experience, ...changes };
   const error =
@@ -136,6 +160,30 @@ function changeExperience(field: keyof ProgressionExperience, value: number) {
 }
 function changeLevel(level: number) {
   if (level !== selected.value?.sheet.level) submit({ level });
+}
+const createOpen = ref(false);
+const newCharacterName = ref("");
+const creating = ref(false);
+let newCharacterId: string | undefined;
+function openCreate() {
+  newCharacterId = crypto.randomUUID();
+  newCharacterName.value = "";
+  createOpen.value = true;
+}
+async function createCharacter() {
+  const name = newCharacterName.value.trim();
+  if (!newCharacterId || !name || creating.value) return;
+  creating.value = true;
+  try {
+    await api.create(newCharacterId, name);
+    selectedId.value = newCharacterId;
+    createOpen.value = false;
+    await load();
+  } catch (error) {
+    report(error);
+  } finally {
+    creating.value = false;
+  }
 }
 async function reset() {
   resetPrototypeBackend();
@@ -195,11 +243,53 @@ onMounted(load);
           >Reset examples</UButton
         >
       </div>
+      <UButton
+        v-if="!readOnly"
+        :disabled="loading || optimistic.saving.value || optimistic.paused.value"
+        data-testid="create-progression-character"
+        @click="openCreate"
+        >Create character</UButton
+      >
+      <UModal
+        v-model:open="createOpen"
+        title="Create character"
+        description="New characters start at level 5 with 50 / 50 EXP."
+        :dismissible="!creating"
+      >
+        <template #body>
+          <form id="create-progression-character-form" @submit.prevent="createCharacter">
+            <LabeledInput
+              v-model="newCharacterName"
+              label="Name"
+              maxlength="100"
+              :disabled="creating"
+              data-testid="progression-character-name"
+            />
+          </form>
+        </template>
+        <template #footer>
+          <UButton
+            color="neutral"
+            variant="outline"
+            :disabled="creating"
+            @click="createOpen = false"
+            >Cancel</UButton
+          >
+          <UButton
+            type="submit"
+            form="create-progression-character-form"
+            :loading="creating"
+            :disabled="!newCharacterName.trim()"
+            data-testid="submit-progression-character"
+            >Create character</UButton
+          >
+        </template>
+      </UModal>
       <p v-if="loading" role="status">Loading characters…</p>
       <UButton v-else-if="loadFailed" data-testid="retry-progression" @click="load"
         >Retry loading characters</UButton
       >
-      <p v-else-if="!snapshot.characters.length" data-testid="progression-empty">
+      <p v-else-if="!snapshot.party.length" data-testid="progression-empty">
         No characters available.
       </p>
       <ProgressionWorkspace

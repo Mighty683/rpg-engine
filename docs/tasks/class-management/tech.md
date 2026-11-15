@@ -4,7 +4,7 @@
 
 ## Production boundary
 
-The Histoire stories use MSW catalog and progression endpoints. Production already has a revisioned [character sheet](../../../packages/backend/src/modules/characters/workspace-service.ts), a batched [party view](../../../packages/backend/src/modules/characters/party-service.ts), and a [roll reader](../../../packages/backend/src/modules/characters/roll-reader.ts). The current `classes` and `skills` on a sheet are manual entries.
+The Histoire stories exercise the proposed catalog and character routes through MSW. Production already has a revisioned [character sheet](../../../packages/backend/src/modules/characters/workspace-service.ts), a batched [party view](../../../packages/backend/src/modules/characters/party-service.ts), and a [roll reader](../../../packages/backend/src/modules/characters/roll-reader.ts). The current `classes` and `skills` on a sheet are manual entries.
 
 ```mermaid
 flowchart LR

@@ -22,20 +22,13 @@ defineEmits<{
 const selectedId = defineModel<string>("selectedId", { required: true });
 const surface = ref(props.playerCharacterId ? "table" : "sheet");
 const drawerOpen = ref(false);
-const availableSheets = computed(() =>
-  props.playerCharacterId
-    ? props.snapshot.characters.filter((entry) => entry.id === props.playerCharacterId)
-    : props.snapshot.characters,
+const sheetsById = computed(
+  () => new Map(props.snapshot.characters.map((entry) => [entry.id, entry])),
 );
-const selected = computed(() =>
-  availableSheets.value.find((entry) => entry.id === selectedId.value),
-);
+const selected = computed(() => sheetsById.value.get(selectedId.value));
 const characterTabs = computed(() =>
-  availableSheets.value.map((entry) => ({ label: entry.sheet.name, value: entry.id })),
+  props.snapshot.characters.map((entry) => ({ label: entry.sheet.name, value: entry.id })),
 );
-function canOpenSheet(id: string) {
-  return !props.playerCharacterId || id === props.playerCharacterId;
-}
 </script>
 <template>
   <section class="space-y-medium">
@@ -53,7 +46,7 @@ function canOpenSheet(id: string) {
     </UTabs>
     <template v-if="surface === 'sheet'">
       <LabeledSelect
-        v-if="!playerCharacterId"
+        v-if="!playerCharacterId || characterTabs.length > 1"
         v-model="selectedId"
         label="Character"
         :items="characterTabs"
@@ -82,23 +75,19 @@ function canOpenSheet(id: string) {
         sheet.
       </p>
       <ul class="grid gap-medium md:grid-cols-2">
-        <PartyCharacterCard
-          v-for="character in snapshot.characters"
-          :key="character.id"
-          :member="character.party"
-        >
-          <template v-if="canOpenSheet(character.id)" #class-progression>
-            <TableClassesCard :catalog="snapshot.catalog" :character="character" />
+        <PartyCharacterCard v-for="member in snapshot.party" :key="member.id" :member="member">
+          <template v-if="sheetsById.has(member.id)" #class-progression>
+            <TableClassesCard :catalog="snapshot.catalog" :character="sheetsById.get(member.id)!" />
           </template>
           <template #actions>
             <UButton
-              v-if="canOpenSheet(character.id)"
+              v-if="sheetsById.has(member.id)"
               class="mt-medium"
               color="neutral"
               variant="outline"
-              :data-testid="`open-sheet-${character.id}`"
+              :data-testid="`open-sheet-${member.id}`"
               @click="
-                selectedId = character.id;
+                selectedId = member.id;
                 drawerOpen = true;
               "
               >Open character sheet</UButton

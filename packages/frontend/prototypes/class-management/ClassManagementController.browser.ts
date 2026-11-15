@@ -83,11 +83,17 @@ test("library creation is optimistic and the copied class can be acquired withou
   await page.getByTestId("switch-class-context").click();
   await expect.element(page.getByTestId("create-class")).not.toBeInTheDocument();
   await page.getByTestId("copy-from-library").click();
+  setPrototypeScenario("loading");
   await page.getByTestId(`copy-class-${libraryId}`).click();
   await expect.element(page.getByTestId("class-name")).toHaveValue("Lancer");
+  await expect.element(page.getByTestId("class-name")).toHaveAttribute("readonly");
   await expect
-    .poll(() => prototypeStore.gameClasses.find((entry) => entry.name === "Lancer")?.id)
+    .poll(() => prototypeStore.gameClasses.find((entry) => entry.name === "Lancer")?.id, {
+      timeout: 4000,
+    })
     .toBeTruthy();
+  setPrototypeScenario("default");
+  await expect.element(page.getByTestId("class-name")).not.toHaveAttribute("readonly");
   const copyId = prototypeStore.gameClasses.find((entry) => entry.name === "Lancer")!.id;
   expect(copyId).not.toBe(libraryId);
   await page.getByTestId("back-to-classes").click();
@@ -130,16 +136,21 @@ test("library edits preserve an independent game copy until it is removed and co
   await page.getByTestId("class-tab-benefits").click();
   await page.getByTestId("new-benefit-name").fill("Vigor");
   await page.getByTestId("add-benefit").click();
+  const draftBenefit = () =>
+    document.querySelector<HTMLInputElement>('[data-testid^="benefit-description-"]')?.dataset
+      .testid;
+  await expect.poll(draftBenefit).toBeTruthy();
+  expect(prototypeStore.libraryClasses[0]?.benefits).toEqual([]);
+  await page.getByTestId(draftBenefit()!).fill("Recover your footing after a fall.");
   await expect.poll(() => prototypeStore.libraryClasses[0]?.benefits.length).toBe(1);
-  const benefitId = prototypeStore.libraryClasses[0]!.benefits[0]!.id;
-  await page
-    .getByTestId(`benefit-description-${benefitId}`)
-    .fill("Recover your footing after a fall.");
   await page.getByTestId("class-tab-skills").click();
   await page.getByTestId("add-skill").click();
+  const draftSkill = () =>
+    document.querySelector<HTMLInputElement>('[data-testid^="skill-name-"]')?.dataset.testid;
+  await expect.poll(draftSkill).toBeTruthy();
+  expect(prototypeStore.libraryClasses[0]?.skills).toEqual([]);
+  await page.getByTestId(draftSkill()!).fill("Lunge");
   await expect.poll(() => prototypeStore.libraryClasses[0]?.skills.length).toBe(1);
-  const skillId = prototypeStore.libraryClasses[0]!.skills[0]!.id;
-  await page.getByTestId(`skill-name-${skillId}`).fill("Lunge");
   await page.getByTestId("back-to-classes").click();
   await page.getByTestId("switch-class-context").click();
   await page.getByTestId("copy-from-library").click();
@@ -151,7 +162,7 @@ test("library edits preserve an independent game copy until it is removed and co
     .toBe("Lunge");
   const copy = prototypeStore.gameClasses.find((entry) => entry.name === "Lancer")!;
   expect(copy.benefits[0]?.description).toBe("Recover your footing after a fall.");
-  expect(copy.skills[0]?.id).not.toBe(skillId);
+  expect(copy.skills[0]?.id).not.toBe(prototypeStore.libraryClasses[0]!.skills[0]!.id);
   await page.getByTestId("back-to-classes").click();
   await page.getByTestId("copy-from-library").click();
   await page.getByTestId("switch-class-context").click();
@@ -176,7 +187,9 @@ test("removing an in-use game skill names its users and requires confirmation", 
   await page.getByTestId("view-class-guardian").click();
   await page.getByTestId("class-tab-skills").click();
   await page.getByTestId("remove-skill-resolve").click();
-  await expect.element(page.getByTestId("affected-skill-users")).toHaveTextContent("Rowan Ash");
+  await expect
+    .element(page.getByTestId("affected-skill-users"))
+    .toHaveTextContent("Rowan Ash · Rank 2");
   expect(prototypeStore.progressionRanks["catalog-rowan"]?.resolve).toBe(2);
   await page.getByTestId("cancel-skill-removal").click();
   await expect.element(page.getByTestId("skill-resolve")).toBeVisible();
@@ -192,4 +205,26 @@ test("removing an in-use game skill names its users and requires confirmation", 
   await page.getByTestId("class-summary-guardian").click();
   await expect.element(page.getByTestId("acquired-resolve")).not.toBeInTheDocument();
   await expect.element(page.getByTestId("acquired-cover")).toBeVisible();
+});
+
+test("saving an in-use game class offers new and existing template choices", async () => {
+  mount("Game");
+  const save = page.getByTestId("save-to-library-guardian");
+  await save.click();
+  await expect.element(page.getByTestId("library-save-name")).toHaveValue("Guardian");
+  await page.getByTestId("library-save-name").fill("Saved Guardian");
+  await page.getByTestId("confirm-save-to-library").click();
+  await expect.poll(() => prototypeStore.libraryClasses[0]?.name).toBe("Saved Guardian");
+  const template = prototypeStore.libraryClasses[0]!;
+  await save.click();
+  await page.getByTestId("library-save-mode").click();
+  await page.getByTestId("library-save-update").click();
+  await page.getByTestId("library-save-template").click();
+  await page.getByTestId(`library-template-${template.id}`).click();
+  await page.getByTestId("confirm-save-to-library").click();
+  await expect.poll(() => prototypeStore.libraryClasses[0]?.name).toBe("Guardian");
+  expect(prototypeStore.libraryClasses.map(({ id }) => id)).toEqual([template.id]);
+  expect(prototypeStore.progressionLevels["catalog-rowan"]?.guardian).toBe(3);
+  expect(prototypeStore.progressionRanks["catalog-rowan"]?.resolve).toBe(2);
+  await expect.element(save).toBeVisible();
 });

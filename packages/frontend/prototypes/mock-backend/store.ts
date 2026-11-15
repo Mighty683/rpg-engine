@@ -10,7 +10,7 @@ import { projectDefenses } from "../../src/modules/characters/sheet/defense/mode
 
 const timestamp = "2026-01-01T00:00:00Z";
 
-function seedCharacter(id: string, name: string, caster: boolean): Character {
+export function seedCharacter(id: string, name: string, caster: boolean): Character {
   const sheet: Sheet = {
     name,
     theme: caster ? "Discovery" : "Duty",
@@ -66,7 +66,10 @@ function initialState() {
   return {
     scenario: "default" as PrototypeScenario,
     gameClasses: seedGameClasses(),
+    classCreateReceipts: new Map<string, string>(),
     libraryClasses: [] as ReturnType<typeof seedGameClasses>,
+    progressionControllers: new Map<string, string>(),
+    progressionCreates: new Map<string, string>(),
     progressionRanks: seedProgressionRanks(),
     progressionExperience: new Map([
       ["catalog-rowan", { current: 40, total: 90 }],

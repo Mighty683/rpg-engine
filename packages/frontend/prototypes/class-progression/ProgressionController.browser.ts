@@ -9,6 +9,7 @@ import { createFrontendI18n } from "../../src/shared/i18n";
 import { startPrototypeBackend, prototypeWorker } from "../mock-backend/browser";
 import { resetPrototypeBackend, setPrototypeScenario, prototypeStore } from "../mock-backend/store";
 import { progressionPlayerCharacterId } from "../mock-backend/progression-seed";
+import { classGamePath } from "../class-management/contract";
 import ProgressionPrototype from "./ProgressionPrototype.vue";
 import "../../src/style.css";
 
@@ -114,6 +115,25 @@ test("a player edits their own EXP and class levels from the party table", async
     .toBeDisabled();
   await expect.element(page.getByTestId("add-class")).toBeDisabled();
 });
+test("a player creates a character and learns a skill from their first class", async () => {
+  mount(false, progressionPlayerCharacterId);
+  await page.getByTestId("create-progression-character").click();
+  await page.getByTestId("progression-character-name").fill("Ari");
+  await page.getByTestId("submit-progression-character").click();
+  await expect
+    .poll(() => prototypeStore.progressionCharacters.find((entry) => entry.name === "Ari")?.id)
+    .toBeTruthy();
+  const id = prototypeStore.progressionCharacters.find((entry) => entry.name === "Ari")!.id;
+  await page.getByTestId(`open-sheet-${id}`).click();
+  await expect.element(page.getByTestId("current-exp")).toHaveValue(50);
+  await addClass("guardian");
+  await addSkill("guardian", "resolve");
+  await expect
+    .poll(() => prototypeStore.progressionExperience.get(id))
+    .toEqual({ current: 40, total: 50 });
+  await expect.poll(() => prototypeStore.progressionRanks[id]?.resolve).toBe(1);
+});
+
 test("optimistic edits queue during slow saves and update table maxima before acknowledgement", async () => {
   mount();
   await page.getByTestId("class-summary-guardian").click();
@@ -161,8 +181,8 @@ test("confirmed rejection rolls ranks and derived stats back without a save form
   await increase("class-progress-guardian");
   await expect.poll(() => prototypeStore.progressionLevels["catalog-rowan"]?.guardian).toBe(4);
   prototypeWorker.use(
-    http.post(
-      "*/api/prototype/class-progression/:id",
+    http.patch(
+      `*${classGamePath}/characters/:id`,
       () => HttpResponse.json({ error: { message: "Rank rejected" } }, { status: 400 }),
       { once: true },
     ),

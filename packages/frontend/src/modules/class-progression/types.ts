@@ -40,13 +40,15 @@ export interface ProgressionCharacter {
 export interface ProgressionSnapshot {
   catalog: ProgressionClass[];
   characters: ProgressionCharacter[];
+  party: PartyCharacter[];
 }
 export interface ProgressionSave extends ProgressionAllocation {
   expectedRevision: number;
 }
 export interface ProgressionApi {
   load(): Promise<ProgressionSnapshot>;
-  save(id: string, input: ProgressionSave): Promise<ProgressionSnapshot>;
+  create(id: string, name: string): Promise<void>;
+  save(base: ProgressionCharacter, input: ProgressionSave): Promise<ProgressionCharacter>;
 }
 export interface SourcedBenefit extends ProgressionBenefit {
   source: string;

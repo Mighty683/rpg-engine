@@ -10,6 +10,8 @@ defineProps<{
   entries: ClassDefinition[];
   current?: ClassDefinition;
   editable: boolean;
+  actionsEnabled?: boolean;
+  hasDraft?: boolean;
 }>();
 defineEmits<{
   navigate: [screen: string];
@@ -18,6 +20,7 @@ defineEmits<{
   create: [name: string];
   copy: [id: string];
   removeClass: [id: string];
+  saveToLibrary: [id: string];
   updateClass: [change: Partial<Pick<ClassDefinition, "name" | "description">>];
 }>();
 
@@ -36,7 +39,7 @@ const editorTabs = [
       <header class="flex flex-wrap items-start justify-between gap-medium">
         <div>
           <p class="text-label text-muted">
-            {{ context === "Library" ? "LIBRARY" : "GAME / THE CRYSTAL ROAD" }} · FABULA ULTIMA
+            {{ context === "Library" ? "LIBRARY" : "GAME / THE LANTERN ROAD" }} · FABULA ULTIMA
           </p>
           <h1 class="text-heading font-semibold">
             {{
@@ -96,7 +99,7 @@ const editorTabs = [
 
       <template v-if="screen === 'List' || screen === 'Copy'">
         <p v-if="screen === 'Copy'" class="text-muted">
-          Copy into The Crystal Road. The game copy is independent of the library.
+          Copy into The Lantern Road. The game copy is independent of the library.
         </p>
         <p v-if="!entries.length" class="text-muted" data-testid="empty-class-list">
           {{
@@ -132,9 +135,18 @@ const editorTabs = [
                 >
                 <UButton
                   v-if="context === 'Game'"
+                  color="neutral"
+                  variant="outline"
+                  :disabled="!actionsEnabled"
+                  :data-testid="`save-to-library-${entry.id}`"
+                  @click="$emit('saveToLibrary', entry.id)"
+                  >Save to library</UButton
+                >
+                <UButton
+                  v-if="context === 'Game'"
                   color="error"
                   variant="outline"
-                  :disabled="!editable"
+                  :disabled="!actionsEnabled"
                   :data-testid="`remove-class-${entry.id}`"
                   @click="$emit('removeClass', entry.id)"
                   >Remove class</UButton
@@ -168,50 +180,50 @@ const editorTabs = [
         >
       </form>
 
-      <UTabs
-        v-else-if="screen === 'Details' && current"
-        v-model="activeTab"
-        :items="editorTabs"
-        :ui="{ content: 'mt-medium' }"
-      >
-        <template #default="{ item }"
-          ><span :data-testid="`class-tab-${item.value}`">{{ item.label }}</span></template
-        >
-        <template #details>
-          <SurfaceCard>
-            <p class="text-muted">
-              {{
-                context === "Library"
-                  ? "Library changes do not update existing game copies."
-                  : "You are editing this game’s copy."
-              }}
-            </p>
-            <LabeledInput
-              :key="current.id"
-              class="mt-medium max-w-xs"
-              label="Name"
-              :model-value="current.name"
-              :readonly="!editable"
-              data-testid="class-name"
-              @update:model-value="
-                String($event).trim() && $emit('updateClass', { name: String($event) })
-              "
-            />
-            <LabeledInput
-              :key="`${current.id}-description`"
-              class="mt-medium"
-              label="Description"
-              multiline
-              :model-value="current.description"
-              :readonly="!editable"
-              data-testid="class-description"
-              @update:model-value="$emit('updateClass', { description: String($event) })"
-            />
-          </SurfaceCard>
-        </template>
-        <template #benefits><slot name="free-benefits" /></template>
-        <template #skills><slot name="skills" /></template>
-      </UTabs>
+      <template v-else-if="screen === 'Details' && current">
+        <p v-if="hasDraft" class="text-small text-muted" role="status">
+          Complete the draft fields to save changes.
+        </p>
+        <UTabs v-model="activeTab" :items="editorTabs" :ui="{ content: 'mt-medium' }">
+          <template #default="{ item }"
+            ><span :data-testid="`class-tab-${item.value}`">{{ item.label }}</span></template
+          >
+          <template #details>
+            <SurfaceCard>
+              <p class="text-muted">
+                {{
+                  context === "Library"
+                    ? "Library changes do not update existing game copies."
+                    : "You are editing this game’s copy."
+                }}
+              </p>
+              <LabeledInput
+                :key="current.id"
+                class="mt-medium max-w-xs"
+                label="Name"
+                :model-value="current.name"
+                :readonly="!editable"
+                data-testid="class-name"
+                @update:model-value="
+                  String($event).trim() && $emit('updateClass', { name: String($event) })
+                "
+              />
+              <LabeledInput
+                :key="`${current.id}-description`"
+                class="mt-medium"
+                label="Description"
+                multiline
+                :model-value="current.description"
+                :readonly="!editable"
+                data-testid="class-description"
+                @update:model-value="$emit('updateClass', { description: String($event) })"
+              />
+            </SurfaceCard>
+          </template>
+          <template #benefits><slot name="free-benefits" /></template>
+          <template #skills><slot name="skills" /></template>
+        </UTabs>
+      </template>
 
       <slot v-else-if="screen === 'Character'" name="characters" />
     </div>

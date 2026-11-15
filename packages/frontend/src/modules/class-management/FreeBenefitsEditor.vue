@@ -6,10 +6,18 @@ import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { BenefitDraft } from "./types";
 import { classModifierLabels, isDieModifier } from "../../shared/fabula/classModifiers";
 
-withDefaults(defineProps<{ benefits: BenefitDraft[]; title?: string; description?: string }>(), {
-  title: "Free benefits",
-  description: "Granted once when the class is acquired.",
-});
+withDefaults(
+  defineProps<{
+    benefits: BenefitDraft[];
+    title?: string;
+    description?: string;
+    allowRankScaling?: boolean;
+  }>(),
+  {
+    title: "Free benefits",
+    description: "Granted once when the class is acquired.",
+  },
+);
 const emit = defineEmits<{
   add: [name: string];
   remove: [id: string];
@@ -108,6 +116,12 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
               :placeholder="isDieModifier(benefit.stat) ? 'e.g. 1' : 'e.g. 5'"
               :data-testid="`benefit-amount-${benefit.id}`"
               @update:model-value="emit('update', benefit.id, { amount: String($event) })"
+            />
+            <UCheckbox
+              v-if="allowRankScaling"
+              label="Apply per rank"
+              :model-value="benefit.perRank ?? false"
+              @update:model-value="emit('update', benefit.id, { perRank: $event === true })"
             />
           </template>
         </div>

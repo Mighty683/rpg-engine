@@ -12,7 +12,12 @@ import type {
   ClassCatalogChange,
   ClassDefinition,
   SkillDraft,
+  RemovalImpact,
+  SaveLibraryChoice,
 } from "../../src/modules/class-management/types";
+import LabeledInput from "../../src/shared/design-system/base/LabeledInput.vue";
+import LabeledSelect from "../../src/shared/design-system/base/LabeledSelect.vue";
+import { completeDefinition, ContractError } from "./contract";
 import ProgressionPrototype from "../class-progression/ProgressionPrototype.vue";
 
 const props = defineProps<{ screen: string; context: string }>();
@@ -23,7 +28,7 @@ const toast = useToast();
 const optimistic = useOptimisticSave<ClassCatalog, ClassCatalogChange[]>({
   apply: (base, changes) => changes.reduce(applyCatalogChange, base),
   merge: (previous, next) => [...previous, ...next],
-  save: (_base, changes) => api.save(changes),
+  save: (base, changes) => api.save(base, changes),
   refresh: () => api.load(),
 });
 const loading = ref(true);
@@ -31,10 +36,28 @@ const loadFailed = ref(false);
 const selectedId = ref("");
 const scope = computed(() => (props.context === "Library" ? "library" : "game"));
 const entries = computed(() => optimistic.displayed.value?.[scope.value] ?? []);
-const current = computed(
-  () => entries.value.find(({ id }) => id === selectedId.value) ?? entries.value[0],
+const drafts = ref<Record<string, ClassDefinition>>({});
+const current = computed(() => {
+  const entry = entries.value.find(({ id }) => id === selectedId.value) ?? entries.value[0];
+  return entry && (drafts.value[entry.id] ?? entry);
+});
+const actionPending = ref(false);
+const awaitingCopiedIds = computed(
+  () =>
+    scope.value === "game" &&
+    props.screen === "Details" &&
+    current.value &&
+    !optimistic.acknowledged.value?.game.some(({ id }) => id === current.value?.id),
 );
-const editable = computed(() => !optimistic.paused.value && !loading.value && !loadFailed.value);
+const editable = computed(
+  () =>
+    !optimistic.paused.value &&
+    !loading.value &&
+    !loadFailed.value &&
+    !actionPending.value &&
+    !awaitingCopiedIds.value,
+);
+const canRunAction = computed(() => editable.value && !optimistic.saving.value);
 const activeScreen = computed(() => {
   if (props.screen === "Manage" || (scope.value === "game" && props.screen === "Create"))
     return "List";
@@ -93,8 +116,14 @@ function copy(from: string) {
   open(id);
 }
 function updateClass(change: Partial<Omit<ClassDefinition, "id">>) {
-  if (current.value)
-    submit({ kind: "put", scope: scope.value, entry: { ...current.value, ...change } });
+  if (!current.value) return;
+  const entry = { ...current.value, ...change };
+  if (!completeDefinition(entry)) {
+    drafts.value[entry.id] = entry;
+    return;
+  }
+  delete drafts.value[entry.id];
+  submit({ kind: "put", scope: scope.value, entry });
 }
 function benefit(name: string): BenefitDraft {
   return { id: crypto.randomUUID(), name, kind: "text", description: "", stat: "", amount: "" };
@@ -127,42 +156,100 @@ function addSkillBenefit(id: string, name: string) {
   if (skill) updateSkill(id, { benefits: [...skill.benefits, benefit(name)] });
 }
 
-const removal = ref<{ classId: string; skill: SkillDraft } | null>(null);
-const affected = computed(
-  () =>
-    optimistic.displayed.value?.characters.filter(
-      (character) => removal.value && character.ranks[removal.value.skill.id],
-    ) ?? [],
-);
+const removal = ref<{ entry: ClassDefinition; name: string; impact: RemovalImpact } | null>(null);
+const saveSource = ref<ClassDefinition | null>(null);
+const saveMode = ref<"new" | "update">("new");
+const saveName = ref("");
+let newTemplateId = "";
+const templateId = ref("");
+const templates = computed(() => optimistic.displayed.value?.library ?? []);
+const saveModeItems = computed(() => [
+  { label: "Save as new", value: "new" },
+  ...(templates.value.length ? [{ label: "Update existing template", value: "update" }] : []),
+]);
+
+async function runAction(action: (base: ClassCatalog) => Promise<void>) {
+  const base = optimistic.acknowledged.value;
+  if (!canRunAction.value || !base) return;
+  actionPending.value = true;
+  try {
+    await action(base);
+  } catch (error) {
+    const actions =
+      error instanceof ContractError && (error.code === "stale_revision" || error.status >= 500)
+        ? [{ label: "Reload saved classes", onClick: () => void load() }]
+        : [];
+    toast.add({
+      title: error instanceof Error ? error.message : "Could not confirm the change.",
+      color: "error",
+      actions,
+    });
+  } finally {
+    actionPending.value = false;
+  }
+}
+
 function removeSkill(id: string) {
   const entry = current.value;
   const skill = entry?.skills.find((item) => item.id === id);
   if (!entry || !skill) return;
-  if (scope.value === "library") {
-    updateClass({ skills: entry.skills.filter((item) => item.id !== id) });
+  const skills = entry.skills.filter((item) => item.id !== id);
+  if (
+    scope.value === "library" ||
+    !entries.value.find((item) => item.id === entry.id)?.skills.some((item) => item.id === id)
+  ) {
+    updateClass({ skills });
     return;
   }
-  removal.value = { classId: entry.id, skill };
-  if (!affected.value.length) confirmRemoval();
+  const next = { ...entry, skills };
+  if (!completeDefinition(next)) {
+    report("Finish the incomplete skills or benefits first.");
+    return;
+  }
+  void saveGameEdit({ entry: next, name: skill.name, impact: [] });
 }
-function confirmRemoval() {
-  if (!removal.value) return;
-  submit({
-    kind: "remove-skill",
-    classId: removal.value.classId,
-    skillId: removal.value.skill.id,
-    confirmedCharacters: affected.value.map(({ id }) => id),
+
+async function saveGameEdit(change: NonNullable<typeof removal.value>) {
+  await runAction(async (base) => {
+    try {
+      optimistic.setSnapshot(await api!.updateGameClass(base, change.entry, change.impact));
+      delete drafts.value[change.entry.id];
+      removal.value = null;
+    } catch (error) {
+      if (
+        !(error instanceof ContractError) ||
+        error.code !== "skill_removal_confirmation_required" ||
+        !error.impact
+      )
+        throw error;
+      removal.value = { ...change, impact: error.impact };
+    }
   });
-  removal.value = null;
 }
+
 function removeClass(id: string) {
-  const affected =
-    optimistic.displayed.value?.characters.filter((character) => character.levels[id]) ?? [];
-  if (affected.length) {
-    report(`Remove this class from ${affected.map(({ name }) => name).join(", ")} first.`);
-    return;
-  }
-  submit({ kind: "remove-class", id });
+  void runAction(async (base) => {
+    optimistic.setSnapshot(await api!.removeGameClass(base, id));
+  });
+}
+function openSave(id: string) {
+  saveSource.value = entries.value.find((entry) => entry.id === id) ?? null;
+  saveMode.value = "new";
+  newTemplateId = crypto.randomUUID();
+  saveName.value = saveSource.value?.name ?? "";
+  templateId.value = "";
+}
+function saveToLibrary() {
+  const source = saveSource.value;
+  if (!source) return;
+  const choice: SaveLibraryChoice =
+    saveMode.value === "new"
+      ? { mode: "new", id: newTemplateId, name: saveName.value.trim() }
+      : { mode: "update", templateId: templateId.value };
+  void runAction(async (base) => {
+    optimistic.setSnapshot(await api!.saveToLibrary(base, source.id, choice));
+    saveSource.value = null;
+  });
 }
 
 watch(
@@ -183,12 +270,15 @@ watch(
     :entries="activeScreen === 'Copy' ? (optimistic.displayed.value?.library ?? []) : entries"
     :current="current"
     :editable="editable"
+    :actions-enabled="canRunAction"
+    :has-draft="Boolean(current && drafts[current.id])"
     @navigate="emit('navigate', $event)"
     @switch-context="emit('switchContext', $event)"
     @open="open"
     @create="create"
     @copy="copy"
     @remove-class="removeClass"
+    @save-to-library="openSave"
     @update-class="updateClass"
   >
     <template #skills>
@@ -196,6 +286,7 @@ watch(
         <SkillsEditor
           :key="current.id"
           :skills="current.skills"
+          :remove-disabled="scope === 'game' && !canRunAction"
           @add="addSkill"
           @update="updateSkill"
           @remove="removeSkill"
@@ -230,7 +321,8 @@ watch(
   </ClassManagementPreview>
   <UModal
     :open="!!removal"
-    :title="`Remove ${removal?.skill.name || 'skill'}?`"
+    :dismissible="!actionPending"
+    :title="`Remove ${removal?.name || 'skill'}?`"
     description="This removes the skill from the game class and these characters."
     @update:open="
       (open: boolean) => {
@@ -240,7 +332,12 @@ watch(
   >
     <template #body>
       <ul class="list-disc pl-medium" data-testid="affected-skill-users">
-        <li v-for="character in affected" :key="character.id">{{ character.name }}</li>
+        <li
+          v-for="character in removal?.impact.flatMap((item) => item.characters)"
+          :key="character.id"
+        >
+          {{ character.name }} · Rank {{ character.rank }}
+        </li>
       </ul>
     </template>
     <template #footer>
@@ -248,11 +345,79 @@ watch(
         color="neutral"
         variant="outline"
         data-testid="cancel-skill-removal"
+        :disabled="actionPending"
         @click="removal = null"
         >Cancel</UButton
       >
-      <UButton color="error" data-testid="confirm-skill-removal" @click="confirmRemoval"
+      <UButton
+        color="error"
+        data-testid="confirm-skill-removal"
+        :disabled="actionPending"
+        @click="removal && saveGameEdit(removal)"
         >Remove skill</UButton
+      >
+    </template>
+  </UModal>
+  <UModal
+    :open="!!saveSource"
+    title="Save to library"
+    :description="saveSource?.name"
+    @update:open="
+      (open: boolean) => {
+        if (!open && !actionPending) saveSource = null;
+      }
+    "
+  >
+    <template #body>
+      <form class="space-y-medium" id="save-class-to-library" @submit.prevent="saveToLibrary">
+        <LabeledSelect
+          v-model="saveMode"
+          label="Save as"
+          :items="saveModeItems"
+          :disabled="actionPending"
+          data-testid="library-save-mode"
+        >
+          <template #item-label="{ item }"
+            ><span :data-testid="`library-save-${item.value}`">{{ item.label }}</span></template
+          >
+        </LabeledSelect>
+        <LabeledInput
+          v-if="saveMode === 'new'"
+          v-model="saveName"
+          label="Template name"
+          maxlength="100"
+          :disabled="actionPending"
+          data-testid="library-save-name"
+        />
+        <LabeledSelect
+          v-else
+          v-model="templateId"
+          label="Template"
+          :items="templates.map(({ id, name }) => ({ label: name, value: id }))"
+          :disabled="actionPending"
+          data-testid="library-save-template"
+        >
+          <template #item-label="{ item }"
+            ><span :data-testid="`library-template-${item.value}`">{{ item.label }}</span></template
+          >
+        </LabeledSelect>
+      </form>
+    </template>
+    <template #footer>
+      <UButton
+        color="neutral"
+        variant="outline"
+        :disabled="actionPending"
+        @click="saveSource = null"
+        >Cancel</UButton
+      >
+      <UButton
+        type="submit"
+        form="save-class-to-library"
+        :loading="actionPending"
+        :disabled="saveMode === 'new' ? !saveName.trim() : !templateId"
+        data-testid="confirm-save-to-library"
+        >Save to library</UButton
       >
     </template>
   </UModal>

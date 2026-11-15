@@ -4,7 +4,7 @@ import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import FreeBenefitsEditor from "./FreeBenefitsEditor.vue";
 import type { BenefitDraft, SkillDraft } from "./types";
 
-defineProps<{ skills: SkillDraft[] }>();
+defineProps<{ skills: SkillDraft[]; removeDisabled?: boolean }>();
 const emit = defineEmits<{
   add: [];
   update: [id: string, change: Partial<SkillDraft>];
@@ -27,7 +27,6 @@ function removeBenefit(skill: SkillDraft, id: string) {
   <SurfaceCard>
     <h2 class="text-section font-semibold">Skills</h2>
     <p class="text-muted">Define each skill's description, rank limit and benefits.</p>
-    <p class="mt-small text-small text-muted"></p>
     <p v-if="skills.length === 0" class="mt-medium text-muted" data-testid="skills-empty">
       No skills added yet.
     </p>
@@ -49,6 +48,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
           <UButton
             color="error"
             variant="outline"
+            :disabled="removeDisabled"
             :aria-label="`Remove skill ${skill.name || index + 1}`"
             :data-testid="`remove-skill-${skill.id}`"
             @click="emit('remove', skill.id)"
@@ -78,7 +78,8 @@ function removeBenefit(skill: SkillDraft, id: string) {
         <FreeBenefitsEditor
           class="mt-medium"
           title="Skill benefits"
-          description="Describe benefits granted by this skill. Explain any rank scaling or conditions in the effect description."
+          allow-rank-scaling
+          description="Add effects and choose whether stat modifiers scale with rank."
           :benefits="skill.benefits"
           @add="emit('addBenefit', skill.id, $event)"
           @update="(id, change) => updateBenefit(skill, id, change)"

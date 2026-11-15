@@ -1,51 +1,36 @@
 /** Prototype-only transaction boundary; both views project the same revisioned records. */
 import { HttpResponse } from "msw";
 import type { Character } from "../../src/modules/characters/types";
+import { projectDefenses } from "../../src/modules/characters/sheet/defense/model";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
 import type {
-  ProgressionBenefit,
   ProgressionCharacter,
   ProgressionClass,
-  ProgressionSave,
-  ProgressionSnapshot,
 } from "../../src/modules/class-progression/types";
 import {
   characterLevelError,
+  CLASS_LEVEL_EXP_COST,
+  totalRanks,
   experienceError,
   progressionError,
   withProgressionRanks,
 } from "../../src/modules/class-progression/model";
-import { prototypeStore as store, projectParty } from "./store";
-import { isClassModifierStat } from "../../src/shared/fabula/classModifiers";
-import type { BenefitDraft } from "../../src/modules/class-management/types";
-
-function benefitEffect(benefit: BenefitDraft): ProgressionBenefit {
-  const stat = isClassModifierStat(benefit.stat) ? benefit.stat : undefined;
-  const amount = Number(benefit.amount);
-  const automatic =
-    benefit.kind === "modifier" && stat && benefit.amount.trim() && Number.isInteger(amount);
-  return {
-    ...benefit,
-    description:
-      benefit.description ||
-      (benefit.kind === "modifier" ? `${benefit.stat} ${benefit.amount}` : ""),
-    stat: automatic ? stat : undefined,
-    amount: automatic ? amount : undefined,
-  };
-}
-
+import { prototypeStore as store, projectParty, seedCharacter } from "./store";
+import { classError } from "./class-catalog";
+import {
+  classGamePath,
+  encodeClass,
+  wireCatalog,
+  classLevels,
+  skillRanks,
+  levelsById,
+  ranksById,
+  wireId,
+  viewId,
+} from "../class-management/contract";
+import type { CharacterChanges } from "../class-management/contract";
 function gameCatalog(): ProgressionClass[] {
-  return store.gameClasses.map((entry) => ({
-    ...entry,
-    benefits: entry.benefits.map(benefitEffect),
-    skills: entry.skills
-      .filter((skill) => skill.name.trim())
-      .map((skill) => ({
-        ...skill,
-        maxRank: Math.max(1, Math.floor(Number(skill.maxRank)) || 1),
-        benefits: skill.benefits.map(benefitEffect),
-      })),
-  }));
+  return wireCatalog(store.gameClasses.map(encodeClass));
 }
 
 function project(character: Character, catalog: ProgressionClass[]): ProgressionCharacter {
@@ -62,53 +47,186 @@ function project(character: Character, catalog: ProgressionClass[]): Progression
   );
 }
 
-function snapshot(): ProgressionSnapshot {
-  const catalog = gameCatalog();
-  return {
-    catalog,
-    characters:
-      store.scenario === "empty"
-        ? []
-        : store.progressionCharacters.map((character) => project(character, catalog)),
-  };
+function availableCharacters() {
+  return store.scenario === "empty" ? [] : store.progressionCharacters;
 }
-export function handleProgression(path: string, method: string, body: Record<string, unknown>) {
-  if (method === "GET" && path === "/api/prototype/class-progression")
-    return HttpResponse.json(snapshot());
-  const character = store.progressionCharacters.find(
-    (entry) => entry.id === path.split("/").at(-1),
+
+function canEdit(character: Character, player: string | null) {
+  return (
+    !player || (store.progressionControllers.get(character.id) ?? character.id) === viewId(player)
   );
-  if (method !== "POST" || !character)
-    return HttpResponse.json({ error: { message: "Character not found." } }, { status: 404 });
-  const input = body as unknown as ProgressionSave;
-  if (input.expectedRevision !== character.revision)
-    return HttpResponse.json(
-      {
-        error: {
-          message: "This character changed. Refresh saved data before choosing ranks again.",
-        },
+}
+
+function readCharacter(character: Character, player: string | null) {
+  const projected = project(character, gameCatalog());
+  const raw = character.sheet as Sheet;
+  const editable = canEdit(character, player);
+  const currentDice = projected.party.currentDice ?? raw.baseDice;
+  const defenses = projectDefenses(raw, currentDice);
+  const defenseValues = {
+    defense: projected.party.defense ?? null,
+    magicDefense: projected.party.magicDefense ?? null,
+    initiative: defenses.initiative.calculated,
+  };
+  return HttpResponse.json({
+    character: {
+      ...character,
+      id: wireId(character.id),
+      playerId: wireId(character.playerId),
+      canEdit: editable,
+      sheet: {
+        ...raw,
+        classes: raw.classes.map((entry) => ({ ...entry, id: wireId(entry.id) })),
+        skills: raw.skills.map((entry) => ({ ...entry, id: wireId(entry.id) })),
+        equipment: raw.equipment.map((entry) => ({ ...entry, id: wireId(entry.id) })),
       },
-      { status: 409 },
-    );
-  if (!input.ranks || typeof input.ranks !== "object" || Array.isArray(input.ranks))
-    return HttpResponse.json({ error: { message: "Choose skill ranks." } }, { status: 400 });
-  if (!input.levels || typeof input.levels !== "object" || Array.isArray(input.levels))
-    return HttpResponse.json({ error: { message: "Choose class levels." } }, { status: 400 });
-  if (!input.experience || typeof input.experience !== "object")
-    return HttpResponse.json(
-      { error: { message: "Enter current and total EXP." } },
-      { status: 400 },
-    );
+      derived: {
+        coverage: "partial",
+        currentDice,
+        maxima: projected.party.maxima,
+        defenses: Object.fromEntries(
+          Object.entries(defenses).map(([name, value]) => {
+            const calculated = defenseValues[name as keyof typeof defenseValues];
+            const contributions = value.contributions.map((entry) => ({
+              ...entry,
+              entryId: entry.entryId ? wireId(entry.entryId) : undefined,
+            }));
+            return [
+              name,
+              calculated === null
+                ? { calculated, reason: "ambiguous_equipment" }
+                : { calculated, contributions },
+            ];
+          }),
+        ),
+      },
+      progression: editable
+        ? {
+            experience: projected.experience,
+            classLevels: classLevels(projected.levels),
+            skillRanks: skillRanks(projected.ranks),
+          }
+        : undefined,
+    },
+  });
+}
+
+function party() {
+  const catalog = gameCatalog();
+  return HttpResponse.json({
+    characters: availableCharacters().map((character) => {
+      const { party } = project(character, catalog);
+      return {
+        ...party,
+        id: wireId(party.id),
+        weapons: party.weapons.map((weapon) => ({ ...weapon, id: wireId(weapon.id) })),
+      };
+    }),
+  });
+}
+
+function roster(player: string | null) {
+  return HttpResponse.json({
+    characters: availableCharacters().map((character) => ({
+      id: wireId(character.id),
+      name: character.name,
+      level: character.level,
+      createdAt: character.createdAt,
+      active: true,
+      canEdit: canEdit(character, player),
+      controllerMembershipId: wireId(character.playerId),
+      controllerName: null,
+    })),
+  });
+}
+
+function create(payload: Record<string, unknown>, player: string | null) {
+  const { id, name } = payload;
+  if (typeof id !== "string" || typeof name !== "string" || !name.trim() || name.length > 100)
+    return classError(422, "validation", "Enter a character name.", {
+      name: "Enter 1–100 characters.",
+    });
+  const existing = store.progressionCharacters.find((character) => character.id === id);
+  if (existing) {
+    if (canEdit(existing, player) && store.progressionCreates.get(id) === name)
+      return readCharacter(existing, player);
+    return classError(409, "id_conflict", "The character ID was already used.");
+  }
+  const character = seedCharacter(id, name, false);
+  character.sheet.classes = [];
+  character.sheet.equipment = [];
+  if (player) store.progressionControllers.set(id, viewId(player));
+  store.progressionCharacters.push(character);
+  store.progressionCreates.set(id, name);
+  const response = readCharacter(character, player);
+  return new HttpResponse(response.body, { status: 201, headers: response.headers });
+}
+
+function patch(character: Character, payload: Record<string, unknown>, player: string | null) {
+  if (!canEdit(character, player))
+    return classError(403, "forbidden", "You can edit only your own character.");
+  if (payload.expectedRevision !== character.revision)
+    return classError(409, "stale_revision", "The character changed. Refresh saved data.");
+  const changes = payload.changes as CharacterChanges;
+  if (!changes || !Object.keys(changes).length)
+    return classError(400, "bad_request", "Supply character changes.");
+  const progression = changes.progression;
+  if (
+    progression &&
+    (!Object.keys(progression).length ||
+      (progression.classLevels !== undefined && !Array.isArray(progression.classLevels)) ||
+      (progression.skillRanks !== undefined && !Array.isArray(progression.skillRanks)))
+  )
+    return classError(400, "bad_request", "Supply valid allocations.");
+  const previousLevels = store.progressionLevels[character.id] ?? {};
+  const previousRanks = store.progressionRanks[character.id] ?? {};
+  const previousExperience = store.progressionExperience.get(character.id) ?? {
+    current: 50,
+    total: 50,
+  };
+  const levels = progression?.classLevels ? levelsById(progression.classLevels) : previousLevels;
+  const ranks = progression?.skillRanks ? ranksById(progression.skillRanks) : previousRanks;
+  if (
+    (progression?.classLevels && Object.keys(levels).length !== progression.classLevels.length) ||
+    (progression?.skillRanks && Object.keys(ranks).length !== progression.skillRanks.length) ||
+    progression?.classLevels?.some((entry) => entry.level < 1) ||
+    progression?.skillRanks?.some((entry) => entry.rank < 1)
+  )
+    return classError(422, "validation", "Use unique IDs and positive allocations.", {
+      progression: "Check class levels and skill ranks.",
+    });
+  const before = progression?.experience ?? previousExperience;
+  const cost = (totalRanks(levels) - totalRanks(previousLevels)) * CLASS_LEVEL_EXP_COST;
+  const experience = { current: before.current - cost, total: before.total };
+  const level = changes.level ?? character.level;
   const error =
-    characterLevelError(input.level) ??
-    progressionError(gameCatalog(), input.levels, input.ranks) ??
-    experienceError(input.experience, input.levels);
-  if (error) return HttpResponse.json({ error: { message: error } }, { status: 400 });
-  store.progressionLevels[character.id] = structuredClone(input.levels);
-  store.progressionRanks[character.id] = structuredClone(input.ranks);
-  store.progressionExperience.set(character.id, structuredClone(input.experience));
-  character.level = input.level;
-  character.sheet.level = input.level;
+    characterLevelError(level) ??
+    progressionError(gameCatalog(), levels, ranks) ??
+    experienceError(before, {}) ??
+    experienceError(experience, levels);
+  if (error) return classError(422, "validation", error, { progression: error });
+  store.progressionLevels[character.id] = levels;
+  store.progressionRanks[character.id] = ranks;
+  store.progressionExperience.set(character.id, experience);
+  character.level = level;
+  character.sheet.level = level;
   character.revision += 1;
-  return HttpResponse.json(snapshot());
+  return readCharacter(character, player);
+}
+
+export function handleProgression(
+  path: string,
+  method: string,
+  body: Record<string, unknown>,
+  player: string | null,
+) {
+  const root = `${classGamePath}/characters`;
+  if (path === `${classGamePath}/party` && method === "GET") return party();
+  if (path === root && method === "GET") return roster(player);
+  if (path === root && method === "POST") return create(body, player);
+  const id = path.startsWith(`${root}/`) ? viewId(path.slice(root.length + 1)) : "";
+  const character = availableCharacters().find((entry) => entry.id === id);
+  if (character && method === "GET") return readCharacter(character, player);
+  if (character && method === "PATCH") return patch(character, body, player);
+  return classError(404, "not_found", "Character not found.");
 }
