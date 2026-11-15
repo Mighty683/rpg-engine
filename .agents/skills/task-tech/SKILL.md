@@ -5,36 +5,58 @@ description: Research affected modules and document technical decisions for a ta
 
 # Task Tech
 
-Inspect relevant implementation, tests, and architecture guidance. Include contracts, data flow, compatibility constraints, and blockers where they affect the design. Prefer module references; specify exact APIs only to settle a boundary. Keep sequencing in the plan.
+Read the task UX when available, plus relevant implementation, tests, and architecture guidance. Follow the real entry points and carry forward agreed behavior. Keep sequencing in the implementation plan.
 
-UI prototype code should be ready to be reused components from there will be migrated to production app. You can adjust data types in prototype code to match decided architecture.
+Write `docs/tasks/<task>/tech.md` and link it from the task summary. Keep it focused on the decisions needed to build the feature.
 
-For UI work, document how the approved view connects to production data, permissions, and persistence. Walk affected entry points and record which flows change. Carry forward agreed decisions and ask only about unresolved choices that materially affect delivery.
+- **Production boundary** names the affected modules, entry points, and reusable prototype components. For UI work, connect each changed screen to production data, permissions, and persistence. Adapt prototype data types where needed to align with the production contract.
+- **Data and flows** show meaningful relationships or mutations in fenced Mermaid blocks. Use an ER diagram for changed persistent entities, a flowchart for ownership and data paths, and a sequence diagram where ordering across components matters. Put invariants, compatibility, and failure cases next to the flow they affect.
+- **API contract** links a machine-readable OpenAPI 3.1 `openapi.yaml` beside `tech.md` for HTTP changes. Cover changed operations, schemas, authorization, and errors. Reuse canonical components and validate the task contract with the repository's existing tooling. For unchanged HTTP contracts, state that no schema update is needed.
 
-For HTTP API changes, prepare a machine-readable OpenAPI 3.1 `openapi.yaml` beside `tech.md` and link it for user review. Cover affected operations and schemas, including authorization and errors. If the HTTP API is unchanged, state that no schema update is needed.
+Identify material choices still needing review. Use the [class management technical design](../../../docs/tasks/class-management/tech.md) as a worked example.
 
-## Example: `docs/tasks/<task>/tech.md`
+## Examples
 
-```markdown
-# Game creation — technical design
+### Data model
 
-**Created:** 2026-11-04
+```mermaid
+erDiagram
+    CHARACTER ||--o{ CHARACTER_CLASS_LEVEL : assigns
+    GAME_CLASS ||--o{ CHARACTER_CLASS_LEVEL : defines
+```
 
-## Current Situation
+### Write flow
 
-Description of current state of product
+```mermaid
+flowchart LR
+    Edit["Change class allocation"] --> Check["Check access and revision"]
+    Check --> Apply["Calculate EXP from the allocation delta"]
+    Apply --> Commit["Save allocation, EXP, and revision together"]
+```
 
-## Decision record
+### OpenAPI request example
 
-What important decision were made by the way of analysis and implementation
+For the character PATCH, place the example next to the request schema.
 
-## Implementation spec
-
-Description of changes
-
-### Database schema
-
-### API schema
-
-### UI Screens updates
+```yaml
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required: [expectedRevision, changes]
+        properties:
+          expectedRevision: { type: integer, minimum: 0 }
+          changes: { $ref: "#/components/schemas/CharacterChanges" }
+      examples:
+        assignFirstClassLevel:
+          summary: Assign one class level to a new character
+          value:
+            expectedRevision: 1
+            changes:
+              progression:
+                classLevels:
+                  - gameClassId: "3101c2bc-0316-47f8-b77a-a614170d7646"
+                    level: 1
 ```
