@@ -68,6 +68,11 @@ function initialState() {
     gameClasses: seedGameClasses(),
     libraryClasses: [] as ReturnType<typeof seedGameClasses>,
     progressionRanks: seedProgressionRanks(),
+    progressionExperience: new Map([
+      ["catalog-rowan", { current: 40, total: 90 }],
+      ["catalog-nera", { current: 10, total: 60 }],
+      ["catalog-new", { current: 50, total: 50 }],
+    ]),
     progressionLevels: Object.fromEntries(
       Object.entries(seedProgressionRanks()).map(([id, ranks]) => [
         id,

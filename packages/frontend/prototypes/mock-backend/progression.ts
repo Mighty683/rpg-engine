@@ -9,7 +9,12 @@ import type {
   ProgressionSave,
   ProgressionSnapshot,
 } from "../../src/modules/class-progression/types";
-import { progressionError, withProgressionRanks } from "../../src/modules/class-progression/model";
+import {
+  characterLevelError,
+  experienceError,
+  progressionError,
+  withProgressionRanks,
+} from "../../src/modules/class-progression/model";
 import { prototypeStore as store, projectParty } from "./store";
 import { isClassModifierStat } from "../../src/shared/fabula/classModifiers";
 import type { BenefitDraft } from "../../src/modules/class-management/types";
@@ -48,9 +53,10 @@ function project(character: Character, catalog: ProgressionClass[]): Progression
   const levels = store.progressionLevels[character.id] ?? {};
   const sheet = structuredClone(character.sheet) as Sheet;
   const party = { ...projectParty(character), canRoll: false };
+  const experience = store.progressionExperience.get(character.id) ?? { current: 50, total: 50 };
   return withProgressionRanks(
     catalog,
-    { id: character.id, revision: character.revision, levels, ranks, sheet, party },
+    { id: character.id, revision: character.revision, levels, ranks, experience, sheet, party },
     ranks,
     levels,
   );
@@ -88,10 +94,21 @@ export function handleProgression(path: string, method: string, body: Record<str
     return HttpResponse.json({ error: { message: "Choose skill ranks." } }, { status: 400 });
   if (!input.levels || typeof input.levels !== "object" || Array.isArray(input.levels))
     return HttpResponse.json({ error: { message: "Choose class levels." } }, { status: 400 });
-  const error = progressionError(gameCatalog(), input.levels, input.ranks);
+  if (!input.experience || typeof input.experience !== "object")
+    return HttpResponse.json(
+      { error: { message: "Enter current and total EXP." } },
+      { status: 400 },
+    );
+  const error =
+    characterLevelError(input.level) ??
+    progressionError(gameCatalog(), input.levels, input.ranks) ??
+    experienceError(input.experience, input.levels);
   if (error) return HttpResponse.json({ error: { message: error } }, { status: 400 });
   store.progressionLevels[character.id] = structuredClone(input.levels);
   store.progressionRanks[character.id] = structuredClone(input.ranks);
+  store.progressionExperience.set(character.id, structuredClone(input.experience));
+  character.level = input.level;
+  character.sheet.level = input.level;
   character.revision += 1;
   return HttpResponse.json(snapshot());
 }

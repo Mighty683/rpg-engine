@@ -25,6 +25,7 @@ The GM can edit every character and handles all edits when running the app alone
 | GM | Remove a game class | Game classes → **Remove class** | Current game |
 | GM | Confirm removal of a skill characters have learned | Skills tab → removal dialog | Affected characters |
 | GM, Player | Edit current and total EXP | Character sheet → **EXP** | Any character for GM, own character for player |
+| GM, Player | Edit character level | Character sheet → **Level** | Any character for GM, own character for player |
 | GM, Player | Add a class, change class levels, learn skills, and adjust ranks | Character sheet → **Classes & skills** | Any character for GM, own character for player |
 | GM, Player | Inspect class benefits and skill effects | Character sheet or game table → class details | Any character for GM, own character for player |
 
@@ -94,7 +95,7 @@ Recalculate affected characters' benefits and keep their class levels. Removing 
 
 ## Character progression
 
-- A new character level costs 10 current EXP and adds one level to a class. Lowering a class by an EXP-funded level refunds 10 current EXP. Save the level and EXP change together. Starting level allocation leaves EXP unchanged.
+- Characters start at level 5 with **50 / 50 EXP**. Every class level costs 10 Current EXP, including the five starting allocations. Removing a class level refunds 10. Save the class level and EXP change together. Character level is edited independently of EXP and class levels.
 - Adding a class saves level 1 and applies its free benefits immediately. Learn skills separately.
 - **Support house rules.** GMs define classes, skill rank limits, and effects. Use the [Fabula Ultima rules](../../spec/fabula-ultima/character-spec.md) for built-in calculations. Groups adjudicate text effects and decide which tabletop progression restrictions to follow.
 - The prototype supports five classes per character, ten levels per class, and unspent starting points. Reduce assigned skill ranks before lowering a class below their total. Add weapons or spells granted by skills manually.
@@ -102,7 +103,7 @@ Recalculate affected characters' benefits and keep their class levels. Removing 
 
 ## Screens
 
-- **EXP** — Show two editable inputs next to character level, **Current / Total**, starting at **0 / 0**. Current is available EXP. Total is all EXP earned. Add earned EXP to both. Spending and refunds change only Current, so Total minus Current is EXP spent.
+- **EXP** — Show two editable inputs next to character level, **Current / Total**. Add earned EXP to both. Spending and refunds change only Current. Total minus Current is EXP spent.
 - **Sheet** — Use a **Classes & skills** section with initially collapsed class cards and segmented −/+ bars. Open **Add class** from the section and **Add skill** from the class. Hide edit controls in read-only views.
 - **Class cards** — Show free benefits as compact pills above the skill cards. Put ranks and effects on the skill cards once. Open full text effects on demand.
 - **Game table** — Place one class summary below stats and above weapons. Show skill previews on hover or focus and open the shared class cards for details. Edit in the existing sheet drawer.
@@ -114,4 +115,4 @@ Recalculate affected characters' benefits and keep their class levels. Removing 
 - Keep the selection if a copy or library save fails. If the outcome is uncertain, check the destination before retrying.
 - In the prototype, remove a class from character sheets before removing it from the game. Keep existing manual entries until a migration is available.
 
-Prototype links · [Class management](../../../packages/frontend/prototypes/class-management/ClassManagement.story.vue) · [Class progression](../../../packages/frontend/prototypes/class-progression/ClassProgression.story.vue)
+Prototype links · [Class management](../../../packages/frontend/prototypes/class-management/ClassManagement.story.vue) · [Class progression](../../../packages/frontend/prototypes/class-progression/ClassProgression.story.vue) · [Player views](../../../packages/frontend/prototypes/class-progression/PlayerProgression.story.vue)

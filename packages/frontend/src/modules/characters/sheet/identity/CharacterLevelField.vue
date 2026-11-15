@@ -1,8 +1,17 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ level: number; max?: number; label?: string; testId?: string }>(), {
-  max: 50,
-  label: "Character level",
-});
+withDefaults(
+  defineProps<{
+    level: number;
+    max?: number;
+    label?: string;
+    testId?: string;
+    disabled?: boolean;
+  }>(),
+  {
+    max: 50,
+    label: "Character level",
+  },
+);
 defineEmits<{ change: [event: Event] }>();
 </script>
 
@@ -14,6 +23,7 @@ defineEmits<{ change: [event: Event] }>();
       min="5"
       :max="max"
       :value="level"
+      :disabled="disabled"
       :aria-label="label"
       :data-testid="testId"
       @change="$emit('change', $event)"

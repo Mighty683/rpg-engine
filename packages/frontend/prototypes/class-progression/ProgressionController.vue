@@ -6,29 +6,40 @@ import { useProgressionApi } from "../../src/modules/class-progression/services"
 import type {
   ProgressionSnapshot,
   ProgressionAllocation,
+  ProgressionExperience,
 } from "../../src/modules/class-progression/types";
-import { progressionError, withProgressionRanks } from "../../src/modules/class-progression/model";
+import {
+  characterLevelError,
+  CLASS_LEVEL_EXP_COST,
+  experienceError,
+  progressionError,
+  withProgressionRanks,
+} from "../../src/modules/class-progression/model";
 import ProgressionWorkspace from "../../src/modules/class-progression/ProgressionWorkspace.vue";
 import LabeledSelect from "../../src/shared/design-system/base/LabeledSelect.vue";
 import { resetPrototypeBackend, setPrototypeScenario } from "../api";
 import type { PrototypeScenario } from "../api";
 
-const props = defineProps<{ readOnly?: boolean }>();
+const props = defineProps<{ readOnly?: boolean; playerCharacterId?: string }>();
 const api = useProgressionApi();
 const toast = useToast();
 const optimistic = useOptimisticSave<ProgressionSnapshot, Record<string, ProgressionAllocation>>({
   apply: (base, changes) => ({
     ...base,
-    characters: base.characters.map((character) =>
-      changes[character.id]
-        ? withProgressionRanks(
-            base.catalog,
-            character,
-            changes[character.id]!.ranks,
-            changes[character.id]!.levels,
-          )
-        : character,
-    ),
+    characters: base.characters.map((character) => {
+      const change = changes[character.id];
+      if (!change) return character;
+      return withProgressionRanks(
+        base.catalog,
+        {
+          ...character,
+          sheet: { ...character.sheet, level: change.level },
+          experience: change.experience,
+        },
+        change.ranks,
+        change.levels,
+      );
+    }),
   }),
   merge: (previous, next) => ({ ...previous, ...next }),
   save: async (base, changes) => {
@@ -61,7 +72,7 @@ watch(optimistic.error, (error) => {
     actions: [refreshAction],
   });
 });
-const selectedId = ref("catalog-rowan");
+const selectedId = ref(props.playerCharacterId ?? "catalog-rowan");
 const loading = ref(true);
 const loadFailed = ref(false);
 const scenario = ref<PrototypeScenario>("default");
@@ -89,9 +100,15 @@ async function load() {
   }
 }
 const levels = computed(() => selected.value?.levels ?? {});
-function submit(allocation: ProgressionAllocation) {
+function submit(changes: Partial<ProgressionAllocation>) {
   if (!selected.value || props.readOnly || optimistic.paused.value) return;
-  const error = progressionError(snapshot.value.catalog, allocation.levels, allocation.ranks);
+  if (props.playerCharacterId && selected.value.id !== props.playerCharacterId) return;
+  const { sheet, levels, ranks, experience } = selected.value;
+  const allocation = { level: sheet.level, levels, ranks, experience, ...changes };
+  const error =
+    characterLevelError(allocation.level) ??
+    progressionError(snapshot.value.catalog, allocation.levels, allocation.ranks) ??
+    experienceError(allocation.experience, allocation.levels);
   if (error) {
     report(new Error(error));
     return;
@@ -100,17 +117,25 @@ function submit(allocation: ProgressionAllocation) {
 }
 function changeClass(id: string, delta: number) {
   if (!selected.value) return;
+  const nextLevels = { ...levels.value, [id]: (levels.value[id] ?? 0) + delta };
+  const { experience } = selected.value;
   submit({
-    ranks: { ...selected.value.ranks },
-    levels: { ...levels.value, [id]: (levels.value[id] ?? 0) + delta },
+    levels: nextLevels,
+    experience: { ...experience, current: experience.current - delta * CLASS_LEVEL_EXP_COST },
   });
 }
 function changeSkill(id: string, delta: number) {
   if (!selected.value) return;
   submit({
-    levels: { ...levels.value },
     ranks: { ...selected.value.ranks, [id]: (selected.value.ranks[id] ?? 0) + delta },
   });
+}
+function changeExperience(field: keyof ProgressionExperience, value: number) {
+  if (!selected.value || selected.value.experience[field] === value) return;
+  submit({ experience: { ...selected.value.experience, [field]: value } });
+}
+function changeLevel(level: number) {
+  if (level !== selected.value?.sheet.level) submit({ level });
 }
 async function reset() {
   resetPrototypeBackend();
@@ -128,7 +153,7 @@ onMounted(load);
 <template>
   <main class="min-h-screen bg-default p-section text-default">
     <div class="mx-auto max-w-5xl space-y-section">
-      <header>
+      <header v-if="!playerCharacterId">
         <p class="text-label text-muted">THE LANTERN ROAD · FABULA ULTIMA</p>
         <h1 class="text-heading font-semibold">Character classes & skills</h1>
         <p class="text-small text-muted">
@@ -136,7 +161,7 @@ onMounted(load);
           restores examples. Skill effects are sample definitions, not official rules.
         </p>
       </header>
-      <div class="flex flex-wrap items-end gap-medium">
+      <div v-if="!playerCharacterId" class="flex flex-wrap items-end gap-medium">
         <LabeledSelect
           :model-value="scenario"
           label="Review response"
@@ -175,16 +200,19 @@ onMounted(load);
         >Retry loading characters</UButton
       >
       <p v-else-if="!snapshot.characters.length" data-testid="progression-empty">
-        No characters available. Reset examples to review selection and progression.
+        No characters available.
       </p>
       <ProgressionWorkspace
         v-else
         v-model:selected-id="selectedId"
         :snapshot="snapshot"
+        :player-character-id="playerCharacterId"
         :read-only="readOnly || optimistic.paused.value"
         :levels="levels"
         @change-class="changeClass"
         @change-skill="changeSkill"
+        @change-experience="changeExperience"
+        @change-level="changeLevel"
       />
     </div>
   </main>

@@ -6,7 +6,7 @@ import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import FreeBenefitPills from "./FreeBenefitPills.vue";
 import ClassAbilitiesContent from "./ClassAbilitiesContent.vue";
 import type { ProgressionClass, ProgressionCharacter } from "./types";
-import { assignedRanks, MAX_CHARACTER_CLASSES, totalRanks } from "./model";
+import { assignedRanks, CLASS_LEVEL_EXP_COST, MAX_CHARACTER_CLASSES, totalRanks } from "./model";
 const props = defineProps<{
   catalog: ProgressionClass[];
   character: ProgressionCharacter;
@@ -29,16 +29,22 @@ const available = computed(() =>
 const acquired = computed(() =>
   props.catalog.filter((entry) => level(entry) || assignedRanks(entry, props.character.ranks)),
 );
-const characterAtCap = computed(() => totalRanks(props.levels ?? props.character.levels) >= 50);
+const currentLevels = computed(() => props.levels ?? props.character.levels);
+const classAllocationAtCap = computed(() => totalRanks(currentLevels.value) >= 50);
+const needsExperience = computed(() => props.character.experience.current < CLASS_LEVEL_EXP_COST);
+const experienceRequired = `You need ${CLASS_LEVEL_EXP_COST} current EXP to add a class level.`;
 const addClassReason = computed(() => {
   if (props.saving) return "Wait for the current change to save.";
   if (acquired.value.length >= MAX_CHARACTER_CLASSES)
     return `A character can have up to ${MAX_CHARACTER_CLASSES} classes.`;
   if (!available.value.length) return "No more classes are available.";
+  if (classAllocationAtCap.value) return "All 50 class levels are assigned.";
+  if (needsExperience.value) return experienceRequired;
 });
 function increaseReason(entry: ProgressionClass) {
   if (level(entry) >= 10) return "This class is at level 10.";
-  if (characterAtCap.value) return "Your character is at level 50.";
+  if (classAllocationAtCap.value) return "All 50 class levels are assigned.";
+  if (needsExperience.value) return experienceRequired;
 }
 function decreaseReason(entry: ProgressionClass) {
   if (level(entry) <= assignedRanks(entry, props.character.ranks))

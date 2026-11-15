@@ -8,6 +8,7 @@ import ui from "@nuxt/ui/vue-plugin";
 import { createFrontendI18n } from "../../src/shared/i18n";
 import { startPrototypeBackend, prototypeWorker } from "../mock-backend/browser";
 import { resetPrototypeBackend, setPrototypeScenario, prototypeStore } from "../mock-backend/store";
+import { progressionPlayerCharacterId } from "../mock-backend/progression-seed";
 import ProgressionPrototype from "./ProgressionPrototype.vue";
 import "../../src/style.css";
 
@@ -19,12 +20,13 @@ afterEach(() => {
   cleanup();
   prototypeWorker.resetHandlers();
 });
-function mount(readOnly = false) {
+function mount(readOnly = false, playerCharacterId?: string) {
   const root = document.createElement("div");
   document.body.append(root);
   const app = createApp(
     defineComponent({
-      setup: () => () => h(UApp, {}, { default: () => h(ProgressionPrototype, { readOnly }) }),
+      setup: () => () =>
+        h(UApp, {}, { default: () => h(ProgressionPrototype, { readOnly, playerCharacterId }) }),
     }),
   )
     .use(ui)
@@ -54,6 +56,64 @@ async function addSkill(classId: string, skillId: string) {
   await page.getByTestId(`add-skill-${classId}`).click();
   await page.getByTestId(`select-skill-${skillId}`).click();
 }
+test("a player edits their own EXP and class levels from the party table", async () => {
+  const id = progressionPlayerCharacterId;
+  mount(false, id);
+  const sheet = page.getByTestId(`open-sheet-${id}`);
+  await expect.element(sheet).toBeVisible();
+  const partyCard = page.getByTestId("party-card").nth(1);
+  await expect.element(partyCard).toBeVisible();
+  expect(partyCard.element().textContent).toContain("Nera Vale");
+  await expect.element(page.getByTestId("open-sheet-catalog-nera")).not.toBeInTheDocument();
+  await expect.element(page.getByTestId("table-classes-catalog-nera")).not.toBeInTheDocument();
+  await sheet.click();
+
+  const total = page.getByTestId("total-exp");
+  const current = page.getByTestId("current-exp");
+  const level = page.getByTestId("progression-character-level");
+  await total.fill("100");
+  await current.click();
+  await current.fill("49");
+  await total.click();
+  await expect
+    .poll(() => prototypeStore.progressionExperience.get(id))
+    .toEqual({ current: 49, total: 100 });
+  await page.getByTestId("class-summary-guardian").click();
+  await increase("class-progress-guardian");
+  await expect.poll(() => (current.element() as HTMLInputElement).value).toBe("39");
+  await expect
+    .poll(() => prototypeStore.progressionExperience.get(id))
+    .toEqual({ current: 39, total: 100 });
+  await expect.element(level).toHaveValue(5);
+  await page.getByTestId("close-character-sheets").click();
+  await expect
+    .element(page.getByTestId(`table-classes-${id}`))
+    .toHaveTextContent("ClassesGuardian 4 · Scholar 2");
+  await sheet.click();
+  await decrease("class-progress-guardian");
+  await expect.poll(() => (current.element() as HTMLInputElement).value).toBe("49");
+  await expect
+    .poll(() => prototypeStore.progressionExperience.get(id))
+    .toEqual({ current: 49, total: 100 });
+  for (const value of [6, 5]) {
+    await level.fill(String(value));
+    await current.click();
+    await expect
+      .poll(() => prototypeStore.progressionCharacters.find((entry) => entry.id === id)?.level)
+      .toBe(value);
+    expect(prototypeStore.progressionExperience.get(id)).toEqual({ current: 49, total: 100 });
+  }
+  expect(prototypeStore.progressionExperience.get("catalog-nera")).toEqual({
+    current: 10,
+    total: 60,
+  });
+  await current.fill("0");
+  await total.click();
+  await expect
+    .element(page.getByTestId("class-progress-guardian").getByTestId("increase-progress"))
+    .toBeDisabled();
+  await expect.element(page.getByTestId("add-class")).toBeDisabled();
+});
 test("optimistic edits queue during slow saves and update table maxima before acknowledgement", async () => {
   mount();
   await page.getByTestId("class-summary-guardian").click();
@@ -69,7 +129,7 @@ test("optimistic edits queue during slow saves and update table maxima before ac
   await expect
     .element(page.getByTestId("table-classes-catalog-rowan"))
     .toHaveTextContent("ClassesGuardian 5 · Scholar 2");
-  await expect.element(page.getByTestId("party-hp").first()).toHaveTextContent("28 / 70");
+  await expect.element(page.getByTestId("party-hp").first()).toHaveTextContent("28 / 68");
   await expect
     .poll(() => prototypeStore.progressionRanks["catalog-rowan"]?.resolve, { timeout: 6000 })
     .toBe(4);
@@ -111,13 +171,17 @@ test("confirmed rejection rolls ranks and derived stats back without a save form
   await expect.element(meter("skill-progress-resolve")).toHaveAttribute("aria-valuenow", "2");
   expect(prototypeStore.progressionRanks["catalog-rowan"]?.resolve).toBe(2);
   await page.getByTestId("surface-table").click();
-  await expect.element(page.getByTestId("party-hp").first()).toHaveTextContent("28 / 65");
+  await expect.element(page.getByTestId("party-hp").first()).toHaveTextContent("28 / 64");
 });
 test("new character selects classes and skills inline without blocking record navigation", async () => {
   mount();
   await page.getByTestId("progression-character").click();
   await page.getByTestId("select-catalog-new").click();
+  await expect.element(page.getByTestId("progression-character-level")).toHaveValue(5);
+  await expect.element(page.getByTestId("current-exp")).toHaveValue(50);
+  await expect.element(page.getByTestId("total-exp")).toHaveValue(50);
   await addClass("guardian");
+  await expect.element(page.getByTestId("current-exp")).toHaveValue(40);
   await increase("class-progress-guardian");
   await increase("class-progress-guardian");
   await addSkill("guardian", "resolve");
@@ -141,6 +205,15 @@ test("new character selects classes and skills inline without blocking record na
     cover: 1,
     insight: 2,
   });
+  expect(prototypeStore.progressionExperience.get("catalog-new")).toEqual({
+    current: 0,
+    total: 50,
+  });
+  await decrease("skill-progress-insight");
+  await decrease("class-progress-scholar");
+  await expect
+    .poll(() => prototypeStore.progressionExperience.get("catalog-new"))
+    .toEqual({ current: 10, total: 50 });
 });
 test("skill picker inside table sheet drawer saves to the shared table projection", async () => {
   mount();

@@ -1,5 +1,7 @@
 import type { ProgressionClass } from "../../src/modules/class-progression/types";
 
+export const progressionPlayerCharacterId = "catalog-rowan";
+
 /** Illustrative game-local definitions, not a transcription of the official skill catalog. */
 export const progressionCatalog: ProgressionClass[] = [
   {

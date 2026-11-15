@@ -5,9 +5,10 @@ import PartyCharacterCard from "../game-table/PartyCharacterCard.vue";
 import CharacterSheetsDrawer from "../game-table/CharacterSheetsDrawer.vue";
 import ProgressionSheet from "./ProgressionSheet.vue";
 import TableClassesCard from "./TableClassesCard.vue";
-import type { ProgressionSnapshot } from "./types";
+import type { ProgressionExperience, ProgressionSnapshot } from "./types";
 const props = defineProps<{
   snapshot: ProgressionSnapshot;
+  playerCharacterId?: string;
   readOnly?: boolean;
   levels?: Record<string, number>;
   saving?: boolean;
@@ -15,16 +16,26 @@ const props = defineProps<{
 defineEmits<{
   changeClass: [id: string, delta: number];
   changeSkill: [id: string, delta: number];
+  changeExperience: [field: keyof ProgressionExperience, value: number];
+  changeLevel: [level: number];
 }>();
 const selectedId = defineModel<string>("selectedId", { required: true });
-const surface = ref("sheet");
+const surface = ref(props.playerCharacterId ? "table" : "sheet");
 const drawerOpen = ref(false);
+const availableSheets = computed(() =>
+  props.playerCharacterId
+    ? props.snapshot.characters.filter((entry) => entry.id === props.playerCharacterId)
+    : props.snapshot.characters,
+);
 const selected = computed(() =>
-  props.snapshot.characters.find((entry) => entry.id === selectedId.value),
+  availableSheets.value.find((entry) => entry.id === selectedId.value),
 );
 const characterTabs = computed(() =>
-  props.snapshot.characters.map((entry) => ({ label: entry.sheet.name, value: entry.id })),
+  availableSheets.value.map((entry) => ({ label: entry.sheet.name, value: entry.id })),
 );
+function canOpenSheet(id: string) {
+  return !props.playerCharacterId || id === props.playerCharacterId;
+}
 </script>
 <template>
   <section class="space-y-medium">
@@ -42,6 +53,7 @@ const characterTabs = computed(() =>
     </UTabs>
     <template v-if="surface === 'sheet'">
       <LabeledSelect
+        v-if="!playerCharacterId"
         v-model="selectedId"
         label="Character"
         :items="characterTabs"
@@ -60,10 +72,12 @@ const characterTabs = computed(() =>
         :saving="saving"
         @change-class="(id, delta) => $emit('changeClass', id, delta)"
         @change-skill="(id, delta) => $emit('changeSkill', id, delta)"
+        @change-experience="(field, value) => $emit('changeExperience', field, value)"
+        @change-level="$emit('changeLevel', $event)"
       />
     </template>
     <template v-else>
-      <p class="text-small text-muted">
+      <p v-if="!playerCharacterId" class="text-small text-muted">
         Party-card preview. Rolling is disabled here; class management opens the same character
         sheet.
       </p>
@@ -73,11 +87,12 @@ const characterTabs = computed(() =>
           :key="character.id"
           :member="character.party"
         >
-          <template #class-progression>
+          <template v-if="canOpenSheet(character.id)" #class-progression>
             <TableClassesCard :catalog="snapshot.catalog" :character="character" />
           </template>
           <template #actions>
             <UButton
+              v-if="canOpenSheet(character.id)"
               class="mt-medium"
               color="neutral"
               variant="outline"
@@ -107,6 +122,8 @@ const characterTabs = computed(() =>
             :saving="saving"
             @change-class="(id, delta) => $emit('changeClass', id, delta)"
             @change-skill="(id, delta) => $emit('changeSkill', id, delta)"
+            @change-experience="(field, value) => $emit('changeExperience', field, value)"
+            @change-level="$emit('changeLevel', $event)"
           />
         </template>
       </CharacterSheetsDrawer>

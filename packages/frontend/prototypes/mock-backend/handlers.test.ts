@@ -208,7 +208,13 @@ describe("prototype catalog progression", () => {
     const preview = withProgressionRanks(snapshot.catalog, rowan, ranks, rowan.levels);
     const saved: ProgressionSnapshot = await fetch(`${progressionUrl}/${rowan.id}`, {
       method: "POST",
-      body: JSON.stringify({ expectedRevision: rowan.revision, levels: rowan.levels, ranks }),
+      body: JSON.stringify({
+        expectedRevision: rowan.revision,
+        level: rowan.sheet.level,
+        levels: rowan.levels,
+        ranks,
+        experience: rowan.experience,
+      }),
     }).then((response) => response.json());
     expect(saved.characters[0]?.party).toEqual({ ...preview.party, revision: rowan.revision + 1 });
     expect(preview.party).toMatchObject({
@@ -262,7 +268,13 @@ describe("prototype catalog progression", () => {
     ) =>
       fetch(`${url}/catalog-new`, {
         method: "POST",
-        body: JSON.stringify({ levels, ranks, expectedRevision: revision }),
+        body: JSON.stringify({
+          levels,
+          ranks,
+          level: character.sheet.level,
+          experience: { current: 50 - (levels.scholar ?? 0) * 10, total: 50 },
+          expectedRevision: revision,
+        }),
       });
     expect((await save({ scholar: 1 }, {}, character.revision)).status).toBe(200);
     const reloaded = await fetch(url).then((response) => response.json());
@@ -272,7 +284,8 @@ describe("prototype catalog progression", () => {
     expect(selected).toMatchObject({
       levels: { scholar: 1 },
       ranks: {},
-      sheet: { classes: [{ id: "scholar" }] },
+      experience: { current: 40, total: 50 },
+      sheet: { level: 5, classes: [{ id: "scholar" }] },
     });
     expect(selected.party.maxima.mp).toBe(character.party.maxima.mp + 5);
     expect((await save({ scholar: 1 }, { insight: 2 }, selected.revision)).status).toBe(400);
@@ -281,17 +294,19 @@ describe("prototype catalog progression", () => {
     expect((await save({ scholar: 0 }, {}, selected.revision + 1)).status).toBe(200);
   });
 
-  it("validates ranks and revisions without altering manual character records", async () => {
+  it("validates ranks, EXP, and revisions without altering manual character records", async () => {
     const url = `${root}/prototype/class-progression`;
     const original = await fetch(url).then((response) => response.json());
     const rowan = original.characters[0];
     expect(rowan.party.maxima.hp).toBe(64);
-    const save = (ranks: Record<string, number>, revision = rowan.revision) =>
+    const save = (ranks: Record<string, number>, revision = rowan.revision, current = 30) =>
       fetch(`${url}/${rowan.id}`, {
         method: "POST",
         body: JSON.stringify({
           expectedRevision: revision,
+          level: 6,
           ranks,
+          experience: { current, total: 90 },
           levels: {
             guardian: (ranks.resolve ?? 0) + (ranks.cover ?? 0),
             scholar: (ranks.insight ?? 0) + (ranks.study ?? 0),
@@ -299,11 +314,13 @@ describe("prototype catalog progression", () => {
         }),
       });
     expect((await save({ resolve: 6, cover: 1, insight: 2 })).status).toBe(400);
+    expect((await save({ resolve: 3, cover: 1, insight: 2 }, rowan.revision, 40)).status).toBe(400);
     const saved = await save({ resolve: 3, cover: 1, insight: 2 }).then((response) =>
       response.json(),
     );
     expect(saved.characters[0]).toMatchObject({
       revision: 2,
+      experience: { current: 30, total: 90 },
       sheet: { level: 6 },
       party: { level: 6, maxima: { hp: 67, mp: 51 } },
     });

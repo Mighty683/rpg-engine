@@ -24,11 +24,16 @@ export interface ProgressionClass {
   benefits: ProgressionBenefit[];
   skills: ProgressionSkill[];
 }
+export interface ProgressionExperience {
+  current: number;
+  total: number;
+}
 export interface ProgressionCharacter {
   id: string;
   revision: number;
   levels: Record<string, number>;
   ranks: Record<string, number>;
+  experience: ProgressionExperience;
   sheet: Sheet;
   party: PartyCharacter;
 }
@@ -36,10 +41,8 @@ export interface ProgressionSnapshot {
   catalog: ProgressionClass[];
   characters: ProgressionCharacter[];
 }
-export interface ProgressionSave {
+export interface ProgressionSave extends ProgressionAllocation {
   expectedRevision: number;
-  levels: Record<string, number>;
-  ranks: Record<string, number>;
 }
 export interface ProgressionApi {
   load(): Promise<ProgressionSnapshot>;
@@ -54,6 +57,8 @@ export interface SourcedBenefit extends ProgressionBenefit {
 }
 
 export interface ProgressionAllocation {
+  level: number;
   ranks: Record<string, number>;
   levels: Record<string, number>;
+  experience: ProgressionExperience;
 }

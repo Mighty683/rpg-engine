@@ -96,8 +96,13 @@ function warnIfEditingLocked(event: PointerEvent) {
           :controller="controller"
         />
         <CharacterThemeField v-model="identity.theme" />
-        <CharacterLevelField :level="level" @change="setLevel" />
       </fieldset>
+      <slot name="level">
+        <fieldset :disabled="editingLocked" class="contents">
+          <CharacterLevelField :level="level" @change="setLevel" />
+        </fieldset>
+      </slot>
+      <slot name="experience" />
       <EditingLockButton v-if="!readOnly" v-model="character.editingLocked" />
       <fieldset :disabled="editingLocked" class="vital-resources">
         <ResourceField

@@ -2,15 +2,37 @@
 import type { ClassModifierStat } from "../../shared/fabula/classModifiers";
 import { projectDefenses } from "../characters/sheet/defense/model";
 import type { Sheet } from "../characters/sheet/types";
-import type { ProgressionClass, ProgressionCharacter, SourcedBenefit } from "./types";
+import type {
+  ProgressionClass,
+  ProgressionCharacter,
+  ProgressionExperience,
+  SourcedBenefit,
+} from "./types";
 
 export const MAX_CHARACTER_CLASSES = 5;
+export const CLASS_LEVEL_EXP_COST = 10;
+export const STARTING_CHARACTER_LEVEL = 5;
 
 export function assignedRanks(entry: ProgressionClass, ranks: Record<string, number>): number {
   return entry.skills.reduce((total, skill) => total + (ranks[skill.id] ?? 0), 0);
 }
 export function totalRanks(ranks: Record<string, number>): number {
   return Object.values(ranks).reduce((total, rank) => total + rank, 0);
+}
+export function characterLevelError(level: number): string | undefined {
+  if (!Number.isInteger(level) || level < STARTING_CHARACTER_LEVEL || level > 50)
+    return "Enter a character level from 5 to 50.";
+}
+export function experienceError(
+  experience: ProgressionExperience,
+  levels: Record<string, number>,
+): string | undefined {
+  if (!Number.isSafeInteger(experience.current) || !Number.isSafeInteger(experience.total))
+    return "Enter whole numbers for current and total EXP.";
+  if (experience.current < 0 || experience.total < 0) return "EXP cannot be negative.";
+  if (experience.current > experience.total) return "Total EXP must cover current EXP.";
+  if (experience.total - experience.current < totalRanks(levels) * CLASS_LEVEL_EXP_COST)
+    return "Total EXP must cover current EXP and the cost of assigned class levels.";
 }
 export function progressionError(
   catalog: ProgressionClass[],
@@ -115,7 +137,7 @@ export function withProgressionRanks(
   ranks: Record<string, number>,
   levels: Record<string, number>,
 ): ProgressionCharacter {
-  const level = Math.max(5, totalRanks(levels));
+  const level = character.sheet.level;
   const classes = catalog
     .filter((entry) => levels[entry.id])
     .map((entry) => ({
@@ -125,7 +147,6 @@ export function withProgressionRanks(
     }));
   const sheet = {
     ...character.sheet,
-    level,
     classes,
     skills: catalog
       .flatMap((entry) => entry.skills)
