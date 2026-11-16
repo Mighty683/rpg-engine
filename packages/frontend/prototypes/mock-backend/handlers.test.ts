@@ -13,7 +13,9 @@ beforeEach(() => resetPrototypeBackend());
 describe("prototype backend", () => {
   it("shares revisioned sheet writes across character and party reads", async () => {
     const url = `${root}/games/prototype-game/characters/rowan`;
-    const original = await fetch(url).then((response) => response.json());
+    const original = await fetch(url, { headers: { "Content-Type": "application/json" } }).then(
+      (response) => response.json(),
+    );
     expect(original.character.sheet.name).toBe("Rowan Ash");
     const patch = { expectedRevision: 1, changes: { name: "Edited Rowan", resources: { hp: 9 } } };
     const saved = await fetch(url, { method: "PATCH", body: JSON.stringify(patch) }).then(

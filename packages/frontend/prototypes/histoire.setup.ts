@@ -1,6 +1,7 @@
 import ui from "@nuxt/ui/vue-plugin";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { defineSetupVue3 } from "@histoire/plugin-vue";
+import { QueryClient, VueQueryPlugin } from "@tanstack/vue-query";
 import "../src/style.css";
 import { providePrototypeApiServices } from "./api";
 
@@ -12,5 +13,6 @@ export const setupVue3 = defineSetupVue3(async ({ app }) => {
   }
   providePrototypeApiServices(app);
   app.use(createRouter({ history: createMemoryHistory(), routes: [] }));
+  app.use(VueQueryPlugin, { queryClient: new QueryClient() });
   app.use(ui);
 });

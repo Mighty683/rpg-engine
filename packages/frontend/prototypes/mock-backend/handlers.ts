@@ -27,9 +27,9 @@ export const prototypeHandlers = [
       return HttpResponse.json({ error: { code: "prototype_error" } }, { status: 500 });
     const path = new URL(request.url).pathname;
     const method = request.method;
-    const body = request.headers.get("content-type")?.includes("application/json")
-      ? ((await request.json()) as Record<string, any>)
-      : method === "GET" || method === "DELETE"
+    const body =
+      method === "GET" ||
+      (method === "DELETE" && !request.headers.get("content-type")?.includes("application/json"))
         ? {}
         : ((await request.json()) as Record<string, any>);
     const empty = store.scenario === "empty";
@@ -42,6 +42,8 @@ export const prototypeHandlers = [
     if (path === "/api/games") return HttpResponse.json({ games: [game] });
     if (/\/api\/games\/[^/]+$/.test(path)) return HttpResponse.json({ game });
     if (path.endsWith("/members")) return HttpResponse.json({ members: store.members });
+    if (method === "GET" && path.endsWith("/npcs")) return HttpResponse.json({ npcs: [] });
+    if (method === "GET" && path.endsWith("/classes")) return HttpResponse.json({ classes: [] });
     if (path.endsWith("/party"))
       return HttpResponse.json({ characters: empty ? [] : store.characters.map(projectParty) });
     if (path.endsWith("/throws")) {

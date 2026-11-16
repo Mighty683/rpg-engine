@@ -29,6 +29,7 @@ import CharacterSheetsDrawer from "./CharacterSheetsDrawer.vue";
 import PartyPanel from "./PartyPanel.vue";
 import HistoryPanel from "./HistoryPanel.vue";
 import EdgeTabs from "../../shared/design-system/base/EdgeTabs.vue";
+import type { EdgeTab } from "../../shared/design-system/base/EdgeTabs.vue";
 import RollDialog from "./RollDialog.vue";
 import FreeRollDialog from "./FreeRollDialog.vue";
 
@@ -37,6 +38,7 @@ const props = defineProps<{
   role: "GM" | "Player";
   throwsHint: number;
   npcsHint?: number;
+  extraEdgeTab?: EdgeTab;
 }>();
 const toast = useToast();
 
@@ -68,6 +70,7 @@ const edgeTabs = computed(() => [
     ? [{ id: "npcs", label: "NPCs", color: "info" as const, testId: "edge-tab-npcs" }]
     : []),
   { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
+  ...(props.extraEdgeTab ? [props.extraEdgeTab] : []),
 ]);
 watch(sheetOpen, (open) => {
   if (open) historyTab.value = "sheets";
@@ -592,6 +595,25 @@ async function removeEntry(entry: ThrowRecord) {
             @load-older="history.loadOlder"
             @retry="history.refresh"
             @make-roll="openFreeRoll"
+          />
+        </template>
+      </USlideover>
+      <USlideover
+        v-if="extraEdgeTab"
+        :open="historyTab === extraEdgeTab.id"
+        :title="extraEdgeTab.label"
+        @update:open="
+          (open: boolean) => {
+            if (!open && historyTab === extraEdgeTab?.id) historyTab = null;
+          }
+        "
+      >
+        <template #body>
+          <slot
+            name="extra-edge-panel"
+            :party="party"
+            :party-ready="partyQuery.isSuccess.value"
+            :party-loading="partyQuery.isLoading.value"
           />
         </template>
       </USlideover>
