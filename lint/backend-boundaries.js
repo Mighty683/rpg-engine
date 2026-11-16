@@ -20,6 +20,10 @@ const tableOwners = {
   npcs: "npcs",
   npcAttacks: "npcs",
   npcCreateRequests: "npcs",
+  classTemplates: "class-catalog",
+  gameClasses: "class-catalog",
+  gameClassSkills: "class-catalog",
+  classCreateRequests: "class-catalog",
 };
 
 function localPath(filename) {
