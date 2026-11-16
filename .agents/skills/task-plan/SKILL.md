@@ -12,6 +12,8 @@ Sequence work around actual dependencies. Each wave should deliver an integrated
 Reuse approved prototype components and wire them to production. Schedule checks against the reviewed design across relevant screen sizes and states.
 Assign one owner to wire the approved shared view into the production route and verify it there as soon as it renders.
 
+For persistence changes, assign database schema, migrations, runtime-role grants, and any seed updates to the owning wave. Schedule migration preparation before dependent runtime checks, including verification with the restricted application role and preservation of existing data where affected.
+
 ## Example
 
 ```markdown
