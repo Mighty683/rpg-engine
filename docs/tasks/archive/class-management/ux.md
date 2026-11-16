@@ -113,4 +113,4 @@ Recalculate affected characters' benefits and keep their class levels. Removing 
 - Keep the selection if a copy or library save fails. If the outcome is uncertain, check the destination before retrying.
 - In the prototype, remove a class from character sheets before removing it from the game. Keep existing manual entries until a migration is available.
 
-Prototype links · [Class management](../../../../packages/frontend/prototypes/class-management/ClassManagement.story.vue) · [Class progression](../../../../packages/frontend/prototypes/class-progression/ClassProgression.story.vue) · [Player views](../../../../packages/frontend/prototypes/class-progression/PlayerProgression.story.vue)
+The prototype stories were retired after the production screens shipped. The handover records the original comparisons.

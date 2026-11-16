@@ -1,10 +1,7 @@
-import { handleClassCatalog } from "./class-catalog";
-import { classGamePath, gameClassesPath, libraryPath } from "../class-management/contract";
 /** MSW HTTP boundary for offline prototypes, including production character clients. */
 import { delay, http, HttpResponse } from "msw";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
 import type { CreateThrowInput } from "../../src/modules/game-table/types";
-import { handleProgression } from "./progression";
 import { createPrototypeThrow } from "./throws";
 import { projectCharacter, projectParty, prototypeStore as store } from "./store";
 
@@ -35,15 +32,6 @@ export const prototypeHandlers = [
       : method === "GET" || method === "DELETE"
         ? {}
         : ((await request.json()) as Record<string, any>);
-    const player = request.headers.get("x-prototype-character");
-    if (
-      path === libraryPath ||
-      path.startsWith(`${libraryPath}/`) ||
-      path === gameClassesPath ||
-      path.startsWith(`${gameClassesPath}/`)
-    )
-      return handleClassCatalog(path, method, body, Boolean(player));
-    if (path.startsWith(`${classGamePath}/`)) return handleProgression(path, method, body, player);
     const empty = store.scenario === "empty";
     const game = {
       id: "prototype-game",

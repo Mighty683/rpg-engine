@@ -1,11 +1,9 @@
-import { seedGameClasses } from "./class-catalog-seed";
 /** Deterministic in-memory prototype data. All HTTP projections share these sheets. */
 import type { Character } from "../../src/modules/characters/types";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
 import type { PartyCharacter } from "../../src/modules/game-table/types";
 import { makeThrow, members } from "../domain/fixtures";
 import type { PrototypeScenario } from "./types";
-import { seedProgressionRanks, progressionCatalog } from "./progression-seed";
 import { projectDefenses } from "../../src/modules/characters/sheet/defense/model";
 
 const timestamp = "2026-01-01T00:00:00Z";
@@ -65,33 +63,6 @@ export function seedCharacter(id: string, name: string, caster: boolean): Charac
 function initialState() {
   return {
     scenario: "default" as PrototypeScenario,
-    gameClasses: seedGameClasses(),
-    classCreateReceipts: new Map<string, string>(),
-    libraryClasses: [] as ReturnType<typeof seedGameClasses>,
-    progressionControllers: new Map<string, string>(),
-    progressionCreates: new Map<string, string>(),
-    progressionRanks: seedProgressionRanks(),
-    progressionExperience: new Map([
-      ["catalog-rowan", { current: 40, total: 90 }],
-      ["catalog-nera", { current: 10, total: 60 }],
-      ["catalog-new", { current: 50, total: 50 }],
-    ]),
-    progressionLevels: Object.fromEntries(
-      Object.entries(seedProgressionRanks()).map(([id, ranks]) => [
-        id,
-        Object.fromEntries(
-          progressionCatalog.map((entry) => [
-            entry.id,
-            entry.skills.reduce((sum, skill) => sum + (ranks[skill.id] ?? 0), 0),
-          ]),
-        ),
-      ]),
-    ),
-    progressionCharacters: [
-      seedCharacter("catalog-rowan", "Rowan Ash", false),
-      seedCharacter("catalog-nera", "Nera Vale", true),
-      seedCharacter("catalog-new", "New adventurer", false),
-    ],
     characters: [
       seedCharacter("rowan", "Rowan Ash", false),
       seedCharacter("nera", "Nera Vale", true),
