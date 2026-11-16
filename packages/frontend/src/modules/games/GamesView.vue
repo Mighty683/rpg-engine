@@ -184,13 +184,6 @@ onMounted(() => {
           {{ t("games.title") }}
         </h1>
         <div class="flex flex-wrap gap-small">
-          <UButton
-            to="/library/class"
-            color="neutral"
-            variant="outline"
-            data-testid="open-class-library"
-            >Class library</UButton
-          >
           <UButton v-if="!checking" data-testid="open-game-creation" @click="showForm">{{
             t("games.create")
           }}</UButton>

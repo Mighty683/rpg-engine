@@ -48,17 +48,22 @@ const editorTabs = [
       <header class="flex flex-wrap items-start justify-between gap-medium">
         <div>
           <p class="text-label text-muted">
-            {{
-              context === "Library"
-                ? "LIBRARY"
-                : `GAME / ${gameName?.toUpperCase() ?? "THE LANTERN ROAD"}`
-            }}
-            · FABULA ULTIMA
+            <template v-if="context === 'Game'">
+              <ULink
+                v-if="returnTo"
+                :to="returnTo"
+                class="underline-offset-4 hover:text-highlighted hover:underline"
+                data-testid="return-from-classes"
+                >{{ gameName ?? "Game table" }}</ULink
+              >
+              <span v-else>{{ gameName }}</span> · Fabula Ultima
+            </template>
+            <template v-else>Fabula Ultima</template>
           </p>
           <h1 class="text-heading font-semibold">
             {{
               {
-                List: "Classes",
+                List: context === "Library" ? "Class library" : "Game classes",
                 Create: "Create class",
                 Copy: "Copy from library",
                 Character: "Characters",
@@ -70,25 +75,12 @@ const editorTabs = [
         </div>
         <div class="flex flex-wrap gap-small">
           <UButton
-            v-if="(screen === 'List' || screen === 'Copy') && (contextTo || !returnTo)"
+            v-if="(screen === 'List' || screen === 'Copy') && contextTo"
             :to="contextTo"
             color="neutral"
             variant="outline"
             data-testid="switch-class-context"
-            @click="
-              !contextTo && $emit('switchContext', context === 'Library' ? 'Game' : 'Library')
-            "
-            >{{ context === "Library" ? "Game classes" : "Class library" }}</UButton
-          >
-          <UButton
-            v-if="returnTo && screen === 'List'"
-            :to="returnTo"
-            color="neutral"
-            variant="outline"
-            data-testid="return-from-classes"
-            >{{
-              context === "Library" && returnTo === "/" ? "My games" : "Return to game"
-            }}</UButton
+            >{{ context === "Library" ? "Back to game classes" : "Class library" }}</UButton
           >
           <UButton
             v-if="screen === 'List' && context === 'Library'"

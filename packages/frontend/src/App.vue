@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { DropdownMenuItem } from "@nuxt/ui";
 import type { Account } from "./modules/auth/types";
 
 import { useToast } from "@nuxt/ui/composables";
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouter } from "vue-router";
 import AccountScreen from "./modules/auth/AccountScreen.vue";
@@ -16,7 +17,10 @@ const client = useQueryClient();
 const router = useRouter();
 const loading = ref(true);
 const sessionError = ref("");
-const menuOpen = ref(false);
+const accountItems = computed<DropdownMenuItem[]>(() => [
+  { label: account.value?.username ?? "", type: "label" },
+  { label: "Sign out", color: "error", "data-testid": "sign-out", onSelect: signOut },
+]);
 
 async function setAccount(next: Account | null) {
   account.value = null;
@@ -70,43 +74,28 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
       <UButton @click="loadSession">Try again</UButton>
     </div>
     <AccountScreen v-else-if="!account" @authenticated="setAccount" />
-    <main v-else class="min-h-screen bg-default text-default">
-      <header class="flex items-center gap-small border-b border-default p-medium">
-        <UButton
-          color="neutral"
-          variant="outline"
-          aria-label="Open menu"
-          :aria-expanded="menuOpen"
-          data-testid="open-navigation"
-          @click="menuOpen = true"
-        >
-          <svg
-            class="size-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            aria-hidden="true"
+    <div v-else class="min-h-screen bg-default text-default">
+      <header
+        class="grid grid-cols-[1fr_auto] items-center gap-x-small border-b border-default px-large sm:grid-cols-[auto_1fr_auto] sm:gap-x-section"
+      >
+        <RouterLink to="/" class="col-start-1 row-start-1 font-semibold">RPG Engine</RouterLink>
+        <PrimaryNavigation
+          class="col-span-2 col-start-1 row-start-2 sm:col-span-1 sm:col-start-2 sm:row-start-1"
+        />
+        <UDropdownMenu :items="accountItems" :content="{ align: 'end' }">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            trailing-icon="i-lucide-chevron-down"
+            class="col-start-2 row-start-1 min-h-page justify-self-end sm:col-start-3"
+            data-testid="open-account-menu"
+            >Account</UButton
           >
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </UButton>
-        <RouterLink to="/" class="font-semibold">RPG Engine</RouterLink>
+        </UDropdownMenu>
       </header>
-      <USlideover v-model:open="menuOpen" :title="account.username" side="left">
-        <template #body>
-          <div class="space-y-large">
-            <PrimaryNavigation @navigate="menuOpen = false" />
-            <div class="space-y-small border-t border-default pt-medium">
-              <UButton variant="outline" color="error" data-testid="sign-out" @click="signOut"
-                >Sign out</UButton
-              >
-            </div>
-          </div>
-        </template>
-      </USlideover>
-      <UContainer class="py-page sm:py-page-wide"><RouterView :key="$route.fullPath" /></UContainer>
-    </main>
+      <UContainer as="main" class="py-page sm:py-page-wide">
+        <RouterView :key="$route.fullPath" />
+      </UContainer>
+    </div>
   </UApp>
 </template>

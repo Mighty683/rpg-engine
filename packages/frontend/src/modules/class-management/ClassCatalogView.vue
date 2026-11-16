@@ -31,7 +31,7 @@ const returnGame =
     :game-name="gameRecord?.name"
     :can-manage="!gameId || gameRecord?.role === 'GM'"
     :context-to="gamePath ? (gameRecord?.role === 'GM' ? libraryPath : undefined) : returnGame"
-    :return-to="gamePath ?? '/'"
+    :return-to="gamePath"
     :characters-to="gamePath ? `${gamePath}?manage=characters` : undefined"
     @navigate="screen = $event"
   />

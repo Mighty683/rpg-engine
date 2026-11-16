@@ -44,6 +44,8 @@ async function mount(fetchMock: ReturnType<typeof vi.fn>, canEdit = true) {
       return Promise.resolve(
         new Response(JSON.stringify({ account: { id: "p1", username: "Player" } })),
       );
+    if (url.endsWith("/games/g1"))
+      return Promise.resolve(Response.json({ game: { name: "The Lantern Road" } }));
     if (url.endsWith("/characters") && !init?.method)
       return Promise.resolve(
         new Response(
@@ -62,14 +64,17 @@ async function mount(fetchMock: ReturnType<typeof vi.fn>, canEdit = true) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      { path: "/", component: { template: "<h1>Games</h1>" } },
+      { path: "/library/class", component: { template: "<h1>Class library</h1>" } },
+      { path: "/games/:gameId", component: { template: "<h1>Game table</h1>" } },
       {
-        path: "/games/:gameId/players/:playerId/characters/:characterId",
+        path: "/games/:gameId/characters/:characterId",
         component: CharacterView,
       },
     ],
   });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  await router.push("/games/g1/players/p1/characters/c1");
+  await router.push("/games/g1/characters/c1");
   await router.isReady();
   const app = createApp(App)
     .provide(apiServicesKey, browserApiServices)
@@ -98,6 +103,38 @@ function response(overrides: Record<string, unknown> = {}) {
     }),
   );
 }
+
+test("standalone sheets link to their game and provide the signed-in navigation", async () => {
+  const fetchMock = vi.fn((url: string) =>
+    Promise.resolve(url.endsWith("/auth/logout") ? Response.json({ ok: true }) : response()),
+  );
+  const mounted = await mount(fetchMock);
+  try {
+    const games = page.getByTestId("nav-games");
+    const library = page.getByTestId("nav-class-library");
+    await expect.element(games).toHaveAttribute("data-section-active", "true");
+    expect(
+      mounted.root.querySelector('[data-testid="nav-games"]')?.hasAttribute("aria-current"),
+    ).toBe(false);
+    const gameLink = page.getByTestId("character-game-link");
+    await expect.element(gameLink).toHaveTextContent("The Lantern Road");
+    await expect.element(gameLink).toHaveAttribute("href", "/games/g1");
+    await library.click();
+    await expect.element(library).toHaveAttribute("aria-current", "page");
+    await expect.element(games).toHaveAttribute("data-section-active", "false");
+    await page.getByTestId("open-account-menu").click();
+    await page.getByTestId("sign-out").click();
+    await expect.element(games).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/auth/logout"),
+      expect.objectContaining({ method: "POST" }),
+    );
+  } finally {
+    mounted.app.unmount();
+    mounted.root.remove();
+    vi.unstubAllGlobals();
+  }
+});
 
 test("read-only sheets explain control and keep informational help focusable", async () => {
   const fetchMock = vi.fn(() => Promise.resolve(response()));

@@ -17,6 +17,7 @@ import type { Character as SheetCharacter } from "./sheet/types";
 import { useOptimisticSave } from "../../shared/useOptimisticSave";
 import CharacterAbilities from "../class-progression/CharacterAbilities.vue";
 import ExperienceFields from "../class-progression/ExperienceFields.vue";
+import GameContextLink from "../games/GameContextLink.vue";
 import { useGameEvents } from "../games/useGameEvents";
 import { useGameClassCatalogQuery } from "../class-progression/hooks";
 import {
@@ -350,6 +351,7 @@ function changeSkill(id: string, delta: number) {
 
 <template>
   <div class="mx-auto max-w-6xl space-y-small">
+    <GameContextLink v-if="!props.gameId" :game-id="gameId" />
     <p
       v-if="draft && rosterCharacter"
       data-testid="character-controller"

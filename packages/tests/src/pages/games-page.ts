@@ -38,7 +38,6 @@ export class GamesPage {
   }
 
   async returnToGames() {
-    await this.page.getByTestId("open-navigation").click();
     await this.page.getByTestId("nav-games").click();
   }
 

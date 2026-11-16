@@ -1,39 +1,49 @@
 <script setup lang="ts">
+import type { NavigationMenuItem } from "@nuxt/ui";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
-import { useQuery } from "@tanstack/vue-query";
-import { account } from "../../modules/auth/session";
-import { useApiServices } from "../api-services";
 
-const { games: api } = useApiServices();
-
-const emit = defineEmits<{ navigate: [] }>();
 const route = useRoute();
-const gameId = computed(() => (typeof route.params.gameId === "string" ? route.params.gameId : ""));
-const gameLink = computed(() => (gameId.value ? `/games/${gameId.value}` : null));
-const game = useQuery({
-  queryKey: computed(() => ["accounts", account.value?.id, "games", gameId.value]),
-  queryFn: () => api.getGame(gameId.value),
-  enabled: computed(() => Boolean(gameId.value)),
-});
+
+const items = computed<NavigationMenuItem[]>(() => [
+  {
+    label: "Games",
+    to: "/",
+    exact: true,
+    "data-testid": "nav-games",
+    "data-section-active": route.path === "/" || typeof route.params.gameId === "string",
+  },
+  {
+    label: "Class library",
+    to: "/library/class",
+    exact: true,
+    "data-testid": "nav-class-library",
+    "data-section-active": route.path === "/library/class",
+  },
+]);
 </script>
 
 <template>
-  <nav aria-label="Primary navigation" class="space-y-small">
-    <RouterLink
-      to="/"
-      class="block rounded p-small font-semibold"
-      data-testid="nav-games"
-      @click="emit('navigate')"
-      >Games</RouterLink
-    >
-    <RouterLink
-      v-if="gameLink"
-      :to="gameLink"
-      class="block rounded p-small text-muted"
-      data-testid="nav-game"
-      @click="emit('navigate')"
-      >{{ game.data.value?.game.name ?? "Game table" }}</RouterLink
-    >
-  </nav>
+  <div>
+    <UNavigationMenu
+      aria-label="Primary navigation"
+      :items="items"
+      color="neutral"
+      variant="link"
+      :ui="{ link: 'min-h-page rounded-none whitespace-nowrap px-small text-small' }"
+    />
+  </div>
 </template>
+
+<style scoped>
+:deep([data-section-active="true"]) {
+  box-shadow: inset 0 calc(-1 * var(--focus-ring-width)) var(--ui-primary);
+  color: var(--ui-text-highlighted);
+  font-weight: 600;
+}
+
+:deep([data-slot="link"]:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: calc(-1 * var(--focus-ring-offset));
+}
+</style>

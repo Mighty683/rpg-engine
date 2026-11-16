@@ -11,3 +11,9 @@ Document each task’s user flow, screen design, and prototype decisions togethe
 - Communicate every API error through a toast that clearly explains what happened and, when possible, what the user can do next. Do not show API error messages as red text in the interface.
 - Do not care about WCAG for now
 - We will try to make it AI first, any operation done by users can be done by prompting it to agent which will manage the session
+
+## Navigation
+
+- Keep the main destinations visible in the signed-in header. Place Games and Class library beside the app name when they fit. Move the links to a second row on narrow screens. Put session actions such as Sign out in the Account menu.
+- Show which section is active. Game tables and their subpages belong to Games. Keep the current game's name and return link in the page context, and keep game-specific destinations and actions there.
+- Reserve the page heading's actions for work on that page, such as Create game or Create class. Preserve contextual return links when a workflow crosses sections, such as returning to a game's classes from the class library.

@@ -270,9 +270,7 @@ async function removeCharacter() {
                   : gameRecord.name
             }}
           </h1>
-          <p class="text-muted">
-            {{ gameRecord.name }} · {{ gameRecord.system.name }} · {{ gameRecord.role }}
-          </p>
+          <p class="text-muted">{{ gameRecord.system.name }} · {{ gameRecord.role }}</p>
         </div>
         <div class="flex flex-wrap gap-small">
           <UButton
@@ -299,7 +297,7 @@ async function removeCharacter() {
             variant="outline"
             data-testid="return-to-game"
             @click="returnToGame"
-            >Return to game</UButton
+            >{{ gameRecord.name }}</UButton
           >
           <UButton
             v-if="!management && !settings"

@@ -24,7 +24,7 @@ export class ClassCatalogPage {
   }
 
   async openLibrary() {
-    await this.page.getByTestId("open-class-library").click();
+    await this.page.getByTestId("nav-class-library").click();
   }
   async openGameCatalog() {
     await this.page.getByTestId("open-game-classes").click();
