@@ -2,8 +2,10 @@ packages:
   - packages/*
 
 allowBuilds:
+  '@scarf/scarf': true
   argon2: true
   esbuild: true
+  msw: true
   vue-demi: true
 
 trustLockfile: true
