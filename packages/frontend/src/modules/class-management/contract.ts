@@ -3,8 +3,10 @@ import { isClassModifierStat } from "../../shared/fabula/classModifiers";
 
 export function completeDefinition(entry: ClassDefinition): boolean {
   const hasName = (name: string) => Boolean(name.trim()) && name.length <= 100;
+  const boundedText = (text: string) => text.length <= 2000;
   const completeBenefit = (benefit: BenefitDraft) =>
     hasName(benefit.name) &&
+    boundedText(benefit.description) &&
     (benefit.kind === "text"
       ? Boolean(benefit.description.trim())
       : isClassModifierStat(benefit.stat) &&
@@ -14,13 +16,18 @@ export function completeDefinition(entry: ClassDefinition): boolean {
         Number(benefit.amount) <= 2147483647);
   return (
     hasName(entry.name) &&
+    boundedText(entry.description) &&
+    entry.benefits.length <= 10 &&
     entry.benefits.every(completeBenefit) &&
+    entry.skills.length <= 30 &&
     entry.skills.every(
       (skill) =>
         hasName(skill.name) &&
+        boundedText(skill.description) &&
         Number.isInteger(Number(skill.maxRank)) &&
         Number(skill.maxRank) >= 1 &&
         Number(skill.maxRank) <= 2147483647 &&
+        skill.benefits.length <= 10 &&
         skill.benefits.every(completeBenefit),
     )
   );

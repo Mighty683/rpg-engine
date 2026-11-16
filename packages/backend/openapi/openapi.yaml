@@ -1747,6 +1747,7 @@ components:
             description:
               type: string
               minLength: 1
+              maxLength: 2000
           additionalProperties: false
         - type: object
           required:
@@ -1765,6 +1766,7 @@ components:
               $ref: "#/components/schemas/Name"
             description:
               type: string
+              maxLength: 2000
             stat:
               $ref: "#/components/schemas/ModifierStat"
             amount:
@@ -1791,12 +1793,14 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
+          maxLength: 2000
         maxRank:
           type: integer
           minimum: 1
           maximum: 2147483647
         benefits:
           type: array
+          maxItems: 10
           items:
             $ref: "#/components/schemas/Benefit"
       additionalProperties: false
@@ -1812,12 +1816,15 @@ components:
           $ref: "#/components/schemas/Name"
         description:
           type: string
+          maxLength: 2000
         freeBenefits:
           type: array
+          maxItems: 10
           items:
             $ref: "#/components/schemas/Benefit"
         skills:
           type: array
+          maxItems: 30
           items:
             $ref: "#/components/schemas/ClassSkill"
       additionalProperties: false
@@ -1890,6 +1897,7 @@ components:
       additionalProperties: false
     SkillRemovalImpact:
       type: array
+      maxItems: 30
       items:
         type: object
         required: [skillId, characters]

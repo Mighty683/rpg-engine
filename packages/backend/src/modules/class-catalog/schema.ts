@@ -13,7 +13,7 @@ const modifierStats = [
   "dieWlp",
 ] as const;
 const name = { type: "string", minLength: 1, maxLength: 100 };
-const description = { type: "string" };
+const description = { type: "string", maxLength: 2000 };
 const revision = { ...int32Schema, minimum: 0 };
 const benefitIdentity = { id: uuidSchema, name };
 const benefit = {
@@ -43,7 +43,7 @@ const benefit = {
     },
   ],
 };
-const benefits = { type: "array", items: benefit };
+const benefits = { type: "array", items: benefit, maxItems: 10 };
 const skill = {
   type: "object",
   required: ["id", "name", "description", "maxRank", "benefits"],
@@ -62,7 +62,7 @@ export const classDefinitionSchema: ObjectInputSchema = {
     name,
     description,
     freeBenefits: benefits,
-    skills: { type: "array", items: skill },
+    skills: { type: "array", items: skill, maxItems: 30 },
   },
   additionalProperties: false,
 };
@@ -114,8 +114,10 @@ export const saveClassToLibrarySchema: ObjectInputSchema = {
   additionalProperties: false,
 };
 
+/** Echoed server impact: bounded by skill count, but character counts follow live game state. */
 const skillRemovalImpact = {
   type: "array",
+  maxItems: 30,
   items: {
     type: "object",
     required: ["skillId", "characters"],
