@@ -129,3 +129,7 @@ Tested the combined Wave 1–3 working tree based on `3ae0d99` against disposabl
 | Restricted runtime role | Under the deployed grants, the restricted role inserted and edited a skill, removed a learned rank and its skill, revised the class and character, and deleted an unassigned class in a rolled-back transaction. |
 
 Production uses the reviewed game class editor and affected-character dialog. The standalone sheet and game catalog refresh when the event stream opens and when relevant changes arrive. The table drawer receives the existing game stream through its parent.
+
+### Local demo seed
+
+`pnpm seed:demo --reset` rebuilt the local development schema and applied all 11 migrations. A readback confirmed independent Lantern Guard library and game definitions, Rowan at class level 1 with one learned rank and 40 / 50 EXP, and Nera unassigned at 50 / 50 EXP. Running `pnpm seed:demo` again left the existing demo intact. `pnpm check` passed.

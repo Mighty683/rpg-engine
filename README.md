@@ -43,9 +43,17 @@ Run `pnpm hooks:install` once per clone to install the pre-push hook. The hook r
 
 ### Demo data
 
-Run `pnpm seed:demo` after migrations to create **The Lantern Road**, a GM account (`demo-gm`), a player account (`demo-player`), an active character for each, and three NPCs with attacks covering hidden, visible, and known visibility. Both accounts use `demo-password` by default; set `DEMO_PASSWORD` to change it.
+Run `pnpm seed:demo` after migrations to create **The Lantern Road**, a GM account (`demo-gm`), a player account (`demo-player`), an active character for each, a reusable **Lantern Guard** class with a copy in the game and a learned skill on the GM’s sheet, and three NPCs with attacks covering hidden, visible, and known visibility. Both accounts use `demo-password` by default; set `DEMO_PASSWORD` to change it.
 
-The command refuses to run in production. Reruns leave an existing demo game unchanged; if either username is taken, the transaction fails without changing existing data.
+The command refuses to run in production. Reruns leave an existing demo game unchanged. If either username is taken, the seed transaction fails without changing existing data.
+
+To wipe the local development database’s `public` schema, apply all migrations, and reload the demo data:
+
+```sh
+pnpm seed:demo --reset
+```
+
+Reset deletes every object and all data in that schema. It uses the backend’s `DATABASE_URL` and requires a loopback PostgreSQL host.
 
 ### Local PostgreSQL with Podman
 
