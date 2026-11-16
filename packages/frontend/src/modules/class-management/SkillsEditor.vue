@@ -4,7 +4,7 @@ import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import FreeBenefitsEditor from "./FreeBenefitsEditor.vue";
 import type { BenefitDraft, SkillDraft } from "./types";
 
-defineProps<{ skills: SkillDraft[]; removeDisabled?: boolean }>();
+defineProps<{ skills: SkillDraft[]; removeDisabled?: boolean; readOnly?: boolean }>();
 const emit = defineEmits<{
   add: [];
   update: [id: string, change: Partial<SkillDraft>];
@@ -26,7 +26,9 @@ function removeBenefit(skill: SkillDraft, id: string) {
 <template>
   <SurfaceCard>
     <h2 class="text-section font-semibold">Skills</h2>
-    <p class="text-muted">Define each skill's description, rank limit and benefits.</p>
+    <p v-if="!readOnly" class="text-muted">
+      Define each skill's description, rank limit and benefits.
+    </p>
     <p v-if="skills.length === 0" class="mt-medium text-muted" data-testid="skills-empty">
       No skills added yet.
     </p>
@@ -39,6 +41,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
       >
         <div class="flex flex-wrap items-end justify-between gap-medium">
           <LabeledInput
+            :readonly="readOnly"
             label="Skill name"
             class="w-64 max-w-full"
             :model-value="skill.name"
@@ -46,6 +49,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
             @update:model-value="emit('update', skill.id, { name: String($event) })"
           />
           <UButton
+            v-if="!readOnly"
             color="error"
             variant="outline"
             :disabled="removeDisabled"
@@ -56,6 +60,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
           >
         </div>
         <LabeledInput
+          :readonly="readOnly"
           class="mt-small"
           label="Description"
           multiline
@@ -65,6 +70,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
           @update:model-value="emit('update', skill.id, { description: String($event) })"
         />
         <LabeledInput
+          :readonly="readOnly"
           class="mt-small w-32"
           label="Maximum rank"
           type="number"
@@ -81,6 +87,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
           allow-rank-scaling
           description="Add effects and choose whether stat modifiers scale with rank."
           :benefits="skill.benefits"
+          :read-only="readOnly"
           @add="emit('addBenefit', skill.id, $event)"
           @update="(id, change) => updateBenefit(skill, id, change)"
           @remove="removeBenefit(skill, $event)"
@@ -88,6 +95,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
       </article>
     </div>
     <UButton
+      v-if="!readOnly"
       class="mt-medium"
       color="primary"
       variant="solid"

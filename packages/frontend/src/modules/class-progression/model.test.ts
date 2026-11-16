@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { assignedRanks, progressionError, sourcedBenefits } from "./model";
+import { defaultSheet, preview } from "../../../../backend/src/modules/fabula/rules.ts";
+import type { FabulaSheet } from "../../../../backend/src/modules/fabula/types.ts";
+import { assignedRanks, projectClassStats, progressionError, sourcedBenefits } from "./model";
 import type { ProgressionClass } from "./types";
 const catalog: ProgressionClass[] = ["a", "b", "c", "d", "e", "f"].map((id) => ({
   id,
@@ -44,5 +46,52 @@ describe("catalog progression", () => {
     expect(benefits.map((benefit) => benefit.total)).toEqual([5, 6]);
     expect(benefits[1]).toMatchObject({ rank: 3, maxRank: 10, isFree: false });
     expect(sourcedBenefits(catalog, {}, { a: 0 })).toEqual([]);
+  });
+  it("matches server projections for signed dice, fixed armor, overrides, and rank effects", () => {
+    const sheet: FabulaSheet = {
+      ...defaultSheet("Guardian"),
+      equipment: [
+        {
+          id: "armor",
+          kind: "armor",
+          name: "Mail",
+          notes: "",
+          priceZenit: null,
+          equipped: true,
+          fixedDefense: 9,
+          defenseBonus: 50,
+          magicDefenseBonus: -1,
+          initiativeModifier: 2,
+        },
+      ],
+      overrides: { ...defaultSheet("Guardian").overrides, maxHp: 60, maxMp: 2147483646 },
+    };
+    const effects = sourcedBenefits(
+      [
+        {
+          ...catalog[0]!,
+          benefits: [
+            ...catalog[0]!.benefits,
+            { id: "dex", name: "Dex", description: "", stat: "dieDex", amount: 8 },
+            { id: "ins", name: "Ins", description: "", stat: "dieIns", amount: -4 },
+            { id: "def", name: "Def", description: "", stat: "defense", amount: -3 },
+            { id: "mdef", name: "MDef", description: "", stat: "magicDefense", amount: 4 },
+          ],
+        },
+      ],
+      { a: 3 },
+      { a: 4 },
+    );
+    const server = preview(
+      sheet,
+      effects.flatMap((effect) =>
+        effect.stat ? [{ stat: effect.stat, value: effect.total }] : [],
+      ),
+    );
+    expect(projectClassStats(sheet, effects)).toEqual({
+      currentDice: server.currentDice,
+      defenses: server.defenses,
+      maxima: server.maxima,
+    });
   });
 });

@@ -12,6 +12,7 @@ withDefaults(
     title?: string;
     description?: string;
     allowRankScaling?: boolean;
+    readOnly?: boolean;
   }>(),
   {
     title: "Free benefits",
@@ -46,7 +47,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
       </div>
     </div>
     <p v-if="benefits.length === 0" class="mt-medium text-muted">
-      No benefits added yet. Add a text effect or a stat modifier.
+      No benefits added yet.{{ readOnly ? "" : " Add a text effect or a stat modifier." }}
     </p>
     <div v-else class="mt-medium flex flex-col gap-small">
       <article
@@ -57,6 +58,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
       >
         <div class="flex items-center justify-between gap-small">
           <LabeledInput
+            :readonly="readOnly"
             label="Benefit name"
             class="w-64 max-w-full"
             :model-value="benefit.name"
@@ -64,6 +66,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
             @update:model-value="emit('update', benefit.id, { name: String($event) })"
           />
           <UButton
+            v-if="!readOnly"
             color="error"
             variant="outline"
             size="sm"
@@ -75,6 +78,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
         </div>
         <div class="mt-small flex flex-wrap items-end gap-medium">
           <LabeledSelect
+            :disabled="readOnly"
             label="Type"
             :model-value="benefit.kind"
             :items="types"
@@ -93,6 +97,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
           </LabeledSelect>
           <template v-if="benefit.kind === 'modifier'">
             <LabeledSelect
+              :disabled="readOnly"
               label="Stat"
               :model-value="benefit.stat || undefined"
               :items="stats"
@@ -109,6 +114,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
               >
             </LabeledSelect>
             <LabeledInput
+              :readonly="readOnly"
               :label="isDieModifier(benefit.stat) ? 'Die steps' : 'Modifier'"
               type="number"
               class="w-24"
@@ -119,6 +125,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
             />
             <UCheckbox
               v-if="allowRankScaling"
+              :disabled="readOnly"
               label="Apply per rank"
               :model-value="benefit.perRank ?? false"
               @update:model-value="emit('update', benefit.id, { perRank: $event === true })"
@@ -126,6 +133,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
           </template>
         </div>
         <LabeledInput
+          :readonly="readOnly"
           :label="benefit.kind === 'text' ? 'Effect' : 'Description'"
           multiline
           :rows="2"
@@ -144,7 +152,11 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
         </p>
       </article>
     </div>
-    <form class="mt-medium flex flex-wrap items-end gap-small" @submit.prevent="addBenefit">
+    <form
+      v-if="!readOnly"
+      class="mt-medium flex flex-wrap items-end gap-small"
+      @submit.prevent="addBenefit"
+    >
       <LabeledInput
         v-model="newName"
         label="Benefit name"

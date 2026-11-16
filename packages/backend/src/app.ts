@@ -1,3 +1,11 @@
+import { createGameClassEdits } from "./application/game-class-edits.ts";
+import { createGameClassStore } from "./modules/class-catalog/repository.ts";
+import { createClassProgressionStore } from "./modules/characters/class-progression-store.ts";
+import {
+  classLibraryController,
+  gameClassesController,
+} from "./modules/class-catalog/controller.ts";
+import { createClassCatalogService } from "./modules/class-catalog/service.ts";
 import { createCharacterRollReader } from "./modules/characters/roll-reader.ts";
 import { createNpcRollReader } from "./modules/npcs/roll-reader.ts";
 import { createOwnershipWorkflows } from "./application/ownership.ts";
@@ -87,8 +95,20 @@ export function createApplication(
     new PostgresRateStore(database, "account-mutations"),
     options.mutationLimits,
   );
-  app.use(["/api/games", "/api/invitations"], limitMutations);
+  app.use(["/api/games", "/api/invitations", "/api/library"], limitMutations);
   const games = createGamesService(database);
+  const classCatalog = createClassCatalogService({
+    database,
+    gameAccessFor: createGameAccessService,
+    events,
+  });
+  const classEdits = createGameClassEdits({
+    database,
+    events,
+    gameAccessFor: createGameAccessService,
+    classesFor: createGameClassStore,
+    progressionFor: createClassProgressionStore,
+  });
   const ownership = createOwnershipWorkflows({
     database,
     events,
@@ -128,6 +148,8 @@ export function createApplication(
     .registerControllers(
       authController({ auth, config }),
       gamesController({ auth, games }),
+      classLibraryController(auth, classCatalog),
+      gameClassesController(auth, classCatalog, classEdits),
       charactersController({ auth, games, characters }),
       partyController({ auth, characters }),
       throwsController({ auth, games, throws }),

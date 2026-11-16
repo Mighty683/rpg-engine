@@ -152,6 +152,8 @@ it("assembles complete sheets with ordered collections and explicit null/zero ov
     current_mp: 7,
     current_ip: 3,
     fabula_points: 2,
+    exp_current: 50,
+    exp_total: 50,
     max_hp_override: 80,
     max_mp_override: null,
     max_ip_override: 9,

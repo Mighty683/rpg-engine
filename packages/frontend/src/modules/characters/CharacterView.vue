@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Snapshot } from "./types";
+import type { CharacterEdit, Snapshot } from "./types";
 import type { Sheet } from "./sheet/types";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
@@ -15,6 +15,19 @@ import CharacterSheet from "./sheet/CharacterSheet.vue";
 import { toCharacter, toSheet } from "./sheet/model";
 import type { Character as SheetCharacter } from "./sheet/types";
 import { useOptimisticSave } from "../../shared/useOptimisticSave";
+import CharacterAbilities from "../class-progression/CharacterAbilities.vue";
+import ExperienceFields from "../class-progression/ExperienceFields.vue";
+import { useGameEvents } from "../games/useGameEvents";
+import { useGameClassCatalogQuery } from "../class-progression/hooks";
+import {
+  experienceError,
+  managedAbilities,
+  previewManagedProgression,
+  progressionError,
+  projectClassStats,
+  sourcedBenefits,
+} from "../class-progression/model";
+import type { ManagedProgression, ProgressionExperience } from "../class-progression/types";
 
 const toast = useToast();
 const route = useRoute();
@@ -27,6 +40,28 @@ const roster = useGameCharactersQuery(gameId.value);
 if (!props.gameId) useQueryErrorToast(roster, "Could not load character access. Try again.");
 const mutation = useSaveGameCharacterMutation(gameId.value, characterId.value);
 const snapshot = ref<Snapshot | null>(null);
+const catalogQuery = useGameClassCatalogQuery(
+  gameId.value,
+  computed(() => Boolean(snapshot.value?.character.progression)),
+);
+useQueryErrorToast(catalogQuery, "Could not load classes. Try again.");
+const catalog = computed(() => catalogQuery.data.value ?? []);
+
+function refreshSheet() {
+  void query.refetch();
+  void roster.refetch();
+  if (snapshot.value?.character.progression) void catalogQuery.refetch();
+}
+useGameEvents(
+  props.gameId ? undefined : gameId.value,
+  (hint) => {
+    if (hint.type === "sheet" && hint.characterId === characterId.value.toLowerCase())
+      void query.refetch();
+    if (hint.type === "roster") refreshSheet();
+  },
+  refreshSheet,
+);
+
 const locked = ref(localStorage.getItem(`character-lock:${characterId.value}`) === "1");
 function mergeSheet(base: Sheet, changes: Record<string, unknown>) {
   return {
@@ -37,28 +72,65 @@ function mergeSheet(base: Sheet, changes: Record<string, unknown>) {
     overrides: { ...base.overrides, ...(changes.overrides as object | undefined) },
   } as Sheet;
 }
-const optimistic = useOptimisticSave<Snapshot, Record<string, unknown>>({
-  initial: snapshot,
-  apply: (base, changes) => ({
-    character: { ...base.character, sheet: mergeSheet(base.character.sheet, changes) },
-  }),
-  save: (base, changes) =>
-    mutation.mutateAsync({
-      expectedRevision: base.character.revision,
-      changes,
-    }) as unknown as Promise<Snapshot>,
-  refresh: async () => {
-    const result = await query.refetch();
-    if (!result.data) throw new Error("Character could not be refreshed");
-    return result.data as unknown as Snapshot;
-  },
-  merge: (a, b) => ({
+function applyEdit(
+  base: Snapshot,
+  { progression: change, ...sheetChanges }: CharacterEdit,
+): Snapshot {
+  const sheet = mergeSheet(base.character.sheet, sheetChanges);
+  const stored = base.character.progression;
+  if (!stored) return { character: { ...base.character, sheet } };
+  const progression = change ? previewManagedProgression(stored, change) : stored;
+  const { ranks, levels } = managedAbilities(progression);
+  const derived =
+    catalogQuery.data.value || !progression.classLevels.length
+      ? {
+          ...base.character.derived,
+          ...projectClassStats(sheet, sourcedBenefits(catalog.value, ranks, levels)),
+        }
+      : base.character.derived;
+  return { character: { ...base.character, sheet, progression, derived } };
+}
+
+function mergeEdits(a: CharacterEdit, b: CharacterEdit): CharacterEdit {
+  return {
     ...a,
     ...b,
     baseDice: { ...(a.baseDice as object | undefined), ...(b.baseDice as object | undefined) },
     resources: { ...(a.resources as object | undefined), ...(b.resources as object | undefined) },
     overrides: { ...(a.overrides as object | undefined), ...(b.overrides as object | undefined) },
-  }),
+  };
+}
+
+const optimistic = useOptimisticSave<Snapshot, CharacterEdit[]>({
+  initial: snapshot,
+  apply: (base, edits) => edits.reduce(applyEdit, base),
+  async save(base, edits) {
+    let latest = base;
+    try {
+      for (const changes of edits) {
+        latest = (await mutation.mutateAsync({
+          expectedRevision: latest.character.revision,
+          changes,
+        })) as unknown as Snapshot;
+      }
+    } catch (error) {
+      if (latest === base) throw error;
+      throw new Error("Some edits may have been saved. Reload the latest sheet.");
+    }
+    return latest;
+  },
+  refresh: async () => {
+    const result = await query.refetch();
+    if (result.isError || !result.data) throw new Error("Character could not be refreshed");
+    return result.data as unknown as Snapshot;
+  },
+  merge: (a, b) => {
+    const last = a.at(-1)!;
+    const next = b[0]!;
+    // EXP is entered before the allocation delta. Keep progression edits in submission order.
+    if (last.progression || next.progression) return [...a, ...b];
+    return [...a.slice(0, -1), mergeEdits(last, next), ...b.slice(1)];
+  },
   isKnownRejection: (error) => error.status === 400 || error.status === 422,
 });
 watch(optimistic.error, (error) => {
@@ -69,15 +141,20 @@ watch(optimistic.error, (error) => {
       : error.status === 400 || error.status === 422
         ? "The change was rejected and has been reverted."
         : "Your changes could not be confirmed. Your local draft is preserved.";
-  toast.add({ title: message, color: "error" });
+  const reload = {
+    label: "Reload saved sheet",
+    "data-testid": "reload-saved-sheet",
+    onClick: () => void optimistic.retry(),
+  };
+  toast.add({ title: message, color: "error", actions: optimistic.paused.value ? [reload] : [] });
 });
 watch(
-  () => query.data.value,
-  (value) => {
-    if (value) {
-      const next = value as unknown as Snapshot;
+  [() => query.data.value, optimistic.saving],
+  ([value, saving]) => {
+    if (!value || saving) return;
+    const next = value as unknown as Snapshot;
+    if (next.character.revision >= (optimistic.acknowledged.value?.character.revision ?? 0))
       optimistic.setSnapshot(next);
-    }
   },
   { immediate: true },
 );
@@ -99,7 +176,12 @@ const readAccessLost = computed(() => {
 });
 const effectiveReadOnly = computed(() => {
   const canEdit = rosterCharacter.value?.canEdit;
-  return props.readOnly || !canEdit || optimistic.error.value?.status === 403;
+  return (
+    props.readOnly ||
+    !canEdit ||
+    snapshot.value?.character.canEdit === false ||
+    optimistic.error.value?.status === 403
+  );
 });
 const draft = ref<SheetCharacter | null>(null);
 let syncedDraft = "";
@@ -132,15 +214,21 @@ watch(
       if (JSON.stringify(updated[key]) !== JSON.stringify(current[key]))
         changes[key] = updated[key];
     }
-    if (Object.keys(changes).length) optimistic.submit(changes);
+    if (Object.keys(changes).length) optimistic.submit([changes]);
   },
   { deep: true },
 );
 const derived = computed(() => snapshot.value?.character.derived ?? {});
 const maximum = computed(() => ({
-  HP: sheet.value?.overrides.maxHp ?? derived.value.maxima?.hp ?? 0,
-  MP: sheet.value?.overrides.maxMp ?? derived.value.maxima?.mp ?? 0,
-  IP: sheet.value?.overrides.maxIp ?? derived.value.maxima?.ip ?? 0,
+  HP: derived.value.currentDice
+    ? (derived.value.maxima?.hp ?? 0)
+    : (sheet.value?.overrides.maxHp ?? derived.value.maxima?.hp ?? 0),
+  MP: derived.value.currentDice
+    ? (derived.value.maxima?.mp ?? 0)
+    : (sheet.value?.overrides.maxMp ?? derived.value.maxima?.mp ?? 0),
+  IP: derived.value.currentDice
+    ? (derived.value.maxima?.ip ?? 0)
+    : (sheet.value?.overrides.maxIp ?? derived.value.maxima?.ip ?? 0),
 }));
 const maximumOverrides = computed(() => ({
   HP: sheet.value?.overrides.maxHp ?? null,
@@ -150,7 +238,7 @@ const maximumOverrides = computed(() => ({
 function overrideMaximum(resource: "HP" | "MP" | "IP", value: number | null) {
   const keys = { HP: "maxHp", MP: "maxMp", IP: "maxIp" } as const;
   if (!locked.value && !effectiveReadOnly.value)
-    optimistic.submit({ overrides: { [keys[resource]]: value } });
+    optimistic.submit([{ overrides: { [keys[resource]]: value } }]);
 }
 const defenseKeys = { DEF: "defense", "MAG DEF": "magicDefense", INIT: "initiative" } as const;
 const baseDefense = computed(
@@ -174,9 +262,11 @@ const defenseDetails = computed(() => {
             index === 0 &&
             entry?.kind === "armor" &&
             entry.fixedDefense !== null;
-          const modifier = !fixedBase && (part.source === "armor" || part.source === "shield");
+          const modifier =
+            !fixedBase &&
+            (part.source === "armor" || part.source === "shield" || part.source === "class");
           if (modifier && part.value === 0) return [];
-          const name = entry?.name ?? part.source;
+          const name = entry?.name ?? (part.source === "class" ? "Class effects" : part.source);
           return [{ name: fixedBase ? `${name} (fixed)` : name, value: part.value, modifier }];
         },
       );
@@ -192,9 +282,15 @@ const savedDraft = computed(() =>
 );
 const savedDerived = computed(() => optimistic.latestSaved.value?.character.derived ?? {});
 const savedMaximum = computed(() => ({
-  HP: savedSheet.value?.overrides.maxHp ?? savedDerived.value.maxima?.hp ?? 0,
-  MP: savedSheet.value?.overrides.maxMp ?? savedDerived.value.maxima?.mp ?? 0,
-  IP: savedSheet.value?.overrides.maxIp ?? savedDerived.value.maxima?.ip ?? 0,
+  HP: savedDerived.value.currentDice
+    ? (savedDerived.value.maxima?.hp ?? 0)
+    : (savedSheet.value?.overrides.maxHp ?? savedDerived.value.maxima?.hp ?? 0),
+  MP: savedDerived.value.currentDice
+    ? (savedDerived.value.maxima?.mp ?? 0)
+    : (savedSheet.value?.overrides.maxMp ?? savedDerived.value.maxima?.mp ?? 0),
+  IP: savedDerived.value.currentDice
+    ? (savedDerived.value.maxima?.ip ?? 0)
+    : (savedSheet.value?.overrides.maxIp ?? savedDerived.value.maxima?.ip ?? 0),
 }));
 const savedOverrides = computed(() => ({
   HP: savedSheet.value?.overrides.maxHp ?? null,
@@ -211,6 +307,45 @@ const savedDefense = computed(
     ) as Record<keyof typeof defenseKeys, number | null>,
 );
 const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
+const progression = computed(() => snapshot.value?.character.progression);
+const abilities = computed(() => progression.value && managedAbilities(progression.value));
+const progressionReadOnly = computed(() => effectiveReadOnly.value || locked.value);
+const progressionBusy = computed(() => optimistic.saving.value || optimistic.paused.value);
+
+function editProgression(changes: Partial<ManagedProgression>) {
+  if (!progression.value || progressionReadOnly.value || progressionBusy.value) return;
+  const next = managedAbilities(previewManagedProgression(progression.value, changes));
+  const message =
+    experienceError(next.experience, next.levels) ??
+    (changes.classLevels || changes.skillRanks
+      ? progressionError(catalog.value, next.levels, next.ranks)
+      : undefined);
+  if (message) {
+    toast.add({ title: message, color: "error" });
+    return;
+  }
+  optimistic.submit([{ progression: changes }]);
+}
+function changeExperience(field: keyof ProgressionExperience, value: number) {
+  if (abilities.value)
+    editProgression({ experience: { ...abilities.value.experience, [field]: value } });
+}
+function changeClass(id: string, delta: number) {
+  if (!abilities.value) return;
+  const { levels } = abilities.value;
+  const classLevels = Object.entries({ ...levels, [id]: (levels[id] ?? 0) + delta })
+    .filter(([, level]) => level > 0)
+    .map(([gameClassId, level]) => ({ gameClassId, level }));
+  editProgression({ classLevels });
+}
+function changeSkill(id: string, delta: number) {
+  if (!abilities.value) return;
+  const { ranks } = abilities.value;
+  const skillRanks = Object.entries({ ...ranks, [id]: (ranks[id] ?? 0) + delta })
+    .filter(([, rank]) => rank > 0)
+    .map(([skillId, rank]) => ({ skillId, rank }));
+  editProgression({ skillRanks });
+}
 </script>
 
 <template>
@@ -236,12 +371,43 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
       v-else-if="draft"
       :character="draft"
       :read-only="effectiveReadOnly"
+      :current-dice="derived.currentDice"
+      show-manual-entries
       :maximum="maximum"
       :maximum-overrides="maximumOverrides"
       @override-maximum="overrideMaximum"
       :base-defense="baseDefense"
       :defense-details="defenseDetails"
-    />
+    >
+      <template v-if="abilities" #experience>
+        <ExperienceFields
+          :experience="abilities.experience"
+          :read-only="progressionReadOnly"
+          :disabled="progressionBusy"
+          @change="changeExperience"
+        />
+      </template>
+      <template v-if="abilities" #class-progression>
+        <ContentState v-if="catalogQuery.isLoading.value" kind="loading"
+          >Loading classes…</ContentState
+        >
+        <ContentState
+          v-else-if="catalogQuery.isError.value"
+          kind="error"
+          retry-label="Retry loading classes"
+          @retry="catalogQuery.refetch"
+        />
+        <CharacterAbilities
+          v-else
+          :catalog="catalog"
+          :character="abilities"
+          :read-only="progressionReadOnly"
+          :saving="progressionBusy"
+          @change-class="changeClass"
+          @change-skill="changeSkill"
+        />
+      </template>
+    </CharacterSheet>
     <p v-if="optimistic.saving.value" data-testid="save-status" role="status">Saving…</p>
     <div
       v-else-if="optimistic.error.value"
@@ -273,6 +439,7 @@ const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
       <summary class="cursor-pointer font-semibold">Review latest saved version</summary>
       <CharacterSheet
         :character="savedDraft"
+        :current-dice="savedDerived.currentDice"
         read-only
         :maximum="savedMaximum"
         :maximum-overrides="savedOverrides"

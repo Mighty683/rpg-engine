@@ -1,5 +1,7 @@
 import type {
+  ActiveModifier,
   Attribute,
+  Die,
   FabulaSheet,
   SheetChanges,
   Contribution,
@@ -239,14 +241,41 @@ export function mergeSheet(current: FabulaSheet, changes: SheetChanges): FabulaS
   return validateSheet(next);
 }
 
-function calculated(value: number, contributions: Contribution[]): CalculatedDefense {
-  return { calculated: value, contributions };
+const intMax = 2147483647;
+const intMin = -2147483648;
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
-export function preview(sheet: FabulaSheet): FabulaPreview {
+function calculated(value: number, contributions: Contribution[], bonus = 0): CalculatedDefense {
+  return {
+    calculated: clamp(value + bonus, intMin, intMax),
+    contributions: bonus
+      ? [...contributions, { source: "class", value: clamp(bonus, intMin, intMax) }]
+      : contributions,
+  };
+}
+export function preview(sheet: FabulaSheet, modifiers: ActiveModifier[] = []): FabulaPreview {
+  const bonus = (stat: ActiveModifier["stat"]) =>
+    modifiers.reduce((sum, modifier) => sum + (modifier.stat === stat ? modifier.value : 0), 0);
+  const stepDie = (base: Die, steps: number) => clamp(base + 2 * steps, 6, 12) as Die;
+  const currentDice = {
+    DEX: stepDie(sheet.baseDice.DEX, bonus("dieDex")),
+    INS: stepDie(sheet.baseDice.INS, bonus("dieIns")),
+    MIG: stepDie(sheet.baseDice.MIG, bonus("dieMig")),
+    WLP: stepDie(sheet.baseDice.WLP, bonus("dieWlp")),
+  };
   const maxima = {
-    hp: sheet.level + 5 * sheet.baseDice.MIG,
-    mp: sheet.level + 5 * sheet.baseDice.WLP,
-    ip: 6,
+    hp: clamp(
+      (sheet.overrides.maxHp ?? sheet.level + 5 * sheet.baseDice.MIG) + bonus("maxHp"),
+      0,
+      intMax,
+    ),
+    mp: clamp(
+      (sheet.overrides.maxMp ?? sheet.level + 5 * sheet.baseDice.WLP) + bonus("maxMp"),
+      0,
+      intMax,
+    ),
+    ip: clamp((sheet.overrides.maxIp ?? 6) + bonus("maxIp"), 0, intMax),
   };
   const armor = sheet.equipment.filter(
     (entry): entry is Extract<EquipmentEntry, { kind: "armor" }> =>
@@ -261,11 +290,11 @@ export function preview(sheet: FabulaSheet): FabulaPreview {
       ? { calculated: null, reason: "ambiguous_equipment" }
       : calculated(
           (armor[0]?.fixedDefense ??
-            sheet.baseDice.DEX + armor.reduce((sum, entry) => sum + entry.defenseBonus, 0)) +
+            currentDice.DEX + armor.reduce((sum, entry) => sum + entry.defenseBonus, 0)) +
             shields.reduce((sum, entry) => sum + entry.defenseBonus, 0),
           [
             ...(armor[0]?.fixedDefense === null || !armor[0]
-              ? [{ source: "DEX" as const, value: sheet.baseDice.DEX }]
+              ? [{ source: "DEX" as const, value: currentDice.DEX }]
               : [{ source: "armor" as const, entryId: armor[0].id, value: armor[0].fixedDefense }]),
             ...armor
               .filter((entry) => entry.fixedDefense === null)
@@ -280,16 +309,17 @@ export function preview(sheet: FabulaSheet): FabulaPreview {
               value: entry.defenseBonus,
             })),
           ],
+          bonus("defense"),
         );
   const magic: CalculatedDefense =
     armor.length > 1 || shields.length > 1
       ? { calculated: null, reason: "ambiguous_equipment" }
       : calculated(
-          sheet.baseDice.INS +
+          currentDice.INS +
             armor.reduce((sum, entry) => sum + entry.magicDefenseBonus, 0) +
             shields.reduce((sum, entry) => sum + entry.magicDefenseBonus, 0),
           [
-            { source: "INS", value: sheet.baseDice.INS },
+            { source: "INS", value: currentDice.INS },
             ...armor.map((entry) => ({
               source: "armor" as const,
               entryId: entry.id,
@@ -301,6 +331,7 @@ export function preview(sheet: FabulaSheet): FabulaPreview {
               value: entry.magicDefenseBonus,
             })),
           ],
+          bonus("magicDefense"),
         );
   const initiative: CalculatedDefense =
     armor.length > 1 || shields.length > 1
@@ -323,6 +354,7 @@ export function preview(sheet: FabulaSheet): FabulaPreview {
         );
   return {
     coverage: "partial",
+    currentDice,
     maxima,
     defenses: { defense: physical, magicDefense: magic, initiative },
   };

@@ -34,3 +34,37 @@ export const characterControllerSchema: ObjectInputSchema = {
   properties: { membershipId: { anyOf: [uuidSchema, { type: "null" }] } },
   additionalProperties: true,
 };
+
+const experienceValue = { type: "integer", minimum: 0, maximum: 2147483647 };
+const experience = {
+  type: "object",
+  required: ["current", "total"],
+  properties: { current: experienceValue, total: experienceValue },
+  additionalProperties: false,
+};
+const classLevels = {
+  type: "array",
+  maxItems: 5,
+  items: {
+    type: "object",
+    required: ["gameClassId", "level"],
+    properties: { gameClassId: uuidSchema, level: { type: "integer", minimum: 1, maximum: 10 } },
+    additionalProperties: false,
+  },
+};
+const skillRanks = {
+  type: "array",
+  maxItems: 50,
+  items: {
+    type: "object",
+    required: ["skillId", "rank"],
+    properties: { skillId: uuidSchema, rank: { type: "integer", minimum: 1, maximum: 10 } },
+    additionalProperties: false,
+  },
+};
+export const progressionChangesSchema: ObjectInputSchema = {
+  type: "object",
+  minProperties: 1,
+  properties: { experience, classLevels, skillRanks },
+  additionalProperties: false,
+};

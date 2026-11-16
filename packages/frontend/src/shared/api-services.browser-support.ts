@@ -1,3 +1,4 @@
+import { classCatalog } from "../modules/class-management/api";
 /** Explicit HTTP-service composition for browser tests that mock the transport. */
 import type { ApiServices } from "./api-services";
 import { authApi } from "../modules/auth/api";
@@ -13,6 +14,7 @@ export const browserApiServices: ApiServices = {
   characters,
   gameTable,
   npcs,
+  classCatalog,
   games,
   invitations: invitationApi,
   players,

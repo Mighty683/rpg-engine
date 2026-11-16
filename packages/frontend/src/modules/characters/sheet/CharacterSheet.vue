@@ -20,6 +20,7 @@ const props = defineProps<{
   controller?: string;
   readOnly?: boolean;
   hideReadOnlyBadge?: boolean;
+  showManualEntries?: boolean;
   currentDice?: Record<Attribute, number>;
   maximum: Record<"HP" | "MP" | "IP", number>;
   maximumOverrides: Record<"HP" | "MP" | "IP", number | null>;
@@ -99,7 +100,7 @@ function warnIfEditingLocked(event: PointerEvent) {
       </fieldset>
       <slot name="level">
         <fieldset :disabled="editingLocked" class="contents">
-          <CharacterLevelField :level="level" @change="setLevel" />
+          <CharacterLevelField :level="level" test-id="character-level" @change="setLevel" />
         </fieldset>
       </slot>
       <slot name="experience" />
@@ -132,7 +133,7 @@ function warnIfEditingLocked(event: PointerEvent) {
         />
       </ScreenSection>
       <ScreenSection
-        v-if="!$slots['class-progression']"
+        v-if="showManualEntries || !$slots['class-progression']"
         class="sheet-split"
         aria-label="Classes and skills"
       >

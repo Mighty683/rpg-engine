@@ -8,6 +8,8 @@ import {
 } from "../../database/schema.ts";
 import type { DatabaseTransaction } from "../../database/types.ts";
 import type { CharacterRollReader, RollCharacter } from "./types.ts";
+import { preview } from "../fabula/rules.ts";
+import { activeModifiers, managedAllocations } from "./progression.ts";
 import { sheetSequential } from "./service.ts";
 async function activeCharacterIds(tx: DatabaseTransaction, gameId: string) {
   const result = await tx
@@ -42,7 +44,16 @@ async function loadCharacter(
     .where(and(eq(characters.gameId, gameId), eq(characters.id, characterId)));
   if (!row) return null;
   const sheet = await sheetSequential(tx, row);
-  return { id: row.id, playerId: row.player_id, revision: row.revision, name: sheet.name, sheet };
+  const allocation = (await managedAllocations(tx, [row.id])).get(row.id);
+  const currentDice = preview(sheet, activeModifiers(allocation)).currentDice;
+  return {
+    id: row.id,
+    playerId: row.player_id,
+    revision: row.revision,
+    name: sheet.name,
+    sheet,
+    currentDice,
+  };
 }
 
 export function createCharacterRollReader(tx: DatabaseTransaction): CharacterRollReader {

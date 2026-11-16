@@ -1,5 +1,5 @@
 import type { MembershipOwnershipFactory } from "../players/types.ts";
-import type { FabulaSheet, SheetChanges } from "../fabula/types.ts";
+import type { FabulaSheet } from "../fabula/types.ts";
 import type { GameAccessFactory, GameActor } from "../games/types.ts";
 import type { GameEvents } from "../events/types.ts";
 import { transaction } from "../../database/transaction.ts";
@@ -15,10 +15,17 @@ import {
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import { defaultSheet, mergeSheet } from "../fabula/rules.ts";
 
-import { present, sheetSequential } from "./service.ts";
+import { loadWorkspaceRecord, present, sheetSequential } from "./service.ts";
 import { canEditCharacter } from "./access.ts";
 import { characterSummaries, summary } from "./ownership.ts";
 import { equipmentToRow } from "./mapping.ts";
+import {
+  applyProgression,
+  managedAllocations,
+  progressionFor,
+  replaceManagedAllocation,
+} from "./progression.ts";
+import type { CharacterChanges } from "./types.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
 
@@ -67,11 +74,7 @@ export async function getWorkspaceCharacter(
       };
       const character = result.rows[0];
       if (!character) throw fail("not_found");
-      const record = {
-        ...present(character, await sheetSequential(tx, character)),
-        canEdit: canEditCharacter(access, character.player_id),
-      };
-      return record;
+      return loadWorkspaceRecord(tx, character, canEditCharacter(access, character.player_id));
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -121,10 +124,7 @@ export async function createWorkspaceCharacter(
       };
       if (!existing.rows[0]) throw fail("not_found");
       if (!canEditCharacter(access, existing.rows[0].player_id)) throw fail("forbidden");
-      const record = {
-        ...present(existing.rows[0], await sheetSequential(tx, existing.rows[0])),
-        canEdit: canEditCharacter(access, existing.rows[0].player_id),
-      };
+      const record = await loadWorkspaceRecord(tx, existing.rows[0], true);
       return { record, created: false };
     }
     const inserted = await tx
@@ -158,7 +158,7 @@ export async function createWorkspaceCharacter(
     if (access.role === "Player")
       await membershipsFor(tx).select(gameId, access.membershipId!, id, true);
     afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
-    return { record: { ...present(inserted[0], sheet), canEdit: true }, created: true };
+    return { record: present(inserted[0], sheet, true), created: true };
   });
 }
 
@@ -221,7 +221,7 @@ export async function updateWorkspaceCharacter(
   actor: GameActor,
   id: string,
   expected: number,
-  changes: SheetChanges,
+  changes: CharacterChanges,
 ) {
   return transaction(database, async (c, afterCommit) => {
     const access = await gameAccessFor(c).lockGame(actor, gameId);
@@ -237,11 +237,31 @@ export async function updateWorkspaceCharacter(
     if (!canEditCharacter(access, r.player_id)) throw fail("forbidden");
     if (r.revision !== expected) throw fail("stale_revision");
     const current = await sheetSequential(c, r);
-    const s = mergeSheet(current, changes);
-    if (JSON.stringify(s) === JSON.stringify(current)) {
-      return { ...present(r, current), canEdit: true };
+    const { progression: progressionChanges, ...sheetChanges } = changes;
+    const s =
+      progressionChanges && !Object.keys(sheetChanges).length
+        ? current
+        : mergeSheet(current, sheetChanges);
+    const previous = (await managedAllocations(c, [r.id])).get(r.id);
+    const before = progressionFor(r, previous);
+    const updated = progressionChanges
+      ? await applyProgression(c, gameId, r.id, before, progressionChanges)
+      : { progression: before, allocation: previous };
+    const { current: expCurrent, total: expTotal } = updated.progression.experience;
+    const allocationsChanged =
+      JSON.stringify(before.classLevels) !== JSON.stringify(updated.progression.classLevels) ||
+      JSON.stringify(before.skillRanks) !== JSON.stringify(updated.progression.skillRanks);
+    if (
+      !allocationsChanged &&
+      r.exp_current === expCurrent &&
+      r.exp_total === expTotal &&
+      JSON.stringify(s) === JSON.stringify(current)
+    ) {
+      return present(r, current, true, previous);
     }
-    await c
+    if (allocationsChanged && updated.allocation)
+      await replaceManagedAllocation(c, gameId, r.id, updated.allocation);
+    const [persisted] = await c
       .update(characters)
       .set({
         name: s.name,
@@ -251,6 +271,8 @@ export async function updateWorkspaceCharacter(
         insDie: s.baseDice.INS,
         migDie: s.baseDice.MIG,
         wlpDie: s.baseDice.WLP,
+        expCurrent,
+        expTotal,
         currentHp: s.resources.hp,
         currentMp: s.resources.mp,
         currentIp: s.resources.ip,
@@ -270,7 +292,8 @@ export async function updateWorkspaceCharacter(
           eq(characters.gameId, gameId),
           eq(characters.revision, expected),
         ),
-      );
+      )
+      .returning(characterFields);
     if ("classes" in changes) await replaceNamedEntries(c, characterClasses, id, s.classes);
     if ("skills" in changes) await replaceNamedEntries(c, characterSkills, id, s.skills);
     if ("equipment" in changes) {
@@ -278,10 +301,10 @@ export async function updateWorkspaceCharacter(
       for (const [index, entry] of s.equipment.entries())
         await c.insert(characterEquipment).values(equipmentToRow(id, index + 1, entry));
     }
-    const out = present({ ...r, revision: r.revision + 1, updated_at: new Date() }, s);
-    afterCommit(() => events.publishGameEvent(gameId, { type: "sheet", characterId: id }));
+    const out = present(persisted!, s, true, updated.allocation);
+    afterCommit(() => events.publishGameEvent(gameId, { type: "sheet", characterId: r.id }));
     afterCommit(() => events.publishGameEvent(gameId, { type: "roster" }));
-    return { ...out, canEdit: true };
+    return out;
   });
 }
 

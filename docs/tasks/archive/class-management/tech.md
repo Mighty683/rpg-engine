@@ -4,7 +4,7 @@
 
 ## Production boundary
 
-The Histoire stories exercise the proposed catalog and character routes through MSW. Production already has a revisioned [character sheet](../../../packages/backend/src/modules/characters/workspace-service.ts), a batched [party view](../../../packages/backend/src/modules/characters/party-service.ts), and a [roll reader](../../../packages/backend/src/modules/characters/roll-reader.ts). The current `classes` and `skills` on a sheet are manual entries.
+The Histoire stories exercise the proposed catalog and character routes through MSW. Production already has a revisioned [character sheet](../../../../packages/backend/src/modules/characters/workspace-service.ts), a batched [party view](../../../../packages/backend/src/modules/characters/party-service.ts), and a [roll reader](../../../../packages/backend/src/modules/characters/roll-reader.ts). The current `classes` and `skills` on a sheet are manual entries.
 
 ```mermaid
 flowchart LR
@@ -22,9 +22,9 @@ flowchart LR
 
 | Entry point | Production connection |
 | --- | --- |
-| Library and game classes | Reuse the class editor and pickers. Provide a catalog client through [API services](../../../packages/frontend/src/shared/api-services.ts). Scope library requests to the signed-in account and game requests to the active game. |
-| Character sheet and game-table drawer | Mount the prototype's class and EXP controls in [CharacterView](../../../packages/frontend/src/modules/characters/CharacterView.vue). Use the existing revisioned save queue and `canEdit`. Load game definitions for selection and display. |
-| Game table | Reuse the compact class summary with the [party query and sheet drawer](../../../packages/frontend/src/modules/game-table/GameTable.vue). Show public class names and current dice from the party response. Open full class details through the authorized character read. |
+| Library and game classes | Reuse the class editor and pickers. Provide a catalog client through [API services](../../../../packages/frontend/src/shared/api-services.ts). Scope library requests to the signed-in account and game requests to the active game. |
+| Character sheet and game-table drawer | Mount the prototype's class and EXP controls in [CharacterView](../../../../packages/frontend/src/modules/characters/CharacterView.vue). Use the existing revisioned save queue and `canEdit`. Load game definitions for selection and display. |
+| Game table | Reuse the compact class summary with the [party query and sheet drawer](../../../../packages/frontend/src/modules/game-table/GameTable.vue). Show public class names and current dice from the party response. Open full class details through the authorized character read. |
 
 ## Data model
 
@@ -46,7 +46,7 @@ erDiagram
 - **Class catalog owns definitions.** `class_templates` stores an account-scoped revisioned definition. `game_classes` stores the same class metadata and free benefits. `game_class_skills` stores ordered skills with stable IDs, rank caps, and effects. Store benefit lists as validated JSONB. Copying a definition assigns new skill and benefit IDs. Editing a game class preserves IDs of surviving skills.
 - **Characters owns progression.** `character_class_levels` keys by character and game class. `character_skill_ranks` references the selected class and a skill from it. Scope foreign keys to the same game. Store Current and Total EXP as integer columns on `characters`. Use positive stored allocations, with absence representing zero.
 - **Compatibility.** New and existing sheets start managed progression at **50 / 50 EXP** with no allocations. Preserve existing character level and manual class and skill rows. Manual entries remain editable through the existing sheet fields and have no automatic effects. Keep the current character GET readable for game members. Attach managed progression only when `canEdit` is true.
-- **Ownership.** Implement catalog writes in a class catalog module. The characters module owns its tables and exports transaction-bound progression operations for catalog changes. Compose both in the application layer and use domain ports for cross-module writes. Follow [code conventions](../../spec/code-conventions.md).
+- **Ownership.** Implement catalog writes in a class catalog module. The characters module owns its tables and exports transaction-bound progression operations for catalog changes. Compose both in the application layer and use domain ports for cross-module writes. Follow [code conventions](../../../spec/code-conventions.md).
 
 ## Write rules
 
@@ -82,4 +82,4 @@ Use the same calculation for character reads, batched party reads, and default r
 
 ## API review
 
-The [task OpenAPI contract](openapi.yaml) covers catalog routes and the affected character and party contracts. Reuse the session cookie, write Origin and CSRF checks, and existing error envelopes. Add the approved contract to the [canonical API](../../../packages/backend/openapi/openapi.yaml) at implementation, along with Ajv request schemas and parity coverage.
+The [task OpenAPI contract](openapi.yaml) covers catalog routes and the affected character and party contracts. Reuse the session cookie, write Origin and CSRF checks, and existing error envelopes. Add the approved contract to the [canonical API](../../../../packages/backend/openapi/openapi.yaml) at implementation, along with Ajv request schemas and parity coverage.

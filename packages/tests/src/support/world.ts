@@ -4,6 +4,10 @@ import { GamesPage } from "../pages/games-page.ts";
 import { GamePage } from "../pages/game-page.ts";
 import { PlayerPage } from "../pages/player-page.ts";
 import { CharacterPage } from "../pages/character-page.ts";
+import type { StoredClass } from "../../../backend/src/modules/class-catalog/types.ts";
+import type { SeededGame } from "./seed.ts";
+import type { CharacterProgressionPage } from "../pages/character-progression-page.ts";
+import type { ClassCatalogPage } from "../pages/class-catalog-page.ts";
 
 export class BrowserWorld extends World {
   browser?: Browser;
@@ -12,6 +16,15 @@ export class BrowserWorld extends World {
   game!: GamePage;
   player!: PlayerPage;
   character!: CharacterPage;
+  classCatalog!: ClassCatalogPage;
+  classGameId!: string;
+  progression!: CharacterProgressionPage;
+  progressionGame!: SeededGame;
+  progressionClass!: StoredClass;
+  progressionName!: string;
+  livePlayerPage!: Page;
+  liveProgression!: CharacterProgressionPage;
+  fallbackClass!: StoredClass;
 }
 
 setWorldConstructor(BrowserWorld);

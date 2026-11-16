@@ -18,3 +18,5 @@ export type GameMember = {
   activeCharacterId: string | null;
   revision: number;
 };
+
+export type GameChangeHint = { type?: string; characterId?: string };

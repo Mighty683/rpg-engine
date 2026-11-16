@@ -5,11 +5,11 @@ import SegmentedProgress from "../../shared/design-system/base/SegmentedProgress
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import FreeBenefitPills from "./FreeBenefitPills.vue";
 import ClassAbilitiesContent from "./ClassAbilitiesContent.vue";
-import type { ProgressionClass, ProgressionCharacter } from "./types";
+import type { ProgressionClass, ManagedAbilities } from "./types";
 import { assignedRanks, CLASS_LEVEL_EXP_COST, MAX_CHARACTER_CLASSES, totalRanks } from "./model";
 const props = defineProps<{
   catalog: ProgressionClass[];
-  character: ProgressionCharacter;
+  character: ManagedAbilities;
   expanded?: boolean;
   readOnly?: boolean;
   saving?: boolean;
@@ -82,9 +82,7 @@ function addClass(id: string) {
           @increase="emit('changeClass', entry.id, 1)"
           @decrease="emit('changeClass', entry.id, -1)"
         />
-        <p v-if="level(entry) === 10" class="text-small text-muted">
-          Mastered · Heroic Skill selection pending (not included in this prototype).
-        </p>
+        <p v-if="level(entry) === 10" class="text-small text-muted">Mastered</p>
         <ClassAbilitiesContent
           :entry="entry"
           :character="character"
@@ -118,9 +116,7 @@ function addClass(id: string) {
             @decrease="emit('changeClass', entry.id, -1)"
           />
         </summary>
-        <p v-if="level(entry) === 10" class="text-small text-muted">
-          Mastered · Heroic Skill selection pending (not included in this prototype).
-        </p>
+        <p v-if="level(entry) === 10" class="text-small text-muted">Mastered</p>
         <ClassAbilitiesContent
           :entry="entry"
           :character="character"

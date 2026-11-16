@@ -1,8 +1,11 @@
 /** Catalog progression constraints and display projections shared by the prototype boundary. */
-import type { ClassModifierStat } from "../../shared/fabula/classModifiers";
+import type { BenefitDraft, ClassDefinition } from "../class-management/types";
+import { isClassModifierStat, type ClassModifierStat } from "../../shared/fabula/classModifiers";
 import { projectDefenses } from "../characters/sheet/defense/model";
 import type { Sheet } from "../characters/sheet/types";
 import type {
+  ManagedAbilities,
+  ManagedProgression,
   ProgressionClass,
   ProgressionCharacter,
   ProgressionExperience,
@@ -27,9 +30,11 @@ export function experienceError(
   experience: ProgressionExperience,
   levels: Record<string, number>,
 ): string | undefined {
-  if (!Number.isSafeInteger(experience.current) || !Number.isSafeInteger(experience.total))
+  if (!Number.isInteger(experience.current) || !Number.isInteger(experience.total))
     return "Enter whole numbers for current and total EXP.";
   if (experience.current < 0 || experience.total < 0) return "EXP cannot be negative.";
+  if (Math.max(experience.current, experience.total) > 2147483647)
+    return "EXP must be at most 2147483647.";
   if (experience.current > experience.total) return "Total EXP must cover current EXP.";
   if (experience.total - experience.current < totalRanks(levels) * CLASS_LEVEL_EXP_COST)
     return "Total EXP must cover current EXP and the cost of assigned class levels.";
@@ -98,10 +103,11 @@ export function sourcedBenefits(
   });
 }
 
-function classStats(sheet: Sheet, benefits: SourcedBenefit[]) {
+export function projectClassStats(sheet: Sheet, benefits: SourcedBenefit[]) {
   const bonus = (stat: ClassModifierStat) =>
     benefits.reduce((sum, benefit) => sum + (benefit.stat === stat ? benefit.total : 0), 0);
-  const stepDie = (base: number, steps: number) => Math.min(12, Math.max(6, base + 2 * steps));
+  const clamp = (value: number, min = 0, max = 2147483647) => Math.min(max, Math.max(min, value));
+  const stepDie = (base: number, steps: number) => clamp(base + 2 * steps, 6, 12);
   const currentDice = {
     DEX: stepDie(sheet.baseDice.DEX, bonus("dieDex")),
     INS: stepDie(sheet.baseDice.INS, bonus("dieIns")),
@@ -109,24 +115,80 @@ function classStats(sheet: Sheet, benefits: SourcedBenefit[]) {
     WLP: stepDie(sheet.baseDice.WLP, bonus("dieWlp")),
   };
   const equipment = projectDefenses(sheet, currentDice);
-  const physical = equipment.defense.calculated;
-  const magical = equipment.magicDefense.calculated;
+  const defenseWithBonus = (defense: typeof equipment.defense, value = 0) =>
+    defense.calculated === null
+      ? defense
+      : {
+          calculated: clamp(defense.calculated + value, -2147483648),
+          contributions: value
+            ? [...defense.contributions, { source: "class", value: clamp(value, -2147483648) }]
+            : defense.contributions,
+        };
+  const defenses = {
+    defense: defenseWithBonus(equipment.defense, bonus("defense")),
+    magicDefense: defenseWithBonus(equipment.magicDefense, bonus("magicDefense")),
+    initiative: defenseWithBonus(equipment.initiative),
+  };
   return {
     currentDice,
     maxima: {
-      hp: Math.max(
-        0,
-        (sheet.overrides.maxHp ?? sheet.level + 5 * sheet.baseDice.MIG) + bonus("maxHp"),
-      ),
-      mp: Math.max(
-        0,
-        (sheet.overrides.maxMp ?? sheet.level + 5 * sheet.baseDice.WLP) + bonus("maxMp"),
-      ),
-      ip: Math.max(0, (sheet.overrides.maxIp ?? 6) + bonus("maxIp")),
+      hp: clamp((sheet.overrides.maxHp ?? sheet.level + 5 * sheet.baseDice.MIG) + bonus("maxHp")),
+      mp: clamp((sheet.overrides.maxMp ?? sheet.level + 5 * sheet.baseDice.WLP) + bonus("maxMp")),
+      ip: clamp((sheet.overrides.maxIp ?? 6) + bonus("maxIp")),
     },
-    defense: sheet.overrides.defense ?? (physical === null ? null : physical + bonus("defense")),
-    magicDefense:
-      sheet.overrides.magicDefense ?? (magical === null ? null : magical + bonus("magicDefense")),
+    defenses,
+  };
+}
+
+function toProgressionBenefit(benefit: BenefitDraft) {
+  const { id, name, description } = benefit;
+  return {
+    id,
+    name,
+    description,
+    ...(benefit.kind === "modifier" && isClassModifierStat(benefit.stat)
+      ? { stat: benefit.stat, amount: Number(benefit.amount), perRank: benefit.perRank }
+      : {}),
+  };
+}
+export function toProgressionClass(entry: ClassDefinition): ProgressionClass {
+  return {
+    id: entry.id,
+    name: entry.name,
+    description: entry.description,
+    benefits: entry.benefits.map(toProgressionBenefit),
+    skills: entry.skills.map((skill) => ({
+      ...skill,
+      maxRank: Number(skill.maxRank),
+      benefits: skill.benefits.map(toProgressionBenefit),
+    })),
+  };
+}
+export function managedAbilities(progression: ManagedProgression): ManagedAbilities {
+  return {
+    experience: progression.experience,
+    levels: Object.fromEntries(
+      progression.classLevels.map(({ gameClassId, level }) => [gameClassId, level]),
+    ),
+    ranks: Object.fromEntries(progression.skillRanks.map(({ skillId, rank }) => [skillId, rank])),
+  };
+}
+export function previewManagedProgression(
+  current: ManagedProgression,
+  changes: Partial<ManagedProgression>,
+): ManagedProgression {
+  const classLevels = changes.classLevels ?? current.classLevels;
+  const sum = (levels: ManagedProgression["classLevels"]) =>
+    levels.reduce((total, entry) => total + entry.level, 0);
+  const balance = changes.experience ?? current.experience;
+  return {
+    classLevels,
+    skillRanks: changes.skillRanks ?? current.skillRanks,
+    experience: {
+      total: balance.total,
+      current:
+        balance.current - CLASS_LEVEL_EXP_COST * (sum(classLevels) - sum(current.classLevels)),
+    },
   };
 }
 
@@ -138,6 +200,10 @@ export function withProgressionRanks(
   levels: Record<string, number>,
 ): ProgressionCharacter {
   const level = character.sheet.level;
+  const { defenses, ...stats } = projectClassStats(
+    character.sheet,
+    sourcedBenefits(catalog, ranks, levels),
+  );
   const classes = catalog
     .filter((entry) => levels[entry.id])
     .map((entry) => ({
@@ -166,7 +232,9 @@ export function withProgressionRanks(
       ...character.party,
       level,
       classes: classes.map((entry) => entry.name),
-      ...classStats(sheet, sourcedBenefits(catalog, ranks, levels)),
+      ...stats,
+      defense: sheet.overrides.defense ?? defenses.defense.calculated,
+      magicDefense: sheet.overrides.magicDefense ?? defenses.magicDefense.calculated,
     },
   };
 }

@@ -1,3 +1,5 @@
+import type { ClassDefinition } from "../../../backend/src/modules/class-catalog/types.ts";
+import { createClassCatalogService } from "../../../backend/src/modules/class-catalog/service.ts";
 import { createMembershipOwnership } from "../../../backend/src/modules/players/ownership.ts";
 import { createGameAccessService } from "../../../backend/src/modules/games/service.ts";
 import { createGameEvents } from "../../../backend/src/modules/events/streams.ts";
@@ -183,6 +185,33 @@ export async function setPlayerActiveCharacter(game: SeededGame, characterId: st
       characterId,
       game.membershipId,
     ]);
+  } finally {
+    await pool.end();
+  }
+}
+
+/** Installs a game copy through the catalog service, preserving the generated child identities. */
+export async function seedGameClass(game: SeededGame, definition: ClassDefinition) {
+  const pool = await seedPool();
+  try {
+    const catalog = createClassCatalogService({
+      database: databaseFromPool(pool),
+      gameAccessFor: createGameAccessService,
+      events: createGameEvents(),
+    });
+    const gm = { accountId: game.gm.accountId, sessionId: randomUUID() };
+    const template = await catalog.createTemplate(gm, {
+      id: randomUUID(),
+      systemId: "fabula-ultima",
+      definition,
+    });
+    return (
+      await catalog.copyClass(gm, game.gameId, {
+        id: randomUUID(),
+        templateId: template.record.id,
+        expectedTemplateRevision: template.record.revision,
+      })
+    ).record;
   } finally {
     await pool.end();
   }

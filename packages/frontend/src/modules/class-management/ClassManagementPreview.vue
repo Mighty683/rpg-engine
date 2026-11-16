@@ -10,6 +10,15 @@ defineProps<{
   entries: ClassDefinition[];
   current?: ClassDefinition;
   editable: boolean;
+  definitionEditable: boolean;
+  readOnlyDefinition?: boolean;
+  canManage: boolean;
+  gameName?: string;
+  contextTo?: string;
+  returnTo?: string;
+  charactersTo?: string;
+  showRemoval?: boolean;
+  showCharacters?: boolean;
   actionsEnabled?: boolean;
   hasDraft?: boolean;
 }>();
@@ -34,12 +43,17 @@ const editorTabs = [
 </script>
 
 <template>
-  <main class="min-h-screen bg-default p-section text-default">
+  <section class="bg-default p-section text-default">
     <div class="mx-auto flex max-w-5xl flex-col gap-section">
       <header class="flex flex-wrap items-start justify-between gap-medium">
         <div>
           <p class="text-label text-muted">
-            {{ context === "Library" ? "LIBRARY" : "GAME / THE LANTERN ROAD" }} · FABULA ULTIMA
+            {{
+              context === "Library"
+                ? "LIBRARY"
+                : `GAME / ${gameName?.toUpperCase() ?? "THE LANTERN ROAD"}`
+            }}
+            · FABULA ULTIMA
           </p>
           <h1 class="text-heading font-semibold">
             {{
@@ -56,12 +70,25 @@ const editorTabs = [
         </div>
         <div class="flex flex-wrap gap-small">
           <UButton
-            v-if="screen === 'List' || screen === 'Copy'"
+            v-if="(screen === 'List' || screen === 'Copy') && (contextTo || !returnTo)"
+            :to="contextTo"
             color="neutral"
             variant="outline"
             data-testid="switch-class-context"
-            @click="$emit('switchContext', context === 'Library' ? 'Game' : 'Library')"
+            @click="
+              !contextTo && $emit('switchContext', context === 'Library' ? 'Game' : 'Library')
+            "
             >{{ context === "Library" ? "Game classes" : "Class library" }}</UButton
+          >
+          <UButton
+            v-if="returnTo && screen === 'List'"
+            :to="returnTo"
+            color="neutral"
+            variant="outline"
+            data-testid="return-from-classes"
+            >{{
+              context === "Library" && returnTo === "/" ? "My games" : "Return to game"
+            }}</UButton
           >
           <UButton
             v-if="screen === 'List' && context === 'Library'"
@@ -72,6 +99,7 @@ const editorTabs = [
           >
           <template v-else-if="screen === 'List'">
             <UButton
+              v-if="canManage"
               data-testid="copy-from-library"
               :disabled="!editable"
               @click="$emit('navigate', 'Copy')"
@@ -80,8 +108,10 @@ const editorTabs = [
             <UButton
               color="neutral"
               variant="outline"
+              v-if="showCharacters"
+              :to="charactersTo"
               data-testid="view-characters"
-              @click="$emit('navigate', 'Character')"
+              @click="!charactersTo && $emit('navigate', 'Character')"
               >Characters</UButton
             >
           </template>
@@ -99,7 +129,7 @@ const editorTabs = [
 
       <template v-if="screen === 'List' || screen === 'Copy'">
         <p v-if="screen === 'Copy'" class="text-muted">
-          Copy into The Lantern Road. The game copy is independent of the library.
+          Copy into {{ gameName }}. The game copy is independent of the library.
         </p>
         <p v-if="!entries.length" class="text-muted" data-testid="empty-class-list">
           {{
@@ -108,7 +138,7 @@ const editorTabs = [
               : "No classes yet."
           }}
         </p>
-        <SurfaceCard v-for="entry in entries" :key="entry.id">
+        <SurfaceCard v-for="entry in entries" :key="entry.id" data-testid="class-catalog-entry">
           <div class="flex flex-wrap items-center justify-between gap-medium">
             <div>
               <h2 class="text-section font-semibold">{{ entry.name }}</h2>
@@ -134,7 +164,7 @@ const editorTabs = [
                   >View class</UButton
                 >
                 <UButton
-                  v-if="context === 'Game'"
+                  v-if="context === 'Game' && canManage"
                   color="neutral"
                   variant="outline"
                   :disabled="!actionsEnabled"
@@ -143,7 +173,7 @@ const editorTabs = [
                   >Save to library</UButton
                 >
                 <UButton
-                  v-if="context === 'Game'"
+                  v-if="context === 'Game' && showRemoval && canManage"
                   color="error"
                   variant="outline"
                   :disabled="!actionsEnabled"
@@ -194,7 +224,9 @@ const editorTabs = [
                 {{
                   context === "Library"
                     ? "Library changes do not update existing game copies."
-                    : "You are editing this game’s copy."
+                    : readOnlyDefinition
+                      ? "This class belongs to this game."
+                      : "You are editing this game’s copy."
                 }}
               </p>
               <LabeledInput
@@ -202,7 +234,7 @@ const editorTabs = [
                 class="mt-medium max-w-xs"
                 label="Name"
                 :model-value="current.name"
-                :readonly="!editable"
+                :readonly="!definitionEditable"
                 data-testid="class-name"
                 @update:model-value="
                   String($event).trim() && $emit('updateClass', { name: String($event) })
@@ -214,7 +246,7 @@ const editorTabs = [
                 label="Description"
                 multiline
                 :model-value="current.description"
-                :readonly="!editable"
+                :readonly="!definitionEditable"
                 data-testid="class-description"
                 @update:model-value="$emit('updateClass', { description: String($event) })"
               />
@@ -227,5 +259,5 @@ const editorTabs = [
 
       <slot v-else-if="screen === 'Character'" name="characters" />
     </div>
-  </main>
+  </section>
 </template>

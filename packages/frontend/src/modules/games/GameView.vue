@@ -23,6 +23,7 @@ import GameSettings from "./GameSettings.vue";
 import GameTable from "../game-table/GameTable.vue";
 import { partyKey, throwsKey } from "../game-table/hooks";
 import { useGameMembersQuery, useGameQuery, useSelectGameCharacterMutation } from "./hooks";
+import { gameClassCatalogKey } from "../class-progression/hooks";
 import { newUuid } from "../../shared/uuid";
 
 const toast = useToast();
@@ -57,7 +58,7 @@ const activeTabs = computed(() =>
 );
 const selectedId = ref("");
 const initialCharacterId = typeof route.query.character === "string" ? route.query.character : "";
-const management = ref(Boolean(initialCharacterId));
+const management = ref(Boolean(initialCharacterId) || route.query.manage === "characters");
 const settings = ref(false);
 const managedCharacterId = ref(initialCharacterId);
 const createOpen = ref(false);
@@ -94,11 +95,15 @@ onMounted(() => {
   events.onopen = () => {
     eventConnectionFailed = false;
     refreshGameQueries(managedCharacterId.value || selectedId.value || undefined);
+    void queryClient.invalidateQueries({ queryKey: gameClassCatalogKey(gameId) });
   };
   events.onmessage = (event) => {
     try {
       const hint = JSON.parse(event.data) as { type?: string; characterId?: string };
-      if (hint.type === "roster") refreshGameQueries();
+      if (hint.type === "roster") {
+        refreshGameQueries();
+        void queryClient.invalidateQueries({ queryKey: gameClassCatalogKey(gameId) });
+      }
       if (hint.type === "sheet" && hint.characterId) refreshGameQueries(hint.characterId);
       if (hint.type === "npcs") npcsHint.value += 1;
       if (hint.type === "throws") {
@@ -269,7 +274,15 @@ async function removeCharacter() {
             {{ gameRecord.name }} · {{ gameRecord.system.name }} · {{ gameRecord.role }}
           </p>
         </div>
-        <div class="flex gap-small">
+        <div class="flex flex-wrap gap-small">
+          <UButton
+            v-if="!management && !settings"
+            :to="`/games/${gameId}/classes`"
+            data-testid="open-game-classes"
+            color="neutral"
+            variant="outline"
+            >Game classes</UButton
+          >
           <UButton
             v-if="management && managedCharacterId"
             color="neutral"
@@ -375,6 +388,7 @@ async function removeCharacter() {
           />
           <FormActions
             submit-label="Create character"
+            submit-test-id="confirm-create-character"
             :pending="createCharacter.isPending.value"
             @cancel="createOpen = false"
           />

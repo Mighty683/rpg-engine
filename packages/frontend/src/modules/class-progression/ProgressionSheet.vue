@@ -3,6 +3,7 @@ import { computed } from "vue";
 import CharacterSheet from "../characters/sheet/CharacterSheet.vue";
 import CharacterLevelField from "../characters/sheet/identity/CharacterLevelField.vue";
 import { toCharacter } from "../characters/sheet/model";
+import ExperienceFields from "./ExperienceFields.vue";
 import CharacterAbilities from "./CharacterAbilities.vue";
 import type { ProgressionClass, ProgressionCharacter, ProgressionExperience } from "./types";
 const props = defineProps<{
@@ -19,12 +20,6 @@ const emit = defineEmits<{
   changeLevel: [level: number];
 }>();
 const sheetCharacter = computed(() => toCharacter(props.character.sheet, props.character.id, true));
-function changeExperience(field: keyof ProgressionExperience, event: Event) {
-  const input = event.target as HTMLInputElement;
-  const value = input.valueAsNumber;
-  input.value = String(props.character.experience[field]);
-  emit("changeExperience", field, value);
-}
 function changeLevel(event: Event) {
   const input = event.target as HTMLInputElement;
   const value = input.valueAsNumber;
@@ -60,35 +55,12 @@ function changeLevel(event: Event) {
       />
     </template>
     <template #experience>
-      <div class="self-center" role="group" aria-label="Experience">
-        <p class="text-label text-muted">EXP</p>
-        <p v-if="readOnly">{{ character.experience.current }} / {{ character.experience.total }}</p>
-        <div v-else class="flex items-center gap-small">
-          <UInput
-            :model-value="character.experience.current"
-            type="number"
-            min="0"
-            size="sm"
-            class="w-18"
-            :disabled="saving"
-            aria-label="Current EXP"
-            data-testid="current-exp"
-            @change="changeExperience('current', $event)"
-          />
-          <span aria-hidden="true">/</span>
-          <UInput
-            :model-value="character.experience.total"
-            type="number"
-            min="0"
-            size="sm"
-            class="w-18"
-            :disabled="saving"
-            aria-label="Total EXP"
-            data-testid="total-exp"
-            @change="changeExperience('total', $event)"
-          />
-        </div>
-      </div>
+      <ExperienceFields
+        :experience="character.experience"
+        :read-only="readOnly"
+        :disabled="saving"
+        @change="(field, value) => emit('changeExperience', field, value)"
+      />
     </template>
     <template #class-progression
       ><CharacterAbilities

@@ -1,3 +1,5 @@
+import type { ClassModifierStat } from "../../shared/fabula/classModifiers";
+
 /** A descriptive or modifier benefit in a class or skill draft. */
 export interface BenefitDraft {
   id: string;
@@ -47,11 +49,36 @@ export type SaveLibraryChoice =
 export interface ClassCatalogApi {
   load(): Promise<ClassCatalog>;
   save(base: ClassCatalog, changes: ClassCatalogChange[]): Promise<ClassCatalog>;
-  updateGameClass(
+  updateGameClass?(
     base: ClassCatalog,
     entry: ClassDefinition,
     impact?: RemovalImpact,
   ): Promise<ClassCatalog>;
-  removeGameClass(base: ClassCatalog, id: string): Promise<ClassCatalog>;
+  removeGameClass?(base: ClassCatalog, id: string): Promise<ClassCatalog>;
   saveToLibrary(base: ClassCatalog, id: string, choice: SaveLibraryChoice): Promise<ClassCatalog>;
 }
+
+type BenefitIdentity = { id: string; name: string };
+export type Benefit =
+  | (BenefitIdentity & { kind: "text"; description: string })
+  | (BenefitIdentity & {
+      kind: "modifier";
+      description?: string;
+      stat: ClassModifierStat;
+      amount: number;
+      perRank?: boolean;
+    });
+export type Definition = {
+  name: string;
+  description: string;
+  freeBenefits: Benefit[];
+  skills: { id: string; name: string; description: string; maxRank: number; benefits: Benefit[] }[];
+};
+export type StoredClass = {
+  id: string;
+  revision: number;
+  systemId: "fabula-ultima";
+  definition: Definition;
+};
+
+export type CatalogRequest = <T>(path: string, method?: string, body?: unknown) => Promise<T>;

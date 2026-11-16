@@ -29,6 +29,7 @@ const scalars = new Set([
   "maxLength",
   "pattern",
   "minItems",
+  "minProperties",
   "maxItems",
   "uniqueItems",
 ]);

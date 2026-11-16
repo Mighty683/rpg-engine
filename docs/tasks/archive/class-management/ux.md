@@ -1,6 +1,6 @@
 # Class management — UX
 
-See the [user story](story.md), [UX guidelines](../../spec/ux.md), and [UI conventions](../../spec/ui.md).
+See the [user story](story.md), [UX guidelines](../../../spec/ux.md), and [UI conventions](../../../spec/ui.md).
 
 ## Domain language
 
@@ -95,7 +95,7 @@ Recalculate affected characters' benefits and keep their class levels. Removing 
 
 - Characters start at level 5 with **50 / 50 EXP**. Every class level costs 10 Current EXP, including the five starting allocations. Removing a class level refunds 10. Save the class level and EXP change together. Character level is edited independently of EXP and class levels.
 - Adding a class saves level 1 and applies its free benefits immediately. Learn skills separately.
-- **Support house rules.** GMs define classes, skill rank limits, and effects. Use the [Fabula Ultima rules](../../spec/fabula-ultima/character-spec.md) for built-in calculations. Groups adjudicate text effects and decide which tabletop progression restrictions to follow.
+- **Support house rules.** GMs define classes, skill rank limits, and effects. Use the [Fabula Ultima rules](../../../spec/fabula-ultima/character-spec.md) for built-in calculations. Groups adjudicate text effects and decide which tabletop progression restrictions to follow.
 - The prototype supports five classes per character, ten levels per class, and unspent starting points. Reduce assigned skill ranks before lowering a class below their total. Add weapons or spells granted by skills manually.
 - Calculate modifiers from selected classes and learned skills. Scale effects by rank where configured. Support signed modifiers to maximum HP, MP, and IP, Defense, Magic Defense, and attribute die steps (d6–d12). Defense formulas use adjusted DEX and INS where applicable. Maximum HP and MP use base MIG and WLP. Current HP, MP, and IP stay as entered.
 
@@ -113,4 +113,4 @@ Recalculate affected characters' benefits and keep their class levels. Removing 
 - Keep the selection if a copy or library save fails. If the outcome is uncertain, check the destination before retrying.
 - In the prototype, remove a class from character sheets before removing it from the game. Keep existing manual entries until a migration is available.
 
-Prototype links · [Class management](../../../packages/frontend/prototypes/class-management/ClassManagement.story.vue) · [Class progression](../../../packages/frontend/prototypes/class-progression/ClassProgression.story.vue) · [Player views](../../../packages/frontend/prototypes/class-progression/PlayerProgression.story.vue)
+Prototype links · [Class management](../../../../packages/frontend/prototypes/class-management/ClassManagement.story.vue) · [Class progression](../../../../packages/frontend/prototypes/class-progression/ClassProgression.story.vue) · [Player views](../../../../packages/frontend/prototypes/class-progression/PlayerProgression.story.vue)

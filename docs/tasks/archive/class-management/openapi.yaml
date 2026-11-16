@@ -89,7 +89,7 @@ paths:
         '500': {$ref: '#/components/responses/ServerError'}
   /api/games/{gameId}/classes:
     parameters:
-    - {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
     get:
       operationId: listGameClasses
       tags: [Class catalog]
@@ -140,7 +140,7 @@ paths:
         '500': {$ref: '#/components/responses/ServerError'}
   /api/games/{gameId}/classes/{gameClassId}:
     parameters:
-    - {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
     - {$ref: '#/components/parameters/gameClassId'}
     patch:
       operationId: updateGameClass
@@ -192,7 +192,7 @@ paths:
         '500': {$ref: '#/components/responses/ServerError'}
   /api/games/{gameId}/classes/{gameClassId}/save-to-library:
     parameters:
-    - {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
     - {$ref: '#/components/parameters/gameClassId'}
     post:
       operationId: saveGameClassToLibrary
@@ -223,7 +223,7 @@ paths:
         '500': {$ref: '#/components/responses/ServerError'}
   /api/games/{gameId}/characters:
     parameters:
-    - {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
     post:
       operationId: createCharacter
       tags: [Characters]
@@ -241,7 +241,7 @@ paths:
               type: object
               required: [id, name]
               properties:
-                id: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id}
+                id: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id}
                 name: {type: string, minLength: 1, maxLength: 100}
       responses:
         '201':
@@ -274,8 +274,8 @@ paths:
         '500': {$ref: '#/components/responses/ServerError'}
   /api/games/{gameId}/characters/{characterId}:
     parameters:
-    - {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
-    - {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/characterId}
+    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/characterId}
     get:
       operationId: getCharacter
       tags: [Characters]
@@ -338,7 +338,7 @@ paths:
         delta atomically. The separate character level does not affect EXP.
   /api/games/{gameId}/party:
     parameters:
-    - {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
     get:
       operationId: listActiveParty
       tags: [Characters]
@@ -364,9 +364,9 @@ paths:
 components:
   securitySchemes:
     sessionCookie:
-      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie
+      $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie
     csrfToken:
-      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken
+      $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken
   parameters:
     templateId:
       name: templateId
@@ -434,18 +434,18 @@ components:
                     type: string
                     enum: [stale_revision, class_in_use]
                   message: {type: string}
-    BadRequest: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest}
-    Unauthorized: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized}
-    Forbidden: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden}
-    NotFound: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound}
-    Conflict: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict}
-    PayloadTooLarge: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge}
-    ValidationError: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError}
-    RateLimited: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited}
-    DatabaseUnavailable: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable}
-    ServerError: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError}
+    BadRequest: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest}
+    Unauthorized: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized}
+    Forbidden: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden}
+    NotFound: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound}
+    Conflict: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict}
+    PayloadTooLarge: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge}
+    ValidationError: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError}
+    RateLimited: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited}
+    DatabaseUnavailable: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable}
+    ServerError: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError}
   schemas:
-    Id: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id}
+    Id: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id}
     NonnegativeInt: {type: integer, minimum: 0, maximum: 2147483647}
     Name: {type: string, minLength: 1, maxLength: 100}
     Revision: {$ref: '#/components/schemas/NonnegativeInt'}
@@ -644,14 +644,14 @@ components:
       type: object
       required: [DEX, INS, MIG, WLP]
       properties:
-        DEX: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
-        INS: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
-        MIG: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
-        WLP: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
+        DEX: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
+        INS: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
+        MIG: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
+        WLP: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
       additionalProperties: false
     CharacterWithProgression:
       allOf:
-      - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Character
+      - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Character
       - type: object
         properties:
           derived:
@@ -673,7 +673,7 @@ components:
             progression: false
     PartyCharacterWithClasses:
       allOf:
-      - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/PartyCharacter
+      - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/PartyCharacter
       - type: object
         required: [currentDice]
         properties:
@@ -688,13 +688,13 @@ components:
       additionalProperties: false
       minProperties: 1
       properties:
-        name: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/name}
-        theme: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/theme}
-        level: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/level}
-        baseDice: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/baseDice}
-        classes: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/classes}
-        skills: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/skills}
-        equipment: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/equipment}
-        resources: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/resources}
-        overrides: {$ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/overrides}
+        name: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/name}
+        theme: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/theme}
+        level: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/level}
+        baseDice: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/baseDice}
+        classes: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/classes}
+        skills: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/skills}
+        equipment: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/equipment}
+        resources: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/resources}
+        overrides: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/overrides}
         progression: {$ref: '#/components/schemas/ProgressionChanges'}

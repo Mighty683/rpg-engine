@@ -3,11 +3,11 @@ import { computed, ref } from "vue";
 import ProgressActionButton from "../../shared/design-system/base/ProgressActionButton.vue";
 import SegmentedProgress from "../../shared/design-system/base/SegmentedProgress.vue";
 import { totalRanks } from "./model";
-import type { ProgressionClass, ProgressionCharacter, ProgressionSkill } from "./types";
+import type { ProgressionClass, ManagedAbilities, ProgressionSkill } from "./types";
 import FreeBenefitPills from "./FreeBenefitPills.vue";
 const props = defineProps<{
   entry: ProgressionClass;
-  character: ProgressionCharacter;
+  character: ManagedAbilities;
   editable?: boolean;
   saving?: boolean;
   level?: number;
@@ -65,7 +65,7 @@ const skills = computed(() =>
           <SegmentedProgress
             class="mt-small"
             :value="character.ranks[skill.id] ?? 0"
-            :maximum="skill.maxRank"
+            :maximum="Math.min(skill.maxRank, 10)"
             :label="`${skill.name} rank`"
             :data-testid="`skill-progress-${skill.id}`"
             :editable="editable"
@@ -75,6 +75,11 @@ const skills = computed(() =>
             @decrease="emit('changeSkill', skill.id, -1)"
           />
           <p class="mt-small text-small text-muted">{{ skill.description }}</p>
+          <FreeBenefitPills
+            v-if="skill.benefits.length"
+            class="mt-small"
+            :benefits="skill.benefits"
+          />
         </li>
         <li v-if="editable" class="min-w-40 flex-1">
           <ProgressActionButton

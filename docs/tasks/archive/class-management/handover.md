@@ -82,4 +82,50 @@ After each attempt, read as the owner and verify the definition and revision are
 
 ## Verification evidence
 
-Pending implementation and execution. Record the tested revision, commands, outcomes, and production screen comparisons here.
+### Wave 1 — Library and game copies
+
+Tested the Wave 1 working tree based on `3ae0d99` against disposable PostgreSQL 17.
+
+| Check | Result |
+| --- | --- |
+| `pnpm check` | Passed, including canonical OpenAPI lint and bundling. |
+| `pnpm verify` | Passed builds and all 239 unit, 49 component browser, 12 backend database, 51 cross-module API, and 19 browser E2E tests. |
+| Canonical Ajv parity | `pnpm exec vp test --run packages/backend/src/schema-contract.test.ts` passed all 13 tests. |
+| API-01 and API-02 | `pnpm --filter @rpg-engine/tests test:api --run class-catalog` passed both tests. Wave 1 uses copy and save requests for game authorization and cross-game checks. The corresponding PATCH cases are assigned to Wave 3. |
+| E2E-01 | `pnpm --filter @rpg-engine/tests test --run class-management` passed the real library and game journeys at 1280px and 390px. The checks reopen the game copy after reload, inspect its original benefit and ranked skill, and save it both as new and over the original template. |
+| Reviewed prototype | `pnpm --filter @rpg-engine/frontend test:browser --run ClassManagementController` passed all five scenarios against MSW, including optimistic editing and existing confirmation behavior. The standalone Histoire preview also fit the library, editor, copy picker, and save dialog at 1366px and 390px. |
+| Dev startup and production layout | Started the actual `pnpm dev` entry point after migrating and seeding a separate disposable database. Chromium at 1366px and 390px exercised library loading, an injected HTTP 503 and retry, the empty library and game catalog, template creation, game copy, read-only inspection, and the save dialog. No horizontal overflow after the screens settled. |
+| Runtime database permissions | Applied `runtime-grants.sql` as migration owner. The restricted runtime role updated and row-locked a template, claimed a receipt, inserted a game definition and skill, and read back the skill in a rolled-back transaction. |
+
+Production reuses the reviewed editor tabs, free-benefit and skill fields, copy picker, and save dialog. The app supplies the real destination game name and retains a link back to its catalog when opening the library from the game. Game class fields are read-only in this increment. The game editor and removal confirmation are scheduled for Wave 3, and the character sheet and table drawer checks are scheduled for Wave 2.
+
+### Wave 2 — Character progression and effects
+
+Tested the combined Wave 1 and Wave 2 working tree based on `3ae0d99` against disposable PostgreSQL 17.
+
+| Check | Result |
+| --- | --- |
+| `pnpm check` | Passed, including canonical OpenAPI lint and bundling. |
+| Request schema parity and effect projections | `pnpm test` passed all 240 tests, including canonical Ajv request parity and frontend/server projection comparison for signed die steps, fixed armor, maximum overrides, and ranked effects. Backend TypeScript and frontend Vue TypeScript builds also passed. |
+| API-03, API-04, API-05, and projection regression | `pnpm --filter @rpg-engine/tests test:api --run character-progression character-projections` passed all four tests. Covers controller permissions, preserved manual fields and current resources, transactional EXP, concurrent revisions, signed and rank-scaled modifiers, and immutable roll history. |
+| E2E-02 and E2E-04 | `pnpm --filter @rpg-engine/tests test --run class-management` passed all five scenarios. The player journey ran at 1280px and 390px through the real table drawer and party class details. The response-loss scenario checked the pending optimistic allocation and EXP, actionable recovery, and a subsequent successful edit. |
+| Browser components and reviewed prototype | `pnpm --filter @rpg-engine/frontend test:browser --run` passed all 49 tests. The reviewed class cards, EXP, and party details were exercised alongside the production checks. |
+| Actual development startup | Migrated and seeded a separate disposable database and started `pnpm dev`. On real sheet routes, Chromium checked the GM at 1366px and the player at 390px. The checks covered starting EXP, class selection, persisted class cost, other-character visibility, and layout fit. |
+| Restricted runtime role | Applied `runtime-grants.sql` as migration owner, then inserted and read a learned rank and verified cascading rank cleanup under the runtime role in a rolled-back transaction. |
+
+The production sheet and drawer reuse the reviewed EXP fields, class and skill controls, and party class summary. The editable production sheet retains its manual sections. Authorized party viewers load class details through the character endpoint, while other party members see only public class summaries. The sheet previews local changes while the party and roll controls use the server's committed revision. The party now uses maximum overrides before applying class effects, matching the sheet.
+
+### Wave 3 — Live game class edits and removal
+
+Tested the combined Wave 1–3 working tree based on `3ae0d99` against disposable PostgreSQL 17.
+
+| Check | Result |
+| --- | --- |
+| `pnpm check` and Ajv parity | Passed, including canonical OpenAPI lint and bundling. `pnpm exec vp test --run packages/backend/src/schema-contract.test.ts` passed all 13 tests. |
+| Final integrated `pnpm verify` | Passed against disposable PostgreSQL 17 and Chromium. Both builds passed, along with 240 unit, 49 component browser, 12 backend database, 57 cross-module API, and 24 end-to-end tests. The first integrated run failed the NPC keyboard-focus scenario. It passed in isolation and in the full rerun. |
+| API-01, API-06, and API-07 | `pnpm --filter @rpg-engine/tests test:api --run game-class-edits` passed all three cases. Rejected writes preserved definitions, ranks, and revisions. Successful confirmation produced sheet and roster events, and the affected records showed committed values. |
+| E2E-01 through E2E-04 | `pnpm --filter @rpg-engine/tests test --run class-management` passed all seven scenarios. E2E-03 exercised cancellation, rank and effect removal, and deletion at 1280px and 390px. The desktop player kept the standalone sheet open, and the narrow player kept the table drawer open. Both updated live. After reload the deleted class was absent from the game catalog and picker. |
+| Actual development startup | Real `pnpm dev` and Chromium at 1366px and 390px verified the affected name and rank, cancellation, confirmation, open-sheet updates, the recalculated maximum, preserved class level and EXP, and one character revision increment. The Skills editor and open confirmation dialog fit the narrow screen after constraining the editor fieldset. |
+| Restricted runtime role | Under the deployed grants, the restricted role inserted and edited a skill, removed a learned rank and its skill, revised the class and character, and deleted an unassigned class in a rolled-back transaction. |
+
+Production uses the reviewed game class editor and affected-character dialog. The standalone sheet and game catalog refresh when the event stream opens and when relevant changes arrive. The table drawer receives the existing game stream through its parent.

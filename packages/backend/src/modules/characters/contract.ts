@@ -9,12 +9,14 @@ import {
   createCharacterEnvelopeSchema,
   characterNameSchema,
   updateCharacterEnvelopeSchema,
+  progressionChangesSchema,
   characterActiveSchema,
   characterControllerSchema,
 } from "./schema.ts";
 
 const createEnvelope = compileObjectSchema(createCharacterEnvelopeSchema);
 const nameValidator = compileSchema(characterNameSchema);
+const progressionValidator = compileObjectSchema(progressionChangesSchema);
 const updateEnvelope = compileObjectSchema(updateCharacterEnvelopeSchema);
 const activeValidator = compileSchema(characterActiveSchema);
 const controllerValidator = compileObjectSchema(characterControllerSchema);
@@ -29,9 +31,13 @@ export function parseCreateCharacter(value: unknown): CreateCharacterInput {
 }
 export function parseUpdateCharacter(value: unknown): UpdateCharacterInput {
   const body = parseEnvelope(updateEnvelope, value);
+  const changes = body.changes as UpdateCharacterInput["changes"];
+  if ("progression" in changes) {
+    parseFields(progressionValidator, changes.progression, "progression");
+  }
   return {
     expectedRevision: body.expectedRevision as number,
-    changes: body.changes as UpdateCharacterInput["changes"],
+    changes,
   };
 }
 export const parseCharacterActive = (value: unknown) => parseEnvelope(activeValidator, value);

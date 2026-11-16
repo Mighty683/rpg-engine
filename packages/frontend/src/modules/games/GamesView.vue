@@ -183,10 +183,19 @@ onMounted(() => {
         <h1 ref="listHeading" tabindex="-1" class="text-heading font-semibold">
           {{ t("games.title") }}
         </h1>
-        <UButton v-if="!checking" data-testid="open-game-creation" @click="showForm">{{
-          t("games.create")
-        }}</UButton>
-        <UButton v-else @click="showForm">{{ t("games.returnToSetup") }}</UButton>
+        <div class="flex flex-wrap gap-small">
+          <UButton
+            to="/library/class"
+            color="neutral"
+            variant="outline"
+            data-testid="open-class-library"
+            >Class library</UButton
+          >
+          <UButton v-if="!checking" data-testid="open-game-creation" @click="showForm">{{
+            t("games.create")
+          }}</UButton>
+          <UButton v-else @click="showForm">{{ t("games.returnToSetup") }}</UButton>
+        </div>
       </div>
       <p v-if="checking" role="status">
         {{ t("games.setupAvailable") }}

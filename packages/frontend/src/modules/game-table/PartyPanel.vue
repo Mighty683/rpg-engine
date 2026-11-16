@@ -3,10 +3,12 @@ import { useId } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import type { Attribute, PartyCharacter } from "./types";
+import PartyClassSummary from "../class-progression/PartyClassSummary.vue";
 import PartyCharacterCard from "./PartyCharacterCard.vue";
 
 defineProps<{
   party: readonly PartyCharacter[];
+  gameId?: string;
   isLoading?: boolean;
   isError?: boolean;
   weaponHint?: { character: PartyCharacter; weaponName: string } | null;
@@ -36,10 +38,16 @@ const emit = defineEmits<{
         v-for="member in party"
         :key="member.id"
         :member="member"
+        :can-edit="Boolean(gameId && member.canRoll)"
+        @edit="emit('openSheet', member.id)"
         @roll-attribute="emit('rollAttribute', member, $event)"
         @roll-weapon="emit('rollWeapon', member, $event)"
         @needs-weapon-setup="emit('needsWeaponSetup', member, $event)"
-      />
+      >
+        <template v-if="gameId" #class-progression>
+          <PartyClassSummary :game-id="gameId" :member="member" />
+        </template>
+      </PartyCharacterCard>
       <slot />
     </ul>
     <p v-if="!isLoading && !isError && !party.length" class="text-muted" data-testid="party-empty">

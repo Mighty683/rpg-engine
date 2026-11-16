@@ -1,3 +1,4 @@
+import type { ClassBenefit, ClassDefinition } from "../modules/class-catalog/types.ts";
 import type { OutcomeJson, ResolvedSetup, ThrowKind } from "../modules/throws/types.ts";
 import { and, eq, isNull, or } from "drizzle-orm";
 
@@ -74,6 +75,8 @@ export const characters = pgTable("characters", {
   currentMp: integer("current_mp").notNull().default(6),
   currentIp: integer("current_ip").notNull().default(6),
   fabulaPoints: integer("fabula_points").notNull().default(0),
+  expCurrent: integer("exp_current").notNull().default(50),
+  expTotal: integer("exp_total").notNull().default(50),
   maxHpOverride: integer("max_hp_override"),
   maxMpOverride: integer("max_mp_override"),
   maxIpOverride: integer("max_ip_override"),
@@ -151,6 +154,8 @@ export const characterFields = {
   current_mp: characters.currentMp,
   current_ip: characters.currentIp,
   fabula_points: characters.fabulaPoints,
+  exp_current: characters.expCurrent,
+  exp_total: characters.expTotal,
   max_hp_override: characters.maxHpOverride,
   max_mp_override: characters.maxMpOverride,
   max_ip_override: characters.maxIpOverride,
@@ -259,4 +264,51 @@ export const npcCreateRequests = pgTable("npc_create_requests", {
   gameId: uuid("game_id").notNull(),
   npcId: uuid("npc_id").notNull(),
   requestBody: jsonb("request_body").notNull(),
+});
+
+export const classTemplates = pgTable("class_templates", {
+  id: uuid("id").primaryKey(),
+  accountId: uuid("account_id").notNull(),
+  systemId: text("system_id", { enum: ["fabula-ultima"] }).notNull(),
+  revision: integer("revision").notNull().default(0),
+  definition: jsonb("definition").$type<ClassDefinition>().notNull(),
+});
+export const gameClasses = pgTable("game_classes", {
+  id: uuid("id").primaryKey(),
+  gameId: uuid("game_id").notNull(),
+  systemId: text("system_id", { enum: ["fabula-ultima"] }).notNull(),
+  revision: integer("revision").notNull().default(0),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  freeBenefits: jsonb("free_benefits").$type<ClassBenefit[]>().notNull(),
+});
+export const gameClassSkills = pgTable("game_class_skills", {
+  id: uuid("id").primaryKey(),
+  gameClassId: uuid("game_class_id").notNull(),
+  gameId: uuid("game_id").notNull(),
+  position: integer("position").notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  maxRank: integer("max_rank").notNull(),
+  benefits: jsonb("benefits").$type<ClassBenefit[]>().notNull(),
+});
+export const classCreateRequests = pgTable("class_create_requests", {
+  accountId: uuid("account_id").notNull(),
+  requestId: uuid("request_id").notNull(),
+  intent: jsonb("intent").$type<Record<string, unknown>>().notNull(),
+});
+
+export const characterClassLevels = pgTable("character_class_levels", {
+  gameId: uuid("game_id").notNull(),
+  characterId: uuid("character_id").notNull(),
+  gameClassId: uuid("game_class_id").notNull(),
+  level: smallint("level").notNull(),
+});
+
+export const characterSkillRanks = pgTable("character_skill_ranks", {
+  gameId: uuid("game_id").notNull(),
+  characterId: uuid("character_id").notNull(),
+  gameClassId: uuid("game_class_id").notNull(),
+  skillId: uuid("skill_id").notNull(),
+  rank: smallint("rank").notNull(),
 });

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { computed } from "vue";
+import { computed, toValue, type MaybeRefOrGetter } from "vue";
 import { account } from "../auth/session";
 import { useApiServices } from "../../shared/api-services";
 import { partyKey } from "../game-table/hooks";
@@ -25,11 +25,16 @@ export function useCreateGameCharacterMutation(gameId: string) {
     onSuccess: () => client.invalidateQueries({ queryKey: gameCharactersKey(gameId) }),
   });
 }
-export function useGameCharacterQuery(gameId: string, characterId: string) {
+export function useGameCharacterQuery(
+  gameId: string,
+  characterId: string,
+  enabled: MaybeRefOrGetter<boolean> = true,
+) {
   const { characters: api } = useApiServices();
   return useQuery({
     queryKey: computed(() => [...gameCharactersKey(gameId), characterId]),
     queryFn: () => api.getGameCharacter(gameId, characterId),
+    enabled: computed(() => toValue(enabled)),
   });
 }
 export function useSaveGameCharacterMutation(gameId: string, characterId: string) {
@@ -38,11 +43,15 @@ export function useSaveGameCharacterMutation(gameId: string, characterId: string
   return useMutation({
     mutationFn: (input: { expectedRevision: number; changes: Record<string, unknown> }) =>
       api.saveGameCharacter(gameId, characterId, input.expectedRevision, input.changes),
-    onSuccess: () =>
-      Promise.all([
+    onSuccess: (saved) => {
+      client.setQueryData<typeof saved>([...gameCharactersKey(gameId), characterId], (current) =>
+        current && current.character.revision > saved.character.revision ? current : saved,
+      );
+      return Promise.all([
         client.invalidateQueries({ queryKey: gameCharactersKey(gameId), exact: true }),
         client.invalidateQueries({ queryKey: partyKey(gameId) }),
-      ]),
+      ]);
+    },
   });
 }
 export function useGameCharacterActiveMutation(gameId: string) {

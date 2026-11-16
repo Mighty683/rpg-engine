@@ -1,3 +1,5 @@
+import type { ClassModifierStat } from "../class-catalog/types.ts";
+
 export type DieSource = (sides: number) => number;
 
 export type RolledDie = { label: string | null; size: number; face: number };
@@ -81,7 +83,7 @@ export type SheetChanges = Partial<Omit<FabulaSheet, "baseDice" | "resources" | 
 };
 
 export type Contribution = {
-  source: Attribute | "base" | "armor" | "shield";
+  source: Attribute | "base" | "armor" | "shield" | "class";
   entryId?: string;
   value: number;
 };
@@ -90,7 +92,10 @@ export type CalculatedDefense =
   | { calculated: number; contributions: Contribution[] }
   | { calculated: null; reason: "ambiguous_equipment" };
 
+export type ActiveModifier = { stat: ClassModifierStat; value: number };
+
 export type FabulaPreview = {
+  currentDice: FabulaSheet["baseDice"];
   coverage: "partial";
   maxima: { hp: number; mp: number; ip: number };
   defenses: {

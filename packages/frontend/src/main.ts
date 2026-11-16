@@ -1,3 +1,5 @@
+import ClassCatalogView from "./modules/class-management/ClassCatalogView.vue";
+import { classCatalog } from "./modules/class-management/api";
 import { createApp } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
 import ui from "@nuxt/ui/vue-plugin";
@@ -22,6 +24,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: "/", component: GamesView },
+    { path: "/library/class", component: ClassCatalogView },
+    { path: "/games/:gameId/classes", component: ClassCatalogView },
     { path: "/games/:gameId", component: GameView },
     { path: "/games/:gameId/characters/:characterId", component: CharacterView },
     { path: "/invite/:token", component: InvitationView },
@@ -37,6 +41,7 @@ createApp(App)
     characters,
     gameTable,
     npcs,
+    classCatalog,
     games,
     invitations: invitationApi,
     players,

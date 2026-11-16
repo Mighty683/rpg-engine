@@ -130,7 +130,7 @@ describe.skipIf(!url)("API-MAP-01 character projection parity", () => {
         magicDefense: 13,
         canRoll: viewer === "gm",
       });
-      expect(projected.maxima).toEqual({ hp: 35, mp: 45, ip: 6 });
+      expect(projected.maxima).toEqual({ hp: 80, mp: 40, ip: 9 });
       expect(projected.weapons).toEqual([
         {
           id: equipment[0]!.id,

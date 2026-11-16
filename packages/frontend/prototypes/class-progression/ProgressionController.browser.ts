@@ -331,7 +331,8 @@ test("benefits show effects without duplicating skill rank bars", async () => {
     benefits.getBoundingClientRect().width / 2,
   );
   for (const sectionId of ["class-skills-guardian"]) {
-    const cards = document.querySelectorAll(`[data-testid="${sectionId}"] li`);
+    const cards = document.querySelectorAll(`[data-testid="${sectionId}"] > ul > li`);
+    expect(cards).toHaveLength(2);
     expect(cards[0]!.getBoundingClientRect().top).toBe(cards[1]!.getBoundingClientRect().top);
     expect(cards[1]!.getBoundingClientRect().left).toBeGreaterThan(
       cards[0]!.getBoundingClientRect().left,

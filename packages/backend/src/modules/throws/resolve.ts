@@ -66,9 +66,9 @@ function resolveAttribute(
   if (setup.expectedRevision !== character.revision)
     throw fail("stale_revision", "The sheet changed since this roll was prepared");
   const [first, second] = setup.attributes;
-  const firstSize = effectiveDie(character.sheet.baseDice, first, setup.dice[first]);
+  const firstSize = effectiveDie(character.currentDice, first, setup.dice[first]);
   const secondSize = second
-    ? effectiveDie(character.sheet.baseDice, second, setup.dice[second])
+    ? effectiveDie(character.currentDice, second, setup.dice[second])
     : undefined;
   const friendly: RolledDie[] = [rollDie(first, firstSize, source)];
   if (second && secondSize) friendly.push(rollDie(second, secondSize, source));
@@ -160,9 +160,9 @@ function resolveWeapon(
     );
   const accuracyPair: [Attribute, Attribute] = [accuracyDice[0], accuracyDice[1]];
   const firstSize =
-    setup.dice[0] ?? effectiveDie(character.sheet.baseDice, accuracyPair[0], undefined);
+    setup.dice[0] ?? effectiveDie(character.currentDice, accuracyPair[0], undefined);
   const secondSize =
-    setup.dice[1] ?? effectiveDie(character.sheet.baseDice, accuracyPair[1], undefined);
+    setup.dice[1] ?? effectiveDie(character.currentDice, accuracyPair[1], undefined);
   if (!standardDice.includes(firstSize as Die) || !standardDice.includes(secondSize as Die))
     throw fail("validation", "Weapon dice use d6, d8, d10 or d12", "dice");
   const friendly = [

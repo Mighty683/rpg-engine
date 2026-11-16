@@ -26,6 +26,7 @@ export function useGameQuery(gameId: string) {
   return useQuery({
     queryKey: computed(() => [...gamesKey(), gameId]),
     queryFn: () => api.getGame(gameId),
+    enabled: Boolean(gameId),
   });
 }
 const membersKey = (gameId: string) => [...gamesKey(), gameId, "members"];

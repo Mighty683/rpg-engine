@@ -30,6 +30,12 @@ const sheet = () => ({
   },
 });
 async function mount(fetchMock: ReturnType<typeof vi.fn>, canEdit = true) {
+  vi.stubGlobal(
+    "EventSource",
+    class {
+      close() {}
+    },
+  );
   vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     if (url.endsWith("/auth/csrf"))

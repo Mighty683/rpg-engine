@@ -64,6 +64,20 @@
       "when": 1700000008000,
       "tag": "009_private_throws",
       "breakpoints": false
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1700000009000,
+      "tag": "010_class_catalog",
+      "breakpoints": false
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1700000010000,
+      "tag": "011_character_progression",
+      "breakpoints": false
     }
   ]
 }

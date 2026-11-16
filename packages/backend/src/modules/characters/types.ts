@@ -1,10 +1,32 @@
+import type { ClassBenefit } from "../class-catalog/types.ts";
 import type { FabulaPreview } from "../fabula/types.ts";
 import type { GameActor, GameAccess } from "../games/types.ts";
 import type { Attribute, FabulaSheet, SheetChanges } from "../fabula/types.ts";
 import type { characterEquipment } from "../../database/schema.ts";
 
 export type CreateCharacterInput = { id: string; name: string };
-export type UpdateCharacterInput = { expectedRevision: number; changes: SheetChanges };
+export type Experience = { current: number; total: number };
+export type ClassLevel = { gameClassId: string; level: number };
+export type SkillRank = { skillId: string; rank: number };
+export type Progression = {
+  experience: Experience;
+  classLevels: ClassLevel[];
+  skillRanks: SkillRank[];
+};
+export type CharacterChanges = SheetChanges & { progression?: Partial<Progression> };
+export type UpdateCharacterInput = { expectedRevision: number; changes: CharacterChanges };
+export type ManagedClass = ClassLevel & {
+  characterId: string;
+  name: string;
+  freeBenefits: ClassBenefit[];
+};
+export type ManagedSkill = SkillRank & {
+  characterId: string;
+  gameClassId: string;
+  benefits: ClassBenefit[];
+};
+export type ManagedAllocation = { classes: ManagedClass[]; skills: ManagedSkill[] };
+
 export type CharacterActiveInput = { active: boolean };
 export type CharacterControllerInput = { membershipId: string | null };
 
@@ -40,6 +62,7 @@ export type CharacterRecord = {
   systemId: "fabula-ultima";
   sheet: FabulaSheet;
   derived: FabulaPreview;
+  progression?: Progression;
   canEdit: boolean;
 };
 export interface CharactersService {
@@ -69,7 +92,7 @@ export interface CharactersService {
     actor: GameActor,
     id: string,
     expected: number,
-    changes: SheetChanges,
+    changes: CharacterChanges,
   ): Promise<CharacterRecord>;
   listActiveParty(actor: GameActor, gameId: string): Promise<{ characters: PartyCharacter[] }>;
 }
@@ -110,6 +133,7 @@ export type PartyCharacter = {
   name: string;
   classes: string[];
   baseDice: Record<Attribute, number>;
+  currentDice: FabulaSheet["baseDice"];
   resources: { hp: number; mp: number; ip: number; fabula: number };
   maxima: { hp: number; mp: number; ip: number };
   defense: number | null;
@@ -134,6 +158,8 @@ export type Row = {
   current_mp: number;
   current_ip: number;
   fabula_points: number;
+  exp_current: number;
+  exp_total: number;
   max_hp_override: number | null;
   max_mp_override: number | null;
   max_ip_override: number | null;
@@ -169,10 +195,26 @@ export type RollCharacter = {
   revision: number;
   name: string;
   sheet: FabulaSheet;
+  currentDice: FabulaSheet["baseDice"];
 };
 
 export interface CharacterRollReader {
   activeIds(gameId: string): Promise<string[]>;
   ownActiveId(gameId: string, membershipId: string): Promise<string | null>;
   load(gameId: string, id: string): Promise<RollCharacter | null>;
+}
+
+export type LearnedClassSkill = {
+  skillId: string;
+  characterId: string;
+  name: string;
+  rank: number;
+};
+
+/** Transaction-bound operations for a class edit under the game lock. */
+export interface ClassProgressionStore {
+  learnedSkills(gameId: string, classId: string): Promise<LearnedClassSkill[]>;
+  hasAssignments(gameId: string, classId: string): Promise<boolean>;
+  removeRanks(gameId: string, classId: string, skillIds: string[]): Promise<void>;
+  reviseAssignedCharacters(gameId: string, classId: string): Promise<string[]>;
 }

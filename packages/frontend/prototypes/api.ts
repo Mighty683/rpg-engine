@@ -1,3 +1,4 @@
+import { classCatalog } from "../src/modules/class-management/api";
 /** Prototype composition: real HTTP clients, intercepted only inside Histoire by MSW. */
 import type { App } from "vue";
 import { apiServicesKey } from "../src/shared/api-services";
@@ -20,6 +21,7 @@ export const prototypeApiServices = {
   games,
   gameTable,
   npcs,
+  classCatalog,
   invitations: invitationApi,
   players,
 };

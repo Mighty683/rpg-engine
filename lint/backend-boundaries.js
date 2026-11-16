@@ -10,6 +10,8 @@ const tableOwners = {
   players: "players",
   characters: "characters",
   characterClasses: "characters",
+  characterClassLevels: "characters",
+  characterSkillRanks: "characters",
   characterSkills: "characters",
   characterEquipment: "characters",
   characterCreateRequests: "characters",

@@ -196,7 +196,7 @@ function openAttributeRoll(character: PartyCharacter, attribute: Attribute) {
     weaponBonus: 0,
     first: attribute,
     second: null,
-    dice: { ...character.baseDice } as Record<Attribute, number>,
+    dice: { ...(character.currentDice ?? character.baseDice) } as Record<Attribute, number>,
     modifier: "0",
     note: "",
   };
@@ -219,7 +219,7 @@ function openWeaponRoll(character: PartyCharacter, weaponId: string) {
     weaponBonus: weapon.accuracyBonus ?? 0,
     first: weapon.accuracyDice[0]!,
     second: weapon.accuracyDice[1],
-    dice: { ...character.baseDice } as Record<Attribute, number>,
+    dice: { ...(character.currentDice ?? character.baseDice) } as Record<Attribute, number>,
     modifier: "0",
     note: "",
   };
@@ -292,7 +292,7 @@ function openReroll(entry: ThrowRecord) {
       first: entry.setup.accuracyDice?.[0] ?? "DEX",
       second: entry.setup.accuracyDice?.[1] ?? null,
       dice: {
-        ...character.baseDice,
+        ...(character.currentDice ?? character.baseDice),
         ...Object.fromEntries(entry.setup.dice.map((die) => [die.label, die.size])),
       } as Record<Attribute, number>,
       modifier: String(entry.setup.modifier),
@@ -327,7 +327,7 @@ function openReroll(entry: ThrowRecord) {
       first,
       second: second ?? null,
       dice: {
-        ...character.baseDice,
+        ...(character.currentDice ?? character.baseDice),
         ...Object.fromEntries(entry.setup.dice.map((die) => [die.label, die.size])),
       } as Record<Attribute, number>,
       modifier: String(entry.setup.modifier),
@@ -544,6 +544,7 @@ async function removeEntry(entry: ThrowRecord) {
     >
       <div class="space-y-section">
         <PartyPanel
+          :game-id="gameId"
           :party="party"
           :is-loading="partyQuery.isLoading.value"
           :is-error="partyQuery.isError.value"

@@ -1,3 +1,4 @@
+import type { classCatalog } from "../modules/class-management/api";
 import type { api as npcApi } from "../modules/npcs/api";
 import type { Ref } from "vue";
 import type { authApi } from "../modules/auth/api";
@@ -10,6 +11,7 @@ import type { api as playersApi } from "../modules/players/api";
 /** Replaceable backend boundary; only composition roots import concrete implementations. */
 export interface ApiServices {
   auth: typeof authApi;
+  classCatalog: typeof classCatalog;
   characters: typeof charactersApi;
   gameTable: typeof gameTableApi;
   npcs: typeof npcApi;

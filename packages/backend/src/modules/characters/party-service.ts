@@ -18,6 +18,7 @@ import {
 // controlled characters must be the member's current active choice.
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import { preview } from "../fabula/rules.ts";
+import { activeModifiers, managedAllocations } from "./progression.ts";
 import { assembleSheet } from "./mapping.ts";
 
 const fail = (code: string) => Object.assign(new Error(code), { code });
@@ -91,9 +92,14 @@ export async function listActiveParty(
         .where(and(eq(characters.gameId, gameId), activeCharacterCondition()))
         .orderBy(characters.createdAt, characters.id);
       const sheets = await batchedSheets(tx, activeRows);
+      const allocations = await managedAllocations(
+        tx,
+        activeRows.map(({ id }) => id),
+      );
       const party: PartyCharacter[] = activeRows.map((row) => {
         const sheet = sheets.get(row.id)!;
-        const derived = preview(sheet);
+        const allocation = allocations.get(row.id);
+        const derived = preview(sheet, activeModifiers(allocation));
         const weapons: PartyWeapon[] = sheet.equipment
           .filter(
             (entry): entry is Extract<typeof entry, { kind: "weapon" }> => entry.kind === "weapon",
@@ -112,8 +118,12 @@ export async function listActiveParty(
           id: row.id,
           revision: row.revision,
           name: sheet.name,
-          classes: sheet.classes.map((entry) => entry.name),
+          classes: [
+            ...sheet.classes.map((entry) => entry.name),
+            ...(allocation?.classes.map(({ name, level }) => `${name} ${level}`) ?? []),
+          ],
           baseDice: { ...sheet.baseDice },
+          currentDice: derived.currentDice,
           resources: { ...sheet.resources },
           maxima: { ...derived.maxima },
           defense: sheet.overrides.defense ?? derived.defenses.defense.calculated,

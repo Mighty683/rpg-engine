@@ -64,3 +64,10 @@ export interface ProgressionAllocation {
   levels: Record<string, number>;
   experience: ProgressionExperience;
 }
+
+export type ManagedProgression = {
+  experience: ProgressionExperience;
+  classLevels: { gameClassId: string; level: number }[];
+  skillRanks: { skillId: string; rank: number }[];
+};
+export type ManagedAbilities = Pick<ProgressionCharacter, "experience" | "levels" | "ranks">;

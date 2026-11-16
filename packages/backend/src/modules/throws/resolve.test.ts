@@ -50,6 +50,7 @@ const character = (overrides: Partial<RollCharacter> = {}): RollCharacter => ({
   revision: 3,
   name: "Hero",
   sheet: sheet(),
+  currentDice: overrides.sheet?.baseDice ?? sheet().baseDice,
   ...overrides,
 });
 

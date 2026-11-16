@@ -1,7 +1,6 @@
 import type { MembershipOwnershipFactory } from "../players/types.ts";
-import type { CharactersService } from "./types.ts";
+import type { CharactersService, CharacterChanges } from "./types.ts";
 import type { GameActor, GameAccessFactory } from "../games/types.ts";
-import type { SheetChanges } from "../fabula/types.ts";
 import type { GameEvents } from "../events/types.ts";
 
 import {
@@ -50,7 +49,7 @@ export function createCharactersService(
       actor: GameActor,
       id: string,
       expected: number,
-      changes: SheetChanges,
+      changes: CharacterChanges,
     ) =>
       updateWorkspaceCharacter(
         { gameAccessFor, events, database },

@@ -1,4 +1,4 @@
-import type { Row } from "./types.ts";
+import type { CharacterRecord, ManagedAllocation, Row } from "./types.ts";
 import type { FabulaSheet } from "../fabula/types.ts";
 import { eq } from "drizzle-orm";
 import {
@@ -10,6 +10,7 @@ import {
 import type { DatabaseTransaction } from "../../database/types.ts";
 import { preview } from "../fabula/rules.ts";
 import { assembleSheet } from "./mapping.ts";
+import { activeModifiers, managedAllocations, progressionFor } from "./progression.ts";
 
 export async function sheetSequential(tx: DatabaseTransaction, r: Row): Promise<FabulaSheet> {
   const db = tx;
@@ -41,7 +42,12 @@ export async function sheetSequential(tx: DatabaseTransaction, r: Row): Promise<
   return assembleSheet(r, { classes, skills, equipment });
 }
 
-export const present = (r: Row, s: FabulaSheet) => ({
+export const present = (
+  r: Row,
+  s: FabulaSheet,
+  canEdit: boolean,
+  allocation?: ManagedAllocation,
+): CharacterRecord => ({
   id: r.id,
   playerId: r.player_id,
   name: s.name,
@@ -51,5 +57,13 @@ export const present = (r: Row, s: FabulaSheet) => ({
   revision: r.revision,
   systemId: "fabula-ultima" as const,
   sheet: s,
-  derived: preview(s),
+  derived: preview(s, activeModifiers(allocation)),
+  canEdit,
+  ...(canEdit ? { progression: progressionFor(r, allocation) } : {}),
 });
+
+export async function loadWorkspaceRecord(tx: DatabaseTransaction, row: Row, canEdit: boolean) {
+  const sheet = await sheetSequential(tx, row);
+  const allocations = await managedAllocations(tx, [row.id]);
+  return present(row, sheet, canEdit, allocations.get(row.id));
+}

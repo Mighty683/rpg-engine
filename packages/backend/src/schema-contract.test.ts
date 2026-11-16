@@ -8,6 +8,7 @@ import * as character from "./modules/characters/schema.ts";
 import { activeCharacterSchema } from "./modules/players/schema.ts";
 import * as invitation from "./modules/invitations/schema.ts";
 import * as npc from "./modules/npcs/schema.ts";
+import * as catalog from "./modules/class-catalog/schema.ts";
 import * as roll from "./modules/throws/schema.ts";
 import { uuidSchema } from "./shared/validation/schema.ts";
 import { systems } from "./modules/rpg-systems/catalog.ts";
@@ -84,6 +85,14 @@ it("compares dialects without dropping tuple constraints, unknown keywords, or d
 });
 
 describe("normalized request structural parity", () => {
+  it("covers class template, copy, and save request contracts", () => {
+    equal(catalog.createTemplateSchema, request("createClassTemplate"));
+    equal(catalog.updateTemplateSchema, request("updateClassTemplate"));
+    equal(catalog.updateGameClassSchema, request("updateGameClass"));
+    equal(catalog.deleteGameClassSchema, request("deleteGameClass"));
+    equal(catalog.copyClassSchema, request("copyClassToGame"));
+    equal(catalog.saveClassToLibrarySchema, request("saveGameClassToLibrary"));
+  });
   it("covers registration and game creation with explicit catalog semantics", () => {
     equal(credentialsSchema, schema("Registration"));
     const game = request("createGame");
@@ -109,6 +118,7 @@ describe("normalized request structural parity", () => {
       character.updateCharacterEnvelopeSchema,
       compose(update, { changes: { type: "object", additionalProperties: true } }),
     );
+    equal(character.progressionChangesSchema, schema("CharacterChanges").properties!.progression!);
     equal(character.characterActiveSchema, request("setGmCharacterActive"));
     equal(character.characterControllerSchema, request("assignCharacter"));
   });
