@@ -1,4 +1,4 @@
-/** Catalog progression constraints and display projections shared by the prototype boundary. */
+/** Catalog progression constraints and display projections for managed character progression. */
 import type { BenefitDraft, ClassDefinition } from "../class-management/types";
 import { isClassModifierStat, type ClassModifierStat } from "../../shared/fabula/classModifiers";
 import { projectDefenses } from "../characters/sheet/defense/model";
@@ -7,24 +7,18 @@ import type {
   ManagedAbilities,
   ManagedProgression,
   ProgressionClass,
-  ProgressionCharacter,
   ProgressionExperience,
   SourcedBenefit,
 } from "./types";
 
 export const MAX_CHARACTER_CLASSES = 5;
 export const CLASS_LEVEL_EXP_COST = 10;
-export const STARTING_CHARACTER_LEVEL = 5;
 
 export function assignedRanks(entry: ProgressionClass, ranks: Record<string, number>): number {
   return entry.skills.reduce((total, skill) => total + (ranks[skill.id] ?? 0), 0);
 }
 export function totalRanks(ranks: Record<string, number>): number {
   return Object.values(ranks).reduce((total, rank) => total + rank, 0);
-}
-export function characterLevelError(level: number): string | undefined {
-  if (!Number.isInteger(level) || level < STARTING_CHARACTER_LEVEL || level > 50)
-    return "Enter a character level from 5 to 50.";
 }
 export function experienceError(
   experience: ProgressionExperience,
@@ -188,53 +182,6 @@ export function previewManagedProgression(
       total: balance.total,
       current:
         balance.current - CLASS_LEVEL_EXP_COST * (sum(classLevels) - sum(current.classLevels)),
-    },
-  };
-}
-
-/** Derives both saved and optimistic projections from the base sheet and active benefits. */
-export function withProgressionRanks(
-  catalog: ProgressionClass[],
-  character: ProgressionCharacter,
-  ranks: Record<string, number>,
-  levels: Record<string, number>,
-): ProgressionCharacter {
-  const level = character.sheet.level;
-  const { defenses, ...stats } = projectClassStats(
-    character.sheet,
-    sourcedBenefits(catalog, ranks, levels),
-  );
-  const classes = catalog
-    .filter((entry) => levels[entry.id])
-    .map((entry) => ({
-      id: entry.id,
-      name: `${entry.name} ${levels[entry.id]}`,
-      notes: entry.description,
-    }));
-  const sheet = {
-    ...character.sheet,
-    classes,
-    skills: catalog
-      .flatMap((entry) => entry.skills)
-      .filter((skill) => ranks[skill.id])
-      .map((skill) => ({
-        id: skill.id,
-        name: `${skill.name} ${ranks[skill.id]}/${skill.maxRank}`,
-        notes: skill.description,
-      })),
-  };
-  return {
-    ...character,
-    ranks,
-    levels,
-    sheet,
-    party: {
-      ...character.party,
-      level,
-      classes: classes.map((entry) => entry.name),
-      ...stats,
-      defense: sheet.overrides.defense ?? defenses.defense.calculated,
-      magicDefense: sheet.overrides.magicDefense ?? defenses.magicDefense.calculated,
     },
   };
 }

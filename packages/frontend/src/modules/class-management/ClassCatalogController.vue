@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useGameEvents } from "../games/useGameEvents";
-import { computed, inject, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useOptimisticSave } from "../../shared/useOptimisticSave";
 import ClassManagementPreview from "./ClassManagementPreview.vue";
 import FreeBenefitsEditor from "./FreeBenefitsEditor.vue";
 import SkillsEditor from "./SkillsEditor.vue";
-import { applyCatalogChange, classCatalogApiKey } from "./catalog";
+import { applyCatalogChange } from "./catalog";
 import type {
   BenefitDraft,
   ClassCatalog,
@@ -34,9 +34,8 @@ const props = defineProps<{
   charactersTo?: string;
 }>();
 const emit = defineEmits<{ navigate: [screen: string]; switchContext: [context: string] }>();
-const prototypeApi = inject(classCatalogApiKey, null);
-const canManage = computed(() => Boolean(prototypeApi) || props.canManage !== false);
-const api = prototypeApi ?? useApiServices().classCatalog.forContext(props.gameId, canManage.value);
+const canManage = computed(() => props.canManage !== false);
+const api = useApiServices().classCatalog.forContext(props.gameId, canManage.value);
 const toast = useToast();
 const optimistic = useOptimisticSave<ClassCatalog, ClassCatalogChange[]>({
   apply: (base, changes) => changes.reduce(applyCatalogChange, base),
@@ -124,7 +123,7 @@ function requestRefresh() {
   refreshRequested.value = true;
 }
 useGameEvents(
-  prototypeApi ? undefined : props.gameId,
+  props.gameId,
   (hint) => {
     if (hint.type === "roster") requestRefresh();
   },
@@ -301,10 +300,7 @@ function removeSkill(id: string) {
 async function saveGameEdit(change: NonNullable<typeof removal.value>) {
   await runAction(async (base) => {
     try {
-      if (
-        !prototypeApi &&
-        base.game.find(({ id }) => id === change.entry.id)?.revision !== change.entry.revision
-      ) {
+      if (base.game.find(({ id }) => id === change.entry.id)?.revision !== change.entry.revision) {
         removal.value = null;
         throw new ContractError(
           409,
@@ -386,7 +382,7 @@ watch(
     :context-to="contextTo"
     :return-to="returnTo"
     :characters-to="charactersTo"
-    :show-characters="Boolean(prototypeApi || charactersTo)"
+    :show-characters="Boolean(charactersTo)"
     :actions-enabled="canRunAction"
     :has-draft="Boolean(current && drafts[current.id])"
     @navigate="emit('navigate', $event)"

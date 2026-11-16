@@ -1,7 +1,4 @@
-import type { InjectionKey } from "vue";
-import type { ClassCatalog, ClassCatalogApi, ClassCatalogChange } from "./types";
-
-export const classCatalogApiKey: InjectionKey<ClassCatalogApi> = Symbol("class catalog");
+import type { ClassCatalog, ClassCatalogChange } from "./types";
 
 export function applyCatalogChange(
   catalog: ClassCatalog,
