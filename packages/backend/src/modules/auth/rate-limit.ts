@@ -14,7 +14,7 @@ export class PostgresRateStore implements Store {
     this.database = database;
     this.policy = policy;
   }
-  init(options: Options) {
+  init(options: Pick<Options, "windowMs">) {
     this.windowMs = options.windowMs;
   }
   private key(key: string) {

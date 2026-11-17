@@ -62,6 +62,7 @@ export type ThrowSetup = AttributeSetup | WeaponSetup | FreeSetup;
 export type AnyThrowSetup = ThrowSetup | NpcThrowSetup;
 
 export type CreateThrowInput = {
+  agentTurnId?: string;
   sourceThrowId: string | null;
   private?: boolean;
   setup: AnyThrowSetup;

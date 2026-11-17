@@ -1,3 +1,4 @@
+import type { AgentProvider } from "./modules/agent/types.ts";
 import type { DatabaseTimeouts } from "./database/types.ts";
 import type { HttpErrorLogger, MutationLimitOptions } from "./shared/http/types.ts";
 import type { Express } from "express";
@@ -7,6 +8,7 @@ import type { EventStreamOptions } from "./modules/events/types.ts";
 export interface Configuration {
   production: boolean;
   development: boolean;
+  agent?: { enabled: boolean; model: string; apiKey?: string };
   databaseUrl: string | undefined;
   databaseTimeouts: DatabaseTimeouts;
   port: number;
@@ -17,6 +19,7 @@ export interface Configuration {
 }
 
 export type ApplicationOptions = {
+  agentProvider?: AgentProvider;
   eventStreams?: Partial<EventStreamOptions>;
   mutationLimits?: Partial<MutationLimitOptions>;
   errorLogger?: HttpErrorLogger;

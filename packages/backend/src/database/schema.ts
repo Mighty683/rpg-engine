@@ -1,3 +1,4 @@
+import type { AgentToolSummary } from "../modules/agent/types.ts";
 import type { ClassBenefit, ClassDefinition } from "../modules/class-catalog/types.ts";
 import type { OutcomeJson, ResolvedSetup, ThrowKind } from "../modules/throws/types.ts";
 import { and, eq, isNull, or } from "drizzle-orm";
@@ -168,6 +169,9 @@ export const characterFields = {
 };
 
 export const throws = pgTable("throws", {
+  agentTurnId: uuid("agent_turn_id")
+    .unique()
+    .references(() => agentTurns.id, { onDelete: "set null" }),
   id: uuid("id").primaryKey(),
   gameId: uuid("game_id").notNull(),
   seq: bigint("seq", { mode: "number" }).notNull(),
@@ -311,4 +315,19 @@ export const characterSkillRanks = pgTable("character_skill_ranks", {
   gameClassId: uuid("game_class_id").notNull(),
   skillId: uuid("skill_id").notNull(),
   rank: smallint("rank").notNull(),
+});
+
+export const agentTurns = pgTable("agent_turns", {
+  id: uuid("id").primaryKey(),
+  sequence: bigint("sequence", { mode: "bigint" }).generatedAlwaysAsIdentity().unique(),
+  gameId: uuid("game_id")
+    .notNull()
+    .references(() => games.id, { onDelete: "cascade" }),
+  gmAccountId: uuid("gm_account_id")
+    .notNull()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  author: text("author").notNull(),
+  message: text("message").notNull(),
+  reply: text("reply").notNull(),
+  tools: jsonb("tools").$type<AgentToolSummary[]>().notNull(),
 });

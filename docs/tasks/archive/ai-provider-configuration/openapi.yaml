@@ -1,0 +1,251 @@
+openapi: 3.1.0
+info:
+  title: Game table Agent
+  version: 0.1.0
+  description: Proposed Agent operations. Game mutations use the canonical game APIs after user review.
+servers:
+  - url: /
+tags:
+  - name: Agent
+    description: Chat restricted to the current GM of the game.
+security:
+  - sessionCookie: []
+paths:
+  /api/games/{gameId}/agent/status:
+    parameters:
+      - $ref: "#/components/parameters/gameId"
+    get:
+      operationId: getGameAgentStatus
+      summary: Read Agent availability and a page of GM history
+      parameters:
+        - name: before
+          in: query
+          description: Exclusive turn ID from this GM transcript. Omit to read the latest page.
+          schema: { $ref: "#/components/schemas/Id" }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      tags: [Agent]
+      description: Requires current GM ownership. A player membership receives 403. Reports deployment enablement without contacting the provider.
+      responses:
+        "200":
+          description: Availability, game-wide busy state and a page of persisted completed turns in chronological order.
+          headers:
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentStatus" }
+        "400": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest" }
+        "401": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden" }
+        "404": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound" }
+        "500": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError" }
+        "503": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable" }
+  /api/games/{gameId}/agent/turns:
+    parameters:
+      - $ref: "#/components/parameters/gameId"
+    post:
+      operationId: sendGameAgentTurn
+      summary: Ask the Agent about the current game
+      tags: [Agent]
+      description: >-
+        Requires current GM ownership and the application's write Origin check.
+        The server builds context using the GM table view, including hidden NPCs, relevant GM notes, public throws and the GM’s own private throws. Completed turns are persisted and
+        return text, tool summaries, and optionally a proposal for user review.
+        The proposal is input to the existing game workflow and grants no authority.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentTurnInput" }
+            examples:
+              weaponAttack:
+                value: { message: Robert attacks Agile with hammer }
+              agilityCheck:
+                value: { message: Christine make check roll for agility when tumbling }
+              freeRoll:
+                value: { message: Make 2x10d roll }
+              askAboutParty:
+                summary: Ask who is at the table
+                value:
+                  message: Who is in the party?
+      responses:
+        "200":
+          description: Completed turn.
+          headers:
+            Cache-Control: { $ref: "#/components/headers/NoStore" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentTurn" }
+        "400": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest" }
+        "401": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized" }
+        "403": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden" }
+        "404": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound" }
+        "409":
+          description: Another turn is active in this game (agent_game_busy), or visibility narrowed during the turn (agent_context_changed).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "413": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError" }
+        "429":
+          description: Account rate limit or Agent concurrency limit. Code rate_limited or agent_busy.
+          headers:
+            Retry-After:
+              schema: { type: integer, minimum: 0 }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError" }
+        "502":
+          description: Invalid provider response or exhausted tool-call budget. Code agent_failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: Agent disabled, provider temporarily unavailable, or database busy. Code agent_disabled, agent_unavailable, or database_busy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "504":
+          description: Turn deadline exceeded. Code agent_timeout.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+components:
+  securitySchemes:
+    sessionCookie: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie" }
+    csrfToken: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken" }
+  parameters:
+    gameId: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId" }
+  headers:
+    NoStore:
+      schema: { type: string, const: no-store }
+  schemas:
+    Id: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id" }
+    Error: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Error" }
+    Revision: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision" }
+    AgentStatus:
+      type: object
+      required: [available, busy, turns, nextBefore]
+      properties:
+        available: { type: boolean }
+        busy: { type: boolean }
+        nextBefore:
+          description: Exclusive cursor for the next older page, or null at the beginning of history.
+          oneOf:
+            - { $ref: "#/components/schemas/Id" }
+            - { type: "null" }
+        turns:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required: [id, author, message, tools, reply]
+            properties:
+              id: { $ref: "#/components/schemas/Id" }
+              author: { type: string, description: Display name of the sender. }
+              message: { $ref: "#/components/schemas/AgentMessage" }
+              tools:
+                type: array
+                maxItems: 10
+                items: { $ref: "#/components/schemas/AgentToolSummary" }
+              reply: { type: string, minLength: 1, maxLength: 6000 }
+              roll:
+                type: object
+                required: [characterName, equipmentName, private, outcome]
+                properties:
+                  characterName: { type: string }
+                  equipmentName: { type: [string, "null"] }
+                  private: { type: boolean }
+                  outcome: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/ThrowOutcome" }
+            additionalProperties: false
+      additionalProperties: false
+    AgentMessage:
+      type: string
+      minLength: 1
+      maxLength: 2000
+      description: User text. The server trims it and rejects whitespace-only input.
+    AgentTurnInput:
+      type: object
+      required: [message]
+      properties:
+        message: { $ref: "#/components/schemas/AgentMessage" }
+      additionalProperties: false
+    AgentToolSummary:
+      type: object
+      required: [tool, label]
+      properties:
+        tool: { type: string, enum: [read_character, read_npc, read_throws, prepare_throw, prepare_character_edit, prepare_npc_edit] }
+        label: { type: string, minLength: 1, maxLength: 160 }
+      additionalProperties: false
+    AgentTurn:
+      type: object
+      required: [id, reply, tools]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        reply: { type: string, minLength: 1, maxLength: 6000 }
+        tools:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/AgentToolSummary" }
+          description: Server-authored summaries of completed reads and prepared actions, in execution order.
+        action:
+          oneOf:
+            - $ref: "#/components/schemas/RollProposal"
+            - $ref: "#/components/schemas/CharacterEditProposal"
+            - $ref: "#/components/schemas/NpcEditProposal"
+      additionalProperties: false
+    RollProposal:
+      type: object
+      required: [kind, input]
+      properties:
+        kind: { type: string, const: roll }
+        targetLabel:
+          type: string
+          maxLength: 100
+          description: GM-only target display name shown in review. Never copy it into the throw payload.
+        input:
+          $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CreateThrow"
+          description: Reviewed setup. sourceThrowId identifies a visible reroll target when supplied.
+      additionalProperties: false
+    CharacterEditProposal:
+      type: object
+      required: [kind, characterId, expectedRevision, changes]
+      properties:
+        kind: { type: string, const: edit_character }
+        characterId: { $ref: "#/components/schemas/Id" }
+        expectedRevision: { $ref: "#/components/schemas/Revision" }
+        changes:
+          type: object
+          minProperties: 1
+          allOf:
+            - $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges"
+          propertyNames:
+            enum: [name, theme, level, baseDice, resources]
+      additionalProperties: false
+    NpcEditProposal:
+      type: object
+      required: [kind, npcId, expectedRevision, changes]
+      properties:
+        kind: { type: string, const: edit_npc }
+        npcId: { $ref: "#/components/schemas/Id" }
+        expectedRevision: { $ref: "#/components/schemas/Revision" }
+        changes:
+          type: object
+          minProperties: 1
+          additionalProperties: false
+          properties:
+            name: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/name" }
+            relationship: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/relationship" }
+            level: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/level" }
+            baseDice: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/baseDice" }
+            hp: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/hp" }
+            mp: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/mp" }
+            defense: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/defense" }
+            magicDefense: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/magicDefense" }
+            notes: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/notes" }
+      additionalProperties: false

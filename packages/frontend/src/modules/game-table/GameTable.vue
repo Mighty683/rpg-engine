@@ -16,7 +16,7 @@ import { useGameCharactersQuery } from "../characters/hooks";
 import { useGameMembersQuery } from "../games/hooks";
 import CharacterView from "../characters/CharacterView.vue";
 import NpcManager from "../npcs/NpcManager.vue";
-import type { GmNpc } from "../npcs/api";
+import type { GmNpc, NpcWrite } from "../npcs/api";
 import type { NpcAttack } from "../npcs/types";
 
 import {
@@ -56,7 +56,16 @@ const rosterById = computed(
 
 const sheetOpen = ref(false);
 const npcEditorOpen = ref(false);
+const npcManager = ref<InstanceType<typeof NpcManager>>();
+function saveReviewedNpc(id: string, revision: number, next: NpcWrite) {
+  if (!npcManager.value) throw new Error("NPC editor unavailable");
+  return npcManager.value.saveReviewed(id, revision, next);
+}
 const historyTab = ref<string | null>(null);
+const emit = defineEmits<{ agentOpen: [open: boolean] }>();
+watch(historyTab, (id) =>
+  emit("agentOpen", Boolean(props.extraEdgeTab && id === props.extraEdgeTab.id)),
+);
 const npcOpenRequest = ref(0);
 const npcCloseRequest = ref(0);
 const edgeTabs = computed(() => [
@@ -558,6 +567,7 @@ async function removeEntry(entry: ThrowRecord) {
           @open-sheet="openSheet"
         >
           <NpcManager
+            ref="npcManager"
             :game-id="gameId"
             :role="role"
             :hint="npcsHint ?? 0"
@@ -600,7 +610,7 @@ async function removeEntry(entry: ThrowRecord) {
       <Teleport to="body">
         <UButton
           v-if="extraEdgeTab && historyTab !== extraEdgeTab.id"
-          class="fixed bottom-3 right-3 z-[110] w-40 justify-between shadow-lg"
+          class="fixed bottom-3 left-3 z-[110] w-40 justify-between shadow-lg"
           color="neutral"
           variant="soft"
           :aria-expanded="false"
@@ -616,12 +626,13 @@ async function removeEntry(entry: ThrowRecord) {
       </Teleport>
       <USlideover
         v-if="extraEdgeTab"
+        side="left"
         :modal="false"
         :overlay="false"
         :transition="false"
         :ui="{
           content:
-            '!z-[110] !top-auto !bottom-3 !right-3 !h-[420px] !max-h-[calc(100dvh-1.5rem)] !w-[360px] !max-w-[calc(100vw-1.5rem)] rounded-panel shadow-xl ring ring-default',
+            '!z-[110] !top-auto !bottom-3 !left-3 !h-[420px] !max-h-[calc(100dvh-1.5rem)] !w-[360px] !max-w-[calc(100vw-1.5rem)] rounded-panel shadow-xl ring ring-default',
           header: 'p-small min-h-0',
           title: 'text-small',
           body: 'p-0 sm:p-0 flex min-h-0 flex-col',
@@ -649,6 +660,8 @@ async function removeEntry(entry: ThrowRecord) {
           <slot
             name="extra-edge-panel"
             :party="party"
+            :npc-actors="npcRecords.map(npcCharacter)"
+            :save-reviewed-npc="saveReviewedNpc"
             :party-ready="partyQuery.isSuccess.value"
             :party-loading="partyQuery.isLoading.value"
           />

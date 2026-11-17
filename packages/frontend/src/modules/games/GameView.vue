@@ -20,6 +20,7 @@ import {
 } from "../characters/hooks";
 import CharacterManagement from "./CharacterManagement.vue";
 import GameSettings from "./GameSettings.vue";
+import AgentTable from "../agent/AgentTable.vue";
 import GameTable from "../game-table/GameTable.vue";
 import { partyKey, throwsKey } from "../game-table/hooks";
 import { useGameMembersQuery, useGameQuery, useSelectGameCharacterMutation } from "./hooks";
@@ -360,7 +361,15 @@ async function removeCharacter() {
           />
         </template>
         <template v-else>
+          <AgentTable
+            v-if="gameRecord.role === 'GM' && account"
+            :key="gameId + account.id"
+            :game-id="gameId"
+            :throws-hint="throwsHint"
+            :npcs-hint="npcsHint"
+          />
           <GameTable
+            v-else
             :game-id="gameId"
             :role="gameRecord.role"
             :throws-hint="throwsHint"

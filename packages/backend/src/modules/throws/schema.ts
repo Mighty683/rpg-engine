@@ -68,7 +68,7 @@ export const setupKeys = {
     "note",
   ],
   npcAttack: ["type", "npcId", "attackId", "expectedRevision", "dice", "modifier", "note"],
-  request: ["sourceThrowId", "setup", "private"],
+  request: ["agentTurnId", "sourceThrowId", "setup", "private"],
 } as const;
 /** Separate key checks retain legacy failure precedence before individual field checks. */
 export function keysSchema(keys: readonly string[]): ObjectInputSchema {

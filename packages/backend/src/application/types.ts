@@ -32,3 +32,16 @@ export type GameClassEditDependencies = {
   classesFor: (tx: DatabaseTransaction) => GameClassStore;
   progressionFor: (tx: DatabaseTransaction) => ClassProgressionStore;
 };
+
+export type AgentDependencies = import("../modules/agent/types.ts").AgentReadDependencies & {
+  provider: import("../modules/agent/types.ts").AgentProvider;
+  history: import("../modules/agent/types.ts").AgentHistory;
+  shutdown: AbortSignal;
+  countTurn(accountId: string): Promise<{ totalHits: number; resetTime: Date | undefined }>;
+  proposals?: import("../modules/agent/types.ts").AgentToolFactory;
+};
+export interface AgentUsage {
+  input: number;
+  output: number;
+  calls: number;
+}

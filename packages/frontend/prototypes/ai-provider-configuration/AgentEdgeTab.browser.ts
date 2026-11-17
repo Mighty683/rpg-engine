@@ -31,10 +31,10 @@ test("Agent minimizes to the bottom bar and preserves the conversation and draft
   try {
     const agent = page.getByTestId("agent-chat-launcher");
     const history = page.getByTestId("edge-tab-history");
-    const panel = page.getByTestId("prototype-agent-panel");
-    const draft = page.getByTestId("prototype-agent-command");
-    const run = page.getByTestId("prototype-agent-submit");
-    const result = page.getByTestId("prototype-agent-result");
+    const panel = page.getByTestId("agent-panel");
+    const draft = page.getByTestId("agent-command");
+    const run = page.getByTestId("agent-submit");
+    const result = page.getByTestId("agent-result");
 
     await expect.element(page.getByTestId("party-list")).toBeVisible();
     await expect.element(agent).toBeVisible();
@@ -56,7 +56,7 @@ test("Agent minimizes to the bottom bar and preserves the conversation and draft
     await expect.element(draft).toHaveValue("");
 
     available.value = false;
-    await expect.element(page.getByTestId("prototype-agent-offline")).toBeVisible();
+    await expect.element(page.getByTestId("agent-offline")).toBeVisible();
     await draft.fill("Who is in the party?");
     await expect.element(run).toBeDisabled();
     await page.getByTestId("agent-chat-close").click();

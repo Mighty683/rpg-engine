@@ -3,6 +3,7 @@ import path from "node:path";
 const sourceRoot = "/packages/backend/src/";
 const pureExports = new Set(["fabula/rules.ts", "fabula/rolls.ts", "rpg-systems/catalog.ts"]);
 const tableOwners = {
+  agentTurns: "agent",
   accounts: "auth",
   sessions: "auth",
   signInAttempts: "auth",

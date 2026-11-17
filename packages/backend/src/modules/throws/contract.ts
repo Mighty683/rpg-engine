@@ -194,39 +194,21 @@ export function parseCreateRequest(body: unknown): CreateThrowInput {
     !isUuid(value.sourceThrowId)
   )
     throw fail("validation", "Invalid source throw", "sourceThrowId");
+  if (value.agentTurnId !== undefined && !isUuid(value.agentTurnId))
+    throw fail("validation", "Invalid Agent turn", "agentTurnId");
+  const common = {
+    ...(value.agentTurnId ? { agentTurnId: value.agentTurnId } : {}),
+    private: value.private === true,
+    sourceThrowId: (value.sourceThrowId as string) ?? null,
+  };
   const setup = value.setup;
   if (!validateObject(setup)) throw fail("validation", "Invalid setup", "setup");
   const record = setup as Record<string, unknown>;
-  if (record.type === "npc-attribute")
-    return {
-      private: value.private === true,
-      sourceThrowId: (value.sourceThrowId as string) ?? null,
-      setup: parseNpcAttribute(record),
-    };
-  if (record.type === "npc-attack")
-    return {
-      private: value.private === true,
-      sourceThrowId: (value.sourceThrowId as string) ?? null,
-      setup: parseNpcAttack(record),
-    };
-  if (record.type === "attribute")
-    return {
-      private: value.private === true,
-      sourceThrowId: (value.sourceThrowId as string) ?? null,
-      setup: parseAttributeSetup(record),
-    };
-  if (record.type === "weapon")
-    return {
-      private: value.private === true,
-      sourceThrowId: (value.sourceThrowId as string) ?? null,
-      setup: parseWeaponSetup(record),
-    };
-  if (record.type === "free")
-    return {
-      private: value.private === true,
-      sourceThrowId: (value.sourceThrowId as string) ?? null,
-      setup: parseFreeSetup(record),
-    };
+  if (record.type === "npc-attribute") return { ...common, setup: parseNpcAttribute(record) };
+  if (record.type === "npc-attack") return { ...common, setup: parseNpcAttack(record) };
+  if (record.type === "attribute") return { ...common, setup: parseAttributeSetup(record) };
+  if (record.type === "weapon") return { ...common, setup: parseWeaponSetup(record) };
+  if (record.type === "free") return { ...common, setup: parseFreeSetup(record) };
   throw fail("validation", "Unknown setup type", "setup.type");
 }
 

@@ -85,6 +85,7 @@ export type ThrowSetup =
   | NpcAttackSetup;
 
 export type CreateThrowInput = {
+  agentTurnId?: string;
   sourceThrowId: string | null;
   private?: boolean;
   setup: ThrowSetup;

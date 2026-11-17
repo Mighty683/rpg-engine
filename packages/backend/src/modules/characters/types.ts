@@ -66,6 +66,7 @@ export type CharacterRecord = {
   canEdit: boolean;
 };
 export interface CharactersService {
+  learnedSkills(actor: GameActor, gameId: string, id: string): Promise<LearnedSkill[]>;
   assignCharacter(
     actor: GameActor,
     gameId: string,
@@ -218,3 +219,8 @@ export interface ClassProgressionStore {
   removeRanks(gameId: string, classId: string, skillIds: string[]): Promise<void>;
   reviseAssignedCharacters(gameId: string, classId: string): Promise<string[]>;
 }
+
+export type LearnedSkill = Pick<ManagedSkill, "rank" | "benefits"> & {
+  name: string;
+  description: string;
+};

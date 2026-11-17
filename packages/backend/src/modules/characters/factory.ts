@@ -11,6 +11,7 @@ import {
   setGmCharacterActive,
   updateWorkspaceCharacter,
 } from "./workspace-service.ts";
+import { learnedSkills } from "./learned-skills.ts";
 import { listActiveParty } from "./party-service.ts";
 import type { Database } from "../../database/types.ts";
 
@@ -22,6 +23,7 @@ export function createCharactersService(
   membershipsFor: MembershipOwnershipFactory,
 ): CharactersService {
   return {
+    learnedSkills: (actor, gameId, id) => learnedSkills(database, gameAccessFor, actor, gameId, id),
     assignCharacter,
     createWorkspaceCharacter: (actor: GameActor, gameId: string, id: string, name: string) =>
       createWorkspaceCharacter(

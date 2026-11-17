@@ -13,6 +13,7 @@ export class NpcsPage {
     await field.fill(name);
     const saved = await response;
     if (!saved.ok()) throw new Error(`NPC update failed: ${saved.status()}`);
+    await this.page.getByTestId("npc-saving").waitFor({ state: "hidden" });
   }
   async addAttack(name: string) {
     let response = this.page.waitForResponse(

@@ -1,3 +1,4 @@
+import { agentApi } from "./modules/agent/api";
 import ClassCatalogView from "./modules/class-management/ClassCatalogView.vue";
 import { classCatalog } from "./modules/class-management/api";
 import { createApp } from "vue";
@@ -37,6 +38,7 @@ const queryClient = new QueryClient({
 });
 createApp(App)
   .provide(apiServicesKey, {
+    agent: agentApi,
     auth: authApi,
     characters,
     gameTable,

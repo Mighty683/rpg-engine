@@ -16,4 +16,8 @@ GRANT SELECT, INSERT, UPDATE ON :"app_schema".class_templates TO :"app_role";
 GRANT SELECT, INSERT ON :"app_schema".game_classes, :"app_schema".game_class_skills, :"app_schema".class_create_requests TO :"app_role";
 GRANT UPDATE, DELETE ON :"app_schema".game_classes, :"app_schema".game_class_skills TO :"app_role";
 GRANT SELECT, INSERT, DELETE ON :"app_schema".character_class_levels, :"app_schema".character_skill_ranks TO :"app_role";
+GRANT SELECT, INSERT, UPDATE, DELETE ON :"app_schema".npcs TO :"app_role";
+GRANT SELECT, INSERT, DELETE ON :"app_schema".npc_attacks TO :"app_role";
+GRANT SELECT, INSERT ON :"app_schema".npc_create_requests, :"app_schema".agent_turns TO :"app_role";
+GRANT USAGE ON SEQUENCE :"app_schema".agent_turns_sequence_seq TO :"app_role";
 COMMIT;

@@ -154,6 +154,27 @@ async function create() {
     creating.value = false;
   }
 }
+async function writeProfile(id: string, expectedRevision: number, next: NpcWrite) {
+  const result = await api.update(props.gameId, id, expectedRevision, next);
+  const pending = queued.get(id);
+  records.value = records.value.map((record) =>
+    record.id === id ? { ...result.npc, ...pending } : record,
+  );
+}
+
+async function saveReviewed(id: string, expectedRevision: number, next: NpcWrite) {
+  if (writing.value || removing.value || panelOpen.value)
+    throw new Error("Finish the open NPC edit and review the change again.");
+  requestVersion++;
+  writing.value = true;
+  try {
+    await writeProfile(id, expectedRevision, next);
+  } finally {
+    await drainQueue();
+  }
+}
+defineExpose({ saveReviewed });
+
 async function save(npc: Npc) {
   requestVersion++;
   const update = JSON.parse(JSON.stringify(toWrite(npc))) as NpcWrite;
@@ -163,6 +184,9 @@ async function save(npc: Npc) {
   );
   if (writing.value) return;
   writing.value = true;
+  await drainQueue();
+}
+async function drainQueue() {
   while (queued.size) {
     const [id, next] = queued.entries().next().value!;
     queued.delete(id);
@@ -171,11 +195,7 @@ async function save(npc: Npc) {
     );
     if (!current) continue;
     try {
-      const result = await api.update(props.gameId, id, current.revision, next);
-      const pending = queued.get(id);
-      records.value = records.value.map((record) =>
-        record.id === id ? { ...result.npc, ...pending } : record,
-      );
+      await writeProfile(id, current.revision, next);
     } catch {
       queued.clear();
       toast.add({

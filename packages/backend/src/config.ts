@@ -34,6 +34,8 @@ export function validateConfiguration(config: Configuration) {
     if (!Number.isSafeInteger(value) || value <= 0 || value > 2147483647)
       throw new Error(`Invalid database timeout: ${name}`);
   }
+  if (config.agent?.enabled && (!config.agent.apiKey?.trim() || !config.agent.model.trim()))
+    throw new Error("Enabled Agent requires MISTRAL_API_KEY and MISTRAL_MODEL");
   if (!config.production) return;
   for (const [name, value] of [
     ["CSRF_SECRET", config.csrfSecret],
@@ -54,7 +56,14 @@ export function createConfiguration(env: NodeJS.ProcessEnv = process.env): Confi
     proxySetting === "none" || !proxySetting
       ? []
       : proxySetting.split(",").map((value) => value.trim());
+  if (env.AGENT_ENABLED && !["true", "false"].includes(env.AGENT_ENABLED))
+    throw new Error("AGENT_ENABLED must be true or false");
   const config: Configuration = {
+    agent: {
+      enabled: env.AGENT_ENABLED === "true",
+      model: env.MISTRAL_MODEL ?? "mistral-small-2603",
+      apiKey: env.MISTRAL_API_KEY,
+    },
     production,
     development: env.NODE_ENV === "development",
     databaseUrl: env.DATABASE_URL,

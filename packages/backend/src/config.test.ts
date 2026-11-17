@@ -84,3 +84,12 @@ it.each([
   config.databaseTimeouts.lockMs = 0;
   expect(() => validateConfiguration(config)).toThrow("database timeout");
 });
+
+it("keeps the Agent disabled by default and requires explicit provider settings when enabled", () => {
+  expect(createConfiguration({}).agent?.enabled).toBe(false);
+  expect(() => createConfiguration({ AGENT_ENABLED: "yes" })).toThrow("AGENT_ENABLED");
+  expect(() => createConfiguration({ AGENT_ENABLED: "true" })).toThrow("MISTRAL_API_KEY");
+  expect(
+    createConfiguration({ AGENT_ENABLED: "true", MISTRAL_API_KEY: "test-only" }).agent?.model,
+  ).toBe("mistral-small-2603");
+});

@@ -125,6 +125,12 @@ The migration setup starts from a fresh database and does not import the former 
 
 Login is rate-limited by client address and account, and registration by client address; counters are stored in PostgreSQL. Password hashing is capped per backend process.
 
+### GM table Agent
+
+Agent access is disabled by default. To enable it, apply migrations and runtime grants, then set the backend environment to `AGENT_ENABLED=true`, `MISTRAL_MODEL=mistral-small-2603` and a deployment-provided `MISTRAL_API_KEY`. Restart the backend after changing these settings. Keep the key in the backend secret store or the ignored local `packages/backend/.env`. The browser talks to the same-origin game API.
+
+Enabling the Agent sends GM messages and requested game facts to Mistral. Configure the provider account’s retention and training preferences for your deployment before using real games. To check the integration, use a synthetic game. A prepared roll appears in the chat with a **Make a roll** button. Confirming it records the throw and displays the dice and total in the conversation. Completed GM conversations persist in PostgreSQL. One turn runs per game, with up to ten turns across the single backend process.
+
 ### Database roles
 
 1. Create separate PostgreSQL login roles: a migration owner that owns the application schema and tables, and a runtime role without superuser, database/schema ownership, role creation, or privileged role membership. Set passwords through the database administration or secrets system.

@@ -78,6 +78,20 @@
       "when": 1700000010000,
       "tag": "011_character_progression",
       "breakpoints": false
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1700000011000,
+      "tag": "012_agent_turns",
+      "breakpoints": false
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1700000012000,
+      "tag": "013_agent_roll_link",
+      "breakpoints": false
     }
   ]
 }

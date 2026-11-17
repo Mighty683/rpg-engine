@@ -1,3 +1,4 @@
+import { agentTurnInputSchema } from "./modules/agent/schema.ts";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import { parse } from "yaml";
@@ -85,6 +86,7 @@ it("compares dialects without dropping tuple constraints, unknown keywords, or d
 });
 
 describe("normalized request structural parity", () => {
+  it("covers Agent turns", () => equal(agentTurnInputSchema, request("sendGameAgentTurn")));
   it("covers class template, copy, and save request contracts", () => {
     equal(catalog.createTemplateSchema, request("createClassTemplate"));
     equal(catalog.updateTemplateSchema, request("updateClassTemplate"));
@@ -212,6 +214,7 @@ describe("normalized request structural parity", () => {
       compose(
         roll.keysSchema(roll.setupKeys.request),
         {
+          agentTurnId: uuidSchema,
           private: roll.booleanSchema,
           sourceThrowId: { anyOf: [uuidSchema, { type: "null" }] },
           setup: { oneOf: setups.map(([name]) => ({ $ref: `#/components/schemas/${name}` })) },

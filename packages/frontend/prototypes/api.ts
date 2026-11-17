@@ -1,3 +1,4 @@
+import { agentApi } from "../src/modules/agent/api";
 import { classCatalog } from "../src/modules/class-management/api";
 /** Prototype composition: real HTTP clients, intercepted only inside Histoire by MSW. */
 import type { App } from "vue";
@@ -16,6 +17,7 @@ export const prototypeGameId = "prototype-game";
 export const prototypePlayerId = "member-nera";
 
 export const prototypeApiServices = {
+  agent: agentApi,
   auth: authApi,
   characters,
   games,

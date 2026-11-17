@@ -1,3 +1,9 @@
+import { createEditTools } from "./application/agent-edits.ts";
+import { createRollTools } from "./application/agent-rolls.ts";
+import { createAgentRuntime } from "./application/agent-turn.ts";
+import { createMistralProvider } from "./modules/agent/mistral.ts";
+import { agentController, disabledAgent } from "./modules/agent/controller.ts";
+import { createAgentHistory } from "./modules/agent/history.ts";
 import { createGameClassEdits } from "./application/game-class-edits.ts";
 import { createGameClassStore } from "./modules/class-catalog/repository.ts";
 import { createClassProgressionStore } from "./modules/characters/class-progression-store.ts";
@@ -143,10 +149,37 @@ export function createApplication(
     createGameAccessService,
     ownership.acceptInvitation,
   );
+  const agentHistory = createAgentHistory(database, createGameAccessService);
+  const provider =
+    options.agentProvider ??
+    (config.agent?.enabled
+      ? createMistralProvider(config.agent.model, config.agent.apiKey!)
+      : undefined);
+  const agentRate = new PostgresRateStore(database, "agent-turns");
+  agentRate.init({ windowMs: 60_000 });
+  const shutdown = new AbortController();
+  const agent = provider
+    ? createAgentRuntime({
+        characters,
+        npcs,
+        throws,
+        history: agentHistory,
+        provider,
+        proposals: (context) => [...createRollTools(context), ...createEditTools(context)],
+        shutdown: shutdown.signal,
+        countTurn: (id) => agentRate.increment(id),
+      })
+    : disabledAgent;
   const routes = Application()
     .prefix("api")
     .registerControllers(
       authController({ auth, config }),
+      agentController({
+        auth,
+        games,
+        history: agentHistory,
+        runtime: agent,
+      }),
       gamesController({ auth, games }),
       classLibraryController(auth, classCatalog),
       gameClassesController(auth, classCatalog, classEdits),
@@ -163,5 +196,11 @@ export function createApplication(
     );
   mountRoutes(app, routes);
   app.use(errorBoundary(invalidCsrfTokenError, options.errorLogger));
-  return { app, dispose: () => events.dispose() };
+  return {
+    app,
+    dispose: () => {
+      shutdown.abort();
+      events.dispose();
+    },
+  };
 }

@@ -12,7 +12,7 @@ import type { GameAccessFactory, GameActor, GameAccess } from "../games/types.ts
 import type { GameEvents } from "../events/types.ts";
 import { notifyAfterCommit, transaction } from "../../database/transaction.ts";
 import { and, desc, eq, lt, or, sql } from "drizzle-orm";
-import { throws, throwFields } from "../../database/schema.ts";
+import { agentTurns, throws, throwFields } from "../../database/schema.ts";
 // Game Table throw history: immutable roll snapshots with server-assigned per-game
 // sequence and authorship-based removal. Every write
 // takes the per-game transaction lock before resolving access, so stale selections
@@ -143,6 +143,32 @@ export async function createThrow(
 ) {
   const result = await transaction(database, async (tx) => {
     const access = await gameAccessFor(tx).lockGame(actor, gameId);
+    if (input.agentTurnId) {
+      if (access.role !== "GM") throw fail("forbidden");
+      const [turn] = await tx
+        .select({ tools: agentTurns.tools })
+        .from(agentTurns)
+        .where(
+          and(
+            eq(agentTurns.id, input.agentTurnId),
+            eq(agentTurns.gameId, gameId),
+            eq(agentTurns.gmAccountId, actor.accountId),
+          ),
+        );
+      if (!turn?.tools.some((tool) => tool.tool === "prepare_throw")) throw fail("not_found");
+      const [existing] = await tx
+        .select({ ...throwFields, deleted: throws.deleted })
+        .from(throws)
+        .where(
+          and(
+            eq(throws.agentTurnId, input.agentTurnId),
+            eq(throws.gameId, gameId),
+            eq(throws.authorAccountId, actor.accountId),
+          ),
+        );
+      if (existing?.deleted) throw fail("not_found");
+      if (existing) return { record: present(existing, actor, access), created: false };
+    }
     const setup = input.setup;
     const readers = readersFor(tx);
     const resolved =
@@ -176,6 +202,7 @@ export async function createThrow(
       .values({
         id,
         gameId,
+        agentTurnId: input.agentTurnId,
         seq: Number(sequence!.next),
         authorAccountId: actor.accountId,
         private: input.private ?? false,
@@ -189,15 +216,16 @@ export async function createThrow(
         outcome: resolved.outcome,
       })
       .returning(throwFields);
-    return { record: present(inserted!, actor, access) };
+    return { record: present(inserted!, actor, access), created: true };
   });
-  await notifyAfterCommit(() =>
-    events.publishGameEvent(
-      gameId,
-      { type: "throws" },
-      input.private ? actor.accountId : undefined,
-    ),
-  );
+  if (result.created)
+    await notifyAfterCommit(() =>
+      events.publishGameEvent(
+        gameId,
+        { type: "throws" },
+        input.private ? actor.accountId : undefined,
+      ),
+    );
   return result;
 }
 
