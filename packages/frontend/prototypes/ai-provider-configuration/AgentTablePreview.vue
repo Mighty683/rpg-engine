@@ -5,25 +5,32 @@ import type { PartyCharacter } from "../../src/modules/game-table/types";
 import type { EdgeTab } from "../../src/shared/design-system/base/EdgeTabs.vue";
 import { prototypeGameId } from "../api";
 import AgentPanel from "./AgentPanel.vue";
+import type { ChatMessage } from "./types";
 
 const props = defineProps<{ available: boolean }>();
 
 const agentTab: EdgeTab = { id: "agent", label: "Agent", color: "neutral" };
-const example = "Show active party";
 const draft = ref("");
-const reply = ref("");
+const messages = ref<ChatMessage[]>([
+  { role: "user", text: "Who is in the party?" },
+  { role: "tool", text: "Read active party" },
+  { role: "agent", text: "At the table today: Rowan Ash, Nera Vale." },
+]);
 
 function runCommand(party: readonly PartyCharacter[]) {
   const command = draft.value.trim().toLowerCase();
   if (!props.available || !command) return;
 
-  if (command !== example.toLowerCase()) {
-    reply.value = `Try “${example}” in this prototype.`;
-    return;
-  }
-
+  messages.value.push({ role: "user", text: draft.value.trim() });
   const names = party.map(({ name }) => name).join(", ");
-  reply.value = names ? `Active party: ${names}.` : "There are no active characters.";
+  let text = "In this prototype, I can tell you who’s at the table. Ask me about the party.";
+  if (/party|who.*table/i.test(command)) {
+    messages.value.push({ role: "tool", text: "Read active party" });
+    text = names
+      ? `At the table today: ${names}.`
+      : "There are no active characters at the table yet.";
+  }
+  messages.value.push({ role: "agent", text });
   draft.value = "";
 }
 </script>
@@ -42,8 +49,7 @@ function runCommand(party: readonly PartyCharacter[]) {
             :available="available"
             :party-ready="partyReady"
             :party-loading="partyLoading"
-            :example="example"
-            :reply="reply"
+            :messages="messages"
             @submit="runCommand(party)"
           />
         </template>

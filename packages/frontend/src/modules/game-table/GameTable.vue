@@ -70,7 +70,6 @@ const edgeTabs = computed(() => [
     ? [{ id: "npcs", label: "NPCs", color: "info" as const, testId: "edge-tab-npcs" }]
     : []),
   { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
-  ...(props.extraEdgeTab ? [props.extraEdgeTab] : []),
 ]);
 watch(sheetOpen, (open) => {
   if (open) historyTab.value = "sheets";
@@ -598,8 +597,35 @@ async function removeEntry(entry: ThrowRecord) {
           />
         </template>
       </USlideover>
+      <Teleport to="body">
+        <UButton
+          v-if="extraEdgeTab && historyTab !== extraEdgeTab.id"
+          class="fixed bottom-3 right-3 z-[110] w-40 justify-between shadow-lg"
+          color="neutral"
+          variant="soft"
+          :aria-expanded="false"
+          data-testid="agent-chat-launcher"
+          @click="
+            historyTab = extraEdgeTab.id;
+            selectEdgeTab(historyTab);
+          "
+        >
+          {{ extraEdgeTab.label }}
+          <span aria-hidden="true">↑</span>
+        </UButton>
+      </Teleport>
       <USlideover
         v-if="extraEdgeTab"
+        :modal="false"
+        :overlay="false"
+        :transition="false"
+        :ui="{
+          content:
+            '!z-[110] !top-auto !bottom-3 !right-3 !h-[420px] !max-h-[calc(100dvh-1.5rem)] !w-[360px] !max-w-[calc(100vw-1.5rem)] rounded-panel shadow-xl ring ring-default',
+          header: 'p-small min-h-0',
+          title: 'text-small',
+          body: 'p-0 sm:p-0 flex min-h-0 flex-col',
+        }"
         :open="historyTab === extraEdgeTab.id"
         :title="extraEdgeTab.label"
         @update:open="
@@ -608,6 +634,17 @@ async function removeEntry(entry: ThrowRecord) {
           }
         "
       >
+        <template #close>
+          <UButton
+            class="ml-auto"
+            color="neutral"
+            variant="ghost"
+            aria-label="Close Agent chat"
+            data-testid="agent-chat-close"
+          >
+            <span aria-hidden="true">×</span>
+          </UButton>
+        </template>
         <template #body>
           <slot
             name="extra-edge-panel"

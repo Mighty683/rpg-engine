@@ -10,7 +10,7 @@ import { startPrototypeBackend } from "../mock-backend/browser";
 import AgentTablePreview from "./AgentTablePreview.vue";
 import "../../src/style.css";
 
-test("Agent shares the table edge and keeps an offline draft until it can run", async () => {
+test("Agent minimizes to the bottom bar and preserves the conversation and draft", async () => {
   await startPrototypeBackend();
   resetPrototypeBackend();
   const available = ref(true);
@@ -29,7 +29,7 @@ test("Agent shares the table edge and keeps an offline draft until it can run", 
   app.mount(root);
 
   try {
-    const agent = page.getByTestId("edge-tab-agent");
+    const agent = page.getByTestId("agent-chat-launcher");
     const history = page.getByTestId("edge-tab-history");
     const panel = page.getByTestId("prototype-agent-panel");
     const draft = page.getByTestId("prototype-agent-command");
@@ -38,37 +38,45 @@ test("Agent shares the table edge and keeps an offline draft until it can run", 
 
     await expect.element(page.getByTestId("party-list")).toBeVisible();
     await expect.element(agent).toBeVisible();
-    expect(agent.element().parentElement).toBe(history.element().parentElement);
+    const launcher = agent.element().getBoundingClientRect();
+    expect(launcher.bottom).toBeLessThanOrEqual(globalThis.innerHeight);
+    expect(globalThis.innerHeight - launcher.bottom).toBeLessThan(20);
     await expect.element(panel).not.toBeInTheDocument();
 
     await agent.click();
     await expect.element(panel).toBeVisible();
+    await expect.element(agent).not.toBeInTheDocument();
+    const window = panel.element().closest('[role="dialog"]')!.getBoundingClientRect();
+    expect(window.width).toBeLessThanOrEqual(361);
+    expect(window.height).toBeLessThanOrEqual(421);
     await expect.element(run).toBeDisabled();
-    await draft.fill("Unsupported command");
+    await draft.fill("Hello");
     await run.click();
-    await expect.poll(() => result.element().textContent).toContain("Try “Show active party”");
-    await expect.element(draft).toHaveValue("Unsupported command");
+    await expect.poll(() => result.element().textContent).toContain("Ask me about the party");
+    await expect.element(draft).toHaveValue("");
 
     available.value = false;
     await expect.element(page.getByTestId("prototype-agent-offline")).toBeVisible();
-    await page.getByTestId("prototype-agent-example").click();
+    await draft.fill("Who is in the party?");
     await expect.element(run).toBeDisabled();
-    await userEvent.keyboard("{Escape}");
+    await page.getByTestId("agent-chat-close").click();
     await expect.element(panel).not.toBeInTheDocument();
+    await expect.element(agent).toBeVisible();
 
     await history.click();
     await expect.element(page.getByTestId("make-roll")).toBeVisible();
     await userEvent.keyboard("{Escape}");
     await expect.element(page.getByTestId("make-roll")).not.toBeInTheDocument();
     await agent.click();
-    await expect.element(draft).toHaveValue("Show active party");
+    await expect.element(draft).toHaveValue("Who is in the party?");
+    await expect.poll(() => result.element().textContent).toContain("Ask me about the party");
 
     available.value = true;
     await draft.click();
     await userEvent.keyboard("{Enter}");
     await expect
       .poll(() => result.element().textContent)
-      .toContain("Active party: Rowan Ash, Nera Vale.");
+      .toContain("At the table today: Rowan Ash, Nera Vale.");
     await expect.element(draft).toHaveValue("");
   } finally {
     app.unmount();

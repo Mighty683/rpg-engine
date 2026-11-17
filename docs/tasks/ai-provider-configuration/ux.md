@@ -2,34 +2,35 @@
 
 ## Domain language
 
-- **Agent EdgeTab** opens the Agent drawer from the right edge of the game table, alongside the existing table drawers.
-- **Command** is a request typed by a GM or player for the agent to act on the current game.
-- **Result** tells the user what the command returned or what to try next.
+- **Agent bar** sits minimized at the bottom-right corner of the game table. Selecting it opens a compact chat window in the bottom-right corner and hides the bar. The dark bar stays fixed to the viewport while scrolling. Closing the chat with X restores the bar and preserves the conversation and draft. The proposed size is 360 × 420 px, constrained to fit smaller viewports. The table remains available while chatting.
+- **Message** is a conversational request typed by a GM or player about the current game.
+- **Reply** is the agent’s response in the conversation.
+- **Tool call** appears in the message history between the request and the agent’s reply.
 
 ## Actions by role
 
-| Role   | Action                                                              | Screen or control                           | Scope                             |
-| ------ | ------------------------------------------------------------------- | ------------------------------------------- | --------------------------------- |
-| GM     | Open and close Agent                                                | Game table, Agent EdgeTab                   | Prototype                         |
-| GM     | Enter and run a sample command                                      | Agent drawer, Command field and Run command | Prototype, reads the active party |
-| GM     | Keep editing when Agent is unavailable                              | Agent drawer, Command field                 | Prototype                         |
-| Player | Ask about the party and NPCs visible on the player table            | Agent drawer                                | Planned                           |
-| GM     | Ask about the party and NPCs on the GM table, including hidden NPCs | Agent drawer                                | Planned                           |
-| GM     | Edit an NPC profile                                                 | Agent drawer                                | Planned                           |
-| Player | Roll, reroll, and edit permitted character profiles                 | Agent drawer                                | Planned                           |
+| Role   | Action                                                              | Screen or control                  | Scope                             |
+| ------ | ------------------------------------------------------------------- | ---------------------------------- | --------------------------------- |
+| GM     | Open and close Agent                                                | Game table, Agent bar              | Prototype                         |
+| GM     | Enter and send a sample message                                     | Agent chat, Message field and Send | Prototype, reads the active party |
+| GM     | Keep editing when Agent is unavailable                              | Agent chat, Message field          | Prototype                         |
+| Player | Ask about the party and NPCs visible on the player table            | Agent chat                         | Planned                           |
+| GM     | Ask about the party and NPCs on the GM table, including hidden NPCs | Agent chat                         | Planned                           |
+| GM     | Edit an NPC profile                                                 | Agent chat                         | Planned                           |
+| Player | Roll, reroll, and edit permitted character profiles                 | Agent chat                         | Planned                           |
 
 ## What the agent can see
 
-Every command starts with basic party and NPC information from the caller’s table view. The agent looks up character and NPC profile details when needed. Player commands use the player’s view, including only the NPCs and details visible to that player. GM commands use the GM’s view, including hidden NPCs and GM notes when relevant. Both roles can ask about public throws and their own private throws.
+Every message starts with basic party and NPC information from the caller’s table view. The agent looks up character and NPC profile details when needed. Player messages use the player’s view, including only the NPCs and details visible to that player. GM messages use the GM’s view, including hidden NPCs and GM notes when relevant. Both roles can ask about public throws and their own private throws.
 
-The class library and game class management are outside the Agent drawer’s scope.
+The class library and game class management are outside the Agent chat’s scope.
 
 ## Screen map
 
 ```mermaid
 flowchart LR
-    table[Game table] -->|Select Agent EdgeTab| agent[Agent drawer]
-    agent -->|Close or press Escape| table
+    table[Game table] -->|Select Agent bar| agent[Agent chat]
+    agent -->|Close with X or press Escape| table
     table -->|Select Throw history| history[Throw history drawer]
     history -->|Close or press Escape| table
 ```
@@ -38,19 +39,19 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    party[Game table reads the active party from the mock backend] --> run[Run command]
-    draft[Local command draft] --> run
-    run -->|Agent unavailable| keep[Keep draft and disable submission]
-    run -->|Show active party| reply[Show current party names and clear the draft]
-    run -->|Other text| example[Suggest the sample command and keep the draft]
+    party[Current party] --> send[Send message]
+    draft[Message draft] --> send
+    send -->|Agent unavailable| keep[Keep draft and disable Send]
+    send -->|Ask about the party| reply[Add message and reply to conversation]
+    send -->|Other message| example[Reply with the prototype capability]
 ```
 
 ## Prototype
 
-Run `pnpm --filter @rpg-engine/frontend prototypes:dev` and open **Prototypes / Agent on the game table**. In the [Histoire story](../../../packages/frontend/prototypes/ai-provider-configuration/AgentEdgeTab.story.vue), select **Agent**, choose **Show active party**, and run it. Turn off **Agent available** in the story controls to review the unavailable state. Close and reopen the drawer to review how it preserves the draft.
+Run `pnpm --filter @rpg-engine/frontend prototypes:dev` and open **Prototypes / Agent on the game table**. In the [Histoire story](../../../packages/frontend/prototypes/ai-provider-configuration/AgentEdgeTab.story.vue), select the bottom **Agent** bar, type **Who is in the party?**, and select **Send** or press Enter. Turn off **Agent available** in the story controls to review the unavailable state. Close and reopen the chat to review how it preserves the draft.
 
-The prototype uses the existing [GameTable](../../../packages/frontend/src/modules/game-table/GameTable.vue) and [EdgeTabs](../../../packages/frontend/src/shared/design-system/base/EdgeTabs.vue). It uses the shared mock backend for game data and implements the sample command locally. The choice of sample command, drawer behavior, and draft lifetime are prototype decisions pending review.
+The prototype opens with a sample conversation showing a tool call. It uses the existing [GameTable](../../../packages/frontend/src/modules/game-table/GameTable.vue) and [EdgeTabs](../../../packages/frontend/src/shared/design-system/base/EdgeTabs.vue), with the shared mock backend for game data and locally simulated replies. The choice of sample conversation, chat window size, and draft lifetime are prototype decisions pending review.
 
 ## Verification
 
-The built Histoire story opened and ran the sample command in Chromium at 1024 px and 360 px. The [browser test](../../../packages/frontend/prototypes/ai-provider-configuration/AgentEdgeTab.browser.ts) also covers unsupported commands, keyboard submission, preserving an unavailable draft across drawer changes, and reopening the existing Throw history drawer.
+The compact chat was reviewed in Chromium at viewport widths of 793 px and 360 px. Its window measured 360 × 420 px and 336 × 420 px respectively. The [browser test](../../../packages/frontend/prototypes/ai-provider-configuration/AgentEdgeTab.browser.ts) also covers conversational replies, keyboard submission, preserving an unavailable draft across drawer changes, and reopening the existing Throw history drawer. Minimizing keeps the conversation and draft for the current prototype session.
