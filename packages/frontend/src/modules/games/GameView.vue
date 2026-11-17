@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FormActions from "../../shared/design-system/base/FormActions.vue";
+import CreateFormDialog from "../../shared/design-system/base/CreateFormDialog.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import { useApiServices } from "../../shared/api-services";
 import ConfirmDialog from "../../shared/design-system/base/ConfirmDialog.vue";
@@ -378,30 +378,22 @@ async function removeCharacter() {
         </template>
       </template>
     </template>
-    <UModal
+    <CreateFormDialog
       v-model:open="createOpen"
       title="Create a character"
-      :close="!createCharacter.isPending.value"
-      :dismissible="!createCharacter.isPending.value"
+      submit-label="Create character"
+      submit-test-id="confirm-create-character"
+      :pending="createCharacter.isPending.value"
+      @submit="submitCharacter"
     >
-      <template #body>
-        <form class="space-y-medium" @submit.prevent="submitCharacter">
-          <LabeledInput
-            label="Character name"
-            :error="createError"
-            v-model="characterName"
-            :disabled="createCharacter.isPending.value"
-            data-testid="character-name"
-          />
-          <FormActions
-            submit-label="Create character"
-            submit-test-id="confirm-create-character"
-            :pending="createCharacter.isPending.value"
-            @cancel="createOpen = false"
-          />
-        </form>
-      </template>
-    </UModal>
+      <LabeledInput
+        label="Character name"
+        :error="createError"
+        v-model="characterName"
+        :disabled="createCharacter.isPending.value"
+        data-testid="character-name"
+      />
+    </CreateFormDialog>
     <ConfirmDialog
       :open="Boolean(removingId)"
       title="Remove character"

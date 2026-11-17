@@ -39,7 +39,9 @@ const props = defineProps<{
   throwsHint: number;
   npcsHint?: number;
   extraEdgeTab?: EdgeTab;
+  panelTab?: EdgeTab;
 }>();
+const emit = defineEmits<{ openPanel: []; agentOpen: [open: boolean] }>();
 const toast = useToast();
 
 const partyQuery = useGamePartyQuery(props.gameId);
@@ -62,13 +64,16 @@ function saveReviewedNpc(id: string, revision: number, next: NpcWrite) {
   return npcManager.value.saveReviewed(id, revision, next);
 }
 const historyTab = ref<string | null>(null);
-const emit = defineEmits<{ agentOpen: [open: boolean] }>();
 watch(historyTab, (id) =>
   emit("agentOpen", Boolean(props.extraEdgeTab && id === props.extraEdgeTab.id)),
+);
+const customPanelOpen = computed(() =>
+  Boolean(props.panelTab && historyTab.value === props.panelTab.id),
 );
 const npcOpenRequest = ref(0);
 const npcCloseRequest = ref(0);
 const edgeTabs = computed(() => [
+  ...(props.panelTab ? [props.panelTab] : []),
   {
     id: "sheets",
     label: "Character sheets",
@@ -89,6 +94,7 @@ watch(npcEditorOpen, (open) => {
   else if (historyTab.value === "npcs") historyTab.value = null;
 });
 function selectEdgeTab(id: string | null) {
+  if (id && id === props.panelTab?.id) emit("openPanel");
   sheetOpen.value = id === "sheets";
   if (id === "npcs") npcOpenRequest.value++;
   else if (npcEditorOpen.value) npcCloseRequest.value++;
@@ -584,16 +590,18 @@ async function removeEntry(entry: ThrowRecord) {
       </div>
       <EdgeTabs v-model:open-id="historyTab" :tabs="edgeTabs" tabs-only @open="selectEdgeTab" />
       <USlideover
-        :open="historyTab === 'history'"
-        title="Throw history"
+        :open="historyTab === 'history' || customPanelOpen"
+        :title="customPanelOpen ? panelTab?.label : 'Throw history'"
         @update:open="
           (open: boolean) => {
-            if (!open && historyTab === 'history') historyTab = null;
+            if (!open && (historyTab === 'history' || customPanelOpen)) historyTab = null;
           }
         "
       >
         <template #body>
+          <slot v-if="customPanelOpen" name="edge-panel" />
           <HistoryPanel
+            v-else
             :throws="history.throws.value"
             :is-loading="history.isLoading.value"
             :is-error="history.isError.value"

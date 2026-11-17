@@ -12,7 +12,16 @@ export const setupVue3 = defineSetupVue3(async ({ app }) => {
     await startPrototypeBackend();
   }
   providePrototypeApiServices(app);
-  app.use(createRouter({ history: createMemoryHistory(), routes: [] }));
+  const notesPreview = () => import("./game-notes/NotesPreview.vue");
+  app.use(
+    createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/games/:gameId", component: notesPreview },
+        { path: "/games/:gameId/notes", component: notesPreview },
+      ],
+    }),
+  );
   app.use(VueQueryPlugin, { queryClient: new QueryClient() });
   app.use(ui);
 });

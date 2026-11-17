@@ -1,3 +1,4 @@
+import { seedNotes } from "./notes";
 /** Deterministic in-memory prototype data. All HTTP projections share these sheets. */
 import type { Character } from "../../src/modules/characters/types";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
@@ -63,6 +64,7 @@ export function seedCharacter(id: string, name: string, caster: boolean): Charac
 function initialState() {
   return {
     scenario: "default" as PrototypeScenario,
+    notes: seedNotes(),
     characters: [
       seedCharacter("rowan", "Rowan Ash", false),
       seedCharacter("nera", "Nera Vale", true),
@@ -76,6 +78,7 @@ export const prototypeStore = initialState();
 
 export function resetPrototypeBackend(scenario: PrototypeScenario = "default") {
   Object.assign(prototypeStore, initialState(), { scenario });
+  if (scenario === "empty") prototypeStore.notes = [];
 }
 
 export function setPrototypeScenario(scenario: PrototypeScenario) {

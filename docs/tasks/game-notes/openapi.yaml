@@ -1,0 +1,212 @@
+openapi: 3.1.0
+info:
+  title: Game notes
+  version: 0.1.0
+  description: GM-only entries for the specified game. Writes require a valid Origin
+    and CSRF token.
+servers:
+- url: /
+security:
+- sessionCookie: []
+paths:
+  /api/games/{gameId}/notes:
+    parameters:
+    - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
+    get:
+      operationId: listGameNotes
+      summary: List game entries ordered by latest update and ascending ID
+      responses:
+        '200':
+          description: List game entries ordered by latest update and ascending ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryList'
+        '400':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden
+        '404':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound
+        '500':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError
+        '503':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable
+    post:
+      operationId: createGameNote
+      summary: Create an entry with a client-generated ID
+      security:
+      - sessionCookie: []
+        csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntry'
+      responses:
+        '201':
+          description: Create an entry with a client-generated ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResult'
+        '400':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden
+        '404':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound
+        '409':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict
+        '413':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge
+        '422':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError
+        '429':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited
+        '500':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError
+        '503':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable
+  /api/games/{gameId}/notes/{entryId}:
+    parameters:
+    - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
+    - name: entryId
+      in: path
+      required: true
+      schema:
+        $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id
+    patch:
+      operationId: updateGameNote
+      summary: Update text at the expected revision
+      security:
+      - sessionCookie: []
+        csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEntry'
+      responses:
+        '200':
+          description: Update text at the expected revision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResult'
+        '400':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden
+        '404':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound
+        '409':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict
+        '413':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge
+        '422':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError
+        '429':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited
+        '500':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError
+        '503':
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable
+components:
+  securitySchemes:
+    sessionCookie:
+      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie
+    csrfToken:
+      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken
+  schemas:
+    Title:
+      type: string
+      minLength: 1
+      maxLength: 160
+      description: Trim before validation.
+    Content:
+      type: string
+      maxLength: 16000
+    Entry:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id
+        title:
+          $ref: '#/components/schemas/Title'
+        content:
+          $ref: '#/components/schemas/Content'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        revision:
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision
+      required:
+      - id
+      - title
+      - content
+      - createdAt
+      - updatedAt
+      - revision
+    CreateEntry:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id
+        title:
+          $ref: '#/components/schemas/Title'
+        content:
+          $ref: '#/components/schemas/Content'
+      required:
+      - id
+      - title
+      - content
+    UpdateEntry:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedRevision:
+          $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision
+        changes:
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            title:
+              $ref: '#/components/schemas/Title'
+            content:
+              $ref: '#/components/schemas/Content'
+      required:
+      - expectedRevision
+      - changes
+    EntryResult:
+      type: object
+      additionalProperties: false
+      properties:
+        entry:
+          $ref: '#/components/schemas/Entry'
+      required:
+      - entry
+    EntryList:
+      type: object
+      additionalProperties: false
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entry'
+      required:
+      - entries

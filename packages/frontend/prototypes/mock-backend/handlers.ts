@@ -1,3 +1,4 @@
+import { handleNotes } from "./notes";
 /** MSW HTTP boundary for offline prototypes, including production character clients. */
 import { delay, http, HttpResponse } from "msw";
 import type { Sheet } from "../../src/modules/characters/sheet/types";
@@ -32,6 +33,8 @@ export const prototypeHandlers = [
       (method === "DELETE" && !request.headers.get("content-type")?.includes("application/json"))
         ? {}
         : ((await request.json()) as Record<string, any>);
+    const notesPath = path.match(/^\/api\/games\/prototype-game\/notes(?:\/([^/]+))?$/);
+    if (notesPath) return handleNotes(store.notes, method, notesPath[1], body);
     const empty = store.scenario === "empty";
     const game = {
       id: "prototype-game",
