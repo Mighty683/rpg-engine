@@ -39,7 +39,7 @@ With `pnpm dev` running, open [Swagger UI](http://127.0.0.1:3000/api-docs/) or t
 
 Shared Oxlint rules are in the root `vite.config.ts`, including a maximum block nesting depth of 6. Backend import and table-write ownership rules enforce module boundaries; the [code conventions](docs/spec/code-conventions.md) describe their scope and review requirements. Unit tests compare normalized runtime request schemas against canonical OpenAPI, including draft-07/OpenAPI 3.1 tuple conversion and explicit semantic exceptions.
 
-Run `pnpm hooks:install` once per clone to install the pre-push hook. The hook runs `pnpm verify`, the same checks as CI: formatting, lint, type checks, builds, unit and integration tests, browser component tests, and end-to-end tests. Install Chromium with `pnpm --filter @rpg-engine/tests exec playwright install chromium` and export `TEST_DATABASE_URL` pointing to a disposable PostgreSQL database whose user can create schemas before running these checks or pushing. See the local PostgreSQL instructions below.
+Run `pnpm hooks:install` once per clone to install the pre-push hook. The hook runs `pnpm verify`, the same checks as CI: formatting, lint, type checks, builds, unit and integration tests, browser component tests, and end-to-end tests. Install Chromium with `pnpm --filter @rpg-engine/tests exec playwright install chromium` before running these checks or pushing. See the integration test setup below.
 
 ### Demo data
 
@@ -73,8 +73,6 @@ podman run -d --name rpg-engine-postgres \
 
 The development URL is `postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine`. The password is for local use only.
 
-- Create a separate test database: `podman exec rpg-engine-postgres createdb -U rpg_engine -O rpg_engine rpg_engine_test`.
-- Copy `packages/tests/.env.example` to `packages/tests/.env` and adjust the URL if needed. An existing `TEST_DATABASE_URL` takes precedence.
 - Stop or restart the container with `podman stop rpg-engine-postgres` or `podman start rpg-engine-postgres`.
 
 The named volume preserves data across container recreation. PostgreSQL initialization variables apply only to an empty volume.
@@ -84,10 +82,8 @@ The named volume preserves data across container recreation. PostgreSQL initiali
 - Run unit and API tests: `pnpm exec vp test`.
 - Install Chromium for browser tests: `pnpm --filter @rpg-engine/tests exec playwright install chromium`.
 - Run frontend component tests: `pnpm --filter @rpg-engine/frontend test:browser`. These mock the API and need no backend.
-- Run cross-module API tests: `pnpm --filter @rpg-engine/tests test:api`.
-- Run end-to-end tests: `pnpm --filter @rpg-engine/tests test`. These use Gherkin and Cucumber.js through Vitest and start the real frontend and backend on temporary ports.
 
-API and end-to-end tests require `TEST_DATABASE_URL` pointing to a dedicated PostgreSQL database with permission to create schemas. They load `packages/tests/.env` automatically and create and remove isolated schemas. End-to-end tests do not use `DATABASE_URL`.
+Run `pnpm test:integration` for backend PostgreSQL tests, cross-module API tests, and browser end-to-end tests. Testcontainers starts one disposable PostgreSQL 17 container and removes it afterward. CI uses the same Testcontainers setup. For local runs, start Docker or [configure Podman for Testcontainers](https://node.testcontainers.org/supported-container-runtimes/#podman).
 
 ### Mutation testing
 

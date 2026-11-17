@@ -12,7 +12,7 @@ import { applyMigrations } from "../../backend/src/migrations.ts";
 export default async function setup(project: TestProject) {
   const connectionString = process.env.TEST_DATABASE_URL;
   if (!connectionString)
-    throw new Error("Set TEST_DATABASE_URL to a disposable PostgreSQL database");
+    throw new Error("Run pnpm test:integration to provision PostgreSQL for browser tests");
   const schema = `browser_test_${randomUUID().replaceAll("-", "")}`;
   const admin = new pg.Pool({ connectionString });
   let pool: pg.Pool | undefined;

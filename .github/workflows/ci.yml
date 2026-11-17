@@ -31,20 +31,6 @@ jobs:
       - run: pnpm --filter @rpg-engine/frontend test:browser --run
   integration:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: rpg_test
-          POSTGRES_PASSWORD: local_test_only
-          POSTGRES_DB: rpg_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U rpg_test -d rpg_test"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      TEST_DATABASE_URL: postgresql://rpg_test:local_test_only@127.0.0.1:5432/rpg_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
