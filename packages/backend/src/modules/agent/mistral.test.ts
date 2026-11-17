@@ -1,25 +1,27 @@
+import type { AgentProvider } from "./types.ts";
 import { afterEach, expect, it, vi } from "vite-plus/test";
 import { createMistralProvider } from "./mistral.ts";
 
 afterEach(() => vi.unstubAllGlobals());
 
+const request: Parameters<AgentProvider["complete"]>[0] = {
+  messages: [
+    {
+      role: "assistant",
+      content: "",
+      calls: [{ id: "123456789", name: "read_throws", arguments: "{}" }],
+    },
+    { role: "tool", callId: "123456789", name: "read_throws", content: "[]" },
+  ],
+  tools: [],
+  maxOutputTokens: 500,
+  signal: new AbortController().signal,
+};
+
 it("translates a completed tool exchange and sanitizes transport and malformed provider errors", async () => {
   const attempt = vi.fn<typeof fetch>();
   vi.stubGlobal("fetch", attempt);
   const provider = createMistralProvider("mistral-small-2603", "test-secret");
-  const request: Parameters<typeof provider.complete>[0] = {
-    messages: [
-      {
-        role: "assistant",
-        content: "",
-        calls: [{ id: "123456789", name: "read_throws", arguments: "{}" }],
-      },
-      { role: "tool", callId: "123456789", name: "read_throws", content: "[]" },
-    ],
-    tools: [],
-    maxOutputTokens: 500,
-    signal: new AbortController().signal,
-  };
   attempt.mockResolvedValueOnce(
     Response.json({
       choices: [{ message: { content: "No throws." } }],
@@ -51,4 +53,68 @@ it("translates a completed tool exchange and sanitizes transport and malformed p
   });
   attempt.mockResolvedValueOnce(Response.json({ choices: [{ message: { content: [] } }] }));
   await expect(provider.complete(request)).rejects.toMatchObject({ code: "agent_failed" });
+});
+
+it("decodes tool calls and records usage from a successful upstream response", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      Response.json({
+        choices: [
+          {
+            message: {
+              tool_calls: [{ id: "call123", function: { name: "read_throws", arguments: "{}" } }],
+            },
+          },
+        ],
+        usage: { prompt_tokens: 200, completion_tokens: 10 },
+      }),
+    ),
+  );
+  expect(await createMistralProvider("model", "test").complete(request)).toEqual({
+    text: "",
+    calls: [{ id: "call123", name: "read_throws", arguments: "{}" }],
+    inputTokens: 200,
+    outputTokens: 10,
+  });
+});
+
+it.each([
+  { usage: { prompt_tokens: 0, completion_tokens: 1 } },
+  { usage: { prompt_tokens: 20.5, completion_tokens: 1 } },
+  { usage: { prompt_tokens: 20, completion_tokens: -1 } },
+  { usage: undefined },
+])("rejects invalid upstream usage %#", async ({ usage }) => {
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue(Response.json({ choices: [{ message: { content: "reply" } }], usage })),
+  );
+  await expect(createMistralProvider("model", "test").complete(request)).rejects.toMatchObject({
+    code: "agent_failed",
+    reason: "invalid_provider_response",
+  });
+});
+
+it.each([
+  null,
+  { function: { name: "read_throws", arguments: "{}" } },
+  { id: "call123", function: null },
+  { id: "call123", function: { name: 5, arguments: "{}" } },
+  { id: "call123", function: { name: "read_throws", arguments: {} } },
+])("rejects malformed upstream tool calls %#", async (call: unknown) => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      Response.json({
+        choices: [{ message: { tool_calls: [call] } }],
+        usage: { prompt_tokens: 20, completion_tokens: 1 },
+      }),
+    ),
+  );
+  await expect(createMistralProvider("model", "test").complete(request)).rejects.toMatchObject({
+    code: "agent_failed",
+    reason: "invalid_provider_response",
+  });
 });

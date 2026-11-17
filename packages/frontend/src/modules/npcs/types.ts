@@ -68,3 +68,35 @@ export interface NpcApi {
   remove(id: string): Promise<void>;
   saveCharacterTags(id: string, tags: Tag[]): Promise<{ tags: Tag[] }>;
 }
+
+export type NpcAttackRecord = {
+  id: string;
+  name: string;
+  reach: "melee" | "ranged";
+  attributes: [Attribute, Attribute];
+  damageBonus: number;
+  damageType: string;
+};
+export type NpcProfile = {
+  name: string;
+  relationship: "enemy" | "neutral" | "friend";
+  level: number;
+  baseDice: Record<Attribute, number>;
+  hp: { current: number; max: number };
+  mp: { current: number; max: number };
+  defense: number;
+  magicDefense: number;
+  attacks: NpcAttackRecord[];
+};
+export type NpcWrite = NpcProfile & { visibility: "hidden" | "visible" | "known"; notes: string };
+export type GmNpc = NpcWrite & {
+  view: "gm";
+  id: string;
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+};
+export type NpcRead =
+  | GmNpc
+  | ({ view: "known"; id: string } & NpcProfile)
+  | { view: "visible"; id: string; name: string; relationship: NpcProfile["relationship"] };

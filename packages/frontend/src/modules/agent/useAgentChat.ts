@@ -15,8 +15,6 @@ export function useAgentChat(gameId: string) {
   const draft = ref("");
   const pending = shallowRef<ChatMessage>();
   const turns = shallowRef<HistoryTurn[]>([]);
-  // POST may finish while an older status request is in flight. Only status pages
-  // advance the contiguous history window used to bridge gaps after reconnect.
   const awaitingPage = shallowRef<HistoryTurn[]>([]);
   const nextBefore = ref<string | null>(null);
   const available = ref(false);
@@ -74,13 +72,11 @@ export function useAgentChat(gameId: string) {
       const known = new Set(turns.value.map((turn) => turn.id));
       let rows = latest.turns;
       let cursor = latest.nextBefore;
-      // On reconnect, fetch every missing page until the current window overlaps.
       while (known.size && cursor && !rows.some((turn) => known.has(turn.id))) {
         const page = await agent.status(gameId, signal, cursor);
         rows = [...page.turns, ...rows];
         cursor = page.nextBefore;
       }
-      // A status poll can see the committed turn before its POST response arrives.
       if (signal.aborted || pending.value || version !== rollVersion) return;
       if (!loaded || !turns.value.length) nextBefore.value = cursor;
       const updates = new Map(rows.map((turn) => [turn.id, turn]));

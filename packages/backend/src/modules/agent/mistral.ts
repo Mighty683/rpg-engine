@@ -1,3 +1,4 @@
+/** Mistral chat adapter for the GM Agent provider contract. */
 import type { AgentMessage, AgentProvider, AgentCall } from "./types.ts";
 import { agentError, agentFailure } from "./errors.ts";
 

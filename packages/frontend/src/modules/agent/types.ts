@@ -1,6 +1,6 @@
 import type { Sheet } from "../characters/sheet/types";
 import type { CreateThrowInput, ThrowRecord } from "../game-table/types";
-import type { NpcWrite } from "../npcs/api";
+import type { NpcWrite } from "../npcs/types";
 
 export type ChatMessage = {
   id: string;
@@ -50,3 +50,11 @@ export type AgentStatus = {
   nextBefore: string | null;
   turns: HistoryTurn[];
 };
+
+export type AgentEditRequest = {
+  gameId: string;
+  action: Exclude<AgentAction, { kind: "roll" }>;
+  saveNpc(id: string, revision: number, next: NpcWrite): Promise<void>;
+};
+export type EditDifference = { field: string; oldValue: unknown; newValue: unknown };
+export type RollPreview = { name: string; formula: string; sizes: number[] };

@@ -72,8 +72,6 @@ async function runTurn(
     party: context.table.party.map(({ name, id }) => ({ name, id })),
     npcs: context.table.npcs.map(({ id, name, relationship }) => ({ id, name, relationship })),
   };
-  // A bare weapon selection completes the immediately preceding clarification.
-  // Restate the original command so its actor and target stay in the request.
   const last = previous.turns.at(-1);
   const options = last?.reply.match(/^Which weapon: (.+)\?$/)?.[1];
   const selectsWeapon = options

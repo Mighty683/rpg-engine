@@ -3,8 +3,13 @@ import type {
   AgentToolFactory,
   AgentToolResult,
 } from "../modules/agent/types.ts";
-import { parseCreateRequest } from "../modules/throws/contract.ts";
-import type { ThrowRecord } from "../modules/throws/types.ts";
+
+import type { CreateThrowInput, ThrowRecord } from "../modules/throws/types.ts";
+
+type RollContext = AgentToolContext & { parseThrow(body: unknown): CreateThrowInput };
+type RollActor =
+  | AgentToolContext["table"]["party"][number]
+  | Extract<AgentToolContext["table"]["npcs"][number], { view: "gm" }>;
 
 const string = { type: "string", maxLength: 160 };
 const question = (reason: string) => ({ label: "Checked roll setup", data: { reason } });
@@ -30,6 +35,7 @@ function weaponMatches(rows: { id: string; name: string }[], query: unknown, mes
   return selected;
 }
 function proposal(
+  ctx: RollContext,
   setup: unknown,
   privateRoll: boolean,
   sourceThrowId: string | null,
@@ -37,7 +43,7 @@ function proposal(
   detail?: unknown,
 ): AgentToolResult {
   try {
-    const input = parseCreateRequest({ setup, private: privateRoll, sourceThrowId });
+    const input = ctx.parseThrow({ setup, private: privateRoll, sourceThrowId });
     return {
       label: "Prepared roll for review",
       data: { prepared: true, setup: input.setup, private: privateRoll, detail },
@@ -48,13 +54,14 @@ function proposal(
     return question((error as Error).message);
   }
 }
-function reroll(ctx: AgentToolContext, source: ThrowRecord) {
+function reroll(ctx: RollContext, source: ThrowRecord) {
   const s = source.setup;
   const common = { modifier: s.modifier, note: s.note };
   const opponent = { redDice: s.redDice.map((d) => d.size), redModifier: s.redModifier };
   const dice = s.dice.map((d) => d.size);
   if (s.type === "free")
     return proposal(
+      ctx,
       { type: "free", characterId: s.npcId ?? s.characterId ?? "gm", ...common, ...opponent, dice },
       source.private,
       source.id,
@@ -76,6 +83,7 @@ function reroll(ctx: AgentToolContext, source: ThrowRecord) {
   };
   if (s.type === "weapon" || s.type === "npc-attack")
     return proposal(
+      ctx,
       {
         ...base,
         ...(s.type === "weapon"
@@ -87,6 +95,7 @@ function reroll(ctx: AgentToolContext, source: ThrowRecord) {
       source.id,
     );
   return proposal(
+    ctx,
     {
       ...base,
       ...opponent,
@@ -97,178 +106,214 @@ function reroll(ctx: AgentToolContext, source: ThrowRecord) {
     source.id,
   );
 }
-export const createRollTools: AgentToolFactory = (ctx) => [
-  {
-    name: "prepare_throw",
-    description:
-      "Prepare a roll for GM review. Pass actor, target and weapon names as worded by GM. For character attacks with no specified weapon omit weapon. For an explicit unarmed strike use weapon='Unarmed'. For an agility check send kind='attribute', attributes=['DEX','DEX']; omit dice. Free roll dice are integer sizes. For reroll pass sourceThrowId from read_throws. Never include target in note.",
-    parameters: {
-      type: "object",
-      additionalProperties: false,
-      required: ["kind"],
-      properties: {
-        kind: { enum: ["free", "weapon", "attribute", "reroll"] },
-        actor: string,
-        target: string,
-        weapon: string,
-        sourceThrowId: string,
-        private: { type: "boolean" },
-        note: { ...string, description: "Use only the GM’s verbatim activity, e.g. Tumbling." },
-        modifier: { type: "integer" },
-        dice: {
-          type: "array",
-          description: "For free rolls only. Numeric die sizes.",
-          items: { type: "integer" },
-          maxItems: 12,
-        },
-        attributes: { type: "array", items: { enum: ["DEX", "INS", "MIG", "WLP"] }, maxItems: 2 },
+function resolveRollActors(ctx: RollContext, args: Record<string, unknown>) {
+  const actors = [
+    ...ctx.table.party,
+    ...ctx.table.npcs.filter((n): n is Extract<RollActor, { view: "gm" }> => n.view === "gm"),
+  ];
+  const targets = matches(actors, args.target);
+
+  const selected = matches(actors, args.actor);
+  const actor = selected.length === 1 ? selected[0] : undefined;
+  return { actor, targets };
+}
+function rollNote(ctx: RollContext, args: Record<string, unknown>) {
+  const activity =
+    args.kind === "attribute"
+      ? ctx.message.match(/\bwhen\s+([^.!?]+)[.!?]?$/i)?.[1]?.trim()
+      : undefined;
+  const noteText = activity
+    ? activity[0]!.toUpperCase() + activity.slice(1)
+    : typeof args.note === "string"
+      ? args.note.trim()
+      : "";
+  const hiddenTerms = ctx.table.npcs
+    .flatMap((n) =>
+      n.view === "gm" ? [n.id, n.notes, ...(n.visibility === "hidden" ? [n.name] : [])] : [],
+    )
+    .filter(Boolean);
+  const normalized = noteText.toLowerCase();
+  const suppliedByGm = ctx.message.toLowerCase().includes(normalized);
+  const containsHiddenText = hiddenTerms.some((term) => normalized.includes(term.toLowerCase()));
+  return suppliedByGm && !containsHiddenText ? noteText : "";
+}
+const noOpponent = { redDice: [], redModifier: 0 };
+function actorSetup(actor: RollActor, modifier: unknown) {
+  return {
+    ...("view" in actor ? { npcId: actor.id } : { characterId: actor.id }),
+    expectedRevision: actor.revision,
+    modifier: modifier ?? 0,
+  };
+}
+function prepareAttribute(
+  ctx: RollContext,
+  args: Record<string, unknown>,
+  actor: RollActor,
+  privateRoll: boolean,
+  targetLabel?: string,
+) {
+  const npc = "view" in actor;
+  const current = npc ? actor.baseDice : actor.currentDice;
+  const base = actorSetup(actor, args.modifier);
+  const note = rollNote(ctx, args);
+  const attributes = args.attributes as (keyof typeof current)[] | undefined;
+  if (!attributes?.length) return question("Which attribute should be checked?");
+  const pair = attributes.length === 1 ? [attributes[0], attributes[0]] : attributes;
+  return proposal(
+    ctx,
+    {
+      ...base,
+      type: npc ? "npc-attribute" : "attribute",
+      attributes: pair,
+      dice: Object.fromEntries(pair.map((a) => [a, current[a]])),
+      note,
+      ...noOpponent,
+    },
+    privateRoll,
+    null,
+    targetLabel,
+  );
+}
+function prepareWeapon(
+  ctx: RollContext,
+  args: Record<string, unknown>,
+  actor: RollActor,
+  privateRoll: boolean,
+  targetLabel?: string,
+) {
+  const npc = "view" in actor;
+  const current = npc ? actor.baseDice : actor.currentDice;
+  const base = actorSetup(actor, args.modifier);
+  const available = npc ? actor.attacks : actor.weapons;
+  const weaponName = typeof args.weapon === "string" ? args.weapon.trim() : "";
+  const unarmed = /^(unarmed(?: strike| attack)?|bare hands?|fists?|without (?:a )?weapon)$/i.test(
+    weaponName,
+  );
+  if (!npc && (unarmed || (!weaponName && !available.length))) {
+    return proposal(
+      ctx,
+      {
+        ...base,
+        type: "attribute",
+        attributes: ["DEX", "MIG"],
+        dice: { DEX: current.DEX, MIG: current.MIG },
+        note: "Unarmed strike",
+        ...noOpponent,
       },
+      privateRoll,
+      null,
+      targetLabel,
+    );
+  }
+  if (!available.length)
+    return question(
+      npc
+        ? actor.name +
+            " has no attacks on their NPC profile. Add an attack before preparing this roll."
+        : actor.name +
+            " has no weapon on their sheet. Use an unarmed strike, or add the requested weapon in Equipment.",
+    );
+  const weapons = weaponMatches(available, args.weapon, ctx.message);
+  if (weapons.length !== 1)
+    return question(
+      weapons.length
+        ? "Which weapon: " + weapons.map((w) => w.name).join(", ") + "?"
+        : "Which weapon is being used?",
+    );
+  const id = weapons[0]!.id;
+  const weapon = npc
+    ? actor.attacks.find((w) => w.id === id)!
+    : actor.weapons.find((w) => w.id === id)!;
+  if ("ready" in weapon && !weapon.ready)
+    return question("Complete the weapon's accuracy dice and bonus in its equipment setup.");
+  const attrs = "attributes" in weapon ? weapon.attributes : weapon.accuracyDice;
+  const dice = attrs.map((a) => current[a as keyof typeof current]);
+  return proposal(
+    ctx,
+    {
+      ...base,
+      type: npc ? "npc-attack" : "weapon",
+      ...(npc ? { attackId: id } : { equipmentId: id }),
+      dice,
+      note: "",
     },
-    async execute(args) {
-      if (args.kind === "reroll") {
-        const source = (await ctx.visibleThrows()).find((row) => row.id === args.sourceThrowId);
-        return source ? reroll(ctx, source) : question("The source throw is unavailable.");
-      }
-      const actors = [...ctx.table.party, ...ctx.table.npcs.filter((n) => n.view === "gm")];
-      const targets = matches(actors, args.target);
-      if (args.target && targets.length !== 1) return question("Clarify the target.");
-      const selected = matches(actors, args.actor);
-      const actor = selected.length === 1 ? selected[0] : undefined;
-      const privateRoll =
-        args.private === true ||
-        (actor && "visibility" in actor && actor.visibility === "hidden") ||
-        false;
-      const modifier = args.modifier ?? 0;
-      const activity =
-        args.kind === "attribute"
-          ? ctx.message.match(/\bwhen\s+([^.!?]+)[.!?]?$/i)?.[1]?.trim()
-          : undefined;
-      const noteText = activity
-        ? activity[0]!.toUpperCase() + activity.slice(1)
-        : typeof args.note === "string"
-          ? args.note.trim()
-          : "";
-      const hiddenTerms = ctx.table.npcs
-        .flatMap((n) =>
-          n.view === "gm" ? [n.id, n.notes, ...(n.visibility === "hidden" ? [n.name] : [])] : [],
-        )
-        .filter(Boolean);
-      const note =
-        ctx.message.toLowerCase().includes(noteText.toLowerCase()) &&
-        !hiddenTerms.some((term) => noteText.toLowerCase().includes(term.toLowerCase()))
-          ? noteText
-          : "";
-      const opponent = { redDice: [], redModifier: 0 };
-      if (args.kind === "free") {
-        if (args.actor && args.actor !== "gm" && !actor) return question("Clarify the actor.");
-        return proposal(
-          {
-            type: "free",
-            characterId: actor?.id ?? "gm",
-            dice: args.dice,
-            modifier,
-            note,
-            ...opponent,
-          },
-          privateRoll,
-          null,
-        );
-      }
-      if (!actor) return question("Clarify the actor.");
-      const npc = "view" in actor;
-      const base = {
-        ...(npc ? { npcId: actor.id } : { characterId: actor.id }),
-        expectedRevision: actor.revision,
+    privateRoll,
+    null,
+    targetLabel,
+    {
+      actor: actor.name,
+      weapon: weapon.name,
+      target: targetLabel,
+      attributes: attrs,
+      accuracyBonus:
+        "accuracyBonus" in weapon ? weapon.accuracyBonus : npc ? Math.floor(actor.level / 10) : 0,
+      dice,
+    },
+  );
+}
+async function prepareThrow(ctx: RollContext, args: Record<string, unknown>) {
+  if (args.kind === "reroll") {
+    const source = (await ctx.visibleThrows()).find((row) => row.id === args.sourceThrowId);
+    return source ? reroll(ctx, source) : question("The source throw is unavailable.");
+  }
+  const { actor, targets } = resolveRollActors(ctx, args);
+  if (args.target && targets.length !== 1) return question("Clarify the target.");
+  const privateRoll =
+    args.private === true ||
+    (actor && "visibility" in actor && actor.visibility === "hidden") ||
+    false;
+  const modifier = args.modifier ?? 0;
+
+  if (args.kind === "free") {
+    if (args.actor && args.actor !== "gm" && !actor) return question("Clarify the actor.");
+    return proposal(
+      ctx,
+      {
+        type: "free",
+        characterId: actor?.id ?? "gm",
+        dice: args.dice,
         modifier,
-      };
-      const current = npc ? actor.baseDice : actor.currentDice;
-      if (args.kind === "attribute") {
-        const attributes = args.attributes as (keyof typeof current)[] | undefined;
-        if (!attributes?.length) return question("Which attribute should be checked?");
-        const pair = attributes.length === 1 ? [attributes[0], attributes[0]] : attributes;
-        return proposal(
-          {
-            ...base,
-            type: npc ? "npc-attribute" : "attribute",
-            attributes: pair,
-            dice: Object.fromEntries(pair.map((a) => [a, current[a]])),
-            note,
-            ...opponent,
+        note: rollNote(ctx, args),
+        ...noOpponent,
+      },
+      privateRoll,
+      null,
+    );
+  }
+  if (!actor) return question("Clarify the actor.");
+  if (args.kind === "attribute")
+    return prepareAttribute(ctx, args, actor, privateRoll, targets[0]?.name);
+  return prepareWeapon(ctx, args, actor, privateRoll, targets[0]?.name);
+}
+export function createRollTools(parseThrow: RollContext["parseThrow"]): AgentToolFactory {
+  return (ctx) => [
+    {
+      name: "prepare_throw",
+      description:
+        "Prepare a roll for GM review. Pass actor, target and weapon names as worded by GM. For character attacks with no specified weapon omit weapon. For an explicit unarmed strike use weapon='Unarmed'. For an agility check send kind='attribute', attributes=['DEX','DEX']; omit dice. Free roll dice are integer sizes. For reroll pass sourceThrowId from read_throws. Never include target in note.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        required: ["kind"],
+        properties: {
+          kind: { enum: ["free", "weapon", "attribute", "reroll"] },
+          actor: string,
+          target: string,
+          weapon: string,
+          sourceThrowId: string,
+          private: { type: "boolean" },
+          note: { ...string, description: "Use only the GM’s verbatim activity, e.g. Tumbling." },
+          modifier: { type: "integer" },
+          dice: {
+            type: "array",
+            description: "For free rolls only. Numeric die sizes.",
+            items: { type: "integer" },
+            maxItems: 12,
           },
-          privateRoll,
-          null,
-          targets[0]?.name,
-        );
-      }
-      const available = npc ? actor.attacks : actor.weapons;
-      const weaponName = typeof args.weapon === "string" ? args.weapon.trim() : "";
-      const unarmed =
-        /^(unarmed(?: strike| attack)?|bare hands?|fists?|without (?:a )?weapon)$/i.test(
-          weaponName,
-        );
-      if (!npc && (unarmed || (!weaponName && !available.length))) {
-        return proposal(
-          {
-            ...base,
-            type: "attribute",
-            attributes: ["DEX", "MIG"],
-            dice: { DEX: current.DEX, MIG: current.MIG },
-            note: "Unarmed strike",
-            ...opponent,
-          },
-          privateRoll,
-          null,
-          targets[0]?.name,
-        );
-      }
-      if (!available.length)
-        return question(
-          npc
-            ? actor.name +
-                " has no attacks on their NPC profile. Add an attack before preparing this roll."
-            : actor.name +
-                " has no weapon on their sheet. Use an unarmed strike, or add the requested weapon in Equipment.",
-        );
-      const weapons = weaponMatches(available, args.weapon, ctx.message);
-      if (weapons.length !== 1)
-        return question(
-          weapons.length
-            ? "Which weapon: " + weapons.map((w) => w.name).join(", ") + "?"
-            : "Which weapon is being used?",
-        );
-      const id = weapons[0]!.id;
-      const weapon = npc
-        ? actor.attacks.find((w) => w.id === id)!
-        : actor.weapons.find((w) => w.id === id)!;
-      if ("ready" in weapon && !weapon.ready)
-        return question("Complete the weapon's accuracy dice and bonus in its equipment setup.");
-      const attrs = "attributes" in weapon ? weapon.attributes : weapon.accuracyDice;
-      const dice = attrs.map((a) => current[a as keyof typeof current]);
-      return proposal(
-        {
-          ...base,
-          type: npc ? "npc-attack" : "weapon",
-          ...(npc ? { attackId: id } : { equipmentId: id }),
-          dice,
-          note: "",
+          attributes: { type: "array", items: { enum: ["DEX", "INS", "MIG", "WLP"] }, maxItems: 2 },
         },
-        privateRoll,
-        null,
-        targets[0]?.name,
-        {
-          actor: actor.name,
-          weapon: weapon.name,
-          target: targets[0]?.name,
-          attributes: attrs,
-          accuracyBonus:
-            "accuracyBonus" in weapon
-              ? weapon.accuracyBonus
-              : npc
-                ? Math.floor(actor.level / 10)
-                : 0,
-          dice,
-        },
-      );
+      },
+      execute: (args) => prepareThrow({ ...ctx, parseThrow }, args),
     },
-  },
-];
+  ];
+}

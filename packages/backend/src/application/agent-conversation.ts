@@ -95,7 +95,6 @@ export async function answerTurn(
   const summaries: AgentToolSummary[] = [];
   while (usage.calls < 20) {
     await recheck();
-    // Byte length plus framing reserves input before the call. Charge reported usage after each response.
     const bound =
       Buffer.byteLength(JSON.stringify({ messages, tools })) +
       128 * (1 + messages.length + tools.length);

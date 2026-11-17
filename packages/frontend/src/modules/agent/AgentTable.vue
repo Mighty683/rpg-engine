@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { ref } from "vue";
+import { useToast } from "@nuxt/ui/composables";
+import { useCreateThrowMutation } from "../game-table/hooks";
+import { rollPreview } from "./roll-preview";
 import GameTable from "../game-table/GameTable.vue";
 import AgentRollCard from "./AgentRollCard.vue";
 import AgentRollResult from "./AgentRollResult.vue";
-import AgentEditReview from "./AgentEditReview.vue";
+import AgentEditController from "./AgentEditController.vue";
 import AgentPanel from "./AgentPanel.vue";
 import { useAgentChat } from "./useAgentChat";
 
@@ -20,6 +24,33 @@ const {
   older,
   submit,
 } = useAgentChat(props.gameId);
+const mutation = useCreateThrowMutation(props.gameId);
+const toast = useToast();
+const submitting = ref(false);
+
+async function makeRoll(privateRoll: boolean) {
+  const proposal = action.value;
+  const turnId = actionTurnId.value;
+  if (submitting.value || proposal?.kind !== "roll") return;
+  submitting.value = true;
+  try {
+    const result = await mutation.mutateAsync({
+      ...proposal.input,
+      agentTurnId: turnId,
+      private: privateRoll,
+    });
+    rolled(turnId, result.throw);
+  } catch (error) {
+    const problem = error as { payload?: { error?: { message?: string } } };
+    toast.add({
+      title: "Could not confirm the roll",
+      description: problem.payload?.error?.message,
+      color: "error",
+    });
+  } finally {
+    submitting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -48,13 +79,13 @@ const {
           <AgentRollCard
             v-else-if="action?.kind === 'roll' && message.id === actionTurnId + '-reply'"
             :key="actionTurnId"
-            :game-id="gameId"
-            :turn-id="actionTurnId"
-            :action="action"
-            :actors="[...party, ...npcActors]"
-            @rolled="rolled"
+            :summary="rollPreview(action, [...party, ...npcActors])"
+            :target-label="action.targetLabel"
+            :initially-private="action.input.private === true"
+            :submitting="submitting"
+            :on-roll="makeRoll"
           />
-          <AgentEditReview
+          <AgentEditController
             v-else-if="action && action.kind !== 'roll' && message.id === actionTurnId + '-reply'"
             :key="actionTurnId"
             :game-id="gameId"

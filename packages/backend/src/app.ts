@@ -1,3 +1,4 @@
+import { parseCreateRequest } from "./modules/throws/contract.ts";
 import { createEditTools } from "./application/agent-edits.ts";
 import { createRollTools } from "./application/agent-rolls.ts";
 import { createAgentRuntime } from "./application/agent-turn.ts";
@@ -158,6 +159,7 @@ export function createApplication(
   const agentRate = new PostgresRateStore(database, "agent-turns");
   agentRate.init({ windowMs: 60_000 });
   const shutdown = new AbortController();
+  const rollTools = createRollTools(parseCreateRequest);
   const agent = provider
     ? createAgentRuntime({
         characters,
@@ -165,7 +167,7 @@ export function createApplication(
         throws,
         history: agentHistory,
         provider,
-        proposals: (context) => [...createRollTools(context), ...createEditTools(context)],
+        proposals: (context) => [...rollTools(context), ...createEditTools(context)],
         shutdown: shutdown.signal,
         countTurn: (id) => agentRate.increment(id),
       })

@@ -1,7 +1,8 @@
+import type { ObjectInputSchema } from "../../shared/validation/types.ts";
 import type { GameActor } from "../games/types.ts";
-import type { CharacterChanges } from "../characters/types.ts";
-import type { NpcWrite } from "../npcs/types.ts";
-import type { CreateThrowInput, ThrowRecord } from "../throws/types.ts";
+import type { CharacterChanges, CharactersService, PartyCharacter } from "../characters/types.ts";
+import type { NpcWrite, NpcRecord, NpcsService } from "../npcs/types.ts";
+import type { CreateThrowInput, ThrowRecord, ThrowsService } from "../throws/types.ts";
 
 export type AgentToolName =
   | "read_character"
@@ -67,7 +68,7 @@ export type AgentMessage =
 export interface AgentToolDefinition {
   name: AgentToolName;
   description: string;
-  parameters: import("../../shared/validation/types.ts").ObjectInputSchema;
+  parameters: ObjectInputSchema;
 }
 export interface AgentCompletion {
   text: string;
@@ -92,17 +93,17 @@ export interface AgentTool extends AgentToolDefinition {
   execute(args: Record<string, unknown>): Promise<AgentToolResult>;
 }
 export interface AgentTable {
-  party: import("../characters/types.ts").PartyCharacter[];
-  npcs: import("../npcs/types.ts").NpcRecord[];
+  party: PartyCharacter[];
+  npcs: NpcRecord[];
 }
 export interface AgentReadDependencies {
-  characters: import("../characters/types.ts").CharactersService;
-  npcs: import("../npcs/types.ts").NpcsService;
-  throws: import("../throws/types.ts").ThrowsService;
+  characters: CharactersService;
+  npcs: NpcsService;
+  throws: ThrowsService;
 }
 export interface AgentToolContext extends AgentRunContext, AgentReadDependencies {
   message: string;
   table: AgentTable;
-  visibleThrows(): Promise<import("../throws/types.ts").ThrowRecord[]>;
+  visibleThrows(): Promise<ThrowRecord[]>;
 }
 export type AgentToolFactory = (context: AgentToolContext) => AgentTool[];

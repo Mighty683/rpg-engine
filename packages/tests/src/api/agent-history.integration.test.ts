@@ -57,6 +57,22 @@ describe("GM Agent admission and history", () => {
     });
   });
 
+  it("rejects malformed turn bodies and history queries before Agent work", async () => {
+    const base = `/games/${f.ids.game}/agent`;
+    for (const [body, status] of [
+      [{ message: "  " }, 422],
+      [{ message: "a".repeat(2001) }, 422],
+      [{ message: "Roll", unexpected: true }, 400],
+    ] as const) {
+      expect((await f.request(base + "/turns", "gm", "POST", body)).status).toBe(status);
+    }
+    for (const query of ["limit=0", "limit=latest", `before=${f.ids.game}&before=${f.ids.game}`]) {
+      expect((await f.request(base + "/status?" + query, "gm")).status).toBe(400);
+    }
+    const valid = await f.request(base + "/turns", "gm", "POST", { message: "a".repeat(2000) });
+    expect(valid.status).toBe(503);
+  });
+
   it("GM-API-10 pages a scoped transcript across concurrent appends", async () => {
     const base = `/games/${f.ids.game}/agent/status`;
     const insert = async (game: string, gm: string, count: number) =>
