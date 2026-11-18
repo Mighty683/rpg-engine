@@ -1,6 +1,6 @@
 ---
 description: Review UI clarity, simplicity, and efficiency
-mode: subagent
+mode: all
 ---
 
 # Ui Design Reviewer

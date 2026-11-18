@@ -1,6 +1,6 @@
 ---
 description: Review an implemented task from an assigned persona's perspective
-mode: subagent
+mode: all
 ---
 
 # Ux
