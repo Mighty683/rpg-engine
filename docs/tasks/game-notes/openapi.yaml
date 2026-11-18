@@ -1,0 +1,231 @@
+openapi: 3.1.0
+info:
+  title: Game notes — proposed HTTP API
+  version: 0.1.0
+  description: >-
+    Only the current GM can read or write notes for the specified game. Players receive 403.
+    Unknown or inaccessible games and missing or foreign entry IDs receive 404.
+    Writes require a valid Origin and a session-bound CSRF token. Agent tools are not HTTP operations.
+servers:
+  - url: /
+security:
+  - sessionCookie: []
+paths:
+  /api/games/{gameId}/notes:
+    parameters:
+      - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
+    get:
+      operationId: listGameNotes
+      summary: List a page of game notes
+      description: >-
+        Match the trimmed query as a case-insensitive literal substring of the title or visible body text
+        before pagination. Missing or blank queries browse all entries. Return up to 20 entries ordered by
+        updatedAt descending and ID ascending. Invalid cursors or cursors for another game or query return 400.
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: cursor
+          in: query
+          description: Opaque nextCursor from the preceding page of the same game and query; omit for the first page.
+          schema: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Page of matching entries. A null nextCursor marks the final page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EntryPage" }
+        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
+        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+    post:
+      operationId: createGameNote
+      summary: Create a note with a client-generated ID
+      description: >-
+        A duplicate ID in this game returns 409 without changing the existing note. After an uncertain
+        response, the client can read the note by ID to verify whether the create succeeded.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateEntry" }
+            examples:
+              createEntry:
+                summary: Create with a client-generated entry ID, retryable after an uncertain response
+                value:
+                  id: "f34dd6ea-cdfe-4ee5-9cc8-39e5fc68a5c1"
+                  title: "The ferryman's price"
+                  content: { ops: [{ insert: "\n" }] }
+      responses:
+        "201":
+          description: Created note at revision 1.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EntryResult" }
+        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
+        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "409": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict }
+        "413": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge }
+        "422": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError }
+        "429": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited }
+        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+  /api/games/{gameId}/notes/{entryId}:
+    parameters:
+      - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
+      - name: entryId
+        in: path
+        required: true
+        schema: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+    get:
+      operationId: getGameNote
+      summary: Read a saved note by ID
+      description: Return the current saved entry regardless of the active search or page.
+      responses:
+        "200": { $ref: "#/components/responses/SavedEntry" }
+        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
+        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+    patch:
+      operationId: updateGameNote
+      summary: Save note changes at the expected revision
+      description: >-
+        A supplied body replaces the full document. A stale revision returns 409. A normalized no-op leaves
+        updatedAt and revision unchanged. createdAt never changes.
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateEntry" }
+            examples:
+              retitleNote:
+                summary: Rename an entry at the current revision
+                value:
+                  expectedRevision: 2
+                  changes:
+                    title: "The ferryman's price"
+      responses:
+        "200": { $ref: "#/components/responses/SavedEntry" }
+        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
+        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "409": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict }
+        "413": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge }
+        "422": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError }
+        "429": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited }
+        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+components:
+  securitySchemes:
+    sessionCookie:
+      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie
+    csrfToken:
+      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken
+  responses:
+    SavedEntry:
+      description: Current saved entry.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/EntryResult" }
+  schemas:
+    Title:
+      type: string
+      minLength: 1
+      maxLength: 160
+      description: Trim before validating length. Repeated titles are allowed.
+    Content:
+      type: object
+      additionalProperties: false
+      required: [ops]
+      description: >-
+        Full Quill document Delta. Unknown fields, unsupported operations, and unsupported formats return 400.
+        Invalid attribute placement, a missing terminal newline, or exceeded document limits return 422.
+        Limit visible body text to 5,000 Unicode code points excluding the terminal newline, and compact normalized
+        JSON to 64 KiB. Normalization removes empty attribute objects and merges adjacent inserts with identical attributes.
+      examples:
+        - ops: [{ insert: "\n" }]
+      properties:
+        ops:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/ContentInsert" }
+    ContentInsert:
+      type: object
+      additionalProperties: false
+      required: [insert]
+      properties:
+        insert: { type: string, minLength: 1 }
+        attributes:
+          type: object
+          additionalProperties: false
+          description: Inline attributes apply only to text. Header and list apply only to newlines and are mutually exclusive.
+          properties:
+            bold: { type: boolean, const: true }
+            italic: { type: boolean, const: true }
+            underline: { type: boolean, const: true }
+            strike: { type: boolean, const: true }
+            header: { type: integer, enum: [1, 2, 3] }
+            list: { type: string, enum: [bullet, ordered] }
+    Entry:
+      type: object
+      additionalProperties: false
+      required: [id, title, content, createdAt, updatedAt, revision]
+      properties:
+        id: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+        title: { $ref: "#/components/schemas/Title" }
+        content: { $ref: "#/components/schemas/Content" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        revision: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision }
+    CreateEntry:
+      type: object
+      additionalProperties: false
+      required: [id, title, content]
+      properties:
+        id: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+        title: { $ref: "#/components/schemas/Title" }
+        content: { $ref: "#/components/schemas/Content" }
+    UpdateEntry:
+      type: object
+      additionalProperties: false
+      required: [expectedRevision, changes]
+      properties:
+        expectedRevision: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision }
+        changes:
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            title: { $ref: "#/components/schemas/Title" }
+            content: { $ref: "#/components/schemas/Content" }
+    EntryResult:
+      type: object
+      additionalProperties: false
+      required: [entry]
+      properties:
+        entry: { $ref: "#/components/schemas/Entry" }
+    EntryPage:
+      type: object
+      additionalProperties: false
+      required: [entries, nextCursor]
+      properties:
+        entries:
+          type: array
+          maxItems: 20
+          items: { $ref: "#/components/schemas/Entry" }
+        nextCursor: { type: [string, "null"], minLength: 1 }
