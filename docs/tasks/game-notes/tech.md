@@ -1,12 +1,13 @@
 # Game notes — technical design
 
+[UX spec](ux.md)
+
 ## Production boundary
 
-Supply a GM-only Game notes action tab to the GameTable EdgeTabs rail from the table branch of `packages/frontend/src/modules/games/GameView.vue`. Register `/games/:gameId/notes` in `src/main.ts` under the existing Games navigation and signed-in shell. Handle tab activation by opening the same right-side USlideover as Throw history over the mounted GameTable. Dismissing it preserves the table URL and state. The drawer reads the three latest entries from the same game-scoped collection. Its Search all entries action opens the notes route, whose page header owns New entry. Direct navigation loads the game and verifies the role before requesting entries. A player gets an unavailable screen and a return link. Reset game-scoped state on sign-out, access loss or game switch.
-
-Create frontend `modules/game-notes` with types, HTTP adapter, controller and views. Promote EntryFields and the reviewed dialog/results layouts into production; update the gallery to consume them. Production imports only production modules. Inject the client via the shared ApiServices registry and assemble it in main.ts. Use the shared request/secureFetch path. Keep a game-keyed collection, derive results locally and isolate draft/edit queues by game and entry ID. Reuse useOptimisticSave. Keep queues alive across in-game navigation until settled. On reopen refetch authorized entries; guard late responses after switching games. The complete authorized collection supports literal case-insensitive title/content search locally. This assumes campaign-sized notebooks; a paged server search would require a contract change.
-
-Add backend `modules/game-notes` with public interfaces in types.ts, Ajv request schemas, service/factory and controller. Wire in app.ts with the existing session, origin/CSRF, mutation limiter and Games access capability. The module writes only its own table. Keep all note data out of player projections, game event streams and logs.
+- Add the GM-only Game notes EdgeTab in `packages/frontend/src/modules/games/GameView.vue`. Open a right-side drawer over the mounted table, without changing its URL or state. The drawer shows the three most recently updated entries. Search all entries opens `/games/:gameId/notes`, registered in the signed-in Games shell in `packages/frontend/src/main.ts`. Check the current role before requesting notes on a direct visit; show players an unavailable screen with a route back.
+- Create a frontend `modules/game-notes` module with views, a controller and an HTTP adapter. Inject the game-scoped client through `ApiServices` and use the shared secure request path. Keep drafts and save queues scoped by game and entry ID. Clear state on sign-out, access loss or game switch, and ignore late responses from the previous scope.
+- Use Quill 2 and its bundled TypeScript declarations; `@types/quill` is not needed. Share the editor between creation, detail and the gallery. Use the toolbar and paste allowlist from the UX spec. Treat the editor and toolbar as one focus boundary for autosave. Render previews from the validated document using fixed Vue elements and text bindings, never stored HTML or `v-html`.
+- Add a backend `modules/game-notes` module with Ajv schemas, a service and HTTP handlers. Compose it in `app.ts` behind the existing session, origin/CSRF and mutation rate limits. Use the Games access capability and keep note data out of player projections, event streams and logs.
 
 ## Data and flows
 
@@ -17,7 +18,7 @@ erDiagram
     uuid game_id PK,FK
     uuid id PK
     text title
-    text content
+    jsonb content
     timestamptz created_at
     timestamptz updated_at
     integer revision
@@ -26,10 +27,10 @@ erDiagram
 
 ```mermaid
 flowchart LR
-  Table -->|Game notes EdgeTab| Drawer[Recent entries drawer]
-  Drawer --> Controller
-  Drawer -->|Search all entries| Search[Notes route]
-  Search --> Controller[Game notes controller]
+  Table --> Drawer[Recent entries drawer]
+  Drawer --> Notes[Notes page]
+  Drawer --> Controller[Game-scoped controller]
+  Notes --> Controller
   Controller --> Client[Injected client]
   Client --> Service[Notes service]
   Service --> Access[Game access capability]
@@ -38,29 +39,35 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-  participant C as Client queue
+  participant C as Client save queue
   participant S as Notes service
   participant DB as PostgreSQL
-  C->>S: PATCH game, entry, changes, expectedRevision
-  S->>DB: Begin and lock game; require current GM
-  S->>DB: Resolve composite key and verify revision
-  alt Revision differs
-    S-->>C: 409; refresh and preserve local draft
-  else Accepted
-    S->>DB: Apply changed fields and commit
+  C->>S: PATCH with changes and expected revision
+  S->>DB: Begin, lock game, require current GM
+  S->>DB: Read entry by game and entry ID
+  alt Stale revision
+    S-->>C: 409; refresh and retain draft for explicit retry
+  else Current revision
+    S->>DB: Apply actual changes and commit
     S-->>C: Current entry with server dates and revision
   end
 ```
 
-List reads must enforce ownership at read time (owner-qualified projection or the same transaction/lock). Lock the game for writes with the injected transaction-bound GameAccessService. Players receive 403, unknown/inaccessible games and foreign entry IDs receive 404. Check game access before entry existence. Read and write using bound parameters. Sort by updated_at DESC, id ASC. Render user text through Vue text bindings.
+Validate access before looking up entries. Players get 403; unknown or inaccessible games and foreign entry IDs get 404. Enforce ownership at read time and recheck it using the transaction-bound `GameAccessService` on writes. Return entries by `updated_at DESC, id ASC`. Search locally across the title and concatenated text inserts, excluding the terminal newline, with case-insensitive literal matching.
 
-Client-generated UUIDs identify create attempts. Inserting an existing composite key returns 409 and leaves the existing entry intact. If a create acknowledgement is lost, refetch by game and reconcile the same ID and submitted text before allowing another attempt. Different text must surface a conflict. A PATCH includes at least one of title/content. Validate normalized fields, reject server-owned properties, and use the existing JSON body limit. Only a real text change advances revision and updated_at. Keep created_at immutable. For uncertain PATCH results compare fresh text and expected changes before offering a retry. A stale tab must never silently overwrite a later revision.
+Reuse `useOptimisticSave` for edits. Keep `created_at` immutable; advance `updated_at` and the revision only when the normalized title, text or formatting changes. On an uncertain write, refetch and reconcile against the expected title and body before offering a retry. For create, reuse the client-generated entry ID and treat a matching entry as acknowledgement; a conflicting entry must not be overwritten.
 
-## Database changes
+## Document format
 
-Add the next versioned SQL migration in packages/backend/drizzle and its journal entry, and declare the table in the Drizzle schema. Composite primary key (game_id, id); game_id references games.id ON DELETE CASCADE. All columns non-null. Require trimmed nonblank title of 1–160 characters, content length ≤16,000, revision ≥1, updated_at ≥created_at. Default revision to 1 and both dates to the transaction timestamp. Index (game_id, updated_at DESC, id ASC). Existing games start with zero entries; existing tables and seed data require no backfill. Empty notes are a valid demo state.
+Store a full Quill document Delta, not HTML or an incremental change Delta. Allow nonempty string inserts only, with no embeds or retain/delete operations. Permit `bold`, `italic`, `underline` and `strike` with value `true` on text; permit `header` values 1–3 or `list` values `bullet` and `ordered` on newlines, but never both on the same line. Require a terminal newline. The empty body is `{"ops":[{"insert":"\n"}]}`.
 
-From repository root with a local migrated game database, set MIGRATION_DATABASE_URL to the schema owner and DATABASE_URL to the restricted application login. Run:
+Apply the allowlist server-side independently of client paste filtering. Remove empty attribute objects, merge adjacent inserts with identical attributes, and compare normalized documents structurally. Limit text to 16,000 Unicode code points excluding the terminal newline and compact normalized JSON to 64 KiB. Keep the existing 96 KiB request limit.
+
+## Database
+
+Add a versioned Drizzle migration and journal entry for `game_note_entries`. Use `(game_id, id)` as the primary key, a cascading foreign key to `games`, and an index on `(game_id, updated_at DESC, id ASC)`. Require a trimmed nonblank title of 1–160 characters, a JSON object with a nonempty `ops` array, a revision of at least 1, and `updated_at >= created_at`. Default the revision to 1 and both dates to the transaction timestamp. Existing games start with empty notebooks; no backfill or seed changes are required.
+
+Extend `packages/backend/scripts/runtime-grants.sql` with SELECT, INSERT and UPDATE for the runtime role, not DELETE. Apply migrations as the schema owner and verify on a populated disposable database with the restricted runtime login:
 
 ```sh
 pnpm --filter @rpg-engine/backend migrate
@@ -68,8 +75,12 @@ psql "$MIGRATION_DATABASE_URL" -v app_schema=public -v app_role=rpg_runtime -f p
 DATABASE_URL="$MIGRATION_DATABASE_URL" pnpm seed:demo
 ```
 
-Extend the grants script with SELECT, INSERT, UPDATE on game_note_entries. Use the existing game-lock privileges. Seed with a local account that has the seed script's required privileges. The optional `seed:demo --reset` destroys the local schema and its data; preservation checks use the ordinary migration against populated data.
+## API shape
 
-## API contract
+| Operation | Request | Success |
+| --- | --- | --- |
+| `GET /api/games/{gameId}/notes` | — | `200` with `{ entries }` |
+| `POST /api/games/{gameId}/notes` | `{ id, title, content }` | `201` with `{ entry }` |
+| `PATCH /api/games/{gameId}/notes/{entryId}` | `{ expectedRevision, changes }` with at least one of `title` or `content` | `200` with `{ entry }` |
 
-[OpenAPI 3.1 task contract](openapi.yaml). Merge the operations and note schemas into the canonical backend contract during implementation. Extend schema-contract.test.ts to compare the Ajv write envelopes. Writes require the session cookie, valid origin and CSRF token. Structured validation errors use 422. Transport and domain errors retain the standard application envelope.
+An entry contains `id`, `title`, `content`, `createdAt`, `updatedAt` and `revision`. A supplied `content` replaces the full document. Reject unknown fields, unsupported operations and unsupported formats with 400; reject invalid attribute placement, missing terminal newline or exceeded document limits with 422. Return 409 for duplicate IDs or stale revisions. Add the operations and schemas to the canonical OpenAPI contract during implementation.
