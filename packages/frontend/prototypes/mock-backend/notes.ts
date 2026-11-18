@@ -1,12 +1,29 @@
 import { HttpResponse } from "msw";
-import type { Entry, EntryText } from "../game-notes/types";
+import {
+  noteDocument,
+  noteTextLimit,
+  sameNoteDocument,
+  visibleNoteText,
+} from "../game-notes/note-document";
+import type { Entry, EntryText, NoteDocument } from "../game-notes/types";
+
+function validContent(content: NoteDocument | undefined) {
+  return (
+    Array.isArray(content?.ops) &&
+    content.ops.every((op) => typeof op?.insert === "string") &&
+    String(content.ops.at(-1)?.insert).endsWith("\n") &&
+    Array.from(visibleNoteText(content)).length <= noteTextLimit
+  );
+}
 
 export function seedNotes(): Entry[] {
   return [
     {
       id: "f34dd6ea-cdfe-4ee5-9cc8-39e5fc68a5c1",
       title: "The ferryman’s price",
-      content: "Mara will take the party across at dawn. She wants her brass compass back.",
+      content: noteDocument(
+        "Mara will take the party across at dawn. She wants her brass compass back.",
+      ),
       createdAt: "2026-11-12T18:30:00Z",
       updatedAt: "2026-11-15T20:14:00Z",
       revision: 2,
@@ -14,7 +31,7 @@ export function seedNotes(): Entry[] {
     {
       id: "c050c559-4ca6-4887-a890-c3ae0d57b26b",
       title: "Below the old mill",
-      content: "The third bell opens the sluice. Rowan still has the key.",
+      content: noteDocument("The third bell opens the sluice. Rowan still has the key."),
       createdAt: "2026-11-10T19:20:00Z",
       updatedAt: "2026-11-10T19:20:00Z",
       revision: 1,
@@ -34,7 +51,7 @@ export function handleNotes(
   const now = new Date().toISOString();
   if (method === "POST" && !entryId) {
     if (current) return fail(409);
-    if (!body.title?.trim() || typeof body.content !== "string") return fail(422);
+    if (!body.title?.trim() || !validContent(body.content)) return fail(422);
     const entry = {
       id: body.id,
       title: body.title.trim(),
@@ -51,8 +68,8 @@ export function handleNotes(
   const changes = body.changes as Partial<EntryText>;
   const title = (changes.title ?? current.title).trim();
   const content = changes.content ?? current.content;
-  if (!title || title.length > 160 || content.length > 16000) return fail(422);
-  if (title !== current.title || content !== current.content)
+  if (!title || title.length > 160 || !validContent(content)) return fail(422);
+  if (title !== current.title || !sameNoteDocument(content, current.content))
     Object.assign(current, { title, content, updatedAt: now, revision: current.revision + 1 });
   return HttpResponse.json({ entry: current });
 }

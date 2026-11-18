@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import NoteCard from "./NoteCard.vue";
 import GameTable from "../../src/modules/game-table/GameTable.vue";
 import ContentState from "../../src/shared/design-system/base/ContentState.vue";
-import CreateFormDialog from "../../src/shared/design-system/base/CreateFormDialog.vue";
+import FormActions from "../../src/shared/design-system/base/FormActions.vue";
 import LabeledInput from "../../src/shared/design-system/base/LabeledInput.vue";
 import ScreenSection from "../../src/shared/design-system/base/ScreenSection.vue";
 import { useOptimisticSave } from "../../src/shared/useOptimisticSave";
 import { prototypeGameId, resetPrototypeBackend, type PrototypeScenario } from "../api";
 import EntryFields from "./EntryFields.vue";
+import { noteDocument, sameNoteDocument, visibleNoteText } from "./note-document";
 import type { NotesApi, Entry, EntryText } from "./types";
 
 const props = defineProps<{ api: NotesApi; scenario?: PrototypeScenario }>();
@@ -19,15 +20,18 @@ const toast = useToast();
 const error = (title: string) => toast.add({ title, color: "error" });
 const tablePath = `/games/${prototypeGameId}`;
 const notesPath = `${tablePath}/notes`;
+const newEntryPath = `${notesPath}/new`;
 const route = useRoute();
+const router = useRouter();
 const library = computed(() => route.path === notesPath);
-const creating = ref(false);
+const creating = computed(() => route.path === newEntryPath);
 const busy = ref(false);
+const loaded = ref(false);
 const loading = ref(false);
 const failed = ref(false);
 const term = ref("");
 const selected = ref("");
-const draft = reactive({ id: crypto.randomUUID(), title: "", content: "" });
+const draft = reactive({ id: crypto.randomUUID(), title: "", content: noteDocument() });
 const records = reactive(new Map<string, ReturnType<typeof entryController>>());
 
 function entryController(entry: Entry) {
@@ -68,7 +72,7 @@ function entryController(entry: Entry) {
     }
     const changes: Partial<EntryText> = {};
     if (fields.title.trim() !== base.title) changes.title = fields.title.trim();
-    if (fields.content !== base.content) changes.content = fields.content;
+    if (!sameNoteDocument(fields.content, base.content)) changes.content = fields.content;
     if (Object.keys(changes).length) queue.submit(changes);
   }
   return reactive({ fields, entry: queue.displayed, commit });
@@ -84,11 +88,14 @@ watch(
 );
 
 async function loadEntries() {
-  if (records.size || loading.value) return;
+  if (loaded.value || loading.value) return;
   loading.value = true;
   failed.value = false;
   try {
-    for (const entry of await props.api.list()) records.set(entry.id, entryController(entry));
+    for (const entry of await props.api.list()) {
+      if (!records.has(entry.id)) records.set(entry.id, entryController(entry));
+    }
+    loaded.value = true;
   } catch {
     failed.value = true;
     error("Could not load game notes. Retry to load the entries.");
@@ -106,12 +113,19 @@ const entries = computed(() =>
 const matches = computed(() => {
   const query = term.value.trim().toLowerCase();
   return entries.value.filter((entry) =>
-    [entry.title, entry.content].some((value) => value.toLowerCase().includes(query)),
+    [entry.title, visibleNoteText(entry.content)].some((value) =>
+      value.toLowerCase().includes(query),
+    ),
   );
 });
 const editor = computed(() => records.get(selected.value));
 const date = (value: string) =>
   new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+async function openEntry(id: string) {
+  if (!library.value) await router.push(notesPath);
+  if (library.value) selected.value = id;
+}
 
 async function create() {
   if (busy.value) return;
@@ -127,13 +141,16 @@ async function create() {
       entry = await props.api.create(draft.id, text);
     } catch (cause) {
       const found = (await props.api.list()).find((record) => record.id === draft.id);
-      if (!found || found.title !== text.title || found.content !== text.content) throw cause;
+      if (!found || found.title !== text.title || !sameNoteDocument(found.content, text.content))
+        throw cause;
       entry = found;
     }
     records.set(entry.id, entryController(entry));
-    Object.assign(draft, { id: crypto.randomUUID(), title: "", content: "" });
-    creating.value = false;
-    selected.value = entry.id;
+    Object.assign(draft, { id: crypto.randomUUID(), title: "", content: noteDocument() });
+    if (creating.value) {
+      await router.replace(notesPath);
+      selected.value = entry.id;
+    }
     toast.add({ title: "Entry created.", color: "success" });
   } catch {
     error("Could not create the entry. Your draft is still here.");
@@ -147,21 +164,39 @@ async function create() {
     <header class="flex flex-wrap items-center justify-between gap-medium">
       <div>
         <ULink
-          v-if="library"
+          v-if="library || creating"
           :to="tablePath"
           class="notes-link text-primary underline"
           data-testid="notes-back"
           >The Lantern Road</ULink
         >
         <h1 class="text-heading font-semibold">
-          {{ library ? "Game notes" : "The Lantern Road" }}
+          {{ creating ? "New entry" : library ? "Game notes" : "The Lantern Road" }}
         </h1>
-        <p v-if="!library" class="text-muted">Fabula Ultima · GM</p>
+        <p v-if="!library && !creating" class="text-muted">Fabula Ultima · GM</p>
       </div>
-      <UButton v-if="library" data-testid="note-new" @click="creating = true">New entry</UButton>
+      <UButton v-if="library" :to="newEntryPath" data-testid="note-new">New entry</UButton>
     </header>
+    <ScreenSection v-if="creating">
+      <form class="space-y-medium" @submit.prevent="create">
+        <EntryFields
+          :title="draft.title"
+          :content="draft.content"
+          :pending="busy"
+          @title="draft.title = $event"
+          @content="draft.content = $event"
+        />
+        <FormActions
+          submit-label="Create entry"
+          submit-test-id="note-create"
+          cancel-test-id="note-cancel"
+          :pending="busy"
+          @cancel="router.push(notesPath)"
+        />
+      </form>
+    </ScreenSection>
     <GameTable
-      v-if="!library"
+      v-else-if="!library"
       :game-id="prototypeGameId"
       role="GM"
       :throws-hint="0"
@@ -183,7 +218,9 @@ async function create() {
             v-for="entry in entries.slice(0, 3)"
             :key="entry.id"
             :entry="entry"
+            clickable
             :data-testid="'recent-note-' + entry.id"
+            @open="openEntry(entry.id)"
           />
         </div>
       </template>
@@ -223,35 +260,10 @@ async function create() {
       }}</ContentState>
       <ul v-else class="space-y-small">
         <li v-for="entry in matches" :key="entry.id">
-          <NoteCard :entry="entry">
-            <UButton
-              color="neutral"
-              variant="subtle"
-              size="sm"
-              :data-testid="'open-note-' + entry.id"
-              @click="selected = entry.id"
-              >Open entry</UButton
-            >
-          </NoteCard>
+          <NoteCard :entry="entry" clickable @open="openEntry(entry.id)" />
         </li>
       </ul>
     </template>
-    <CreateFormDialog
-      v-model:open="creating"
-      title="Create an entry"
-      submit-label="Create entry"
-      submit-test-id="note-create"
-      :pending="busy"
-      @submit="create"
-    >
-      <EntryFields
-        :title="draft.title"
-        :content="draft.content"
-        :pending="busy"
-        @title="draft.title = $event"
-        @content="draft.content = $event"
-      />
-    </CreateFormDialog>
   </main>
 </template>
 

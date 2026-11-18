@@ -19,6 +19,7 @@ export const setupVue3 = defineSetupVue3(async ({ app }) => {
       routes: [
         { path: "/games/:gameId", component: notesPreview },
         { path: "/games/:gameId/notes", component: notesPreview },
+        { path: "/games/:gameId/notes/new", component: notesPreview },
       ],
     }),
   );

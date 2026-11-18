@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import LabeledInput from "../../src/shared/design-system/base/LabeledInput.vue";
-defineProps<{ title: string; content: string; pending?: boolean }>();
-defineEmits<{ title: [value: string]; content: [value: string]; commit: [] }>();
+import NoteEditor from "./NoteEditor.vue";
+import type { NoteDocument } from "./types";
+defineProps<{ title: string; content: NoteDocument; pending?: boolean }>();
+defineEmits<{ title: [value: string]; content: [value: NoteDocument]; commit: [] }>();
 </script>
 <template>
   <div class="space-y-medium">
@@ -14,16 +16,11 @@ defineEmits<{ title: [value: string]; content: [value: string]; commit: [] }>();
       @update:model-value="$emit('title', String($event))"
       @blur="$emit('commit')"
     />
-    <LabeledInput
-      label="Content"
-      multiline
-      :rows="6"
+    <NoteEditor
       :model-value="content"
       :disabled="pending"
-      :maxlength="16000"
-      data-testid="note-content"
-      @update:model-value="$emit('content', String($event))"
-      @blur="$emit('commit')"
+      @update:model-value="$emit('content', $event)"
+      @commit="$emit('commit')"
     />
   </div>
 </template>

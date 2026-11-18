@@ -31,6 +31,7 @@ test.each([
       { path: "/", component: NotesPreview },
       { path: "/games/:gameId", component: NotesPreview },
       { path: "/games/:gameId/notes", component: NotesPreview },
+      { path: "/games/:gameId/notes/new", component: NotesPreview },
     ],
   });
   app.use(router).use(ui).use(VueQueryPlugin, { queryClient: new QueryClient() });
@@ -65,15 +66,42 @@ test.each([
     expect(control("game-table").element()).toBe(table);
     await expect.element(control("edge-tab-history")).toBeVisible();
     await notesTab.click();
+    await recentCard.click();
+    await expect.element(control("note-title")).toHaveValue("The ferryman’s price");
+    await control("notes-back").click();
+    await control("edge-tab-notes").click();
     await control("notes-open-search").click();
     await control("note-new").click();
+    expect(router.currentRoute.value.path).toMatch(/\/notes\/new$/);
+    await expect.element(control("notes-search")).not.toBeInTheDocument();
     await control("note-title").fill("Mirror lake");
+    await control("note-cancel").click();
+    await expect.element(control("notes-search")).toBeVisible();
+    await control("note-new").click();
+    await expect.element(control("note-title")).toHaveValue("Mirror lake");
+    const maxBody = "🌊".repeat(5_000);
+    await control("note-content").fill(maxBody + "x");
+    await expect.poll(() => control("note-content").element().textContent === maxBody).toBe(true);
     await control("note-content").fill("The diver owes Mara a favor.");
+    await userEvent.keyboard("{Control>}a{/Control}");
+    await control("note-format-bold").click();
     await control("note-create").click();
     await expect.element(control("note-create")).not.toBeInTheDocument();
+    expect(router.currentRoute.value.path).toMatch(/\/notes$/);
+    await expect.element(control("notes-results")).toBeVisible();
     await control("notes-search").fill("DIVER");
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
     const entry = (await notesApi.list()).find((record) => record.title === "Mirror lake")!;
+    expect(entry.content.ops).toContainEqual({
+      insert: "The diver owes Mara a favor.",
+      attributes: { bold: true },
+    });
+    expect(
+      control("open-note-" + entry.id)
+        .element()
+        .closest("li")
+        ?.querySelector("strong")?.textContent,
+    ).toBe("The diver owes Mara a favor.");
     await control("open-note-" + entry.id).click();
     await control("note-content").fill("Meet at the salt tower.");
     await control("notes-results").click();

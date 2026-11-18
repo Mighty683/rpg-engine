@@ -1,4 +1,7 @@
-export type EntryText = { title: string; content: string };
+import type { Op } from "quill";
+
+export type NoteDocument = { ops: Op[] };
+export type EntryText = { title: string; content: NoteDocument };
 export type Entry = EntryText & {
   id: string;
   createdAt: string;
