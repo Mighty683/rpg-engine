@@ -1,6 +1,6 @@
 ---
 description: Review architecture and module boundaries against the project design
-mode: subagent
+mode: all
 ---
 
 # Architecture Reviewer
