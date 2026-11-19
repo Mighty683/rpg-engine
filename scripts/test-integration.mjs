@@ -1,41 +1,129 @@
-import { spawn } from "node:child_process";
-import { globSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { globSync, readFileSync } from "node:fs";
 import { constants } from "node:os";
-import { PostgreSqlContainer } from "@testcontainers/postgresql";
 
-let child;
-let interrupted;
+const containerName = `rpg-integration-${randomUUID().slice(0, 8)}`;
+
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
-    interrupted = 128 + constants.signals[signal];
-    child?.kill(signal);
+    podman(["rm", "-f", "-t", "0", containerName]);
+    process.exit(128 + constants.signals[signal]);
+  });
+}
+
+function podman(args, options) {
+  return spawnSync("podman", args, { encoding: "utf8", ...options });
+}
+
+function run(command, args, env) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { env, stdio: "inherit" });
+    child.once("error", reject);
+    child.once("close", resolve);
   });
 }
 
 async function startPostgres() {
   console.log("Starting disposable PostgreSQL 17 for integration tests...");
-  try {
-    return await new PostgreSqlContainer("postgres:17").start();
-  } catch (cause) {
+  const started = podman([
+    "run",
+    "-d",
+    "--rm",
+    "--name",
+    containerName,
+    "-e",
+    "POSTGRES_USER=test",
+    "-e",
+    "POSTGRES_PASSWORD=test",
+    "-e",
+    "POSTGRES_DB=test",
+    "-p",
+    "127.0.0.1::5432",
+    "docker.io/library/postgres:17",
+  ]);
+  if (started.error?.code === "ENOENT") {
     throw new Error(
-      "Could not start test PostgreSQL. Check that Docker or Podman is running and accessible.",
-      { cause },
+      "podman not found. Install Podman: https://podman.io/getting-started/installation",
     );
   }
-}
-
-async function stopPostgres(postgres) {
-  const options = { timeout: 10_000 };
-  try {
-    await postgres.stop(options);
-  } catch (error) {
-    if (error.statusCode !== 500) throw error;
-    // The runtime can fail removal after it has already stopped PostgreSQL.
-    await postgres.stop(options);
+  if (started.status !== 0) {
+    throw new Error(`Could not start test PostgreSQL: ${started.stderr}`);
   }
+  const deadline = Date.now() + 60_000;
+  let ready = false;
+  while (Date.now() < deadline) {
+    if (podman(["exec", containerName, "pg_isready", "-U", "test", "-d", "test"]).status === 0) {
+      ready = true;
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  if (!ready) {
+    const logs = podman(["logs", containerName]);
+    throw new Error(
+      `PostgreSQL did not become ready within 60s:\n${logs.stdout ?? ""}${logs.stderr ?? ""}`,
+    );
+  }
+  const port = podman(["port", containerName, "5432"]).stdout?.trim().split("\n")[0];
+  const host = port?.split(":").slice(-2).join(":");
+  if (!host) {
+    throw new Error(
+      `Could not read mapped PostgreSQL port: ${podman(["logs", containerName]).stdout}`,
+    );
+  }
+  return `postgresql://test:test@${host}/test`;
 }
 
-async function runSuites(connectionString) {
+function stopPostgres() {
+  podman(["rm", "-f", "-t", "0", containerName]);
+}
+
+function runBrowserSuite(containerized, env) {
+  if (!containerized) {
+    return run("pnpm", ["--filter", "@rpg-engine/tests", "test", "--run"], env);
+  }
+  // The browser suite runs in the official Playwright image: no local Chromium install needed,
+  // and Chromium's sandbox works where unprivileged user namespaces are restricted (e.g. Ubuntu 24.04).
+  // --maxWorkers=2: 8-way parallel cold Vite transforms exceed the 8s page.goto budget on slower machines.
+  const playwrightVersion = JSON.parse(
+    readFileSync(new URL("../packages/tests/package.json", import.meta.url), "utf8"),
+  ).devDependencies.playwright;
+  const root = process.cwd();
+  return run(
+    "podman",
+    [
+      "run",
+      "--rm",
+      "--userns=keep-id",
+      "--network",
+      "host",
+      "--shm-size",
+      "512m",
+      "-v",
+      `${root}:${root}`,
+      "-w",
+      `${root}/packages/tests`,
+      "-e",
+      `TEST_DATABASE_URL=postgresql://test:test@127.0.0.1:${portFrom(env.TEST_DATABASE_URL)}/test`,
+      "-e",
+      "PLAYWRIGHT_BROWSERS_PATH=/ms-playwright",
+      `mcr.microsoft.com/playwright:v${playwrightVersion}-noble`,
+      "./node_modules/.bin/vitest",
+      "--config",
+      "vitest.config.ts",
+      "--run",
+      "--maxWorkers=2",
+    ],
+    env,
+  );
+}
+
+function portFrom(connectionString) {
+  return new URL(connectionString).port;
+}
+
+async function runSuites(connectionString, containerized) {
   const env = { ...process.env, TEST_DATABASE_URL: connectionString };
   const commands = [
     [
@@ -47,28 +135,26 @@ async function runSuites(connectionString) {
       ...globSync("packages/backend/src/**/*.integration.test.ts").sort(),
     ],
     ["--filter", "@rpg-engine/tests", "test:api", "--run"],
-    ["--filter", "@rpg-engine/tests", "test", "--run"],
   ];
 
   for (const args of commands) {
-    if (interrupted) return interrupted;
-    const exitCode = await new Promise((resolve, reject) => {
-      child = spawn("pnpm", args, { env, stdio: "inherit" });
-      child.once("error", reject);
-      child.once("close", (code, signal) => {
-        child = undefined;
-        resolve(code ?? 128 + constants.signals[signal]);
-      });
-    });
-    if (exitCode) return exitCode;
+    const exitCode = await run("pnpm", args, env);
+    if (exitCode !== 0) return exitCode;
   }
-  return 0;
+  return runBrowserSuite(containerized, env);
 }
 
-const postgres = await startPostgres();
+let exitCode;
+const provided = process.env.TEST_DATABASE_URL;
 try {
-  process.exitCode = await runSuites(postgres.getConnectionUri());
+  if (provided) console.log("Using provided TEST_DATABASE_URL.");
+  const connectionString = provided ?? (await startPostgres());
+  exitCode = await runSuites(connectionString, provided === undefined);
+} catch (error) {
+  console.error(error.message ?? error);
+  exitCode = 1;
 } finally {
-  await stopPostgres(postgres);
-  if (interrupted) process.exitCode = interrupted;
+  if (!provided) stopPostgres();
 }
+
+process.exitCode = exitCode;

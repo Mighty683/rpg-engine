@@ -83,7 +83,7 @@ The named volume preserves data across container recreation. PostgreSQL initiali
 - Install Chromium for browser tests: `pnpm --filter @rpg-engine/tests exec playwright install chromium`.
 - Run frontend component tests: `pnpm --filter @rpg-engine/frontend test:browser`. These mock the API and need no backend.
 
-Run `pnpm test:integration` for backend PostgreSQL tests, cross-module API tests, and browser end-to-end tests. Testcontainers starts one disposable PostgreSQL 17 container and removes it afterward. CI uses the same Testcontainers setup. For local runs, start Docker or [configure Podman for Testcontainers](https://node.testcontainers.org/supported-container-runtimes/#podman).
+Run `pnpm test:integration` for backend PostgreSQL tests, cross-module API tests, and browser end-to-end tests. The script starts one disposable PostgreSQL 17 container through the Podman CLI — the only required container tool — and removes it afterward. The browser suite runs inside the official Playwright image (`mcr.microsoft.com/playwright:v{playwright}-noble`, pulled on first run), so no local Chromium install is needed and the suite works on hosts that restrict unprivileged user namespaces. If `TEST_DATABASE_URL` is already set, the script reuses it and runs the browser suite on the host instead; CI uses this with a GitHub Actions `postgres:17` service container.
 
 ### Mutation testing
 

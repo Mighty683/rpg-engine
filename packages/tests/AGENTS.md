@@ -1,6 +1,6 @@
 # Cross-module tests
 
-- Place cross-module adversarial HTTP API integration tests in `src/api`; use Vitest and test authorization bypasses and persisted effects. Run them with `pnpm test:integration`, which provisions PostgreSQL through Testcontainers.
+- Place cross-module adversarial HTTP API integration tests in `src/api`; use Vitest and test authorization bypasses and persisted effects. Run them with `pnpm test:integration`, which provisions PostgreSQL through the Podman CLI (or reuses `TEST_DATABASE_URL` when set, as CI does with a service container) and runs the browser suite inside the official Playwright Podman image locally.
 - Keep Gherkin browser tests focused on complete user journeys through the frontend and backend; avoid duplicating unit-level cases or adversarial API cases.
 - Describe browser scenarios in Gherkin feature files and implement reusable step definitions with Cucumber.js, run through Vitest.
 - Use page objects to separate selectors and UI interactions from step definitions. Steps call page objects and assert outcomes; page objects own selectors and UI interactions.
