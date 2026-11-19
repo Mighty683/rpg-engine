@@ -4,7 +4,7 @@ A web application for tabletop RPGs.
 
 ## Development
 
-Requirements: Node.js 22.18 or newer, pnpm (version in `package.json`), and PostgreSQL.
+Requirements: Node.js 26 or newer, pnpm (version in `package.json`), and PostgreSQL.
 
 1. Install dependencies and configure the backend:
 
