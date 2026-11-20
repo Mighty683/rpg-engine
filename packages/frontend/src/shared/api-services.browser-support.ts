@@ -4,6 +4,7 @@ import { classCatalog } from "../modules/class-management/api";
 import type { ApiServices } from "./api-services";
 import { authApi } from "../modules/auth/api";
 import { api as characters } from "../modules/characters/api";
+import { gameNotesApi } from "../modules/game-notes/api";
 import { api as gameTable } from "../modules/game-table/api";
 import { api as npcs } from "../modules/npcs/api";
 import { api as games } from "../modules/games/api";
@@ -15,6 +16,7 @@ export const browserApiServices: ApiServices = {
   auth: authApi,
   characters,
   gameTable,
+  gameNotes: gameNotesApi,
   npcs,
   classCatalog,
   games,

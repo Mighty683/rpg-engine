@@ -19,7 +19,7 @@ const appOrigin = "http://localhost:5173";
 const schema = `permissions_test_${randomUUID().replaceAll("-", "")}`;
 const admin = url ? new pg.Pool({ connectionString: url }) : null;
 const pool = url
-  ? new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` })
+  ? new pg.Pool({ connectionString: url, options: `-c search_path=${schema},public` })
   : null;
 let server: Server;
 let origin: string;

@@ -24,8 +24,16 @@ describe("migration runner", () => {
     const admin = new pg.Pool({ connectionString });
     const schema = `migration_${randomUUID().replaceAll("-", "")}`;
     await admin.query(`CREATE SCHEMA "${schema}"`);
-    const first = new pg.Pool({ connectionString, max: 1, options: `-c search_path=${schema}` });
-    const second = new pg.Pool({ connectionString, max: 1, options: `-c search_path=${schema}` });
+    const first = new pg.Pool({
+      connectionString,
+      max: 1,
+      options: `-c search_path=${schema},public`,
+    });
+    const second = new pg.Pool({
+      connectionString,
+      max: 1,
+      options: `-c search_path=${schema},public`,
+    });
     try {
       await Promise.all([applyMigrations(first), applyMigrations(second)]);
       const result = await first.query(

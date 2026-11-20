@@ -4,6 +4,14 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
+    "lib": [
+      // ES2024 built-ins (String.prototype.isWellFormed) keep the client note
+      // document mirror identical to the backend's canonical helper, which
+      // the parity test imports directly; all supported browsers ship them.
+      "ES2024",
+      "DOM",
+      "DOM.Iterable"
+    ],
 
     /* Linting */
     "noUnusedLocals": true,

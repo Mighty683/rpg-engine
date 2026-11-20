@@ -35,7 +35,7 @@ export default async function setup(project: TestProject) {
   try {
     await admin.query(`CREATE SCHEMA "${schema}"`);
     schemaCreated = true;
-    pool = new pg.Pool({ connectionString, options: `-c search_path=${schema}` });
+    pool = new pg.Pool({ connectionString, options: `-c search_path=${schema},public` });
     await applyMigrations(pool);
     backend = createApp(databaseFromPool(pool)).listen(0, "127.0.0.1");
     await new Promise<void>((resolve, reject) => {

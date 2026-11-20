@@ -77,13 +77,19 @@ The development URL is `postgresql://rpg_engine:local_dev_password@localhost:543
 
 The named volume preserves data across container recreation. PostgreSQL initialization variables apply only to an empty volume.
 
+The image is the official PostgreSQL 17 base with the pgvector extension available. Create the extension once per database with a privileged role before applying the passage migration:
+
+```sh
+podman exec rpg-engine-postgres psql -U rpg_engine -d rpg_engine -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+```
+
 ## Testing
 
 - Run unit and API tests: `pnpm exec vp test`.
 - Install Chromium for browser tests: `pnpm --filter @rpg-engine/tests exec playwright install chromium`.
 - Run frontend component tests: `pnpm --filter @rpg-engine/frontend test:browser`. These mock the API and need no backend.
 
-Run `pnpm test:integration` for backend PostgreSQL tests, cross-module API tests, and browser end-to-end tests. The script starts one disposable PostgreSQL 17 container through the Podman CLI — the only required container tool — and removes it afterward. The browser suite runs inside the official Playwright image (`mcr.microsoft.com/playwright:v{playwright}-noble`, pulled on first run), so no local Chromium install is needed and the suite works on hosts that restrict unprivileged user namespaces. If `TEST_DATABASE_URL` is already set, the script reuses it and runs the browser suite on the host instead; CI uses this with a GitHub Actions `postgres:17` service container.
+Run `pnpm test:integration` for backend PostgreSQL tests, cross-module API tests, and browser end-to-end tests. The script starts a disposable `pgvector/pgvector:pg17` container through Podman, enables the `vector` extension in `public`, and removes the container afterward. The browser suite runs inside the official Playwright image (`mcr.microsoft.com/playwright:v{playwright}-noble`, pulled on first run), so no local Chromium install is needed and the suite works on hosts that restrict unprivileged user namespaces. If `TEST_DATABASE_URL` is set, the script reuses that disposable database and runs the browser suite on the host. Enable the extension there first with `CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;`, as CI does for its service container.
 
 ### Mutation testing
 

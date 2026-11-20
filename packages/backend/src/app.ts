@@ -3,6 +3,7 @@ import { createEditTools } from "./application/agent-edits.ts";
 import { createRollTools } from "./application/agent-rolls.ts";
 import { createAgentRuntime } from "./application/agent-turn.ts";
 import { createMistralProvider } from "./modules/agent/mistral.ts";
+import { createMistralEmbeddings } from "./modules/agent/mistral-embeddings.ts";
 import { agentController, disabledAgent } from "./modules/agent/controller.ts";
 import { createAgentHistory } from "./modules/agent/history.ts";
 import { createGameClassEdits } from "./application/game-class-edits.ts";
@@ -37,6 +38,11 @@ import { createGamesService } from "./modules/games/factory.ts";
 import { createCharactersService } from "./modules/characters/factory.ts";
 import { createNpcsService } from "./modules/npcs/service.ts";
 import { npcsController } from "./modules/npcs/controller.ts";
+import { createGameNotesService } from "./modules/game-notes/service.ts";
+import { gameNotesController } from "./modules/game-notes/controller.ts";
+import { createNoteIndexingScheduler } from "./modules/game-notes/indexer.ts";
+import { createNotePassageStore } from "./modules/game-notes/passage-store.ts";
+import { createGameNotesRetrieval } from "./modules/game-notes/retrieval.ts";
 import { createThrowsService } from "./modules/throws/factory.ts";
 import { createMembershipsService } from "./modules/players/factory.ts";
 import { createInvitationsService } from "./modules/invitations/factory.ts";
@@ -134,6 +140,26 @@ export function createApplication(
     createMembershipOwnership,
   );
   const npcs = createNpcsService({ database, events, gameAccessFor: createGameAccessService });
+  const noteEmbeddings =
+    options.noteEmbeddings ??
+    (config.agent?.enabled && config.agent.apiKey
+      ? createMistralEmbeddings(config.agent.embeddingModel, config.agent.apiKey)
+      : null);
+  const noteIndexing = noteEmbeddings
+    ? createNoteIndexingScheduler(createNotePassageStore(database), noteEmbeddings)
+    : null;
+  const gameNotes = createGameNotesService({
+    database,
+    gameAccessFor: createGameAccessService,
+    onTextCommitted: noteIndexing
+      ? (gameId, entryId) => noteIndexing.schedule(gameId, entryId)
+      : undefined,
+  });
+  const gameNotesRetrieval = createGameNotesRetrieval({
+    database,
+    gameAccessFor: createGameAccessService,
+    embeddings: noteEmbeddings,
+  });
   const throws = createThrowsService(database, events, createGameAccessService, (tx) => ({
     characters: createCharacterRollReader(tx),
     npcs: createNpcRollReader(tx),
@@ -165,6 +191,7 @@ export function createApplication(
         characters,
         npcs,
         throws,
+        notes: gameNotesRetrieval,
         history: agentHistory,
         provider,
         proposals: (context) => [...rollTools(context), ...createEditTools(context)],
@@ -172,6 +199,8 @@ export function createApplication(
         countTurn: (id) => agentRate.increment(id),
       })
     : disabledAgent;
+  if (noteIndexing)
+    noteIndexing.sweep().catch(() => console.warn("Game notes startup sweep failed"));
   const routes = Application()
     .prefix("api")
     .registerControllers(
@@ -189,6 +218,7 @@ export function createApplication(
       partyController({ auth, characters }),
       throwsController({ auth, games, throws }),
       npcsController({ auth, games, npcs }),
+      gameNotesController({ auth, games, notes: gameNotes }),
       membershipsController({ auth, games, memberships }),
       activeSelectionController({ auth, games, memberships }),
       gameInvitationsController({ auth, games, invitations }),
@@ -202,6 +232,7 @@ export function createApplication(
     app,
     dispose: () => {
       shutdown.abort();
+      noteIndexing?.dispose();
       events.dispose();
     },
   };

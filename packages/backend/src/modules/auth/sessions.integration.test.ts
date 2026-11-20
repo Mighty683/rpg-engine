@@ -12,7 +12,7 @@ const url = process.env.TEST_DATABASE_URL;
 const schema = `auth_test_${randomUUID().replaceAll("-", "")}`;
 const admin = url ? new pg.Pool({ connectionString: url }) : null;
 const pool = url
-  ? new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` })
+  ? new pg.Pool({ connectionString: url, options: `-c search_path=${schema},public` })
   : null;
 
 describe.skipIf(!url)("account and session persistence", () => {

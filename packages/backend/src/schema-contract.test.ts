@@ -9,6 +9,7 @@ import * as character from "./modules/characters/schema.ts";
 import { activeCharacterSchema } from "./modules/players/schema.ts";
 import * as invitation from "./modules/invitations/schema.ts";
 import * as npc from "./modules/npcs/schema.ts";
+import * as notes from "./modules/game-notes/contract.ts";
 import * as catalog from "./modules/class-catalog/schema.ts";
 import * as roll from "./modules/throws/schema.ts";
 import { uuidSchema } from "./shared/validation/schema.ts";
@@ -153,6 +154,28 @@ describe("normalized request structural parity", () => {
       request("deleteNpc"),
     );
   });
+  it("covers note documents and request envelopes with 400/422 staging", () => {
+    equal(notes.noteTitleSchema, schema("NoteTitle"));
+    equal(notes.noteContentSchema, schema("NoteContent"));
+    equal(
+      compose(notes.noteCreateSchema, { title: notes.noteTitleSchema }),
+      request("createGameNote"),
+    );
+    equal(
+      compose(notes.noteUpdateSchema, {
+        changes: compose(notes.noteUpdateChangesSchema, { title: notes.noteTitleSchema }),
+      }),
+      request("updateGameNote"),
+    );
+    const parameters = operation("listGameNotes").parameters!;
+    expect(parameters.find((parameter) => parameter.name === "q")!.schema).toEqual({
+      type: "string",
+    });
+    expect(parameters.find((parameter) => parameter.name === "cursor")!.schema).toEqual({
+      type: "string",
+      minLength: 1,
+    });
+  });
   const shared = { modifier: roll.int32Schema, note: roll.noteSchema };
   const attribute = {
     expectedRevision: roll.revisionSchema,
@@ -241,6 +264,7 @@ describe("normalized request structural parity", () => {
       "throwId",
       "membershipId",
       "invitationId",
+      "entryId",
     ])
       equal(uuidSchema, document.components.parameters[name]!.schema);
   });

@@ -8,6 +8,7 @@ import AgentRollCard from "./AgentRollCard.vue";
 import AgentRollResult from "./AgentRollResult.vue";
 import AgentEditController from "./AgentEditController.vue";
 import AgentPanel from "./AgentPanel.vue";
+import NotesDrawerPanel from "../game-notes/NotesDrawerPanel.vue";
 import { useAgentChat } from "./useAgentChat";
 
 const props = defineProps<{ gameId: string; throwsHint: number; npcsHint?: number }>();
@@ -60,8 +61,12 @@ async function makeRoll(privateRoll: boolean) {
     :throws-hint="throwsHint"
     :npcs-hint="npcsHint"
     :extra-edge-tab="{ id: 'agent', label: 'Agent', color: 'neutral' }"
+    :panel-tab="{ id: 'notes', label: 'Game notes', color: 'neutral' }"
     @agent-open="setOpen"
   >
+    <template #edge-panel>
+      <NotesDrawerPanel :game-id="gameId" />
+    </template>
     <template #extra-edge-panel="{ party, npcActors, partyReady, partyLoading, saveReviewedNpc }">
       <AgentPanel
         v-model:draft="draft"

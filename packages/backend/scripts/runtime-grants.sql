@@ -19,5 +19,9 @@ GRANT SELECT, INSERT, DELETE ON :"app_schema".character_class_levels, :"app_sche
 GRANT SELECT, INSERT, UPDATE, DELETE ON :"app_schema".npcs TO :"app_role";
 GRANT SELECT, INSERT, DELETE ON :"app_schema".npc_attacks TO :"app_role";
 GRANT SELECT, INSERT ON :"app_schema".npc_create_requests, :"app_schema".agent_turns TO :"app_role";
+-- Entries have no DELETE grant: sharing and deletion stay outside the notes feature.
+GRANT SELECT, INSERT, UPDATE ON :"app_schema".game_note_entries TO :"app_role";
+-- Passage sets are replaced by transactional DELETE + INSERT; stored vectors are never updated.
+GRANT SELECT, INSERT, DELETE ON :"app_schema".game_note_passages TO :"app_role";
 GRANT USAGE ON SEQUENCE :"app_schema".agent_turns_sequence_seq TO :"app_role";
 COMMIT;

@@ -4,6 +4,7 @@ import type { api as npcApi } from "../modules/npcs/api";
 import type { Ref } from "vue";
 import type { authApi } from "../modules/auth/api";
 import type { api as charactersApi } from "../modules/characters/api";
+import type { gameNotesApi } from "../modules/game-notes/api";
 import type { api as gameTableApi } from "../modules/game-table/api";
 import type { api as gamesApi } from "../modules/games/api";
 import type { invitationApi } from "../modules/invitations/api";
@@ -16,6 +17,7 @@ export interface ApiServices {
   classCatalog: typeof classCatalog;
   characters: typeof charactersApi;
   gameTable: typeof gameTableApi;
+  gameNotes: typeof gameNotesApi;
   npcs: typeof npcApi;
   games: typeof gamesApi;
   invitations: typeof invitationApi;

@@ -20,6 +20,8 @@ export const agentToolsSchema: InputSchema<AgentToolSummary[]> = {
           "read_character",
           "read_npc",
           "read_throws",
+          "search_notes",
+          "get_notes",
           "prepare_throw",
           "prepare_character_edit",
           "prepare_npc_edit",

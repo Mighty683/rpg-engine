@@ -19,6 +19,7 @@ tags:
   - { name: Games, description: Games accessible to the signed-in account. }
   - { name: Characters, description: "Character sheets, control, and the active party." }
   - { name: NPCs, description: "NPC profiles, visibility, and attacks." }
+  - { name: Notes, description: "The GM's private per-game notebook." }
   - { name: Throws, description: Resolved dice rolls and history. }
   - { name: Memberships, description: Game membership and active character selection. }
   - { name: Invitations, description: "Manage, preview, and accept invitation links." }
@@ -1115,6 +1116,172 @@ paths:
         "429": { $ref: "#/components/responses/RateLimited" }
         "503": { $ref: "#/components/responses/DatabaseUnavailable" }
         "500": { $ref: "#/components/responses/ServerError" }
+  /api/games/{gameId}/notes:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+    get:
+      operationId: listGameNotes
+      tags:
+        - Notes
+      summary: List a page of game notes
+      description:
+        Current GM only. Match the trimmed query case-insensitively as a literal substring of
+        the title or the visible body text before pagination. Blank or missing queries browse all
+        entries ordered by updatedAt descending then ID ascending, up to 20 per page, with a null
+        nextCursor on the final page. Cursors are scoped to the game and the query.
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Literal search text; blank or missing lists the whole notebook.
+        - name: cursor
+          in: query
+          schema: { type: string, minLength: 1 }
+          description: Opaque nextCursor from the preceding page of the same game and query.
+      responses:
+        "200":
+          description: Page of entries. A null nextCursor marks the final page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotePage" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+        "503":
+          $ref: "#/components/responses/DatabaseUnavailable"
+    post:
+      operationId: createGameNote
+      tags:
+        - Notes
+      summary: Create a note with a client-generated ID
+      description:
+        Current GM only. Entry IDs are unique per game; a duplicate ID returns 409 without
+        changing the existing note. After an uncertain response, the client can read the entry by
+        ID to verify whether the create persisted.
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateNote" }
+            examples:
+              createEntry:
+                summary: Create with a client-generated entry ID
+                value:
+                  id: "f34dd6ea-cdfe-4ee5-9cc8-39e5fc68a5c1"
+                  title: "The ferryman's price"
+                  content: { ops: [{ insert: "\n" }] }
+      responses:
+        "201":
+          description: Created entry at revision 1.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NoteResult" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/ServerError"
+        "503":
+          $ref: "#/components/responses/DatabaseUnavailable"
+  /api/games/{gameId}/notes/{entryId}:
+    parameters:
+      - { $ref: "#/components/parameters/gameId" }
+      - { $ref: "#/components/parameters/entryId" }
+    get:
+      operationId: getGameNote
+      tags:
+        - Notes
+      summary: Read a saved note by ID
+      description: Current GM only. Returns the stored normalized document regardless of any active search or page.
+      responses:
+        "200":
+          description: The current saved entry.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NoteResult" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+        "503":
+          $ref: "#/components/responses/DatabaseUnavailable"
+    patch:
+      operationId: updateGameNote
+      tags:
+        - Notes
+      summary: Save note changes at the expected revision
+      description:
+        Current GM only. Supplied content replaces the full document at the expected revision;
+        a stale revision returns 409 with the row unchanged. A normalized no-op returns the
+        entry with updatedAt and revision unchanged, and createdAt never changes.
+      security:
+        - { sessionCookie: [], csrfToken: [] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateNote" }
+            examples:
+              retitleNote:
+                summary: Rename an entry at the current revision
+                value:
+                  expectedRevision: 2
+                  changes:
+                    title: "The ferryman's price"
+      responses:
+        "200":
+          description: The saved entry.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NoteResult" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/ServerError"
+        "503":
+          $ref: "#/components/responses/DatabaseUnavailable"
   /api/games/{gameId}/throws:
     parameters:
       - { $ref: "#/components/parameters/gameId" }
@@ -1666,6 +1833,11 @@ components:
       schema: { $ref: "#/components/schemas/Id" }
     npcId:
       name: npcId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Id" }
+    entryId:
+      name: entryId
       in: path
       required: true
       schema: { $ref: "#/components/schemas/Id" }
@@ -3037,6 +3209,93 @@ components:
         - { $ref: "#/components/schemas/NpcVisible" }
         - { $ref: "#/components/schemas/NpcKnown" }
         - { $ref: "#/components/schemas/NpcGm" }
+    NoteTitle:
+      type: string
+      minLength: 1
+      maxLength: 160
+      description: Trim before checking the length. Repeated titles are allowed.
+    NoteContent:
+      type: object
+      additionalProperties: false
+      required: [ops]
+      description: >-
+        Full Quill document Delta. Unknown fields, unsupported operations, and unsupported formats
+        return 400. Invalid attribute placement, a missing terminal newline, or exceeded document
+        limits return 422. Limit visible body text to 5,000 Unicode code points excluding the
+        terminal newline and compact normalized JSON to 64 KiB. Normalization removes empty
+        attribute objects and merges adjacent inserts with identical attributes.
+      examples:
+        - ops: [{ insert: "\n" }]
+      properties:
+        ops:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/NoteInsert" }
+    NoteInsert:
+      type: object
+      additionalProperties: false
+      required: [insert]
+      properties:
+        insert: { type: string, minLength: 1 }
+        attributes:
+          type: object
+          additionalProperties: false
+          description: Inline attributes apply only to text. Header and list apply only to newlines and are mutually exclusive.
+          properties:
+            bold: { type: boolean, const: true }
+            italic: { type: boolean, const: true }
+            underline: { type: boolean, const: true }
+            strike: { type: boolean, const: true }
+            header: { type: integer, enum: [1, 2, 3] }
+            list: { type: string, enum: [bullet, ordered] }
+    NoteEntry:
+      type: object
+      additionalProperties: false
+      required: [id, title, content, createdAt, updatedAt, revision]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        title: { $ref: "#/components/schemas/NoteTitle" }
+        content: { $ref: "#/components/schemas/NoteContent" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        revision: { $ref: "#/components/schemas/Revision" }
+    CreateNote:
+      type: object
+      additionalProperties: false
+      required: [id, title, content]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        title: { $ref: "#/components/schemas/NoteTitle" }
+        content: { $ref: "#/components/schemas/NoteContent" }
+    UpdateNote:
+      type: object
+      additionalProperties: false
+      required: [expectedRevision, changes]
+      properties:
+        expectedRevision: { $ref: "#/components/schemas/Revision" }
+        changes:
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            title: { $ref: "#/components/schemas/NoteTitle" }
+            content: { $ref: "#/components/schemas/NoteContent" }
+    NoteResult:
+      type: object
+      additionalProperties: false
+      required: [entry]
+      properties:
+        entry: { $ref: "#/components/schemas/NoteEntry" }
+    NotePage:
+      type: object
+      additionalProperties: false
+      required: [entries, nextCursor]
+      properties:
+        entries:
+          type: array
+          maxItems: 20
+          items: { $ref: "#/components/schemas/NoteEntry" }
+        nextCursor: { type: [string, "null"], minLength: 1 }
     AttributeThrowSetup:
       type: object
       required:

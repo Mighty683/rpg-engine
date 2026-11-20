@@ -3,11 +3,14 @@ import type { GameActor } from "../games/types.ts";
 import type { CharacterChanges, CharactersService, PartyCharacter } from "../characters/types.ts";
 import type { NpcWrite, NpcRecord, NpcsService } from "../npcs/types.ts";
 import type { CreateThrowInput, ThrowRecord, ThrowsService } from "../throws/types.ts";
+import type { GameNotesRetrieval } from "../game-notes/types.ts";
 
 export type AgentToolName =
   | "read_character"
   | "read_npc"
   | "read_throws"
+  | "search_notes"
+  | "get_notes"
   | "prepare_throw"
   | "prepare_character_edit"
   | "prepare_npc_edit";
@@ -100,6 +103,8 @@ export interface AgentReadDependencies {
   characters: CharactersService;
   npcs: NpcsService;
   throws: ThrowsService;
+  /** Read-only GM notebook retrieval for the search_notes and get_notes tools. */
+  notes: GameNotesRetrieval;
 }
 export interface AgentToolContext extends AgentRunContext, AgentReadDependencies {
   message: string;

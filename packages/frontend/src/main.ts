@@ -16,6 +16,8 @@ import { apiServicesKey } from "./shared/api-services";
 import { authApi } from "./modules/auth/api";
 import { api as characters } from "./modules/characters/api";
 import { api as gameTable } from "./modules/game-table/api";
+import { gameNotesApi } from "./modules/game-notes/api";
+import GameNotesView from "./modules/game-notes/GameNotesView.vue";
 import { api as npcs } from "./modules/npcs/api";
 import { api as games } from "./modules/games/api";
 import { invitationApi } from "./modules/invitations/api";
@@ -28,6 +30,8 @@ const router = createRouter({
     { path: "/library/class", component: ClassCatalogView },
     { path: "/games/:gameId/classes", component: ClassCatalogView },
     { path: "/games/:gameId", component: GameView },
+    { path: "/games/:gameId/notes", component: GameNotesView },
+    { path: "/games/:gameId/notes/new", component: GameNotesView },
     { path: "/games/:gameId/characters/:characterId", component: CharacterView },
     { path: "/invite/:token", component: InvitationView },
   ],
@@ -42,6 +46,7 @@ createApp(App)
     auth: authApi,
     characters,
     gameTable,
+    gameNotes: gameNotesApi,
     npcs,
     classCatalog,
     games,

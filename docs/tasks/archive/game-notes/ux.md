@@ -8,20 +8,20 @@
 
 The **Agent** can use saved entries as reference when the GM asks a question in the current game's private chat. Planned retrieval-augmented generation (RAG) finds relevant passages by meaning, not just by exact words. **Search all entries** remains a literal text search.
 
-The [provisional GM persona](../../research/personas/game-master.md) describes a GM keeping play moving. A table drawer gives the GM quick access to recent entries during play. This is a design assumption from simulated research. GM-only visibility and per-game search are product assumptions for review.
+The [provisional GM persona](../../../research/personas/game-master.md) describes a GM keeping play moving. A table drawer gives the GM quick access to recent entries during play. This is a design assumption from simulated research. GM-only visibility and per-game search are product assumptions for review.
 
 ## Actions by role
 
-| Role | Action | Screen or control | Scope |
-| --- | --- | --- | --- |
-| GM | Capture an entry | New entry on the notes screen | Current game |
-| GM | Browse entries newest first | Game notes EdgeTab opens a drawer over the table | Current game; load older entries on scroll |
-| GM | Search the notebook | Search all entries in the drawer | All titles and content in this game |
-| GM | Read or revise an entry | Select a result, edit Title or Content | Selected entry |
-| GM | Ask the Agent about the notebook | Existing Agent chat on the game table | Read-only retrieval from saved entries in the current game |
-| GM | Resume play | Close the table drawer or follow the named game link | Return to the same table |
-| Player | Play at the table | Existing table controls | GM notes and their contents are private |
-| GM | Share or delete entries | Deferred | Outside this task |
+| Role   | Action                           | Screen or control                                    | Scope                                                      |
+| ------ | -------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| GM     | Capture an entry                 | New entry on the notes screen                        | Current game                                               |
+| GM     | Browse entries newest first      | Game notes EdgeTab opens a drawer over the table     | Current game; load older entries on scroll                 |
+| GM     | Search the notebook              | Search all entries in the drawer                     | All titles and content in this game                        |
+| GM     | Read or revise an entry          | Select a result, edit Title or Content               | Selected entry                                             |
+| GM     | Ask the Agent about the notebook | Existing Agent chat on the game table                | Read-only retrieval from saved entries in the current game |
+| GM     | Resume play                      | Close the table drawer or follow the named game link | Return to the same table                                   |
+| Player | Play at the table                | Existing table controls                              | GM notes and their contents are private                    |
+| GM     | Share or delete entries          | Deferred                                             | Outside this task                                          |
 
 ## Screen map
 
@@ -114,7 +114,7 @@ sequenceDiagram
 
 ## Prototype review
 
-Open **Prototypes / Game notes** in Histoire with `pnpm --filter @rpg-engine/frontend prototypes:dev`. The [story](../../../packages/frontend/prototypes/game-notes/GameNotes.story.vue) mounts the existing GameTable and uses the shared MSW worker. In The Lantern Road, select the Game notes EdgeTab, read a recent entry card, choose Search all entries, capture an entry, search for a phrase inside the content, edit it and return to results. Try “compass” for a seeded match and “observatory” for an empty result.
+Open **Prototypes / Game notes** in Histoire with `pnpm --filter @rpg-engine/frontend prototypes:dev`. The [story](../../../../packages/frontend/prototypes/game-notes/GameNotes.story.vue) mounts the existing GameTable and uses the shared MSW worker. In The Lantern Road, select the Game notes EdgeTab, read a recent entry card, choose Search all entries, capture an entry, search for a phrase inside the content, edit it and return to results. Try “compass” for a seeded match and “observatory” for an empty result.
 
 Review at 390 × 844 and 1280 × 800. The gallery simulates the screens locally and resets fixtures on reload.
 
@@ -124,4 +124,4 @@ The gallery currently saves edits on field exit and does not load more entries o
 
 The Backend scenario control resets the fixtures. Choose Empty for first use, Loading for delayed reads, or Error for failed requests. Return to Default to restore the seeded table.
 
-On 2026-11-17 the prototype type-check and gallery build passed. The [Chromium regression](../../../packages/frontend/prototypes/game-notes/GameNotes.browser.ts) passed at both review sizes. It covers entry creation on the notes screen after opening and dismissing the table drawer, reopening it and choosing Search all entries, case-insensitive content search, a persisted edit through shared MSW, result updates and return to the party. A separate Chromium check opened the built gallery and found the seeded ferryman entry by searching for “compass”.
+On 2026-11-17 the prototype type-check and gallery build passed. The [Chromium regression](../../../../packages/frontend/prototypes/game-notes/GameNotes.browser.ts) passed at both review sizes. It covers entry creation on the notes screen after opening and dismissing the table drawer, reopening it and choosing Search all entries, case-insensitive content search, a persisted edit through shared MSW, result updates and return to the party. A separate Chromium check opened the built gallery and found the seeded ferryman entry by searching for “compass”.

@@ -36,6 +36,10 @@ export function validateConfiguration(config: Configuration) {
   }
   if (config.agent?.enabled && (!config.agent.apiKey?.trim() || !config.agent.model.trim()))
     throw new Error("Enabled Agent requires MISTRAL_API_KEY and MISTRAL_MODEL");
+  if (config.agent?.enabled && !config.agent.embeddingModel.trim())
+    throw new Error(
+      "MISTRAL_EMBEDDING_MODEL must be a nonempty model name when the Agent is enabled",
+    );
   if (!config.production) return;
   for (const [name, value] of [
     ["CSRF_SECRET", config.csrfSecret],
@@ -62,6 +66,7 @@ export function createConfiguration(env: NodeJS.ProcessEnv = process.env): Confi
     agent: {
       enabled: env.AGENT_ENABLED === "true",
       model: env.MISTRAL_MODEL ?? "mistral-small-2603",
+      embeddingModel: env.MISTRAL_EMBEDDING_MODEL ?? "mistral-embed",
       apiKey: env.MISTRAL_API_KEY,
     },
     production,

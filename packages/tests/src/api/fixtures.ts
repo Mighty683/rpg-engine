@@ -171,7 +171,7 @@ export async function createApiFixture(
     );
   const schema = `${suite.replaceAll(/[^a-z0-9]+/gi, "_")}_test_${randomUUID().replaceAll("-", "")}`;
   const admin = new pg.Pool({ connectionString: url });
-  const pool = new pg.Pool({ connectionString: url, options: `-c search_path=${schema}` });
+  const pool = new pg.Pool({ connectionString: url, options: `-c search_path=${schema},public` });
   vi.stubEnv("INVITATION_SECRET", "integration-test-secret-at-least-32-bytes");
   vi.stubEnv("APP_ORIGIN", options.appOrigin ?? "");
   await admin.query(`CREATE SCHEMA "${schema}"`);

@@ -5,15 +5,19 @@ import { createApplication } from "../../../backend/src/app.ts";
 import { databaseFromPool } from "../../../backend/src/database/client.ts";
 import { createConfiguration } from "../../../backend/src/config.ts";
 import type { AgentProvider } from "../../../backend/src/modules/agent/types.ts";
+import type { NoteEmbeddings } from "../../../backend/src/modules/game-notes/types.ts";
 import { seedPool } from "./seed.ts";
 
 /** Per-scenario backend, using the suite's database and shared Vite asset server.
  * Restart the real application without changing the browser origin or session cookies. */
-export async function startAgentServer(provider?: AgentProvider) {
+export async function startAgentServer(provider?: AgentProvider, noteEmbeddings?: NoteEmbeddings) {
   const frontend = inject("frontendUrl");
   const pool = await seedPool();
   const makeApp = (next?: AgentProvider) =>
-    createApplication(databaseFromPool(pool), createConfiguration({}), { agentProvider: next });
+    createApplication(databaseFromPool(pool), createConfiguration({}), {
+      agentProvider: next,
+      noteEmbeddings,
+    });
   let application = makeApp(provider);
   const server = createServer((req, res) => {
     if (req.url?.startsWith("/api/")) {

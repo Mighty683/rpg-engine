@@ -87,6 +87,10 @@ async function resetDemoDatabase(pool: pg.Pool) {
     await db.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended('public', 0))`);
     await db.execute(sql`DROP SCHEMA public CASCADE`);
     await db.execute(sql`CREATE SCHEMA public`);
+    // Dropping the schema also dropped the pgvector extension installed in it;
+    // recreate it here, before migrations, so the passage migration applies.
+    // This reset path runs as the schema owner on a loopback host only.
+    await db.execute(sql`CREATE EXTENSION IF NOT EXISTS vector`);
   });
   await applyMigrations(pool);
 }

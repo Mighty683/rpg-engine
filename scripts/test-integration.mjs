@@ -25,7 +25,7 @@ function run(command, args, env) {
 }
 
 async function startPostgres() {
-  console.log("Starting disposable PostgreSQL 17 for integration tests...");
+  console.log("Starting disposable PostgreSQL 17 (pgvector image) for integration tests...");
   const started = podman([
     "run",
     "-d",
@@ -40,7 +40,7 @@ async function startPostgres() {
     "POSTGRES_DB=test",
     "-p",
     "127.0.0.1::5432",
-    "docker.io/library/postgres:17",
+    "docker.io/pgvector/pgvector:pg17",
   ]);
   if (started.error?.code === "ENOENT") {
     throw new Error(
@@ -53,7 +53,10 @@ async function startPostgres() {
   const deadline = Date.now() + 60_000;
   let ready = false;
   while (Date.now() < deadline) {
-    if (podman(["exec", containerName, "pg_isready", "-U", "test", "-d", "test"]).status === 0) {
+    if (
+      podman(["exec", containerName, "pg_isready", "-h", "127.0.0.1", "-U", "test", "-d", "test"])
+        .status === 0
+    ) {
       ready = true;
       break;
     }
@@ -64,6 +67,24 @@ async function startPostgres() {
     throw new Error(
       `PostgreSQL did not become ready within 60s:\n${logs.stdout ?? ""}${logs.stderr ?? ""}`,
     );
+  }
+  const extension = podman([
+    "exec",
+    containerName,
+    "psql",
+    "-h",
+    "127.0.0.1",
+    "-U",
+    "test",
+    "-d",
+    "test",
+    "-v",
+    "ON_ERROR_STOP=1",
+    "-c",
+    "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public",
+  ]);
+  if (extension.status !== 0) {
+    throw new Error(`Could not enable pgvector: ${extension.stderr ?? extension.error}`);
   }
   const port = podman(["port", containerName, "5432"]).stdout?.trim().split("\n")[0];
   const host = port?.split(":").slice(-2).join(":");
@@ -80,12 +101,13 @@ function stopPostgres() {
 }
 
 function runBrowserSuite(containerized, env) {
+  // Parallel cold Vite transforms can starve browser navigation and live-update assertions.
+  const browserArgs = ["--run", "--maxWorkers=1"];
   if (!containerized) {
-    return run("pnpm", ["--filter", "@rpg-engine/tests", "test", "--run"], env);
+    return run("pnpm", ["--filter", "@rpg-engine/tests", "test", ...browserArgs], env);
   }
   // The browser suite runs in the official Playwright image: no local Chromium install needed,
   // and Chromium's sandbox works where unprivileged user namespaces are restricted (e.g. Ubuntu 24.04).
-  // --maxWorkers=2: 8-way parallel cold Vite transforms exceed the 8s page.goto budget on slower machines.
   const playwrightVersion = JSON.parse(
     readFileSync(new URL("../packages/tests/package.json", import.meta.url), "utf8"),
   ).devDependencies.playwright;
@@ -112,8 +134,7 @@ function runBrowserSuite(containerized, env) {
       "./node_modules/.bin/vitest",
       "--config",
       "vitest.config.ts",
-      "--run",
-      "--maxWorkers=2",
+      ...browserArgs,
     ],
     env,
   );

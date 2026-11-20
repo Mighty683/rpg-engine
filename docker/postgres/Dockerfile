@@ -1,1 +1,1 @@
-FROM docker.io/library/postgres:17
+FROM docker.io/pgvector/pgvector:pg17

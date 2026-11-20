@@ -34,7 +34,7 @@ export async function seedPool() {
   const schema = inject("databaseSchema") as string;
   return new pg.Pool({
     connectionString: inject("databaseUrl") as string,
-    options: `-c search_path=${schema}`,
+    options: `-c search_path=${schema},public`,
   });
 }
 

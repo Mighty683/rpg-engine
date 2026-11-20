@@ -13,7 +13,7 @@ security:
 paths:
   /api/games/{gameId}/notes:
     parameters:
-      - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
+      - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
     get:
       operationId: listGameNotes
       summary: List a page of game notes
@@ -35,12 +35,22 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/EntryPage" }
-        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
-        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
-        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
-        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
-        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
-        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+        "400":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized,
+          }
+        "403":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "500":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable,
+          }
     post:
       operationId: createGameNote
       summary: Create a note with a client-generated ID
@@ -68,35 +78,63 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/EntryResult" }
-        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
-        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
-        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
-        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
-        "409": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict }
-        "413": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge }
-        "422": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError }
-        "429": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited }
-        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
-        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+        "400":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized,
+          }
+        "403":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "409":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict }
+        "413":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge,
+          }
+        "422":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError,
+          }
+        "429":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited }
+        "500":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable,
+          }
   /api/games/{gameId}/notes/{entryId}:
     parameters:
-      - $ref: ../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
+      - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId
       - name: entryId
         in: path
         required: true
-        schema: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+        schema: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
     get:
       operationId: getGameNote
       summary: Read a saved note by ID
       description: Return the current saved entry regardless of the active search or page.
       responses:
         "200": { $ref: "#/components/responses/SavedEntry" }
-        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
-        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
-        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
-        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
-        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
-        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+        "400":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized,
+          }
+        "403":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "500":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable,
+          }
     patch:
       operationId: updateGameNote
       summary: Save note changes at the expected revision
@@ -120,22 +158,40 @@ paths:
                     title: "The ferryman's price"
       responses:
         "200": { $ref: "#/components/responses/SavedEntry" }
-        "400": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
-        "401": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
-        "403": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
-        "404": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
-        "409": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict }
-        "413": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge }
-        "422": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError }
-        "429": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited }
-        "500": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
-        "503": { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable }
+        "400":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+        "401":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized,
+          }
+        "403":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+        "404":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+        "409":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict }
+        "413":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge,
+          }
+        "422":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError,
+          }
+        "429":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited }
+        "500":
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
+        "503":
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable,
+          }
 components:
   securitySchemes:
     sessionCookie:
-      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie
+      $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie
     csrfToken:
-      $ref: ../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken
+      $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken
   responses:
     SavedEntry:
       description: Current saved entry.
@@ -186,18 +242,19 @@ components:
       additionalProperties: false
       required: [id, title, content, createdAt, updatedAt, revision]
       properties:
-        id: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+        id: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
         title: { $ref: "#/components/schemas/Title" }
         content: { $ref: "#/components/schemas/Content" }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
-        revision: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision }
+        revision:
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision }
     CreateEntry:
       type: object
       additionalProperties: false
       required: [id, title, content]
       properties:
-        id: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+        id: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
         title: { $ref: "#/components/schemas/Title" }
         content: { $ref: "#/components/schemas/Content" }
     UpdateEntry:
@@ -205,7 +262,8 @@ components:
       additionalProperties: false
       required: [expectedRevision, changes]
       properties:
-        expectedRevision: { $ref: ../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision }
+        expectedRevision:
+          { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision }
         changes:
           type: object
           additionalProperties: false

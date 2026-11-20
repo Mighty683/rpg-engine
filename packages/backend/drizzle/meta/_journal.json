@@ -92,6 +92,20 @@
       "when": 1700000012000,
       "tag": "013_agent_roll_link",
       "breakpoints": false
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1700000013000,
+      "tag": "014_game_note_entries",
+      "breakpoints": false
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1700000014000,
+      "tag": "015_game_note_passages",
+      "breakpoints": false
     }
   ]
 }
