@@ -17,9 +17,14 @@
     "test:integration": "node scripts/test-integration.mjs",
     "verify": "pnpm check && pnpm --filter @rpg-engine/backend build && pnpm build && pnpm test && pnpm --filter @rpg-engine/frontend test:browser --run && pnpm test:integration",
     "scan:secrets": "trivy fs --scanners secret --exit-code 1 --skip-dirs '**/node_modules,**/.git,**/.vitest,**/.stryker-tmp' --skip-files '**/.env,**/.env.local' .",
-    "hooks:install": "git config --local core.hooksPath .githooks"
+    "hooks:install": "git config --local core.hooksPath .githooks",
+    "graph": "node scripts/dependency-graph.mjs frontend backend",
+    "graph:frontend": "node scripts/dependency-graph.mjs frontend",
+    "graph:backend": "node scripts/dependency-graph.mjs backend"
   },
   "devDependencies": {
+    "@viz-js/viz": "^3.31.0",
+    "dependency-cruiser": "^18.9.0",
     "knip": "^6.48.0",
     "vite-plus": "1.5.0"
   },
