@@ -8,10 +8,12 @@ import {
 import type { Entry, EntryText, NoteDocument } from "../game-notes/types";
 
 function validContent(content: NoteDocument | undefined) {
+  if (!Array.isArray(content?.ops)) return false;
+  const lastInsert = content.ops.at(-1)?.insert;
   return (
-    Array.isArray(content?.ops) &&
+    typeof lastInsert === "string" &&
+    lastInsert.endsWith("\n") &&
     content.ops.every((op) => typeof op?.insert === "string") &&
-    String(content.ops.at(-1)?.insert).endsWith("\n") &&
     Array.from(visibleNoteText(content)).length <= noteTextLimit
   );
 }

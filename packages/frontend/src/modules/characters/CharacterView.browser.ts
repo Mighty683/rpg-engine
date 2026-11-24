@@ -162,7 +162,9 @@ test("an item name keeps its word separator through autosave", async () => {
   const mounted = await mount(
     vi.fn(async (_input, init?: RequestInit) => {
       if (init?.method === "PATCH") {
-        item.name = JSON.parse(String(init.body)).changes.equipment[0].name.trim();
+        if (typeof init.body !== "string")
+          throw new Error("Expected a JSON string in the PATCH body");
+        item.name = JSON.parse(init.body).changes.equipment[0].name.trim();
         if (item.name === "Magic")
           await new Promise<void>((resolve) => {
             acknowledge = resolve;
