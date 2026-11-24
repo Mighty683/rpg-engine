@@ -6,13 +6,13 @@
 
 Implement the five waves in order, with a **different subagent for each wave**. Each worker starts from the preceding integrated revision, owns the listed production paths and tests for its wave, and accommodates existing changes. The implementation lead owns cross-wave integration and shared HTTP contract decisions. Wave 1 lands the common types and canonical contract on the lead’s behalf. Later workers coordinate contract changes with the lead before modifying either side. Keep the feature disabled by default throughout implementation.
 
-| Wave and owner | Dependency | Checks the owner implements and runs |
-| --- | --- | --- |
-| 1 · Persistence and HTTP | Existing auth, migrations and task contract | GM-API-01, GM-API-10. Migration, data preservation and restricted-role verification. |
-| 2 · Turn runtime and reads | Wave 1 routes, transcript store and grants | GM-API-02, GM-API-03, GM-API-06, GM-API-07, GM-API-08, GM-API-09, GM-API-11. |
-| 3 · Production chat | Wave 2 can answer questions, report availability and commit history | GM-E2E-01, GM-E2E-02, GM-E2E-03, GM-E2E-07, GM-E2E-10. Whole-screen prototype comparison at both viewport widths. |
-| 4 · Rolls and rerolls | Wave 2 tool dispatch and Wave 3 production chat | GM-API-04, GM-E2E-04, GM-E2E-05, GM-E2E-06. |
-| 5 · Profile edits and final integration | Wave 4 review interaction and completed read/roll flows | GM-API-05, GM-E2E-08, GM-E2E-09. Rerun the combined suites and coordinate final evidence with the lead. |
+| Wave and owner                          | Dependency                                                          | Checks the owner implements and runs                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1 · Persistence and HTTP                | Existing auth, migrations and task contract                         | GM-API-01, GM-API-10. Migration, data preservation and restricted-role verification.                              |
+| 2 · Turn runtime and reads              | Wave 1 routes, transcript store and grants                          | GM-API-02, GM-API-03, GM-API-06, GM-API-07, GM-API-08, GM-API-09, GM-API-11.                                      |
+| 3 · Production chat                     | Wave 2 can answer questions, report availability and commit history | GM-E2E-01, GM-E2E-02, GM-E2E-03, GM-E2E-07, GM-E2E-10. Whole-screen prototype comparison at both viewport widths. |
+| 4 · Rolls and rerolls                   | Wave 2 tool dispatch and Wave 3 production chat                     | GM-API-04, GM-E2E-04, GM-E2E-05, GM-E2E-06.                                                                       |
+| 5 · Profile edits and final integration | Wave 4 review interaction and completed read/roll flows             | GM-API-05, GM-E2E-08, GM-E2E-09. Rerun the combined suites and coordinate final evidence with the lead.           |
 
 ## Wave 1 — Store and retrieve GM history
 
@@ -42,9 +42,9 @@ Implement the five waves in order, with a **different subagent for each wave**. 
 - Own character and NPC preparation tools and their editor integrations. Build one reviewable proposal from current values and the captured revision. Keep pending previews outside autosave, preserve unrelated fields and drafts, and use the existing save paths. Cover cancel, stale revision, refreshed review and confirmation. Follow the handover’s proposed review interaction and editable fields, recording any product decision that changes acceptance there before adjusting tests.
 - Run the assigned scenarios, then rerun the API and browser suites on the integrated revision with a dedicated TEST_DATABASE_URL. Recheck Wave 3 screenshots against the delivered revision and repeat database checks if integration changed persistence or grants. Record outcomes, failures, revision and evidence paths in the handover. [Cross-module test guidance](../../../../packages/tests/AGENTS.md)
 
-~~~sh
+```sh
 pnpm --filter @rpg-engine/tests test:api --run
 pnpm --filter @rpg-engine/tests test --run
-~~~
+```
 
 The implementation lead owns the separate deployment check using synthetic game data and the pinned mistral-small-2603 model. Exercise the four launch prompts once the read and proposal tools are integrated. Record tool selection, argument accuracy, clarification and latency in the handover. Deployment enablement and the real-game provider data policy remain product decisions. Archive the task only after implementation and handover verification.

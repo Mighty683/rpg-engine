@@ -2,15 +2,16 @@ openapi: 3.1.0
 info:
   title: RPG Engine class management proposal
   version: 0.1.0
-  description: Task contract for new and changed operations. Writes use the canonical Origin policy, session
+  description:
+    Task contract for new and changed operations. Writes use the canonical Origin policy, session
     cookie and CSRF token.
 servers:
-- {url: /}
+  - { url: / }
 security:
-- {sessionCookie: []}
+  - { sessionCookie: [] }
 tags:
-- {name: Class catalog, description: Library templates and game-local definitions.}
-- {name: Characters, description: 'Character sheets, progression, and party reads.'}
+  - { name: Class catalog, description: Library templates and game-local definitions. }
+  - { name: Characters, description: "Character sheets, progression, and party reads." }
 paths:
   /api/library/class:
     get:
@@ -19,7 +20,7 @@ paths:
       summary: List class templates
       description: Read the authenticated account’s private Fabula Ultima library.
       responses:
-        '200':
+        "200":
           description: Account-owned templates.
           content:
             application/json:
@@ -29,74 +30,76 @@ paths:
                 properties:
                   templates:
                     type: array
-                    items: {$ref: '#/components/schemas/ClassTemplate'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+                    items: { $ref: "#/components/schemas/ClassTemplate" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createClassTemplate
       tags: [Class catalog]
       summary: Create a class template
-      description: Create in the authenticated account’s private library. An identical create retry returns
+      description:
+        Create in the authenticated account’s private library. An identical create retry returns
         200. A reused ID with different intent returns 409 id_conflict.
       security:
-      - {sessionCookie: [], csrfToken: []}
+        - { sessionCookie: [], csrfToken: [] }
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CreateTemplate'}
+            schema: { $ref: "#/components/schemas/CreateTemplate" }
       responses:
-        '201': {$ref: '#/components/responses/Template'}
-        '200': {$ref: '#/components/responses/Template'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/Conflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '422': {$ref: '#/components/responses/ValidationError'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+        "201": { $ref: "#/components/responses/Template" }
+        "200": { $ref: "#/components/responses/Template" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
   /api/library/class/{templateId}:
     parameters:
-    - {$ref: '#/components/parameters/templateId'}
+      - { $ref: "#/components/parameters/templateId" }
     patch:
       operationId: updateClassTemplate
       tags: [Class catalog]
       summary: Replace a template definition
-      description: Update only a template owned by the caller. Returns 409 stale_revision when the revision
+      description:
+        Update only a template owned by the caller. Returns 409 stale_revision when the revision
         differs.
       security:
-      - {sessionCookie: [], csrfToken: []}
+        - { sessionCookie: [], csrfToken: [] }
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/UpdateTemplate'}
+            schema: { $ref: "#/components/schemas/UpdateTemplate" }
       responses:
-        '200': {$ref: '#/components/responses/Template'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/Conflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '422': {$ref: '#/components/responses/ValidationError'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+        "200": { $ref: "#/components/responses/Template" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/classes:
     parameters:
-    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+      - { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId }
     get:
       operationId: listGameClasses
       tags: [Class catalog]
       summary: List game classes
       description: The GM and active game members may read the Fabula Ultima game catalog.
       responses:
-        '200':
+        "200":
           description: Game-local class definitions.
           content:
             application/json:
@@ -106,133 +109,137 @@ paths:
                 properties:
                   classes:
                     type: array
-                    items: {$ref: '#/components/schemas/StoredClass'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+                    items: { $ref: "#/components/schemas/StoredClass" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: copyClassToGame
       tags: [Class catalog]
       summary: Copy a library template into a game
-      description: GM only. Copy an account-owned template of the same system at the expected revision. Use
+      description:
+        GM only. Copy an account-owned template of the same system at the expected revision. Use
         a new ID for another copy. An identical retry returns 200.
       security:
-      - {sessionCookie: [], csrfToken: []}
+        - { sessionCookie: [], csrfToken: [] }
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CopyClass'}
+            schema: { $ref: "#/components/schemas/CopyClass" }
       responses:
-        '201': {$ref: '#/components/responses/GameClass'}
-        '200': {$ref: '#/components/responses/GameClass'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/Conflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '422': {$ref: '#/components/responses/ValidationError'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+        "201": { $ref: "#/components/responses/GameClass" }
+        "200": { $ref: "#/components/responses/GameClass" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/classes/{gameClassId}:
     parameters:
-    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
-    - {$ref: '#/components/parameters/gameClassId'}
+      - { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId }
+      - { $ref: "#/components/parameters/gameClassId" }
     patch:
       operationId: updateGameClass
       tags: [Class catalog]
       summary: Replace a game class definition
-      description: GM only. Keep IDs of retained skills. If learned skills would be removed, return their current
+      description:
+        GM only. Keep IDs of retained skills. If learned skills would be removed, return their current
         impact. A retry with matching confirmation commits the definition and removes those ranks together.
       security:
-      - {sessionCookie: [], csrfToken: []}
+        - { sessionCookie: [], csrfToken: [] }
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/UpdateGameClass'}
+            schema: { $ref: "#/components/schemas/UpdateGameClass" }
       responses:
-        '200': {$ref: '#/components/responses/GameClass'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/GameClassUpdateConflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '422': {$ref: '#/components/responses/ValidationError'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+        "200": { $ref: "#/components/responses/GameClass" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/GameClassUpdateConflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
     delete:
       operationId: deleteGameClass
       tags: [Class catalog]
       summary: Remove a game class
       description: GM only. A class with assigned levels cannot be removed.
       security:
-      - {sessionCookie: [], csrfToken: []}
+        - { sessionCookie: [], csrfToken: [] }
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/DeleteGameClass'}
+            schema: { $ref: "#/components/schemas/DeleteGameClass" }
       responses:
-        '204': {description: Game class removed.}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/GameClassDeleteConflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+        "204": { description: Game class removed. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/GameClassDeleteConflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/classes/{gameClassId}/save-to-library:
     parameters:
-    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
-    - {$ref: '#/components/parameters/gameClassId'}
+      - { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId }
+      - { $ref: "#/components/parameters/gameClassId" }
     post:
       operationId: saveGameClassToLibrary
       tags: [Class catalog]
       summary: Save a game class to the library
-      description: GM only. Snapshot the current game definition into the caller’s library. Returns 201 for
+      description:
+        GM only. Snapshot the current game definition into the caller’s library. Returns 201 for
         a new template and 200 for an update or matching create retry. The game class and its assignments remain
         in place.
       security:
-      - {sessionCookie: [], csrfToken: []}
+        - { sessionCookie: [], csrfToken: [] }
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/SaveClassToLibrary'}
+            schema: { $ref: "#/components/schemas/SaveClassToLibrary" }
       responses:
-        '201': {$ref: '#/components/responses/Template'}
-        '200': {$ref: '#/components/responses/Template'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/Conflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '422': {$ref: '#/components/responses/ValidationError'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+        "201": { $ref: "#/components/responses/Template" }
+        "200": { $ref: "#/components/responses/Template" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/characters:
     parameters:
-    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+      - { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId }
     post:
       operationId: createCharacter
       tags: [Characters]
       summary: Create a character
-      description: An identical retry returns 200 with the previously created character. Managed progression
+      description:
+        An identical retry returns 200 with the previously created character. Managed progression
         starts empty with 50 / 50 EXP.
       security:
-      - sessionCookie: []
-        csrfToken: []
+        - sessionCookie: []
+          csrfToken: []
       requestBody:
         required: true
         content:
@@ -241,10 +248,11 @@ paths:
               type: object
               required: [id, name]
               properties:
-                id: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id}
-                name: {type: string, minLength: 1, maxLength: 100}
+                id:
+                  { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+                name: { type: string, minLength: 1, maxLength: 100 }
       responses:
-        '201':
+        "201":
           description: Created.
           content:
             application/json:
@@ -252,8 +260,8 @@ paths:
                 type: object
                 required: [character]
                 properties:
-                  character: {$ref: '#/components/schemas/CharacterWithProgression'}
-        '200':
+                  character: { $ref: "#/components/schemas/CharacterWithProgression" }
+        "200":
           description: Successful response.
           content:
             application/json:
@@ -261,27 +269,29 @@ paths:
                 type: object
                 required: [character]
                 properties:
-                  character: {$ref: '#/components/schemas/CharacterWithProgression'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/Conflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '422': {$ref: '#/components/responses/ValidationError'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+                  character: { $ref: "#/components/schemas/CharacterWithProgression" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
   /api/games/{gameId}/characters/{characterId}:
     parameters:
-    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
-    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/characterId}
+      - { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId }
+      - {
+          $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/characterId,
+        }
     get:
       operationId: getCharacter
       tags: [Characters]
       summary: Get a character sheet
       responses:
-        '200':
+        "200":
           description: Successful response.
           content:
             application/json:
@@ -289,21 +299,22 @@ paths:
                 type: object
                 required: [character]
                 properties:
-                  character: {$ref: '#/components/schemas/CharacterWithProgression'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
-      description: Game members can read the existing sheet. Only the GM and character controller receive managed
+                  character: { $ref: "#/components/schemas/CharacterWithProgression" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
+      description:
+        Game members can read the existing sheet. Only the GM and character controller receive managed
         progression.
     patch:
       operationId: updateCharacter
       tags: [Characters]
       summary: Update a character sheet
       security:
-      - sessionCookie: []
-        csrfToken: []
+        - sessionCookie: []
+          csrfToken: []
       requestBody:
         required: true
         content:
@@ -312,10 +323,10 @@ paths:
               type: object
               required: [expectedRevision, changes]
               properties:
-                expectedRevision: {type: integer, minimum: 0}
-                changes: {$ref: '#/components/schemas/CharacterChanges'}
+                expectedRevision: { type: integer, minimum: 0 }
+                changes: { $ref: "#/components/schemas/CharacterChanges" }
       responses:
-        '200':
+        "200":
           description: Successful response.
           content:
             application/json:
@@ -323,28 +334,29 @@ paths:
                 type: object
                 required: [character]
                 properties:
-                  character: {$ref: '#/components/schemas/CharacterWithProgression'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {$ref: '#/components/responses/Forbidden'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '409': {$ref: '#/components/responses/Conflict'}
-        '413': {$ref: '#/components/responses/PayloadTooLarge'}
-        '422': {$ref: '#/components/responses/ValidationError'}
-        '429': {$ref: '#/components/responses/RateLimited'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
-      description: The GM or character controller can edit the sheet. The server applies the class-level EXP
+                  character: { $ref: "#/components/schemas/CharacterWithProgression" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
+      description:
+        The GM or character controller can edit the sheet. The server applies the class-level EXP
         delta atomically. The separate character level does not affect EXP.
   /api/games/{gameId}/party:
     parameters:
-    - {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId}
+      - { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId }
     get:
       operationId: listActiveParty
       tags: [Characters]
       summary: List active party characters
       responses:
-        '200':
+        "200":
           description: Successful response.
           content:
             application/json:
@@ -354,12 +366,12 @@ paths:
                 properties:
                   characters:
                     type: array
-                    items: {$ref: '#/components/schemas/PartyCharacterWithClasses'}
-        '400': {$ref: '#/components/responses/BadRequest'}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '404': {$ref: '#/components/responses/NotFound'}
-        '503': {$ref: '#/components/responses/DatabaseUnavailable'}
-        '500': {$ref: '#/components/responses/ServerError'}
+                    items: { $ref: "#/components/schemas/PartyCharacterWithClasses" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/DatabaseUnavailable" }
+        "500": { $ref: "#/components/responses/ServerError" }
       description: Game members receive public class summaries and effective dice for active characters.
 components:
   securitySchemes:
@@ -372,12 +384,12 @@ components:
       name: templateId
       in: path
       required: true
-      schema: {$ref: '#/components/schemas/Id'}
+      schema: { $ref: "#/components/schemas/Id" }
     gameClassId:
       name: gameClassId
       in: path
       required: true
-      schema: {$ref: '#/components/schemas/Id'}
+      schema: { $ref: "#/components/schemas/Id" }
   responses:
     Template:
       description: Saved library template.
@@ -387,7 +399,7 @@ components:
             type: object
             required: [template]
             properties:
-              template: {$ref: '#/components/schemas/ClassTemplate'}
+              template: { $ref: "#/components/schemas/ClassTemplate" }
     GameClass:
       description: Saved game class.
       content:
@@ -396,7 +408,7 @@ components:
             type: object
             required: [gameClass]
             properties:
-              gameClass: {$ref: '#/components/schemas/StoredClass'}
+              gameClass: { $ref: "#/components/schemas/StoredClass" }
     GameClassUpdateConflict:
       description: Stale revision, or confirmation required for the current skill-removal impact.
       content:
@@ -407,17 +419,17 @@ components:
             properties:
               error:
                 oneOf:
-                - type: object
-                  required: [code, message]
-                  properties:
-                    code: {type: string, const: stale_revision}
-                    message: {type: string}
-                - type: object
-                  required: [code, message, impact]
-                  properties:
-                    code: {type: string, const: skill_removal_confirmation_required}
-                    message: {type: string}
-                    impact: {$ref: '#/components/schemas/SkillRemovalImpact'}
+                  - type: object
+                    required: [code, message]
+                    properties:
+                      code: { type: string, const: stale_revision }
+                      message: { type: string }
+                  - type: object
+                    required: [code, message, impact]
+                    properties:
+                      code: { type: string, const: skill_removal_confirmation_required }
+                      message: { type: string }
+                      impact: { $ref: "#/components/schemas/SkillRemovalImpact" }
     GameClassDeleteConflict:
       description: Stale revision or class assigned to a character.
       content:
@@ -433,114 +445,130 @@ components:
                   code:
                     type: string
                     enum: [stale_revision, class_in_use]
-                  message: {type: string}
-    BadRequest: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest}
-    Unauthorized: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized}
-    Forbidden: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden}
-    NotFound: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound}
-    Conflict: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict}
-    PayloadTooLarge: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge}
-    ValidationError: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError}
-    RateLimited: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited}
-    DatabaseUnavailable: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable}
-    ServerError: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError}
+                  message: { type: string }
+    BadRequest:
+      { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest }
+    Unauthorized:
+      { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized }
+    Forbidden:
+      { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden }
+    NotFound:
+      { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound }
+    Conflict:
+      { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/Conflict }
+    PayloadTooLarge:
+      {
+        $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge,
+      }
+    ValidationError:
+      {
+        $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError,
+      }
+    RateLimited:
+      { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/RateLimited }
+    DatabaseUnavailable:
+      {
+        $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable,
+      }
+    ServerError:
+      { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError }
   schemas:
-    Id: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id}
-    NonnegativeInt: {type: integer, minimum: 0, maximum: 2147483647}
-    Name: {type: string, minLength: 1, maxLength: 100}
-    Revision: {$ref: '#/components/schemas/NonnegativeInt'}
-    FabulaSystem: {type: string, const: fabula-ultima}
+    Id: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id }
+    NonnegativeInt: { type: integer, minimum: 0, maximum: 2147483647 }
+    Name: { type: string, minLength: 1, maxLength: 100 }
+    Revision: { $ref: "#/components/schemas/NonnegativeInt" }
+    FabulaSystem: { type: string, const: fabula-ultima }
     ModifierStat:
       type: string
       enum: [maxHp, maxMp, maxIp, defense, magicDefense, dieDex, dieIns, dieMig, dieWlp]
     Benefit:
       oneOf:
-      - type: object
-        required: [id, kind, name, description]
-        properties:
-          id: {$ref: '#/components/schemas/Id'}
-          kind: {type: string, const: text}
-          name: {$ref: '#/components/schemas/Name'}
-          description: {type: string, minLength: 1}
-        additionalProperties: false
-      - type: object
-        required: [id, kind, name, stat, amount]
-        properties:
-          id: {$ref: '#/components/schemas/Id'}
-          kind: {type: string, const: modifier}
-          name: {$ref: '#/components/schemas/Name'}
-          description: {type: string}
-          stat: {$ref: '#/components/schemas/ModifierStat'}
-          amount: {type: integer, minimum: -2147483648, maximum: 2147483647}
-          perRank: {type: boolean, default: false}
-        additionalProperties: false
+        - type: object
+          required: [id, kind, name, description]
+          properties:
+            id: { $ref: "#/components/schemas/Id" }
+            kind: { type: string, const: text }
+            name: { $ref: "#/components/schemas/Name" }
+            description: { type: string, minLength: 1 }
+          additionalProperties: false
+        - type: object
+          required: [id, kind, name, stat, amount]
+          properties:
+            id: { $ref: "#/components/schemas/Id" }
+            kind: { type: string, const: modifier }
+            name: { $ref: "#/components/schemas/Name" }
+            description: { type: string }
+            stat: { $ref: "#/components/schemas/ModifierStat" }
+            amount: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            perRank: { type: boolean, default: false }
+          additionalProperties: false
       description: Rank scaling applies only to skill benefits. Free benefits are applied once.
     ClassSkill:
       type: object
       required: [id, name, description, maxRank, benefits]
       properties:
-        id: {$ref: '#/components/schemas/Id'}
-        name: {$ref: '#/components/schemas/Name'}
-        description: {type: string}
-        maxRank: {type: integer, minimum: 1, maximum: 2147483647}
+        id: { $ref: "#/components/schemas/Id" }
+        name: { $ref: "#/components/schemas/Name" }
+        description: { type: string }
+        maxRank: { type: integer, minimum: 1, maximum: 2147483647 }
         benefits:
           type: array
-          items: {$ref: '#/components/schemas/Benefit'}
+          items: { $ref: "#/components/schemas/Benefit" }
       additionalProperties: false
     ClassDefinition:
       type: object
       required: [name, description, freeBenefits, skills]
       properties:
-        name: {$ref: '#/components/schemas/Name'}
-        description: {type: string}
+        name: { $ref: "#/components/schemas/Name" }
+        description: { type: string }
         freeBenefits:
           type: array
-          items: {$ref: '#/components/schemas/Benefit'}
+          items: { $ref: "#/components/schemas/Benefit" }
         skills:
           type: array
-          items: {$ref: '#/components/schemas/ClassSkill'}
+          items: { $ref: "#/components/schemas/ClassSkill" }
       additionalProperties: false
       description: List order is preserved. Reject duplicate skill or benefit IDs within the definition.
     StoredClass:
       type: object
       required: [id, revision, systemId, definition]
       properties:
-        id: {$ref: '#/components/schemas/Id'}
-        revision: {$ref: '#/components/schemas/Revision'}
-        systemId: {$ref: '#/components/schemas/FabulaSystem'}
-        definition: {$ref: '#/components/schemas/ClassDefinition'}
+        id: { $ref: "#/components/schemas/Id" }
+        revision: { $ref: "#/components/schemas/Revision" }
+        systemId: { $ref: "#/components/schemas/FabulaSystem" }
+        definition: { $ref: "#/components/schemas/ClassDefinition" }
       additionalProperties: false
-    ClassTemplate: {$ref: '#/components/schemas/StoredClass'}
+    ClassTemplate: { $ref: "#/components/schemas/StoredClass" }
     CreateTemplate:
       type: object
       required: [id, systemId, definition]
       properties:
-        id: {$ref: '#/components/schemas/Id'}
-        systemId: {$ref: '#/components/schemas/FabulaSystem'}
-        definition: {$ref: '#/components/schemas/ClassDefinition'}
+        id: { $ref: "#/components/schemas/Id" }
+        systemId: { $ref: "#/components/schemas/FabulaSystem" }
+        definition: { $ref: "#/components/schemas/ClassDefinition" }
       additionalProperties: false
     UpdateTemplate:
       type: object
       required: [expectedRevision, definition]
       properties:
-        expectedRevision: {$ref: '#/components/schemas/Revision'}
-        definition: {$ref: '#/components/schemas/ClassDefinition'}
+        expectedRevision: { $ref: "#/components/schemas/Revision" }
+        definition: { $ref: "#/components/schemas/ClassDefinition" }
       additionalProperties: false
     CopyClass:
       type: object
       required: [id, templateId, expectedTemplateRevision]
       properties:
-        id: {$ref: '#/components/schemas/Id'}
-        templateId: {$ref: '#/components/schemas/Id'}
-        expectedTemplateRevision: {$ref: '#/components/schemas/Revision'}
+        id: { $ref: "#/components/schemas/Id" }
+        templateId: { $ref: "#/components/schemas/Id" }
+        expectedTemplateRevision: { $ref: "#/components/schemas/Revision" }
       additionalProperties: false
     UpdateGameClass:
       type: object
       required: [expectedRevision, definition]
       properties:
-        expectedRevision: {$ref: '#/components/schemas/Revision'}
-        definition: {$ref: '#/components/schemas/ClassDefinition'}
-        confirmedSkillRemovals: {$ref: '#/components/schemas/SkillRemovalImpact'}
+        expectedRevision: { $ref: "#/components/schemas/Revision" }
+        definition: { $ref: "#/components/schemas/ClassDefinition" }
+        confirmedSkillRemovals: { $ref: "#/components/schemas/SkillRemovalImpact" }
       additionalProperties: false
     SkillRemovalImpact:
       type: array
@@ -548,7 +576,7 @@ components:
         type: object
         required: [skillId, characters]
         properties:
-          skillId: {$ref: '#/components/schemas/Id'}
+          skillId: { $ref: "#/components/schemas/Id" }
           characters:
             type: array
             minItems: 1
@@ -556,47 +584,48 @@ components:
               type: object
               required: [id, name, rank]
               properties:
-                id: {$ref: '#/components/schemas/Id'}
-                name: {$ref: '#/components/schemas/Name'}
-                rank: {type: integer, minimum: 1, maximum: 10}
+                id: { $ref: "#/components/schemas/Id" }
+                name: { $ref: "#/components/schemas/Name" }
+                rank: { type: integer, minimum: 1, maximum: 10 }
               additionalProperties: false
         additionalProperties: false
     DeleteGameClass:
       type: object
       required: [expectedRevision]
       properties:
-        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        expectedRevision: { $ref: "#/components/schemas/Revision" }
       additionalProperties: false
     SaveClassToLibrary:
       type: object
       required: [expectedRevision, target]
       properties:
-        expectedRevision: {$ref: '#/components/schemas/Revision'}
+        expectedRevision: { $ref: "#/components/schemas/Revision" }
         target:
           oneOf:
-          - type: object
-            required: [mode, id, name]
-            properties:
-              mode: {type: string, const: new}
-              id: {$ref: '#/components/schemas/Id'}
-              name: {$ref: '#/components/schemas/Name'}
-            additionalProperties: false
-          - type: object
-            required: [mode, templateId, expectedTemplateRevision]
-            properties:
-              mode: {type: string, const: update}
-              templateId: {$ref: '#/components/schemas/Id'}
-              expectedTemplateRevision: {$ref: '#/components/schemas/Revision'}
-            additionalProperties: false
+            - type: object
+              required: [mode, id, name]
+              properties:
+                mode: { type: string, const: new }
+                id: { $ref: "#/components/schemas/Id" }
+                name: { $ref: "#/components/schemas/Name" }
+              additionalProperties: false
+            - type: object
+              required: [mode, templateId, expectedTemplateRevision]
+              properties:
+                mode: { type: string, const: update }
+                templateId: { $ref: "#/components/schemas/Id" }
+                expectedTemplateRevision: { $ref: "#/components/schemas/Revision" }
+              additionalProperties: false
       additionalProperties: false
     Experience:
       type: object
       required: [current, total]
       properties:
-        current: {$ref: '#/components/schemas/NonnegativeInt'}
-        total: {$ref: '#/components/schemas/NonnegativeInt'}
+        current: { $ref: "#/components/schemas/NonnegativeInt" }
+        total: { $ref: "#/components/schemas/NonnegativeInt" }
       additionalProperties: false
-      description: Current may not exceed Total. Total less Current covers the cost of the saved class levels.
+      description:
+        Current may not exceed Total. Total less Current covers the cost of the saved class levels.
         Both default to 50 for unallocated sheets.
     ClassLevels:
       type: array
@@ -605,8 +634,8 @@ components:
         type: object
         required: [gameClassId, level]
         properties:
-          gameClassId: {$ref: '#/components/schemas/Id'}
-          level: {type: integer, minimum: 1, maximum: 10}
+          gameClassId: { $ref: "#/components/schemas/Id" }
+          level: { type: integer, minimum: 1, maximum: 10 }
         additionalProperties: false
     SkillRanks:
       type: array
@@ -615,86 +644,114 @@ components:
         type: object
         required: [skillId, rank]
         properties:
-          skillId: {$ref: '#/components/schemas/Id'}
-          rank: {type: integer, minimum: 1, maximum: 10}
+          skillId: { $ref: "#/components/schemas/Id" }
+          rank: { type: integer, minimum: 1, maximum: 10 }
         additionalProperties: false
     Progression:
       type: object
       required: [experience, classLevels, skillRanks]
       properties:
-        experience: {$ref: '#/components/schemas/Experience'}
-        classLevels: {$ref: '#/components/schemas/ClassLevels'}
-        skillRanks: {$ref: '#/components/schemas/SkillRanks'}
+        experience: { $ref: "#/components/schemas/Experience" }
+        classLevels: { $ref: "#/components/schemas/ClassLevels" }
+        skillRanks: { $ref: "#/components/schemas/SkillRanks" }
       additionalProperties: false
     ProgressionChanges:
       type: object
       minProperties: 1
       properties:
         experience:
-          $ref: '#/components/schemas/Experience'
+          $ref: "#/components/schemas/Experience"
           description: Explicit balances before applying the class-level debit or refund in this patch.
         classLevels:
-          $ref: '#/components/schemas/ClassLevels'
+          $ref: "#/components/schemas/ClassLevels"
           description: Replacement allocation. Omit the property to preserve the saved allocation.
         skillRanks:
-          $ref: '#/components/schemas/SkillRanks'
+          $ref: "#/components/schemas/SkillRanks"
           description: Replacement allocation. Omit the property to preserve the saved allocation.
       additionalProperties: false
     CurrentDice:
       type: object
       required: [DEX, INS, MIG, WLP]
       properties:
-        DEX: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
-        INS: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
-        MIG: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
-        WLP: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die}
+        DEX: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die }
+        INS: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die }
+        MIG: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die }
+        WLP: { $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Die }
       additionalProperties: false
     CharacterWithProgression:
       allOf:
-      - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Character
-      - type: object
-        properties:
-          derived:
-            type: object
-            required: [currentDice]
-            properties:
-              currentDice: {$ref: '#/components/schemas/CurrentDice'}
-      - oneOf:
-        - type: object
-          required: [progression]
-          properties:
-            canEdit: {type: boolean, const: true}
-            progression:
-              $ref: '#/components/schemas/Progression'
-              description: Present for the GM or character controller.
+        - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Character
         - type: object
           properties:
-            canEdit: {type: boolean, const: false}
-            progression: false
+            derived:
+              type: object
+              required: [currentDice]
+              properties:
+                currentDice: { $ref: "#/components/schemas/CurrentDice" }
+        - oneOf:
+            - type: object
+              required: [progression]
+              properties:
+                canEdit: { type: boolean, const: true }
+                progression:
+                  $ref: "#/components/schemas/Progression"
+                  description: Present for the GM or character controller.
+            - type: object
+              properties:
+                canEdit: { type: boolean, const: false }
+                progression: false
     PartyCharacterWithClasses:
       allOf:
-      - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/PartyCharacter
-      - type: object
-        required: [currentDice]
-        properties:
-          currentDice: {$ref: '#/components/schemas/CurrentDice'}
-          classes:
-            type: array
-            items: {type: string}
-            description: Manual class names and managed class summaries. Detailed ranks and EXP come from the
-              character endpoint under its own permissions.
+        - $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/PartyCharacter
+        - type: object
+          required: [currentDice]
+          properties:
+            currentDice: { $ref: "#/components/schemas/CurrentDice" }
+            classes:
+              type: array
+              items: { type: string }
+              description:
+                Manual class names and managed class summaries. Detailed ranks and EXP come from the
+                character endpoint under its own permissions.
     CharacterChanges:
       type: object
       additionalProperties: false
       minProperties: 1
       properties:
-        name: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/name}
-        theme: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/theme}
-        level: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/level}
-        baseDice: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/baseDice}
-        classes: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/classes}
-        skills: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/skills}
-        equipment: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/equipment}
-        resources: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/resources}
-        overrides: {$ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/overrides}
-        progression: {$ref: '#/components/schemas/ProgressionChanges'}
+        name:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/name,
+          }
+        theme:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/theme,
+          }
+        level:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/level,
+          }
+        baseDice:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/baseDice,
+          }
+        classes:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/classes,
+          }
+        skills:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/skills,
+          }
+        equipment:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/equipment,
+          }
+        resources:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/resources,
+          }
+        overrides:
+          {
+            $ref: ../../../../packages/backend/openapi/openapi.yaml#/components/schemas/CharacterChanges/properties/overrides,
+          }
+        progression: { $ref: "#/components/schemas/ProgressionChanges" }

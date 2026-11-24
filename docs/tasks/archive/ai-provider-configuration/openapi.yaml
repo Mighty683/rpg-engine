@@ -35,12 +35,30 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AgentStatus" }
-        "400": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest" }
-        "401": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized" }
-        "403": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden" }
-        "404": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound" }
-        "500": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError" }
-        "503": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable" }
+        "400":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest",
+          }
+        "401":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized",
+          }
+        "403":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden",
+          }
+        "404":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound",
+          }
+        "500":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError",
+          }
+        "503":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/DatabaseUnavailable",
+          }
   /api/games/{gameId}/agent/turns:
     parameters:
       - $ref: "#/components/parameters/gameId"
@@ -80,17 +98,35 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AgentTurn" }
-        "400": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest" }
-        "401": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized" }
-        "403": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden" }
-        "404": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound" }
+        "400":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/BadRequest",
+          }
+        "401":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Unauthorized",
+          }
+        "403":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/Forbidden",
+          }
+        "404":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/NotFound",
+          }
         "409":
           description: Another turn is active in this game (agent_game_busy), or visibility narrowed during the turn (agent_context_changed).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
-        "413": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge" }
-        "422": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError" }
+        "413":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/PayloadTooLarge",
+          }
+        "422":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ValidationError",
+          }
         "429":
           description: Account rate limit or Agent concurrency limit. Code rate_limited or agent_busy.
           headers:
@@ -99,7 +135,10 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
-        "500": { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError" }
+        "500":
+          {
+            $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/responses/ServerError",
+          }
         "502":
           description: Invalid provider response or exhausted tool-call budget. Code agent_failed.
           content:
@@ -117,17 +156,25 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
 components:
   securitySchemes:
-    sessionCookie: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie" }
-    csrfToken: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken" }
+    sessionCookie:
+      {
+        $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/sessionCookie",
+      }
+    csrfToken:
+      {
+        $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/securitySchemes/csrfToken",
+      }
   parameters:
-    gameId: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId" }
+    gameId:
+      { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/parameters/gameId" }
   headers:
     NoStore:
       schema: { type: string, const: no-store }
   schemas:
     Id: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Id" }
     Error: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Error" }
-    Revision: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision" }
+    Revision:
+      { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/Revision" }
     AgentStatus:
       type: object
       required: [available, busy, turns, nextBefore]
@@ -161,7 +208,10 @@ components:
                   characterName: { type: string }
                   equipmentName: { type: [string, "null"] }
                   private: { type: boolean }
-                  outcome: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/ThrowOutcome" }
+                  outcome:
+                    {
+                      $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/ThrowOutcome",
+                    }
             additionalProperties: false
       additionalProperties: false
     AgentMessage:
@@ -179,7 +229,19 @@ components:
       type: object
       required: [tool, label]
       properties:
-        tool: { type: string, enum: [read_character, read_npc, read_throws, prepare_throw, prepare_character_edit, prepare_npc_edit] }
+        tool:
+          {
+            type: string,
+            enum:
+              [
+                read_character,
+                read_npc,
+                read_throws,
+                prepare_throw,
+                prepare_character_edit,
+                prepare_npc_edit,
+              ],
+          }
         label: { type: string, minLength: 1, maxLength: 160 }
       additionalProperties: false
     AgentTurn:
@@ -239,13 +301,40 @@ components:
           minProperties: 1
           additionalProperties: false
           properties:
-            name: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/name" }
-            relationship: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/relationship" }
-            level: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/level" }
-            baseDice: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/baseDice" }
-            hp: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/hp" }
-            mp: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/mp" }
-            defense: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/defense" }
-            magicDefense: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/magicDefense" }
-            notes: { $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/notes" }
+            name:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/name",
+              }
+            relationship:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/relationship",
+              }
+            level:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/level",
+              }
+            baseDice:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/baseDice",
+              }
+            hp:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/hp",
+              }
+            mp:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/mp",
+              }
+            defense:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/defense",
+              }
+            magicDefense:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/magicDefense",
+              }
+            notes:
+              {
+                $ref: "../../../../packages/backend/openapi/openapi.yaml#/components/schemas/NpcWrite/properties/notes",
+              }
       additionalProperties: false

@@ -25,9 +25,9 @@ Required checks are defined in the [handover](handover.md).
 
 ## Wave 1 — Create and reopen a game
 
-| Owner | Edit boundary | Work | Depends on | Handover checks |
-| --- | --- | --- | --- | --- |
-| Backend | Game creation API | Implement game creation and add API coverage. | Session contract | API-01 |
-| Frontend | Game creation screen | Connect the approved form to the API. | Game creation contract | — |
-| Integration | Browser journey and verification | Implement the browser scenario and run both suites. | Backend and frontend | E2E-01, API-01 |
+| Owner       | Edit boundary                    | Work                                                | Depends on             | Handover checks |
+| ----------- | -------------------------------- | --------------------------------------------------- | ---------------------- | --------------- |
+| Backend     | Game creation API                | Implement game creation and add API coverage.       | Session contract       | API-01          |
+| Frontend    | Game creation screen             | Connect the approved form to the API.               | Game creation contract | —               |
+| Integration | Browser journey and verification | Implement the browser scenario and run both suites. | Backend and frontend   | E2E-01, API-01  |
 ```

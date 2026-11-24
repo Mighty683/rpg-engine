@@ -2,137 +2,142 @@ openapi: 3.1.0
 info:
   title: Private rolls — proposed API changes
   version: 1.0.0
-  description: Review contract for affected throw operations. Replaces the sequence cursor with a throw ID and removes
+  description:
+    Review contract for affected throw operations. Replaces the sequence cursor with a throw ID and removes
     seq from responses.
 security:
-- sessionCookie: []
+  - sessionCookie: []
 paths:
   /api/games/{gameId}/throws:
     parameters:
-    - $ref: '#/components/parameters/gameId'
+      - $ref: "#/components/parameters/gameId"
     get:
       operationId: listThrows
       tags:
-      - Throws
+        - Throws
       summary: List recent throws
       parameters:
-      - name: before
-        in: query
-        schema:
-          $ref: '#/components/schemas/Id'
-        description: ID of a previously visible throw; returns visible throws older than this anchor. Deleted anchors
-          remain usable. Unknown or inaccessible anchors return 404.
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Page size. Values are clamped to 1–100.
+        - name: before
+          in: query
+          schema:
+            $ref: "#/components/schemas/Id"
+          description:
+            ID of a previously visible throw; returns visible throws older than this anchor. Deleted anchors
+            remain usable. Unknown or inaccessible anchors return 404.
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size. Values are clamped to 1–100.
       responses:
-        '200':
+        "200":
           description: Successful response.
           content:
             application/json:
               schema:
                 type: object
                 required:
-                - throws
+                  - throws
                 properties:
                   throws:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Throw'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-      description: Lists public throws and throws authored by the current account, filtering before pagination.
+                      $ref: "#/components/schemas/Throw"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+      description:
+        Lists public throws and throws authored by the current account, filtering before pagination.
         Ordered oldest to newest within each page. Private throws of other accounts are not disclosed.
     post:
       operationId: createThrow
       tags:
-      - Throws
+        - Throws
       summary: Resolve and record a throw
       security:
-      - sessionCookie: []
-        csrfToken: []
+        - sessionCookie: []
+          csrfToken: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateThrow'
+              $ref: "#/components/schemas/CreateThrow"
       responses:
-        '201':
+        "201":
           description: Created.
           content:
             application/json:
               schema:
                 type: object
                 required:
-                - throw
+                  - throw
                 properties:
                   throw:
-                    $ref: '#/components/schemas/Throw'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '413':
-          $ref: '#/components/responses/PayloadTooLarge'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-        '500':
-          $ref: '#/components/responses/ServerError'
-      description: Private throws are visible only to the authenticated author. An inaccessible source throw returns
+                    $ref: "#/components/schemas/Throw"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+      description:
+        Private throws are visible only to the authenticated author. An inaccessible source throw returns
         404. Existing role and setup permissions apply.
   /api/games/{gameId}/throws/{throwId}:
     parameters:
-    - $ref: '#/components/parameters/gameId'
-    - $ref: '#/components/parameters/throwId'
+      - $ref: "#/components/parameters/gameId"
+      - $ref: "#/components/parameters/throwId"
     delete:
       operationId: deleteThrow
       tags:
-      - Throws
+        - Throws
       summary: Delete a throw
       security:
-      - sessionCookie: []
-        csrfToken: []
+        - sessionCookie: []
+          csrfToken: []
       responses:
-        '200':
+        "200":
           description: Successful response.
           content:
             application/json:
               schema:
                 type: object
                 required:
-                - deleted
+                  - deleted
                 properties:
                   deleted:
                     type: boolean
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
-      description: A private throw belonging to another account returns 404, including for the GM. Existing author
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+      description:
+        A private throw belonging to another account returns 404, including for the GM. Existing author
         or GM removal permissions apply to visible throws.
 components:
   parameters:
@@ -141,13 +146,13 @@ components:
       in: path
       required: true
       schema:
-        $ref: '#/components/schemas/Id'
+        $ref: "#/components/schemas/Id"
     gameId:
       name: gameId
       in: path
       required: true
       schema:
-        $ref: '#/components/schemas/Id'
+        $ref: "#/components/schemas/Id"
   schemas:
     Id:
       type: string
@@ -156,13 +161,13 @@ components:
     Error:
       type: object
       required:
-      - error
+        - error
       properties:
         error:
           type: object
           required:
-          - code
-          - message
+            - code
+            - message
           properties:
             code:
               type: string
@@ -175,14 +180,14 @@ components:
     FieldError:
       type: object
       required:
-      - error
+        - error
       properties:
         error:
           type: object
           required:
-          - code
-          - message
-          - fields
+            - code
+            - message
+            - fields
           properties:
             code:
               type: string
@@ -196,51 +201,51 @@ components:
     Throw:
       type: object
       required:
-      - id
-      - createdAt
-      - kind
-      - role
-      - characterId
-      - characterName
-      - equipmentId
-      - equipmentName
-      - setup
-      - outcome
-      - canRemove
-      - private
+        - id
+        - createdAt
+        - kind
+        - role
+        - characterId
+        - characterName
+        - equipmentId
+        - equipmentName
+        - setup
+        - outcome
+        - canRemove
+        - private
       properties:
         id:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         createdAt:
           type: string
           format: date-time
         kind:
-          $ref: '#/components/schemas/ThrowKind'
+          $ref: "#/components/schemas/ThrowKind"
         role:
           type: string
           enum:
-          - GM
-          - Player
+            - GM
+            - Player
         characterId:
           oneOf:
-          - $ref: '#/components/schemas/Id'
-          - type: 'null'
+            - $ref: "#/components/schemas/Id"
+            - type: "null"
         characterName:
           type: string
         equipmentId:
           oneOf:
-          - $ref: '#/components/schemas/Id'
-          - type: 'null'
+            - $ref: "#/components/schemas/Id"
+            - type: "null"
         equipmentName:
           oneOf:
-          - type: string
-          - type: 'null'
+            - type: string
+            - type: "null"
         setup:
           oneOf:
-          - $ref: '#/components/schemas/ResolvedCharacterThrow'
-          - $ref: '#/components/schemas/ResolvedNpcThrow'
+            - $ref: "#/components/schemas/ResolvedCharacterThrow"
+            - $ref: "#/components/schemas/ResolvedNpcThrow"
         outcome:
-          $ref: '#/components/schemas/ThrowOutcome'
+          $ref: "#/components/schemas/ThrowOutcome"
         canRemove:
           type: boolean
         private:
@@ -249,39 +254,39 @@ components:
     ResolvedNpcThrow:
       type: object
       required:
-      - type
-      - npcId
-      - npcName
-      - attributes
-      - kind
-      - dice
-      - modifier
-      - note
-      - redDice
-      - redModifier
-      - attack
+        - type
+        - npcId
+        - npcName
+        - attributes
+        - kind
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
+        - attack
       properties:
         type:
           type: string
           enum:
-          - npc-attribute
-          - npc-attack
+            - npc-attribute
+            - npc-attack
         npcId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         npcName:
           type: string
         attributes:
           type: array
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: "#/components/schemas/Attribute"
           minItems: 1
           maxItems: 2
         kind:
-          $ref: '#/components/schemas/ThrowKind'
+          $ref: "#/components/schemas/ThrowKind"
         dice:
           type: array
           items:
-            $ref: '#/components/schemas/ResolvedDie'
+            $ref: "#/components/schemas/ResolvedDie"
         modifier:
           type: integer
           minimum: -2147483648
@@ -292,110 +297,110 @@ components:
         redDice:
           type: array
           items:
-            $ref: '#/components/schemas/ResolvedDie'
+            $ref: "#/components/schemas/ResolvedDie"
         redModifier:
           type: integer
           minimum: -2147483648
           maximum: 2147483647
         attack:
           oneOf:
-          - type: object
-            required:
-            - id
-            - name
-            - accuracyBonus
-            - damageBonus
-            - damageType
-            properties:
-              id:
-                $ref: '#/components/schemas/Id'
-              name:
-                type: string
-              accuracyBonus:
-                type: integer
-                minimum: -2147483648
-                maximum: 2147483647
-              damageBonus:
-                type: integer
-                minimum: -2147483648
-                maximum: 2147483647
-              damageType:
-                type: string
-          - type: 'null'
+            - type: object
+              required:
+                - id
+                - name
+                - accuracyBonus
+                - damageBonus
+                - damageType
+              properties:
+                id:
+                  $ref: "#/components/schemas/Id"
+                name:
+                  type: string
+                accuracyBonus:
+                  type: integer
+                  minimum: -2147483648
+                  maximum: 2147483647
+                damageBonus:
+                  type: integer
+                  minimum: -2147483648
+                  maximum: 2147483647
+                damageType:
+                  type: string
+            - type: "null"
     ResolvedDie:
       type: object
       required:
-      - label
-      - size
+        - label
+        - size
       properties:
         label:
           oneOf:
-          - type: string
-          - type: 'null'
+            - type: string
+            - type: "null"
         size:
-          $ref: '#/components/schemas/FreeDie'
+          $ref: "#/components/schemas/FreeDie"
     FreeDie:
       type: integer
       enum:
-      - 4
-      - 6
-      - 8
-      - 10
-      - 12
-      - 20
+        - 4
+        - 6
+        - 8
+        - 10
+        - 12
+        - 20
     ThrowKind:
       type: string
       enum:
-      - attribute-check
-      - attribute-roll
-      - weapon-accuracy
-      - free
-      - opposed-check
-      - opposed-roll
+        - attribute-check
+        - attribute-roll
+        - weapon-accuracy
+        - free
+        - opposed-check
+        - opposed-roll
     Attribute:
       type: string
       enum:
-      - DEX
-      - INS
-      - MIG
-      - WLP
+        - DEX
+        - INS
+        - MIG
+        - WLP
     ResolvedCharacterThrow:
       type: object
       required:
-      - type
-      - characterId
-      - equipmentId
-      - kind
-      - dice
-      - modifier
-      - note
-      - redDice
-      - redModifier
-      - weaponBonus
-      - accuracyDice
+        - type
+        - characterId
+        - equipmentId
+        - kind
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
+        - weaponBonus
+        - accuracyDice
       properties:
         type:
           type: string
           enum:
-          - attribute
-          - weapon
-          - free
+            - attribute
+            - weapon
+            - free
         characterId:
           oneOf:
-          - $ref: '#/components/schemas/Id'
-          - type: 'null'
+            - $ref: "#/components/schemas/Id"
+            - type: "null"
         npcId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         equipmentId:
           oneOf:
-          - $ref: '#/components/schemas/Id'
-          - type: 'null'
+            - $ref: "#/components/schemas/Id"
+            - type: "null"
         kind:
-          $ref: '#/components/schemas/ThrowKind'
+          $ref: "#/components/schemas/ThrowKind"
         dice:
           type: array
           items:
-            $ref: '#/components/schemas/ResolvedDie'
+            $ref: "#/components/schemas/ResolvedDie"
         modifier:
           type: integer
           minimum: -2147483648
@@ -406,63 +411,63 @@ components:
         redDice:
           type: array
           items:
-            $ref: '#/components/schemas/ResolvedDie'
+            $ref: "#/components/schemas/ResolvedDie"
         redModifier:
           type: integer
           minimum: -2147483648
           maximum: 2147483647
         weaponBonus:
           oneOf:
-          - type: integer
-            minimum: -2147483648
-            maximum: 2147483647
-          - type: 'null'
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: "null"
         accuracyDice:
           oneOf:
-          - type: array
-            items:
-              $ref: '#/components/schemas/Attribute'
-            minItems: 2
-            maxItems: 2
-          - type: 'null'
+            - type: array
+              items:
+                $ref: "#/components/schemas/Attribute"
+              minItems: 2
+              maxItems: 2
+            - type: "null"
     ThrowOutcome:
       type: object
       required:
-      - first
+        - first
       properties:
         first:
-          $ref: '#/components/schemas/ThrowSide'
+          $ref: "#/components/schemas/ThrowSide"
         second:
-          $ref: '#/components/schemas/ThrowSide'
+          $ref: "#/components/schemas/ThrowSide"
         winner:
           type: string
           enum:
-          - first
-          - second
-          - tie
+            - first
+            - second
+            - tie
     ThrowSide:
       type: object
       required:
-      - dice
-      - modifier
-      - total
-      - result
+        - dice
+        - modifier
+        - total
+        - result
       properties:
         dice:
           type: array
           items:
             type: object
             required:
-            - label
-            - size
-            - face
+              - label
+              - size
+              - face
             properties:
               label:
                 oneOf:
-                - type: string
-                - type: 'null'
+                  - type: string
+                  - type: "null"
               size:
-                $ref: '#/components/schemas/FreeDie'
+                $ref: "#/components/schemas/FreeDie"
               face:
                 type: integer
                 minimum: 1
@@ -473,26 +478,26 @@ components:
         result:
           type: string
           enum:
-          - fumble
-          - critical
-          - ordinary
-          - none
+            - fumble
+            - critical
+            - ordinary
+            - none
     CreateThrow:
       type: object
       required:
-      - setup
+        - setup
       properties:
         sourceThrowId:
           oneOf:
-          - $ref: '#/components/schemas/Id'
-          - type: 'null'
+            - $ref: "#/components/schemas/Id"
+            - type: "null"
         setup:
           oneOf:
-          - $ref: '#/components/schemas/AttributeThrowSetup'
-          - $ref: '#/components/schemas/WeaponThrowSetup'
-          - $ref: '#/components/schemas/FreeThrowSetup'
-          - $ref: '#/components/schemas/NpcAttributeThrowSetup'
-          - $ref: '#/components/schemas/NpcAttackThrowSetup'
+            - $ref: "#/components/schemas/AttributeThrowSetup"
+            - $ref: "#/components/schemas/WeaponThrowSetup"
+            - $ref: "#/components/schemas/FreeThrowSetup"
+            - $ref: "#/components/schemas/NpcAttributeThrowSetup"
+            - $ref: "#/components/schemas/NpcAttackThrowSetup"
         private:
           type: boolean
           default: false
@@ -501,28 +506,28 @@ components:
     NpcAttackThrowSetup:
       type: object
       required:
-      - type
-      - npcId
-      - attackId
-      - expectedRevision
-      - dice
-      - modifier
-      - note
+        - type
+        - npcId
+        - attackId
+        - expectedRevision
+        - dice
+        - modifier
+        - note
       properties:
         type:
           type: string
           const: npc-attack
         npcId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         attackId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         expectedRevision:
           type: integer
           minimum: 0
         dice:
           type: array
           items:
-            $ref: '#/components/schemas/Die'
+            $ref: "#/components/schemas/Die"
           minItems: 2
           maxItems: 2
         modifier:
@@ -536,48 +541,48 @@ components:
     Die:
       type: integer
       enum:
-      - 6
-      - 8
-      - 10
-      - 12
+        - 6
+        - 8
+        - 10
+        - 12
     NpcAttributeThrowSetup:
       type: object
       required:
-      - type
-      - npcId
-      - expectedRevision
-      - attributes
-      - dice
-      - modifier
-      - note
-      - redDice
-      - redModifier
+        - type
+        - npcId
+        - expectedRevision
+        - attributes
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
       properties:
         type:
           type: string
           const: npc-attribute
         npcId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         expectedRevision:
           type: integer
           minimum: 0
         attributes:
           type: array
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: "#/components/schemas/Attribute"
           minItems: 1
           maxItems: 2
         dice:
           type: object
           properties:
             DEX:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
             INS:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
             MIG:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
             WLP:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
           additionalProperties: false
         modifier:
           type: integer
@@ -589,7 +594,7 @@ components:
         redDice:
           type: array
           items:
-            $ref: '#/components/schemas/Die'
+            $ref: "#/components/schemas/Die"
           minItems: 0
           maxItems: 2
         redModifier:
@@ -600,27 +605,27 @@ components:
     FreeThrowSetup:
       type: object
       required:
-      - type
-      - characterId
-      - dice
-      - modifier
-      - note
-      - redDice
-      - redModifier
+        - type
+        - characterId
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
       properties:
         type:
           type: string
           const: free
         characterId:
           oneOf:
-          - $ref: '#/components/schemas/Id'
-          - type: string
-            const: gm
+            - $ref: "#/components/schemas/Id"
+            - type: string
+              const: gm
           description: Character ID, NPC ID for a GM, or gm.
         dice:
           type: array
           items:
-            $ref: '#/components/schemas/FreeDie'
+            $ref: "#/components/schemas/FreeDie"
           minItems: 1
           maxItems: 2
         modifier:
@@ -633,7 +638,7 @@ components:
         redDice:
           type: array
           items:
-            $ref: '#/components/schemas/FreeDie'
+            $ref: "#/components/schemas/FreeDie"
           minItems: 0
           maxItems: 2
         redModifier:
@@ -644,28 +649,28 @@ components:
     WeaponThrowSetup:
       type: object
       required:
-      - type
-      - characterId
-      - equipmentId
-      - expectedRevision
-      - dice
-      - modifier
-      - note
+        - type
+        - characterId
+        - equipmentId
+        - expectedRevision
+        - dice
+        - modifier
+        - note
       properties:
         type:
           type: string
           const: weapon
         characterId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         equipmentId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         expectedRevision:
           type: integer
           minimum: 0
         dice:
           type: array
           items:
-            $ref: '#/components/schemas/Die'
+            $ref: "#/components/schemas/Die"
           minItems: 2
           maxItems: 2
         modifier:
@@ -679,41 +684,41 @@ components:
     AttributeThrowSetup:
       type: object
       required:
-      - type
-      - characterId
-      - expectedRevision
-      - attributes
-      - dice
-      - modifier
-      - note
-      - redDice
-      - redModifier
+        - type
+        - characterId
+        - expectedRevision
+        - attributes
+        - dice
+        - modifier
+        - note
+        - redDice
+        - redModifier
       properties:
         type:
           type: string
           const: attribute
         characterId:
-          $ref: '#/components/schemas/Id'
+          $ref: "#/components/schemas/Id"
         expectedRevision:
           type: integer
           minimum: 0
         attributes:
           type: array
           items:
-            $ref: '#/components/schemas/Attribute'
+            $ref: "#/components/schemas/Attribute"
           minItems: 1
           maxItems: 2
         dice:
           type: object
           properties:
             DEX:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
             INS:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
             MIG:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
             WLP:
-              $ref: '#/components/schemas/Die'
+              $ref: "#/components/schemas/Die"
           additionalProperties: false
         modifier:
           type: integer
@@ -725,7 +730,7 @@ components:
         redDice:
           type: array
           items:
-            $ref: '#/components/schemas/Die'
+            $ref: "#/components/schemas/Die"
           minItems: 0
           maxItems: 2
         redModifier:
@@ -739,49 +744,49 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     NotFound:
       description: Resource unavailable to the current account.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Forbidden:
       description: The action is forbidden or the Origin or CSRF check failed.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Unauthorized:
       description: A session is required or credentials were rejected.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     BadRequest:
       description: Malformed JSON, invalid identifiers, or an invalid request envelope.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     ValidationError:
       description: One or more fields failed validation.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/FieldError'
+            $ref: "#/components/schemas/FieldError"
     PayloadTooLarge:
       description: The JSON body exceeds 96 KiB.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Conflict:
       description: The request conflicts with current state.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -793,5 +798,5 @@ components:
       name: x-csrf-token
       description: Use a token issued for the current session or anonymous CSRF cookies.
 servers:
-- url: /
-  description: Same-origin API
+  - url: /
+    description: Same-origin API

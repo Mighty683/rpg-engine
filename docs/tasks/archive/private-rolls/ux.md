@@ -25,14 +25,14 @@ The user has specified that both players and the GM can make private rolls, and 
 
 ## Where the experience changes
 
-| Surface | Needed change |
-| --- | --- |
-| Character and NPC setup | `RollDialog.vue` needs a privacy checkbox for every applicable roll, including opposed rolls and rerolls. |
-| Free roll setup | `FreeRollDialog.vue` needs the same checkbox for GM and player; privacy is independent of **Roll as**. |
-| Table orchestration | `GameTable.vue` carries privacy through both drafts, submission and rerolls, and handles uncertain submissions. |
-| Throw history | `HistoryPanel.vue`, `ThrowResultCard.vue` and `hooks.ts` show and paginate only visible entries; identify the author's private entries. |
+| Surface                      | Needed change                                                                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Character and NPC setup      | `RollDialog.vue` needs a privacy checkbox for every applicable roll, including opposed rolls and rerolls.                                                                                                                                                                                                                                  |
+| Free roll setup              | `FreeRollDialog.vue` needs the same checkbox for GM and player; privacy is independent of **Roll as**.                                                                                                                                                                                                                                     |
+| Table orchestration          | `GameTable.vue` carries privacy through both drafts, submission and rerolls, and handles uncertain submissions.                                                                                                                                                                                                                            |
+| Throw history                | `HistoryPanel.vue`, `ThrowResultCard.vue` and `hooks.ts` show and paginate only visible entries; identify the author's private entries.                                                                                                                                                                                                    |
 | Shared data and live updates | Throw contracts, history retrieval, reroll and removal authorization, and game events need author-based privacy. Enforce access server-side for every response and operation; browser filtering is insufficient. Existing game-wide `throws` refresh hints must not reveal private activity to other members. Check caches and reconnects. |
-| AI actions | Any future agent roll action must carry privacy and obey the same authorization rules; no agent roll interface is assumed to exist today. |
+| AI actions                   | Any future agent roll action must carry privacy and obey the same authorization rules; no agent roll interface is assumed to exist today.                                                                                                                                                                                                  |
 
 ## Remaining assumptions
 

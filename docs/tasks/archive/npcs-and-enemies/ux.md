@@ -27,11 +27,11 @@ The gallery offers mixed, character-only, NPC-only, empty, loading and error rev
 
 The GM changes player visibility in the NPC editor using the same optimistic update pattern. New NPCs default to **Hidden**. Existing prototype fixtures without a visibility setting are treated as **Known** to preserve the existing review experience.
 
-| Setting | Player table and NPC panel                                                                                                                 |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hidden  | No card or NPC tab; the NPC is not visible.                                                                                                |
+| Setting | Player table and NPC panel                                                                                      |
+| ------- | --------------------------------------------------------------------------------------------------------------- |
+| Hidden  | No card or NPC tab; the NPC is not visible.                                                                     |
 | Visible | Name and relationship are visible; level, attributes, resources, defenses and attacks are concealed with `???`. |
-| Known   | Card shows stats and attacks. GM notes remain private. |
+| Known   | Card shows stats and attacks. GM notes remain private.                                                          |
 
 The GM sees the full card regardless of setting and checks or changes visibility in the editor, not via a card badge. NPC rolls and their snapshots are public to game members, even when the NPC is hidden; GM notes remain private. Players have no NPC edge tab. The role selector in Histoire previews these states; it is not an actual multi-user session. Visibility is a product decision under review, not evidence that players can safely access prototype endpoints.
 

@@ -4,30 +4,30 @@ See the [user story](story.md), [UX guidelines](../../../spec/ux.md), and [UI co
 
 ## Domain language
 
-| Term | Meaning |
-| --- | --- |
-| Library class (template) | A reusable Fabula Ultima class definition. The library starts empty. |
-| Game class | An independent copy in a game. Characters select game classes. |
-| Free benefit | A stat modifier or descriptive effect granted by selecting a class. |
-| Class level | A character's level in a class. It sets that character's skill-rank budget for the class. |
-| Skill rank | A character's investment in a skill. The skill defines its rank cap and any scaling. |
+| Term                     | Meaning                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
+| Library class (template) | A reusable Fabula Ultima class definition. The library starts empty.                      |
+| Game class               | An independent copy in a game. Characters select game classes.                            |
+| Free benefit             | A stat modifier or descriptive effect granted by selecting a class.                       |
+| Class level              | A character's level in a class. It sets that character's skill-rank budget for the class. |
+| Skill rank               | A character's investment in a skill. The skill defines its rank cap and any scaling.      |
 
 ## Actions by role
 
 The GM can edit every character and handles all edits when running the app alone. Players can edit their own character.
 
-| Role | Action | Screen or control | Scope |
-| --- | --- | --- | --- |
-| GM | Browse and create templates | Class library → **Create class** | Library |
-| GM | View or edit class details, free benefits, and skills | Class editor tabs | Library or game class |
-| GM | Copy a template into the game | Game classes → **Copy from library** | Current game |
-| GM | Update a template or save a new one from a game class | Game classes → **Save to library** | Library |
-| GM | Remove a game class | Game classes → **Remove class** | Current game |
-| GM | Confirm removal of a skill characters have learned | Skills tab → removal dialog | Affected characters |
-| GM, Player | Edit current and total EXP | Character sheet → **EXP** | Any character for GM, own character for player |
-| GM, Player | Edit character level | Character sheet → **Level** | Any character for GM, own character for player |
-| GM, Player | Add a class, change class levels, learn skills, and adjust ranks | Character sheet → **Classes & skills** | Any character for GM, own character for player |
-| GM, Player | Inspect class benefits and skill effects | Character sheet or game table → class details | Any character for GM, own character for player |
+| Role       | Action                                                           | Screen or control                             | Scope                                          |
+| ---------- | ---------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------- |
+| GM         | Browse and create templates                                      | Class library → **Create class**              | Library                                        |
+| GM         | View or edit class details, free benefits, and skills            | Class editor tabs                             | Library or game class                          |
+| GM         | Copy a template into the game                                    | Game classes → **Copy from library**          | Current game                                   |
+| GM         | Update a template or save a new one from a game class            | Game classes → **Save to library**            | Library                                        |
+| GM         | Remove a game class                                              | Game classes → **Remove class**               | Current game                                   |
+| GM         | Confirm removal of a skill characters have learned               | Skills tab → removal dialog                   | Affected characters                            |
+| GM, Player | Edit current and total EXP                                       | Character sheet → **EXP**                     | Any character for GM, own character for player |
+| GM, Player | Edit character level                                             | Character sheet → **Level**                   | Any character for GM, own character for player |
+| GM, Player | Add a class, change class levels, learn skills, and adjust ranks | Character sheet → **Classes & skills**        | Any character for GM, own character for player |
+| GM, Player | Inspect class benefits and skill effects                         | Character sheet or game table → class details | Any character for GM, own character for player |
 
 ## Screen map
 

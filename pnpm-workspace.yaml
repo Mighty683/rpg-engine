@@ -2,7 +2,7 @@ packages:
   - packages/*
 
 allowBuilds:
-  '@scarf/scarf': true
+  "@scarf/scarf": true
   argon2: true
   cpu-features: true
   esbuild: true

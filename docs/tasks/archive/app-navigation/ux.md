@@ -6,22 +6,22 @@ The signed-in drawer lists Games and, on game routes, the current game. Class li
 
 ## Domain language
 
-| Term | Meaning |
-| --- | --- |
-| Games | The signed-in user's game list and entry point to individual games. |
+| Term          | Meaning                                                                                                                                |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Games         | The signed-in user's game list and entry point to individual games.                                                                    |
 | Class library | The account's reusable Fabula Ultima class templates, available outside any game. Use the full name while Classes is the only catalog. |
-| Game classes | Class definitions belonging to a specific game. |
-| Account menu | The signed-in username and account actions. |
+| Game classes  | Class definitions belonging to a specific game.                                                                                        |
+| Account menu  | The signed-in username and account actions.                                                                                            |
 
 ## Actions by role
 
-| Role | Action | Screen or control | Scope |
-| --- | --- | --- | --- |
-| GM, player | Browse games | Header → **Games** | Signed-in account |
-| GM, player | Open the class library | Header → **Class library** | Signed-in account |
-| GM, player | Return to the current game | Game name in the game page context | Current game and its subpages |
-| GM, player | Sign out | Header → **Account** → **Sign out** | Signed-in session |
-| GM | Copy a template into the game | Game classes → **Copy from library** | Current game |
+| Role       | Action                        | Screen or control                    | Scope                         |
+| ---------- | ----------------------------- | ------------------------------------ | ----------------------------- |
+| GM, player | Browse games                  | Header → **Games**                   | Signed-in account             |
+| GM, player | Open the class library        | Header → **Class library**           | Signed-in account             |
+| GM, player | Return to the current game    | Game name in the game page context   | Current game and its subpages |
+| GM, player | Sign out                      | Header → **Account** → **Sign out**  | Signed-in session             |
+| GM         | Copy a template into the game | Game classes → **Copy from library** | Current game                  |
 
 Access follows the existing routes and permissions. Broader changes to game-local navigation are deferred.
 

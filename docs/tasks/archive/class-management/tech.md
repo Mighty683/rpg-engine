@@ -20,11 +20,11 @@ flowchart LR
     Projection --> Rolls["Character roll reader"]
 ```
 
-| Entry point | Production connection |
-| --- | --- |
-| Library and game classes | Reuse the class editor and pickers. Provide a catalog client through [API services](../../../../packages/frontend/src/shared/api-services.ts). Scope library requests to the signed-in account and game requests to the active game. |
-| Character sheet and game-table drawer | Mount the prototype's class and EXP controls in [CharacterView](../../../../packages/frontend/src/modules/characters/CharacterView.vue). Use the existing revisioned save queue and `canEdit`. Load game definitions for selection and display. |
-| Game table | Reuse the compact class summary with the [party query and sheet drawer](../../../../packages/frontend/src/modules/game-table/GameTable.vue). Show public class names and current dice from the party response. Open full class details through the authorized character read. |
+| Entry point                           | Production connection                                                                                                                                                                                                                                                         |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Library and game classes              | Reuse the class editor and pickers. Provide a catalog client through [API services](../../../../packages/frontend/src/shared/api-services.ts). Scope library requests to the signed-in account and game requests to the active game.                                          |
+| Character sheet and game-table drawer | Mount the prototype's class and EXP controls in [CharacterView](../../../../packages/frontend/src/modules/characters/CharacterView.vue). Use the existing revisioned save queue and `canEdit`. Load game definitions for selection and display.                               |
+| Game table                            | Reuse the compact class summary with the [party query and sheet drawer](../../../../packages/frontend/src/modules/game-table/GameTable.vue). Show public class names and current dice from the party response. Open full class details through the authorized character read. |
 
 ## Data model
 

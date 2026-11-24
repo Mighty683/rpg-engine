@@ -30,9 +30,9 @@ Use the handover for final acceptance. Record checks as pending until they run, 
 ## E2E tests
 
 Scenario: E2E-01 — Create and reopen a game
-  Given a signed-in GM
-  When the GM creates a game and reloads the game list
-  Then the new game is available to open
+Given a signed-in GM
+When the GM creates a game and reloads the game list
+Then the new game is available to open
 
 ## API tests
 

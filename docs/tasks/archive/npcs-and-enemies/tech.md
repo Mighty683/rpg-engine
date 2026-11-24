@@ -118,13 +118,13 @@ All fields are required; UUIDs are strings and timestamps are ISO 8601. Names ar
 
 All paths below start with `/api/games/:gameId/npcs`. Use existing session and write-origin guards. Resolve current game membership server-side; scope every NPC and attack lookup to the game.
 
-| Method | Request | Response |
-| --- | --- | --- |
-| `GET /` | — | `200 { npcs: NpcRead[] }`, ordered by creation time and ID. |
-| `GET /:npcId` | — | `200 { npc: NpcRead }`. |
-| `POST /` | `{ id: UUID, npc: NpcWrite }` | `201 { npc: GmNpc }`; identical retry returns `200`. |
-| `PUT /:npcId` | `{ expectedRevision: number, npc: NpcWrite }` | `200 { npc: GmNpc }`; replaces the profile and attacks and increments revision. |
-| `DELETE /:npcId` | `{ expectedRevision: number }` | `204`; GM only, rejects a stale revision and preserves historical throw snapshots. |
+| Method           | Request                                       | Response                                                                           |
+| ---------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `GET /`          | —                                             | `200 { npcs: NpcRead[] }`, ordered by creation time and ID.                        |
+| `GET /:npcId`    | —                                             | `200 { npc: NpcRead }`.                                                            |
+| `POST /`         | `{ id: UUID, npc: NpcWrite }`                 | `201 { npc: GmNpc }`; identical retry returns `200`.                               |
+| `PUT /:npcId`    | `{ expectedRevision: number, npc: NpcWrite }` | `200 { npc: GmNpc }`; replaces the profile and attacks and increments revision.    |
+| `DELETE /:npcId` | `{ expectedRevision: number }`                | `204`; GM only, rejects a stale revision and preserves historical throw snapshots. |
 
 Only the GM can write. For players, hidden NPCs are omitted and detail returns 404; visible NPCs return `VisibleNpc`; known NPCs return `KnownNpc`, without GM notes. Apply the same projection to list and detail.
 
