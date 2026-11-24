@@ -1,0 +1,61 @@
+# Development stack: database, backend and frontend in one command — `pnpm dev:compose`.
+# Ports match the host dev flow: PostgreSQL on 127.0.0.1:5432, backend on 127.0.0.1:3000,
+# frontend dev server with the /api proxy on its default port. Override any of them when
+# they are taken: DEV_DB_PORT=15432 DEV_BACKEND_PORT=13000 DEV_FRONTEND_PORT=15173
+name: rpg-engine-dev
+
+services:
+  db:
+    image: docker.io/pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: rpg_engine
+      POSTGRES_PASSWORD: local_dev_password
+      POSTGRES_DB: rpg_engine
+    ports:
+      - "127.0.0.1:${DEV_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/dev/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U rpg_engine -d rpg_engine"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    image: rpg-engine-dev:app
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+    # Rootless host networking, as in the integration-test script: the backend listens on
+    # 127.0.0.1 and the frontend proxy targets it, so no other networking is needed.
+    network_mode: host
+    userns_mode: keep-id
+    working_dir: /workspace
+    volumes: &app_volumes
+      # Bind-mounted source over the image content; anonymous volumes keep the image's
+      # workspace-installed node_modules, built for the container's Node runtime.
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/packages/backend/node_modules
+      - /workspace/packages/frontend/node_modules
+      - /workspace/packages/tests/node_modules
+    environment:
+      DATABASE_URL: postgresql://rpg_engine:local_dev_password@127.0.0.1:${DEV_DB_PORT:-5432}/rpg_engine
+      PORT: "${DEV_BACKEND_PORT:-3000}"
+    command: ["sh", "docker/dev/backend-entrypoint.sh"]
+    depends_on: [db]
+
+  frontend:
+    image: rpg-engine-dev:app
+    network_mode: host
+    userns_mode: keep-id
+    working_dir: /workspace
+    volumes: *app_volumes
+    environment:
+      API_PROXY_TARGET: http://127.0.0.1:${DEV_BACKEND_PORT:-3000}
+    command: ["pnpm", "--filter", "@rpg-engine/frontend", "dev", "--port", "${DEV_FRONTEND_PORT:-5173}"]
+    depends_on: [backend]
+
+volumes:
+  postgres-data:

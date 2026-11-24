@@ -1,63 +1,106 @@
 # RPG Engine
 
-A web application for tabletop RPGs.
+Web application for playing tabletop RPGs online — Fabula Ultima system. GM prepares a game and invites players; the shared game table stays in sync in real time.
+
+- Live game table: chat, dice throws, private GM rolls
+- Characters, class catalog, levels, skills per the [Fabula Ultima spec](docs/spec/fabula-ultima/README.md)
+- NPC/enemy roster with hidden, visible, known information
+- AI GM table assistant, backed by Mistral
+- OpenAPI 3.1 + Swagger UI; PostgreSQL + pgvector
+
+## Application architecture
+
+```mermaid
+flowchart TB
+    Browser["Browser"]
+
+    subgraph FE["packages/frontend — Vue 3, Nuxt UI"]
+        Views["View components"]
+        Controllers["Controller components<br/>application state and API access"]
+        Views --- Controllers
+    end
+
+    subgraph BE["packages/backend — Express 5, Node.js 26"]
+        Contracts["JSON Schema validation (Ajv)<br/>canonical OpenAPI 3.1, Swagger UI"]
+        Modules["Domain modules<br/>auth, games, characters, class-catalog, npcs,<br/>throws, game-notes, invitations, fabula, agent"]
+        SSE["Live events (SSE)<br/>heartbeats, per-account capacity"]
+    end
+
+    DB[("PostgreSQL 17 + pgvector<br/>Drizzle migrations")]
+    Mistral["Mistral AI API<br/>chat and embeddings"]
+
+    Browser --> Views
+    Controllers -->|"REST /api"| Contracts
+    Contracts --> Modules
+    Modules --> DB
+    Modules --> SSE
+    SSE -->|"server-sent events"| Controllers
+    Modules -->|"GM table agent: chat, retrieval"| Mistral
+```
+
+- Monorepo (pnpm): `packages/frontend`, `packages/backend`, `packages/tests`
+- Backend: modular monolith, one folder per domain, JSON Schema + Ajv validation, canonical OpenAPI document, Drizzle migrations, SSE live events
+- Frontend: views (render only) / controllers (state, API), injected API services, prototypes with mock backend in `packages/frontend/prototypes`
+- Security: Helmet, session cookies, CSRF, origin checks, PostgreSQL-backed rate limits, one JSON error boundary with request IDs, graceful shutdown
+
+## AI workflow
+
+Built end-to-end with AI agents. The whole process — standards, skills, task docs, reviewer agents — is committed to the repo, so any agent session continues the same way.
+
+```mermaid
+flowchart TD
+    subgraph CTX["Committed agent context — loaded into every session"]
+        SPECS["AGENTS.md and docs/spec<br/>standards, conventions, Fabula Ultima rules"]
+        SKILLS[".agents/skills<br/>reusable workflow skills, portable Agent Skills format"]
+        REVIEWERS[".opencode/agents<br/>architecture, UI design, persona UX reviewers"]
+    end
+
+    subgraph DOCS["Task folder under docs/tasks, workflow in the open"]
+        direction LR
+        STORY["1. story.md<br/>user story"] --> UX["2. ux.md<br/>screen map, prototype"]
+        UX --> TECH["3. tech.md<br/>data flows, OpenAPI, migrations"]
+        TECH --> HANDOVER["4. handover.md<br/>acceptance criteria, required test IDs"]
+        HANDOVER --> PLAN["5. plan.md<br/>delivery waves, edit boundaries"]
+    end
+
+    IMPL["Implementation subagents<br/>one per wave, inside its edit boundary"]
+    REV["Reviewer subagents<br/>architecture, UI design, persona UX"]
+    GATE["Quality gates — pnpm verify<br/>check, builds, unit, component,<br/>integration, E2E tests, secret scan"]
+    DONE["handover.md<br/>verification evidence recorded"]
+    ARC["Task archived<br/>docs/tasks/archive"]
+
+    PLAN --> IMPL
+    IMPL --> REV
+    IMPL --> GATE
+    REV -.->|"findings"| IMPL
+    GATE --> DONE
+    REV --> DONE
+    DONE --> ARC
+```
+
+Pipeline:
+
+1. **Task docs before code** — `story.md` → `ux.md` (screen map, prototype) → `tech.md` (ER, data flows, OpenAPI, migrations) → `handover.md` (acceptance criteria, required test IDs)
+2. **Plan** — delivery waves, exclusive edit boundaries, one subagent per wave, one owner per shared contract
+3. **Implement** — reviewer subagents in parallel: architecture · UI design · persona UX; findings loop back to builders
+4. **Verify** — `pnpm verify` = CI checks (format, lint, types, OpenAPI, unit, component, integration, E2E) + pre-push hook + Trivy secret scan
+5. **Close** — evidence into `handover.md`, task archived to `docs/tasks/archive`
+
+Source of truth for agents and people: `AGENTS.md`, `docs/spec`, `docs/tasks`, skills in `.agents/skills` (portable [Agent Skills](https://agentskills.io) format, auto-discovered by OpenCode), reviewers in `.opencode/agents/`.
 
 ## Development
 
-Requirements: Node.js 26 or newer, pnpm (version in `package.json`), and PostgreSQL.
-
-1. Install dependencies and configure the backend:
-
-   ```sh
-   pnpm install
-   cp packages/backend/.env.example packages/backend/.env
-   ```
-
-2. Set the database connection in `packages/backend/.env` and apply migrations:
-
-   ```sh
-   pnpm --filter @rpg-engine/backend migrate
-   ```
-
-3. Start the frontend and backend:
-
-   ```sh
-   pnpm dev
-   ```
-
-The backend loads `packages/backend/.env`; shell environment variables take precedence. It listens on `127.0.0.1:3000` by default (`PORT` overrides the port), and the frontend dev server proxies `/api` to port 3000.
-
-With `pnpm dev` running, open [Swagger UI](http://127.0.0.1:3000/api-docs/) or the [bundled OpenAPI schema](http://127.0.0.1:3000/openapi.json) on the backend port.
-
-### Commands
-
-- `pnpm build` — type-check and build the frontend.
-- `pnpm check` — check formatting, lint, types, and the OpenAPI schema.
-- `pnpm lint` — check lint and types.
-- `pnpm --filter @rpg-engine/backend build` — type-check the backend.
-- `pnpm --filter @rpg-engine/frontend <command>` or `pnpm --filter @rpg-engine/backend <command>` — run a package command. Root `build` and `preview` target the frontend.
-
-Shared Oxlint rules are in the root `vite.config.ts`, including a maximum block nesting depth of 6. Backend import and table-write ownership rules enforce module boundaries; the [code conventions](docs/spec/code-conventions.md) describe their scope and review requirements. Unit tests compare normalized runtime request schemas against canonical OpenAPI, including draft-07/OpenAPI 3.1 tuple conversion and explicit semantic exceptions.
-
-Run `pnpm hooks:install` once per clone to install the pre-push hook. The hook runs `pnpm verify` — the same checks as CI: formatting, lint, type checks, builds, unit and integration tests, browser component tests, and end-to-end tests — and then a Trivy secret scan (`pnpm scan:secrets`) over the whole working tree, including the built frontend bundle in `dist`, when `trivy` is installed; without `trivy` it skips the scan with a warning. CI runs the secret scan as its own job via `aquasecurity/trivy-action`, building the frontend first so `dist` is scanned there too, so a missing local `trivy` does not weaken the gate. Install Trivy from the [installation guide](https://aquasecurity.github.io/trivy/latest/getting-started/installation/) and Chromium with `pnpm --filter @rpg-engine/tests exec playwright install chromium` before running these checks or pushing. To allowlist a known false positive, add an `allow-rules` entry to a root `trivy-secret.yaml` (loaded automatically by both the hook and CI). See the integration test setup below.
+- Requirements: Node.js 26+, pnpm (pinned in `package.json`), PostgreSQL 17 + pgvector, Podman
+- Chromium for browser tests: `pnpm --filter @rpg-engine/tests exec playwright install chromium`
+- Pre-push hook: `pnpm hooks:install` → `pnpm verify` + Trivy scan; CI mirrors it in 4 jobs: secrets, lint, test, integration
 
 ### Demo data
 
-Run `pnpm seed:demo` after migrations to create **The Lantern Road**, a GM account (`demo-gm`), a player account (`demo-player`), an active character for each, a reusable **Lantern Guard** class with a copy in the game and a learned skill on the GM’s sheet, and three NPCs with attacks covering hidden, visible, and known visibility. Both accounts use `demo-password` by default; set `DEMO_PASSWORD` to change it.
-
-The command refuses to run in production. Reruns leave an existing demo game unchanged. If either username is taken, the seed transaction fails without changing existing data.
-
-To wipe the local development database’s `public` schema, apply all migrations, and reload the demo data:
-
-```sh
-pnpm seed:demo --reset
-```
-
-Reset deletes every object and all data in that schema. It uses the backend’s `DATABASE_URL` and requires a loopback PostgreSQL host.
+- `pnpm seed:demo` — **The Lantern Road**, accounts `demo-gm` / `demo-player` (`demo-password`, override with `DEMO_PASSWORD`), active characters, reusable **Lantern Guard** class, 3 NPCs covering hidden/visible/known
+- Safe: refuses production, reruns keep the game, taken usernames fail without changes
+- Reset: `pnpm seed:demo --reset` — destructive, loopback host only
 
 ### Local PostgreSQL with Podman
-
-Start a local database:
 
 ```sh
 podman build -t rpg-engine-postgres -f docker/postgres/Dockerfile .
@@ -71,85 +114,125 @@ podman run -d --name rpg-engine-postgres \
   rpg-engine-postgres
 ```
 
-The development URL is `postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine`. The password is for local use only.
+- URL: `postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine` — local password only; init vars apply to an empty volume; data survives recreation
+- pgvector once per database, privileged role, before the passage migration:
 
-- Stop or restart the container with `podman stop rpg-engine-postgres` or `podman start rpg-engine-postgres`.
+  ```sh
+  podman exec rpg-engine-postgres psql -U rpg_engine -d rpg_engine -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+  ```
 
-The named volume preserves data across container recreation. PostgreSQL initialization variables apply only to an empty volume.
-
-The image is the official PostgreSQL 17 base with the pgvector extension available. Create the extension once per database with a privileged role before applying the passage migration:
-
-```sh
-podman exec rpg-engine-postgres psql -U rpg_engine -d rpg_engine -c 'CREATE EXTENSION IF NOT EXISTS vector;'
-```
+- Stop/start: `podman stop rpg-engine-postgres` / `podman start rpg-engine-postgres`
 
 ## Testing
 
-- Run unit and API tests: `pnpm exec vp test`.
-- Install Chromium for browser tests: `pnpm --filter @rpg-engine/tests exec playwright install chromium`.
-- Run frontend component tests: `pnpm --filter @rpg-engine/frontend test:browser`. These mock the API and need no backend.
-
-Run `pnpm test:integration` for backend PostgreSQL tests, cross-module API tests, and browser end-to-end tests. The script starts a disposable `pgvector/pgvector:pg17` container through Podman, enables the `vector` extension in `public`, and removes the container afterward. The browser suite runs inside the official Playwright image (`mcr.microsoft.com/playwright:v{playwright}-noble`, pulled on first run), so no local Chromium install is needed and the suite works on hosts that restrict unprivileged user namespaces. If `TEST_DATABASE_URL` is set, the script reuses that disposable database and runs the browser suite on the host. Enable the extension there first with `CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;`, as CI does for its service container.
+- `pnpm test` — unit + API tests, no backend
+- `pnpm --filter @rpg-engine/frontend test:browser` — component tests, mocked API
+- `pnpm test:integration` — backend PostgreSQL tests + cross-module API tests + browser E2E; disposable `pgvector/pgvector:pg17` container (Podman), browser suite inside the official Playwright image; `TEST_DATABASE_URL` reuses a disposable database and runs the browser suite on the host
+- Conventions: branch coverage over line coverage, cases grouped by input, tests next to source, adversarial API tests in `packages/tests/src/api`, Gherkin browser journeys, `data-testid` selectors — see the [testing spec](docs/spec/testing.md)
 
 ### Mutation testing
 
-Run `pnpm --filter @rpg-engine/backend test:mutation` without a database. Set `TEST_DATABASE_URL` to a dedicated database whose user can create and drop schemas to include backend PostgreSQL integration tests. The cross-module API suite runs separately and is not included.
-
-- Focus a run: `pnpm --filter @rpg-engine/backend test:mutation -- --mutate src/modules/auth/guards.ts`.
-- View the report at `packages/backend/reports/mutation/mutation.html`; each run replaces it.
-
-Full runs can take a long time. The mutation run targets the focused suites listed in `packages/backend/stryker.config.mjs`.
+- `pnpm --filter @rpg-engine/backend test:mutation` — no database; `TEST_DATABASE_URL` adds backend integration tests
+- Focus: `-- --mutate src/modules/auth/guards.ts`; report: `packages/backend/reports/mutation/mutation.html`; suites from `stryker.config.mjs`
 
 ## Database migrations
 
-Run `pnpm --filter @rpg-engine/backend migrate` before starting the backend. The initial migration is safe to rerun. Drizzle's PostgreSQL migrator uses the SQL files and journal in `packages/backend/drizzle` and records applied migrations in the current schema. Add new migrations to the journal in order.
-
-SQL migrations are the source of truth for schema constraints. Keep Drizzle table definitions aligned with columns used by application queries. Services receive typed Drizzle database or transaction objects; `pg` is limited to pool lifecycle and the migration runner.
-
-The migration setup starts from a fresh database and does not import the former `schema_migrations` history. The account and ownership migration also assumes a fresh or deliberately reset database: existing anonymous games and characters cannot be assigned an owner without a separate migration plan.
+- `pnpm --filter @rpg-engine/backend migrate` before backend start
+- SQL files + journal in `packages/backend/drizzle`; migrations are the source of truth for constraints; keep Drizzle definitions aligned
+- Fresh database assumed; no former `schema_migrations` import
 
 ## Deployment
 
-- Serve the frontend and `/api` from the same public origin. Proxy `/api` to the backend and return the application for deep links such as `/invite/:token`.
-- Set `APP_ORIGIN` to the exact public browser origin, including scheme and port where applicable, without a trailing slash. It controls browser write origin checks and invitation URLs. In development, when unset, localhost and 127.0.0.1 same-origin requests are accepted on any port and invitations use the browser origin.
-- Set `INVITATION_SECRET` to a unique secret of at least 32 bytes and keep it stable across restarts. Losing or changing it makes stored invitation tokens unreadable. The example value is for local development only.
-- Set `CSRF_SECRET` to a unique cryptographically random secret of at least 32 bytes, shared by all backend instances. Browser writes use session-bound CSRF tokens as well as origin checks.
-- Set `NODE_ENV=production` and use HTTPS. Session cookies are `HttpOnly`, `SameSite=Lax`, and `Secure` in production. Keep production secrets outside the repository.
-- Configure the proxy to stream `/api` server-sent events without buffering or premature timeouts. **Run one backend process** until shared event delivery and revocation are implemented and verified across two processes; the current registry is in memory.
-- Runtime PostgreSQL deadlines default to 5 seconds for acquiring a connection, 10 seconds per statement, 2 seconds waiting for a lock, and 10 seconds idle inside a transaction. Override with `DB_CONNECTION_TIMEOUT_MS`, `DB_STATEMENT_TIMEOUT_MS`, `DB_LOCK_TIMEOUT_MS`, and `DB_IDLE_TRANSACTION_TIMEOUT_MS` (positive integer milliseconds). SQL deadlines run on PostgreSQL so timed-out statements are cancelled and failed transactions roll back; migrations use their separate pool.
-- Game and invitation mutations share a PostgreSQL-backed limit of 60 requests per authenticated account per minute, across sessions and games. Excess requests receive JSON `429` with `Retry-After` before domain writes. Reads and login/logout retain their existing policies.
-- HTTP failures use one JSON error boundary. Database statement/lock timeouts return `503 database_busy`; unexpected failures return `500 server_error`. Each response has a generated `X-Request-Id`; server logs contain that ID, method, route template, status, and optional database error code, excluding request bodies, URLs, cookies, SQL, and exception messages.
-- SSE capacity defaults to 8 pending/active connections per account and 256 total, across sessions and games. Capacity rejection returns JSON `429` with `Retry-After: 15` before SSE headers. Heartbeats run every 15 seconds without overlapping reauthorization. Slow or failed writers are disconnected instead of accumulating an unbounded queue; clients must reconnect and refresh authoritative state.
-- SIGTERM/SIGINT stops accepting connections, disposes streams/heartbeats, drains HTTP requests, and closes the database pool. HTTP drain has a 10-second deadline before remaining sockets are destroyed. Give the process enough termination grace for that deadline and pool cleanup.
-- Startup rejects invalid port, origin, and proxy settings before listening, and production also requires both secrets to contain at least 32 bytes. `PORT` must be an integer from 1 through 65535. Named proxy ranges are accepted, but prefer narrowly scoped trusted addresses/CIDRs.
-- Set `TRUSTED_PROXIES` to comma-separated exact trusted addresses or CIDR ranges, such as `127.0.0.1/32`, and ensure those proxies overwrite forwarded headers. In production it is required; use `none` only for direct access. Untrusted forwarded addresses make users behind a proxy share its rate limit. Do not trust unverified clients or use an unrestricted proxy setting.
-- Configure security headers and an appropriate CSP on the frontend server. Helmet sets headers on API responses.
-
-Login is rate-limited by client address and account, and registration by client address; counters are stored in PostgreSQL. Password hashing is capped per backend process.
+- One origin: serve frontend + proxy `/api`, return the app on deep links (`/invite/:token`), stream SSE without buffering
+- `APP_ORIGIN`: exact browser origin, no trailing slash; `NODE_ENV=production`; HTTPS; cookies `HttpOnly`, `SameSite=Lax`, `Secure`
+- `INVITATION_SECRET`, `CSRF_SECRET`: unique random, ≥32 bytes, stable across restarts, outside the repo
+- One backend process (event registry in memory)
+- `TRUSTED_PROXIES`: exact addresses/CIDRs, required in production; CSP on the frontend server; Helmet on API responses
+- DB deadlines: 5s connect / 10s statement / 2s lock / 10s idle — override with `DB_*_TIMEOUT_MS`; rate limits: login, registration, game and invitation writes (60/min/account), SSE capacity 8/account, 256 total
+- Errors: one JSON boundary — `503 database_busy`, `500 server_error`, `X-Request-Id`, safe logs (no bodies, URLs, cookies, SQL)
+- Shutdown: drain ≤10s + pool close — allow termination grace
 
 ### GM table Agent
 
-Agent access is disabled by default. To enable it, apply migrations and runtime grants, then set the backend environment to `AGENT_ENABLED=true`, `MISTRAL_MODEL=mistral-small-2603` and a deployment-provided `MISTRAL_API_KEY`. Restart the backend after changing these settings. Keep the key in the backend secret store or the ignored local `packages/backend/.env`. The browser talks to the same-origin game API.
-
-Enabling the Agent sends GM messages and requested game facts to Mistral. Configure the provider account’s retention and training preferences for your deployment before using real games. To check the integration, use a synthetic game. A prepared roll appears in the chat with a **Make a roll** button. Confirming it records the throw and displays the dice and total in the conversation. Completed GM conversations persist in PostgreSQL. One turn runs per game, with up to ten turns across the single backend process.
+- Disabled by default. Enable: migrations + grants, then `AGENT_ENABLED=true`, `MISTRAL_MODEL=mistral-small-2603`, `MISTRAL_API_KEY`, restart
+- Sends GM messages + requested game facts to Mistral — set provider retention and test on a synthetic game first
+- Rolls: **Make a roll** in chat, confirmed roll shows dice + total; conversations persist in PostgreSQL; 1 turn per game, ≤10 per process
 
 ### Database roles
 
-1. Create separate PostgreSQL login roles: a migration owner that owns the application schema and tables, and a runtime role without superuser, database/schema ownership, role creation, or privileged role membership. Set passwords through the database administration or secrets system.
-2. Set `MIGRATION_DATABASE_URL` for migrations and `DATABASE_URL` for the backend runtime. Production migrations require `MIGRATION_DATABASE_URL`; development may fall back to `DATABASE_URL`. Keep migration credentials away from the runtime role.
-3. Run migrations as the schema owner, then apply runtime grants as that owner, replacing the existing role and schema names:
+1. Two login roles: migration owner (schema, tables) + runtime role (no superuser, no ownership, no role management)
+2. `MIGRATION_DATABASE_URL` for migrations (required in production), `DATABASE_URL` for runtime
+3. Migrate as owner, then grants as owner:
 
    ```sh
    psql "$MIGRATION_DATABASE_URL" -v app_schema=public -v app_role=rpg_runtime -f packages/backend/scripts/runtime-grants.sql
    ```
 
-4. Give the runtime role database `CONNECT` and ensure its `search_path` selects the application schema. Check effective privileges, including `PUBLIC` and inherited grants: the script adds permissions but does not remove existing ones or create roles.
-5. Review and rerun the grant script after migrations that add database objects. It excludes the migration history table and does not automatically grant access to future tables.
+4. Verify effective privileges (script adds, never removes); rerun after migrations adding objects; DBA applies these steps
+- Static SQL guard: Oxlint plugin (via `pnpm lint`, `pnpm check`) flags dynamic text in `.query(...)` and Drizzle `sql.raw()` in backend production code
 
-A database administrator must apply these steps to the deployed database.
+## Commands
 
-SQL query construction is checked by an Oxlint plugin through `pnpm lint` and `pnpm check`, including CI. It detects dynamic text in direct `.query(...)` and `["query"](...)` calls and direct Drizzle `sql.raw()` calls in backend production TypeScript. It does not analyze indirect database APIs or SQL migrations.
+| Command | Description |
+| --- | --- |
+| `pnpm install` | Install dependencies. |
+| `pnpm dev` | Frontend + backend dev servers. |
+| `pnpm dev:compose` | One command: db + backend + frontend in containers. |
+| `pnpm compose:down` | Stop and remove the compose stack. |
+| `pnpm build` | Type-check + build frontend. |
+| `pnpm preview` | Preview built frontend. |
+| `pnpm lint` | Lint + types. |
+| `pnpm check` | Format, lint, types, OpenAPI lint + bundle. |
+| `pnpm test` | Unit + API tests. |
+| `pnpm --filter @rpg-engine/frontend test:browser` | Component tests, mocked API. |
+| `pnpm test:integration` | Integration + E2E suites. |
+| `pnpm --filter @rpg-engine/backend test:mutation` | Mutation testing. |
+| `pnpm --filter @rpg-engine/backend migrate` | Apply migrations. |
+| `pnpm seed:demo` | Demo game + accounts. |
+| `pnpm seed:demo --reset` | Destructive: wipe, migrate, reseed. |
+| `pnpm verify` | Full gate — same checks as CI. |
+| `pnpm hooks:install` | Install pre-push hook. |
+| `pnpm scan:secrets` | Trivy secret scan. |
+| `pnpm --filter @rpg-engine/tests exec playwright install chromium` | One-time Chromium install. |
 
-## AI skills and agents
+Package-scoped: `pnpm --filter @rpg-engine/frontend <command>`, `pnpm --filter @rpg-engine/backend <command>`; root `build`/`preview` target the frontend.
 
-Reusable skills live in `.agents/skills/` in the portable [Agent Skills](https://agentskills.io) format. OpenCode discovers them automatically; other compatible harnesses can also use them. Reviewer subagents are defined in `.opencode/agents/`.
+## Run the project
+
+### One command with Podman Compose
+
+```sh
+pnpm dev:compose
+```
+
+- Starts: PostgreSQL 17 (pgvector) + migrations + backend + frontend; image builds on Node 26 with pinned pnpm; rebuild is automatic (`up --build`)
+- URLs = host flow: Vite `127.0.0.1:5173` → `/api` → backend `127.0.0.1:3000`, db `127.0.0.1:5432`, Swagger [127.0.0.1:3000/api-docs](http://127.0.0.1:3000/api-docs/)
+- Live editing: source bind-mounted — `node --watch` backend restart, Vite HMR
+- Demo data: `podman compose exec backend pnpm seed:demo`; sign in `demo-gm` / `demo-password` (player: `demo-player`)
+- Stop: `pnpm compose:down`; data persists in the `postgres-data` volume
+- Ports taken: `DEV_DB_PORT=15432 DEV_BACKEND_PORT=13000 DEV_FRONTEND_PORT=15173 pnpm dev:compose`
+- Needs: Podman with compose provider (`podman compose version`); app containers use rootless host networking + `userns=keep-id`, same as the integration tests
+
+### Manual setup
+
+1. Requirements: Node.js 26+, pnpm 12, Podman, PostgreSQL 17 + pgvector
+
+2. Install + configure:
+
+   ```sh
+   pnpm install
+   cp packages/backend/.env.example packages/backend/.env
+   ```
+
+3. Start a database ([Local PostgreSQL with Podman](#local-postgresql-with-podman)), set `DATABASE_URL`, enable the `vector` extension
+
+4. Migrate + seed:
+
+   ```sh
+   pnpm --filter @rpg-engine/backend migrate
+   pnpm seed:demo
+   ```
+
+5. Run: `pnpm dev` — backend `127.0.0.1:3000` (`PORT` overrides, shell vars beat `.env`), frontend proxies `/api`, [Swagger UI](http://127.0.0.1:3000/api-docs/), [OpenAPI bundle](http://127.0.0.1:3000/openapi.json)
+
+6. Optional agent: `AGENT_ENABLED=true`, `MISTRAL_MODEL`, `MISTRAL_API_KEY`, restart

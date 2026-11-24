@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --parallel --filter @rpg-engine/frontend --filter @rpg-engine/backend dev",
+    "dev:compose": "podman compose up --build",
+    "compose:down": "podman compose down",
     "build": "pnpm --filter @rpg-engine/frontend build",
     "preview": "pnpm --filter @rpg-engine/frontend preview",
     "seed:demo": "pnpm --filter @rpg-engine/backend seed:demo",

@@ -1,0 +1,14 @@
+# Exclude everything the manifest-only dev image does not need; keeps the build
+# context small and keeps local secrets and dependencies out of image builds.
+.git
+node_modules
+packages/*/node_modules
+**/dist
+**/.vitest
+.stryker-tmp
+**/reports
+.env
+.env.*
+!.env.example
+docs
+*.md
