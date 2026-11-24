@@ -490,7 +490,9 @@ function freeSetup(draft: FreeDraft): ThrowSetup | null {
   const redDice = freeOpponent.value.dice;
   return {
     type: "free",
-    characterId: draft.characterId,
+    // Players have no roll-as picker: attribute the roll to the active character as it is
+    // known at submit time, not to the stale snapshot captured when the dialog opened.
+    characterId: props.role === "GM" ? draft.characterId : (playerActiveCharacter.value?.id ?? ""),
     dice: [...draft.dice],
     modifier,
     redDice,

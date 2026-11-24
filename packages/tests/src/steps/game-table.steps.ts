@@ -473,6 +473,11 @@ When(
     await this.page.getByTestId("game-table").waitFor({ state: "visible" });
     await new GameTablePage(this.page).openHistory();
     await this.page.getByTestId("make-roll").click();
+    // Members refetches can lag the character switch; the table must know the active
+    // character before the roll is submitted, otherwise the submit is blocked.
+    await expect
+      .poll(() => this.page.getByTestId("player-roll-as").textContent())
+      .toContain(firstName);
     await this.page.getByTestId("add-die-d8").click();
     await this.page.getByTestId("submit-free-roll").click();
     await this.page.getByTestId("throw-entry").first().waitFor({ state: "visible" });
@@ -495,6 +500,9 @@ When(
     await this.page.getByTestId("game-table").waitFor({ state: "visible" });
     await new GameTablePage(this.page).openHistory();
     await this.page.getByTestId("make-roll").click();
+    await expect
+      .poll(() => this.page.getByTestId("player-roll-as").textContent())
+      .toContain(secondName);
     await this.page.getByTestId("add-die-d10").click();
     await this.page.getByTestId("submit-free-roll").click();
     await expect.poll(() => this.page.getByTestId("throw-entry").count()).toBe(2);
