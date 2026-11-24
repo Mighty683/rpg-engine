@@ -96,8 +96,11 @@ Source of truth for agents and people: `AGENTS.md`, `docs/spec`, `docs/tasks`, s
 
 ### Demo data
 
-- `pnpm seed:demo` — **The Lantern Road**, accounts `demo-gm` / `demo-player` (`demo-password`, override with `DEMO_PASSWORD`), active characters, reusable **Lantern Guard** class, 3 NPCs covering hidden/visible/known
-- Safe: refuses production, reruns keep the game, taken usernames fail without changes
+Run `pnpm seed:demo` after migrations. Sign in as **`demo-player`** to choose between **The Lantern Road**, **Glasswater Isles**, and **The Ember Archive**. Each new campaign starts with two notes, two equipped player characters, four rolls, and a GM character with a learned class skill. The Lantern Road also includes three NPCs at different visibility levels.
+
+- `demo-gm` runs The Lantern Road and The Ember Archive and plays in Glasswater Isles. `demo-keeper` runs Glasswater Isles. `demo-scout` plays in The Lantern Road and The Ember Archive.
+- New accounts use `demo-password` unless `DEMO_PASSWORD` is set.
+- Reruns add missing demo games and accounts and preserve existing campaigns, including an older Lantern Road. A username collision rolls back the seed. The command refuses to run in production.
 - Reset: `pnpm seed:demo --reset` — destructive, loopback host only
 
 ### Local PostgreSQL with Podman
@@ -188,7 +191,7 @@ podman run -d --name rpg-engine-postgres \
 | `pnpm test:integration` | Integration + E2E suites. |
 | `pnpm --filter @rpg-engine/backend test:mutation` | Mutation testing. |
 | `pnpm --filter @rpg-engine/backend migrate` | Apply migrations. |
-| `pnpm seed:demo` | Demo game + accounts. |
+| `pnpm seed:demo` | Demo campaigns, accounts, and play history. |
 | `pnpm seed:demo --reset` | Destructive: wipe, migrate, reseed. |
 | `pnpm verify` | Full gate — same checks as CI. |
 | `pnpm hooks:install` | Install pre-push hook. |

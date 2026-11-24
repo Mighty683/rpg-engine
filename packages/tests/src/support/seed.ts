@@ -51,38 +51,69 @@ export async function seedAccount(): Promise<SeededAccount> {
   }
 }
 
+/** Adds a player with their own roster and selects the first character. */
+export async function seedMember(
+  pool: pg.Pool,
+  gameId: string,
+  player: SeededAccount,
+  characterNames: string[],
+) {
+  const playerActor = { accountId: player.accountId, sessionId: randomUUID() };
+  const membershipId = randomUUID();
+  await pool.query("INSERT INTO players(id,game_id,account_id,name) VALUES ($1,$2,$3,$4)", [
+    membershipId,
+    gameId,
+    player.accountId,
+    unique("member"),
+  ]);
+  const playerCharacterIds: string[] = [];
+  for (const name of characterNames) {
+    const id = randomUUID();
+    await createWorkspaceCharacter(
+      {
+        membershipsFor: createMembershipOwnership,
+        gameAccessFor: createGameAccessService,
+        events: createGameEvents(),
+        database: databaseFromPool(pool),
+      },
+      playerActor,
+      gameId,
+      id,
+      name,
+    );
+    playerCharacterIds.push(id);
+  }
+  const playerCharacterId = playerCharacterIds[0]!;
+  await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [
+    playerCharacterId,
+    membershipId,
+  ]);
+  return { membershipId, playerCharacterIds, playerCharacterId };
+}
+
 /** Seeds a Fabula Ultima game with a GM account, a player membership, and active characters. */
 export async function seedGame(
-  options: { gmWeapon?: "complete" | "incomplete" | "none"; playerCharacters?: number } = {},
+  options: {
+    gmWeapon?: "complete" | "incomplete" | "none";
+    playerCharacters?: number;
+    name?: string;
+    gmName?: string;
+    playerName?: string;
+    player?: SeededAccount;
+  } = {},
 ) {
   const pool = await seedPool();
   try {
-    const gm: SeededAccount = { username: unique("gm"), password: "password-123", accountId: "" };
-    const player: SeededAccount = {
-      username: unique("player"),
-      password: "password-123",
-      accountId: "",
-    };
-    gm.accountId = (await registerAccount(databaseFromPool(pool), gm.username, gm.password)).id;
-    player.accountId = (
-      await registerAccount(databaseFromPool(pool), player.username, player.password)
-    ).id;
+    const gm = await seedAccount();
+    const player = options.player ?? (await seedAccount());
     const gmActor = { accountId: gm.accountId, sessionId: randomUUID() };
-    const playerActor = { accountId: player.accountId, sessionId: randomUUID() };
     const game = await createActorGame(
       databaseFromPool(pool),
       gmActor,
-      unique("Table"),
+      options.name ?? unique("Table"),
       "fabula-ultima",
     );
     const gameId = game.id;
-    const membershipId = randomUUID();
-    await pool.query("INSERT INTO players(id,game_id,account_id,name) VALUES ($1,$2,$3,$4)", [
-      membershipId,
-      gameId,
-      player.accountId,
-      unique("member"),
-    ]);
     const gmCharacterId = randomUUID();
     await createWorkspaceCharacter(
       {
@@ -94,7 +125,7 @@ export async function seedGame(
       gmActor,
       gameId,
       gmCharacterId,
-      unique("GM Hero"),
+      options.gmName ?? unique("GM Hero"),
     );
     await setGmCharacterActive(
       {
@@ -107,29 +138,17 @@ export async function seedGame(
       gmCharacterId,
       true,
     );
-    const playerCharacterIds: string[] = [];
-    const playerCharacters = options.playerCharacters ?? 1;
-    for (let index = 0; index < playerCharacters; index++) {
-      const id = randomUUID();
-      await createWorkspaceCharacter(
-        {
-          membershipsFor: createMembershipOwnership,
-          gameAccessFor: createGameAccessService,
-          events: createGameEvents(),
-          database: databaseFromPool(pool),
-        },
-        playerActor,
-        gameId,
-        id,
-        unique(`Player Hero ${index + 1}`),
-      );
-      playerCharacterIds.push(id);
-    }
-    const playerCharacterId = playerCharacterIds[0]!;
-    await pool.query("UPDATE players SET active_character_id=$1 WHERE id=$2", [
-      playerCharacterId,
-      membershipId,
-    ]);
+    const names = options.playerName
+      ? [options.playerName]
+      : Array.from({ length: options.playerCharacters ?? 1 }, (_, i) =>
+          unique(`Player Hero ${i + 1}`),
+        );
+    const { membershipId, playerCharacterId, playerCharacterIds } = await seedMember(
+      pool,
+      gameId,
+      player,
+      names,
+    );
     let weaponId: string | null = null;
     if (options.gmWeapon && options.gmWeapon !== "none") {
       const weapon = {

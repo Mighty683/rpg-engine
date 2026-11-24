@@ -8,9 +8,8 @@ import {
   characterClassLevels,
   characterSkillRanks,
   characters,
-  classTemplates,
-  gameClasses,
-  gameClassSkills,
+  characterEquipment,
+  throws,
   games,
   npcAttacks,
   npcs,
@@ -19,65 +18,193 @@ import {
 import { transaction } from "./database/transaction.ts";
 import type { DatabaseTransaction } from "./database/types.ts";
 import { applyMigrations } from "./migrations.ts";
-import type { ClassDefinition } from "./modules/class-catalog/types.ts";
+import { insertTemplate, insertGameClass } from "./modules/class-catalog/repository.ts";
+import { gameNoteEntries } from "./modules/game-notes/schema.ts";
+import { noteTextFingerprint } from "./modules/game-notes/document.ts";
+import { resolveThrow } from "./modules/throws/resolve.ts";
+import type { ThrowSetup } from "./modules/throws/types.ts";
+import { serverDieSource } from "./modules/fabula/rolls.ts";
+import {
+  campaigns,
+  demoAccounts,
+  demoGameId,
+  npcFixtures,
+  type Campaign,
+} from "./seed-demo-fixtures.ts";
 import { defaultSheet } from "./modules/fabula/rules.ts";
 
-const demoGameId = "bb351a42-48c8-4c7b-a9ec-a136ef8c7461";
-const demoGmId = "e160cba7-18c1-456e-8fd4-c346fc41a1a8";
-const demoPlayerId = "329e9c0c-e25b-4e84-8f41-dfa339ef7c57";
+async function seedAccounts(db: DatabaseTransaction, password: string) {
+  for (const account of demoAccounts) {
+    const [existing] = await db
+      .select({ username: accounts.username })
+      .from(accounts)
+      .where(eq(accounts.id, account.id));
+    if (existing && existing.username !== account.username)
+      throw new Error("Demo account ID is already in use");
+    if (!existing)
+      await db.insert(accounts).values({ ...account, passwordHash: await argon2.hash(password) });
+  }
+}
 
-async function seedDemoClass(db: DatabaseTransaction, characterId: string) {
-  const definition: ClassDefinition = {
-    name: "Lantern Guard",
-    description: "Protects travelers along the Lantern Road.",
-    freeBenefits: [
-      { id: randomUUID(), kind: "modifier", name: "Stalwart", stat: "maxHp", amount: 5 },
-    ],
-    skills: [
-      {
-        id: randomUUID(),
-        name: "Watchful",
-        description: "Stay alert while escorting the party.",
-        maxRank: 2,
-        benefits: [
-          { id: randomUUID(), kind: "modifier", name: "Keen Senses", stat: "dieIns", amount: 1 },
-        ],
-      },
-    ],
-  };
-  await db.insert(classTemplates).values({
+async function seedCharacter(
+  db: DatabaseTransaction,
+  gameId: string,
+  name: string,
+  playerId: string | null,
+) {
+  const sheet = defaultSheet(name);
+  const id = randomUUID();
+  await db.insert(characters).values({
+    id,
+    gameId,
+    playerId,
+    gmActive: !playerId,
+    name,
+    level: sheet.level,
+    dexDie: sheet.baseDice.DEX,
+    insDie: sheet.baseDice.INS,
+    migDie: sheet.baseDice.MIG,
+    wlpDie: sheet.baseDice.WLP,
+    currentHp: sheet.resources.hp,
+    currentMp: sheet.resources.mp,
+    currentIp: sheet.resources.ip,
+    fabulaPoints: sheet.resources.fabula,
+  });
+  return { id, name, playerId, sheet, currentDice: sheet.baseDice, revision: 0 };
+}
+
+async function seedClass(db: DatabaseTransaction, campaign: Campaign, characterId: string) {
+  const makeRecord = () => ({
     id: randomUUID(),
-    accountId: demoGmId,
-    systemId: "fabula-ultima",
-    definition,
+    systemId: "fabula-ultima" as const,
+    revision: 0,
+    definition: campaign.makeClass(),
   });
-
-  const gameClassId = randomUUID();
-  const { skills, freeBenefits, ...details } = definition;
-  await db.insert(gameClasses).values({
-    id: gameClassId,
-    gameId: demoGameId,
-    systemId: "fabula-ultima",
-    ...details,
-    freeBenefits: freeBenefits.map((benefit) => ({ ...benefit, id: randomUUID() })),
-  });
-  const skill = skills[0]!;
-  const skillId = randomUUID();
-  const allocation = { gameId: demoGameId, gameClassId, characterId };
-  await db.insert(gameClassSkills).values({
-    ...skill,
-    id: skillId,
-    gameId: demoGameId,
-    gameClassId,
-    position: 0,
-    benefits: skill.benefits.map((benefit) => ({ ...benefit, id: randomUUID() })),
-  });
+  await insertTemplate(db, campaign.gm, makeRecord());
+  const record = await insertGameClass(db, campaign.id, makeRecord());
+  const allocation = { gameId: campaign.id, gameClassId: record.id, characterId };
   await db.insert(characterClassLevels).values({ ...allocation, level: 1 });
-  await db.insert(characterSkillRanks).values({ ...allocation, skillId, rank: 1 });
+  await db
+    .insert(characterSkillRanks)
+    .values({ ...allocation, skillId: record.definition.skills[0]!.id, rank: 1 });
   await db
     .update(characters)
     .set({ expCurrent: sql`${characters.expCurrent} - 10` })
     .where(eq(characters.id, characterId));
+}
+
+async function seedMember(
+  db: DatabaseTransaction,
+  campaign: Campaign,
+  member: Campaign["members"][number],
+  index: number,
+) {
+  const playerId = randomUUID();
+  await db.insert(players).values({
+    id: playerId,
+    gameId: campaign.id,
+    accountId: member.accountId,
+    name: member.player,
+  });
+  const character = await seedCharacter(db, campaign.id, member.character, playerId);
+  await db
+    .update(players)
+    .set({ activeCharacterId: character.id, revision: 1 })
+    .where(eq(players.id, playerId));
+
+  const weapon = {
+    kind: "weapon" as const,
+    id: randomUUID(),
+    name: member.weapon,
+    notes: "HR + 6 physical damage.",
+    accuracyDice: ["DEX", "INS"] as ["DEX", "INS"],
+    accuracyBonus: 1,
+    equipped: true,
+    priceZenit: null,
+  };
+  await db.insert(characterEquipment).values({
+    ...weapon,
+    characterId: character.id,
+    position: 1,
+    accuracyAttribute1: weapon.accuracyDice[0],
+    accuracyAttribute2: weapon.accuracyDice[1],
+  });
+  const context = {
+    role: "Player" as const,
+    membershipId: playerId,
+    ownActiveCharacterId: character.id,
+    activeCharacterIds: [character.id],
+    character,
+    weapon,
+    source: null,
+  };
+  const setups: ThrowSetup[] = [
+    {
+      type: "attribute",
+      characterId: character.id,
+      expectedRevision: 0,
+      attributes: ["INS", "WLP"],
+      dice: {},
+      modifier: 0,
+      redDice: [],
+      redModifier: 0,
+      note: campaign.check,
+    },
+    {
+      type: "weapon",
+      characterId: character.id,
+      expectedRevision: 0,
+      equipmentId: weapon.id,
+      dice: [character.currentDice.DEX, character.currentDice.INS],
+      modifier: 0,
+      note: "Sparring before the next watch.",
+    },
+  ];
+  for (const [offset, setup] of setups.entries()) {
+    const seq = index * setups.length + offset + 1;
+    const roll = resolveThrow({ sourceThrowId: null, setup }, context, serverDieSource);
+    await db.insert(throws).values({
+      ...roll,
+      id: randomUUID(),
+      gameId: campaign.id,
+      authorAccountId: member.accountId,
+      seq,
+      createdAt: new Date(
+        Date.now() - (campaign.members.length * setups.length - seq + 1) * 60_000,
+      ),
+    });
+  }
+}
+
+async function seedCampaign(db: DatabaseTransaction, campaign: Campaign) {
+  await db.insert(games).values({
+    id: campaign.id,
+    name: campaign.name,
+    systemId: "fabula-ultima",
+    gmAccountId: campaign.gm,
+  });
+  const gmCharacter = await seedCharacter(db, campaign.id, campaign.gmCharacter, null);
+  await seedClass(db, campaign, gmCharacter.id);
+  for (const [index, member] of campaign.members.entries())
+    await seedMember(db, campaign, member, index);
+  for (const [title, body] of campaign.notes) {
+    const content = { ops: [{ insert: body + "\n" }] };
+    await db.insert(gameNoteEntries).values({
+      id: randomUUID(),
+      gameId: campaign.id,
+      title,
+      content,
+      textFingerprint: noteTextFingerprint(title, content),
+    });
+  }
+  if (campaign.id === demoGameId) await seedLanternNpcs(db);
+}
+
+async function seedLanternNpcs(db: DatabaseTransaction) {
+  for (const { attack, ...npc } of npcFixtures) {
+    await db.insert(npcs).values({ ...npc, gameId: demoGameId });
+    await db.insert(npcAttacks).values({ ...attack, id: randomUUID(), npcId: npc.id, position: 0 });
+  }
 }
 
 async function resetDemoDatabase(pool: pg.Pool) {
@@ -124,155 +251,24 @@ try {
     const schema = await db.execute<{ ready: boolean }>(sql`SELECT EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = current_schema() AND table_name = 'games' AND column_name = 'gm_account_id'
-      ) AND to_regclass(current_schema() || '.character_skill_ranks') IS NOT NULL AS ready`);
+      ) AND to_regclass(current_schema() || '.game_note_entries') IS NOT NULL AS ready`);
     if (!schema.rows[0]?.ready)
       throw new Error(
         "Run `pnpm --filter @rpg-engine/backend migrate` before seeding, or use `pnpm seed:demo --reset` to rebuild the local schema.",
       );
-    const [existing] = await db
-      .select({ gmAccountId: games.gmAccountId })
-      .from(games)
-      .where(eq(games.id, demoGameId));
-    if (existing) {
-      if (existing.gmAccountId !== demoGmId) throw new Error("Demo game ID is already in use");
-      return "Demo game already exists; no data was changed.";
+    await seedAccounts(db, password);
+    const created = [];
+    for (const campaign of campaigns) {
+      const [existing] = await db.select().from(games).where(eq(games.id, campaign.id));
+      if (existing && existing.gmAccountId !== campaign.gm)
+        throw new Error("Demo game ID is already in use");
+      if (existing) continue;
+      await seedCampaign(db, campaign);
+      created.push(campaign.name);
     }
-    const [gmHash, playerHash] = await Promise.all([argon2.hash(password), argon2.hash(password)]);
-    await db.insert(accounts).values([
-      { id: demoGmId, username: "demo-gm", passwordHash: gmHash },
-      { id: demoPlayerId, username: "demo-player", passwordHash: playerHash },
-    ]);
-    await db.insert(games).values({
-      id: demoGameId,
-      name: "The Lantern Road",
-      systemId: "fabula-ultima",
-      gmAccountId: demoGmId,
-    });
-    const membershipId = randomUUID();
-    await db.insert(players).values({
-      id: membershipId,
-      gameId: demoGameId,
-      accountId: demoPlayerId,
-      name: "Demo Player",
-    });
-    const gmCharacterId = randomUUID();
-    const playerCharacterId = randomUUID();
-    for (const character of [
-      { id: gmCharacterId, name: "Rowan Ash", playerId: null, active: true },
-      { id: playerCharacterId, name: "Nera Vale", playerId: membershipId, active: false },
-    ]) {
-      const sheet = defaultSheet(character.name);
-      await db.insert(characters).values({
-        id: character.id,
-        gameId: demoGameId,
-        playerId: character.playerId,
-        gmActive: character.active,
-        name: sheet.name,
-        theme: sheet.theme,
-        level: sheet.level,
-        dexDie: sheet.baseDice.DEX,
-        insDie: sheet.baseDice.INS,
-        migDie: sheet.baseDice.MIG,
-        wlpDie: sheet.baseDice.WLP,
-        currentHp: sheet.resources.hp,
-        currentMp: sheet.resources.mp,
-        currentIp: sheet.resources.ip,
-        fabulaPoints: sheet.resources.fabula,
-      });
-    }
-    await db
-      .update(players)
-      .set({ activeCharacterId: playerCharacterId, revision: sql`${players.revision}+1` })
-      .where(eq(players.id, membershipId));
-    await seedDemoClass(db, gmCharacterId);
-
-    const npcFixtures = [
-      {
-        id: randomUUID(),
-        name: "Captain Vesper",
-        relationship: "enemy" as const,
-        visibility: "known" as const,
-        level: 20,
-        dexDie: 10,
-        insDie: 8,
-        migDie: 10,
-        wlpDie: 8,
-        currentHp: 90,
-        maxHp: 90,
-        currentMp: 40,
-        maxMp: 40,
-        defense: 10,
-        magicDefense: 8,
-        notes: "Commands the raiders on the Lantern Road.",
-        attack: {
-          name: "Saber",
-          reach: "melee" as const,
-          attribute1: "DEX",
-          attribute2: "MIG",
-          damageBonus: 10,
-          damageType: "physical",
-        },
-      },
-      {
-        id: randomUUID(),
-        name: "Mira the Guide",
-        relationship: "friend" as const,
-        visibility: "visible" as const,
-        level: 10,
-        dexDie: 8,
-        insDie: 10,
-        migDie: 6,
-        wlpDie: 8,
-        currentHp: 50,
-        maxHp: 50,
-        currentMp: 30,
-        maxMp: 30,
-        defense: 8,
-        magicDefense: 9,
-        notes: "Knows a safe route through the marsh.",
-        attack: {
-          name: "Shortbow",
-          reach: "ranged" as const,
-          attribute1: "DEX",
-          attribute2: "INS",
-          damageBonus: 6,
-          damageType: "physical",
-        },
-      },
-      {
-        id: randomUUID(),
-        name: "The Masked Patron",
-        relationship: "neutral" as const,
-        visibility: "hidden" as const,
-        level: 15,
-        dexDie: 8,
-        insDie: 10,
-        migDie: 6,
-        wlpDie: 10,
-        currentHp: 60,
-        maxHp: 60,
-        currentMp: 50,
-        maxMp: 50,
-        defense: 8,
-        magicDefense: 10,
-        notes: "Secretly funds both sides of the conflict.",
-        attack: {
-          name: "Arcane Bolt",
-          reach: "ranged" as const,
-          attribute1: "INS",
-          attribute2: "WLP",
-          damageBonus: 8,
-          damageType: "arcane",
-        },
-      },
-    ];
-    for (const { attack, ...npc } of npcFixtures) {
-      await db.insert(npcs).values({ ...npc, gameId: demoGameId });
-      await db
-        .insert(npcAttacks)
-        .values({ ...attack, id: randomUUID(), npcId: npc.id, position: 0 });
-    }
-    return "Demo game created. Accounts: demo-gm and demo-player.";
+    return created.length
+      ? `Created demo games: ${created.join(", ")}.`
+      : "Demo games already exist.";
   });
   console.log(message);
 } catch (error) {

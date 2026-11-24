@@ -72,6 +72,41 @@ export class GameTablePage {
     return this.page.getByTestId("throw-entry").last();
   }
 
+  async rollWithNote(note: string) {
+    await this.openHistory();
+    await this.makeRoll.click();
+    await this.page.getByTestId("add-die-d6").click();
+    await this.page.getByTestId("free-note").fill(note);
+    await this.submitFreeRoll();
+    await this.throwEntries().filter({ hasText: note }).waitFor();
+  }
+
+  rollTitle(note: string) {
+    return this.throwEntries().filter({ hasText: note }).getByTestId("throw-title");
+  }
+
+  historyNotes() {
+    return this.history.getByTestId("throw-note").allTextContents();
+  }
+
+  get settings() {
+    return this.page.getByTestId("open-settings");
+  }
+
+  get featuredCharacter() {
+    return this.page.getByTestId("player-character");
+  }
+
+  async followGameLink(url: string, gameId: string) {
+    const [response] = await Promise.all([
+      this.page.waitForResponse(
+        (response) => new URL(response.url()).pathname === `/api/games/${gameId}`,
+      ),
+      this.page.goto(`${url}/games/${gameId}`),
+    ]);
+    return response.status();
+  }
+
   async submitRoll() {
     await this.page.getByTestId("submit-roll").click();
   }
