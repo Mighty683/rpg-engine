@@ -7,7 +7,7 @@ export type InputErrorBody = {
 };
 
 /** Deliberately excludes URLs, bodies, cookies, SQL, and exception messages. */
-export type HttpErrorRecord = {
+type HttpErrorRecord = {
   requestId: string;
   method: string;
   route: string;

@@ -10,7 +10,7 @@ import type { GameAccessFactory, GameActor } from "../games/types.ts";
  */
 
 /** Inline formatting applied to text runs. Value is always the literal `true`. */
-export type NoteInlineAttributes = {
+type NoteInlineAttributes = {
   bold?: true;
   italic?: true;
   underline?: true;
@@ -18,7 +18,7 @@ export type NoteInlineAttributes = {
 };
 
 /** Block formatting applied to the line ending at the op's terminal newline. */
-export type NoteBlockAttributes = {
+type NoteBlockAttributes = {
   header?: 1 | 2 | 3;
   list?: "bullet" | "ordered";
 };
@@ -40,7 +40,7 @@ export type GameNoteEntryRecord = {
   revision: number;
 };
 
-export type GameNotePage = {
+type GameNotePage = {
   entries: GameNoteEntryRecord[];
   nextCursor: string | null;
 };
@@ -57,7 +57,7 @@ export type CreateGameNoteInput = {
   content: NoteDocument;
 };
 
-export type UpdateGameNoteChanges = {
+type UpdateGameNoteChanges = {
   title?: string;
   content?: NoteDocument;
 };
@@ -100,7 +100,7 @@ export interface NoteEmbeddings {
 }
 
 /** Input validated by the tool layer: trimmed query 1–512 chars, limit 1–10. */
-export type NoteSearchInput = { text: string; limit: number };
+type NoteSearchInput = { text: string; limit: number };
 
 export type NoteSearchMatch = {
   entryId: string;
@@ -117,9 +117,9 @@ export type NoteSearchMatch = {
  * unmatched, and `unavailable` means semantic lookup failed or is disabled.
  */
 export type NoteSearchOutcome = { matches: NoteSearchMatch[]; semanticStatus: NoteSemanticStatus };
-export type NoteSemanticStatus = "ready" | "indexing" | "unavailable";
+type NoteSemanticStatus = "ready" | "indexing" | "unavailable";
 
-export type NoteReadEntry = { entryId: string; title: string; text: string; updatedAt: string };
+type NoteReadEntry = { entryId: string; title: string; text: string; updatedAt: string };
 export type NoteReadOutcome = { entries: NoteReadEntry[]; missingEntryIds: string[] };
 
 /**
@@ -196,10 +196,3 @@ export interface NoteIndexingScheduler {
   sweep(): Promise<void>;
   dispose(): void;
 }
-
-export type NoteIndexingSchedulerDependencies = {
-  store: NoteIndexingStore;
-  embeddings: NoteEmbeddings;
-  cooldownMs?: number;
-  maxAttempts?: number;
-};

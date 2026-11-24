@@ -12,12 +12,11 @@ import { api as npcs } from "../src/modules/npcs/api";
 import { invitationApi } from "../src/modules/invitations/api";
 import { api as players } from "../src/modules/players/api";
 
-export { resetPrototypeBackend, setPrototypeScenario } from "./mock-backend/store";
+export { resetPrototypeBackend } from "./mock-backend/store";
 export type { PrototypeScenario } from "./mock-backend/types";
 export const prototypeGameId = "prototype-game";
-export const prototypePlayerId = "member-nera";
 
-export const prototypeApiServices = {
+const prototypeApiServices = {
   agent: agentApi,
   auth: authApi,
   characters,

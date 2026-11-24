@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "workspaces": {
+    ".": {
+      "ignoreBinaries": ["podman", "trivy"]
+    },
+    "packages/frontend": {
+      "entry": [
+        "histoire.config.ts",
+        "prototypes/histoire.setup.ts",
+        "prototypes/**/*.story.vue",
+        "vitest.browser.config.ts",
+        "{src,prototypes}/**/*.browser.ts"
+      ]
+    },
+    "packages/tests": {
+      "entry": [
+        "vitest.api.config.ts",
+        "src/api/**/*.integration.test.ts",
+        "src/{steps,support}/**/*.ts"
+      ]
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { Controller, RequestError, Route } from "arrow-express";
 
 import { routeId } from "../../shared/http/route-id.ts";
 
-import { fail, parseCreateRequest, parseThrowListQuery } from "./contract.ts";
+import { parseCreateRequest, parseThrowListQuery } from "./contract.ts";
 
 function requestError(error: unknown): never {
   const e = error as { code?: string; message?: string; field?: string };
@@ -109,5 +109,3 @@ export function throwsController(services: {
         }),
     );
 }
-
-export { fail };

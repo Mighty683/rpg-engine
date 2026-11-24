@@ -51,7 +51,7 @@ export type SaveClassToLibrary = {
     | { mode: "new"; id: string; name: string }
     | { mode: "update"; templateId: string; expectedTemplateRevision: number };
 };
-export type ClassCreateResult = { record: StoredClass; created: boolean };
+type ClassCreateResult = { record: StoredClass; created: boolean };
 export type CatalogDependencies = {
   database: Database;
   gameAccessFor: GameAccessFactory;

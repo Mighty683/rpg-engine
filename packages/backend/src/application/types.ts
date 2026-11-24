@@ -15,12 +15,12 @@ import type { MembershipOwnership, MembershipsService } from "../modules/players
 import type { InvitationOwnership, InvitationsService } from "../modules/invitations/types.ts";
 import type { GameAccessFactory } from "../modules/games/types.ts";
 import type { GameEvents, GameEventPublisher } from "../modules/events/types.ts";
-export type OwnershipStores = {
+type OwnershipStores = {
   characters: CharacterOwnership;
   memberships: MembershipOwnership;
   invitations: InvitationOwnership;
 };
-export type OwnershipStoreFactory = (tx: DatabaseTransaction) => OwnershipStores;
+type OwnershipStoreFactory = (tx: DatabaseTransaction) => OwnershipStores;
 export type OwnershipDependencies = {
   database: Database;
   events: GameEvents;

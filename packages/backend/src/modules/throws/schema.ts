@@ -9,7 +9,7 @@ import { standardDice, freeDice } from "../fabula/rolls.ts";
 import type { Attribute, Die } from "../fabula/types.ts";
 
 export { uuidSchema, revisionSchema, int32Schema, objectSchema };
-export const attributeSchema: InputSchema<Attribute> = {
+const attributeSchema: InputSchema<Attribute> = {
   type: "string",
   enum: ["DEX", "INS", "MIG", "WLP"],
 };
@@ -29,11 +29,7 @@ export const attributeDiceSchema: ObjectInputSchema = {
   additionalProperties: { type: "integer", enum: standardDice },
 };
 export const standardDieSchema: InputSchema<Die> = { type: "integer", enum: standardDice };
-export function diceSchema(
-  allowed: readonly number[],
-  min: number,
-  max: number,
-): InputSchema<number[]> {
+function diceSchema(allowed: readonly number[], min: number, max: number): InputSchema<number[]> {
   return { type: "array", minItems: min, maxItems: max, items: { type: "integer", enum: allowed } };
 }
 export const diceSchemas = {

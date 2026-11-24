@@ -38,6 +38,6 @@ export type OptimisticSaveOptions<TSnapshot, TInput> = {
   isKnownRejection?: (error: SaveError) => boolean;
 };
 
-export type TagColor = "primary" | "warning" | "error" | "info" | "success" | "neutral";
+type TagColor = "primary" | "warning" | "error" | "info" | "success" | "neutral";
 
 export type Tag = { name: string; color: TagColor };

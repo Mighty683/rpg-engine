@@ -5,14 +5,14 @@ export type GameInvitationContext = { actor: Actor; gameId: string };
 
 export type InvitationContext = { actor: Actor; token: string };
 
-export type InvitationRecord = {
+type InvitationRecord = {
   id: string;
   kind: string;
   characterId: string | null;
   enabled: boolean;
   url: string;
 };
-export type InvitationPreview = { gameId: string; gameName: string; alreadyMember: boolean } & (
+type InvitationPreview = { gameId: string; gameName: string; alreadyMember: boolean } & (
   | { kind: "game" }
   | { kind: "character"; characterId: string; characterName: string }
 );

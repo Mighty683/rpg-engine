@@ -11,6 +11,7 @@
     "preview": "pnpm --filter @rpg-engine/frontend preview",
     "seed:demo": "pnpm --filter @rpg-engine/backend seed:demo",
     "lint": "vp lint",
+    "knip": "knip",
     "check": "vp check packages scripts vite.config.ts package.json && pnpm --filter @rpg-engine/backend openapi:lint && pnpm --filter @rpg-engine/backend openapi:bundle",
     "test": "vp test --run packages/backend/src packages/frontend/src packages/frontend/prototypes lint --exclude '**/*.integration.test.ts' --exclude '**/migrations.test.ts'",
     "test:integration": "node scripts/test-integration.mjs",
@@ -19,6 +20,7 @@
     "hooks:install": "git config --local core.hooksPath .githooks"
   },
   "devDependencies": {
+    "knip": "^6.48.0",
     "vite-plus": "1.5.0"
   },
   "devEngines": {

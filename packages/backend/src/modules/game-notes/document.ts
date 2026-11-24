@@ -11,11 +11,11 @@ import type { NoteAttributes, NoteDocument, NoteInsertOp } from "./types.ts";
  */
 
 /** Structurally valid op as handed over after request-boundary validation. */
-export type NoteInputOp = { insert: string; attributes?: Record<string, unknown> };
+type NoteInputOp = { insert: string; attributes?: Record<string, unknown> };
 export type NoteInputDocument = { ops: NoteInputOp[] };
 
 /** Semantic rejection the HTTP contract maps onto 422 responses. */
-export type NoteDocumentIssues = { field: "content"; messages: string[] };
+type NoteDocumentIssues = { field: "content"; messages: string[] };
 export type NoteDocumentResult =
   | { ok: true; document: NoteDocument }
   | { ok: false; issues: NoteDocumentIssues };

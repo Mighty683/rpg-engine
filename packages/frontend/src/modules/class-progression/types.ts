@@ -37,32 +37,12 @@ export interface ProgressionCharacter {
   sheet: Sheet;
   party: PartyCharacter;
 }
-export interface ProgressionSnapshot {
-  catalog: ProgressionClass[];
-  characters: ProgressionCharacter[];
-  party: PartyCharacter[];
-}
-export interface ProgressionSave extends ProgressionAllocation {
-  expectedRevision: number;
-}
-export interface ProgressionApi {
-  load(): Promise<ProgressionSnapshot>;
-  create(id: string, name: string): Promise<void>;
-  save(base: ProgressionCharacter, input: ProgressionSave): Promise<ProgressionCharacter>;
-}
 export interface SourcedBenefit extends ProgressionBenefit {
   source: string;
   rank: number;
   maxRank: number;
   isFree: boolean;
   total: number;
-}
-
-export interface ProgressionAllocation {
-  level: number;
-  ranks: Record<string, number>;
-  levels: Record<string, number>;
-  experience: ProgressionExperience;
 }
 
 export type ManagedProgression = {

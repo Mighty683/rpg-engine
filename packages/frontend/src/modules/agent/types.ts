@@ -8,14 +8,14 @@ export type ChatMessage = {
   text: string;
   roll?: HistoryTurn["roll"];
 };
-export type AgentToolName =
+type AgentToolName =
   | "read_character"
   | "read_npc"
   | "read_throws"
   | "prepare_throw"
   | "prepare_character_edit"
   | "prepare_npc_edit";
-export type AgentToolSummary = { tool: AgentToolName; label: string };
+type AgentToolSummary = { tool: AgentToolName; label: string };
 export type AgentAction =
   | { kind: "roll"; input: CreateThrowInput; targetLabel?: string }
   | {

@@ -2,19 +2,19 @@ import type { Tag } from "../../../shared/types";
 
 /** Data shapes used by the character setup prototype. */
 export type Attribute = "DEX" | "INS" | "MIG" | "WLP";
-export type WeaponSettings = {
+type WeaponSettings = {
   attributes: [Attribute | "", Attribute | ""];
   accuracyBonus: number | null;
   equipped?: boolean;
 };
 export type DefenseKind = "armor" | "shield";
-export type ArmorSettings = {
+type ArmorSettings = {
   fixedDefense: number | null;
   physicalBonus: number;
   magicBonus: number;
   initiative: number;
 };
-export type ShieldSettings = { physicalBonus: number; magicBonus: number; initiative: number };
+type ShieldSettings = { physicalBonus: number; magicBonus: number; initiative: number };
 export type NamedEntry = {
   id: string;
   name: string;
@@ -39,17 +39,10 @@ export type Character = {
   overrides: { DEF: number | null; "MAG DEF": number | null; INIT: number | null };
   tags?: Tag[];
 };
-export type Player = {
-  id: string;
-  name: string;
-  activeCharacterId: string | null;
-  characters: Character[];
-};
-export type Game = { id: string; name: string; system: string; players: Player[] };
 
 export type Stat = keyof Character["overrides"];
 
-export type Entry = { id: string; name: string; notes: string };
+type Entry = { id: string; name: string; notes: string };
 
 export type Equipment = Entry & {
   kind: "other" | "weapon" | "armor" | "shield";

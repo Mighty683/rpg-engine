@@ -1,7 +1,7 @@
 import type { npcs, npcAttacks } from "../../database/schema.ts";
 import type { GameEvents } from "../events/types.ts";
 import type { GameActor, GameAccessFactory } from "../games/types.ts";
-import type { Database, DatabaseTransaction } from "../../database/types.ts";
+import type { Database } from "../../database/types.ts";
 export type Attribute = "DEX" | "INS" | "MIG" | "WLP";
 export type Die = 6 | 8 | 10 | 12;
 export type NpcAttack = {
@@ -26,12 +26,8 @@ export type NpcWrite = {
   notes: string;
 };
 
-export type CreateNpcInput = { id: string; npc: NpcWrite };
-export type UpdateNpcInput = { expectedRevision: number; npc: NpcWrite };
-export type RemoveNpcInput = { expectedRevision: number };
-
-export type NpcIdentity = { id: string; name: string; relationship: string };
-export type NpcProfile = NpcIdentity & {
+type NpcIdentity = { id: string; name: string; relationship: string };
+type NpcProfile = NpcIdentity & {
   level: number;
   baseDice: Record<Attribute, number>;
   hp: { current: number; max: number };
@@ -69,7 +65,7 @@ export interface NpcsService {
   ): Promise<{ npc: NpcRecord | null; created: boolean }>;
   remove(actor: GameActor, gameId: string, id: string, expectedRevision: number): Promise<void>;
 }
-export type NpcRollProfile = {
+type NpcRollProfile = {
   id: string;
   name: string;
   revision: number;
@@ -79,7 +75,7 @@ export type NpcRollProfile = {
   migDie: number;
   wlpDie: number;
 };
-export type NpcRollAttack = {
+type NpcRollAttack = {
   id: string;
   name: string;
   attribute1: string;
@@ -91,7 +87,6 @@ export interface NpcRollReader {
   profile(gameId: string, id: string): Promise<NpcRollProfile | null>;
   attack(npcId: string, id: string): Promise<NpcRollAttack | null>;
 }
-export type NpcRollReaderFactory = (tx: DatabaseTransaction) => NpcRollReader;
 
 export type NpcRow = typeof npcs.$inferSelect;
 export type NpcAttackRow = typeof npcAttacks.$inferSelect;

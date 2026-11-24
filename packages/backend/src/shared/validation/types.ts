@@ -6,7 +6,7 @@ export type InputSchema<T> = JSONSchemaType<T>;
 export type SchemaValidator<T> = ValidateFunction<T>;
 export type SchemaCompileOptions = { allErrors?: boolean };
 export type ValidationFields = Record<string, string>;
-export type ValidationIssue = { field: string; message: string };
+type ValidationIssue = { field: string; message: string };
 export type SchemaResult<T> =
   | { success: true; data: T }
   | { success: false; issues: ValidationIssue[] };

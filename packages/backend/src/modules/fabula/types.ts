@@ -19,13 +19,11 @@ export type OpposedOutcome = {
   winner: "first" | "second" | "tie";
 };
 
-export type AttributePair = [Attribute, Attribute?] | [Attribute];
-
 export type Attribute = "DEX" | "INS" | "MIG" | "WLP";
 
 export type Die = 6 | 8 | 10 | 12;
 
-export type NamedEntry = { id: string; name: string; notes: string };
+type NamedEntry = { id: string; name: string; notes: string };
 
 export type EquipmentEntry = {
   id: string;

@@ -8,7 +8,7 @@ import ResourceField from "../characters/sheet/resources/ResourceField.vue";
 import DefenseField from "../characters/sheet/defense/DefenseField.vue";
 import CharacterLevelField from "../characters/sheet/identity/CharacterLevelField.vue";
 import NpcAttacksEditor from "./NpcAttacksEditor.vue";
-import type { Tag } from "./tags";
+import type { Tag } from "../../shared/types";
 import type { Npc, NpcRelationship } from "./types";
 
 const props = defineProps<{

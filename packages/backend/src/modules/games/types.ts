@@ -4,7 +4,7 @@ import type { ValidationFields } from "../../shared/validation/types.ts";
 export type CreateGameInput = { name: string; systemId: string };
 export type GameValidation = CreateGameInput & { fields: ValidationFields };
 
-export type GameRecord = {
+type GameRecord = {
   id: string;
   name: string;
   system: { id: string; name: string };
@@ -28,7 +28,7 @@ export type GameAccess =
 
 export type DatabaseExecutor = Database | DatabaseTransaction;
 
-export type GameAccessRecord = { gmAccountId: string; membershipId: string | null };
+type GameAccessRecord = { gmAccountId: string; membershipId: string | null };
 
 /** Reads membership for an account; callers make the authorization decision. */
 export interface GameAccessRepository {

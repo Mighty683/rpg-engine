@@ -2,7 +2,7 @@
 import { setupWorker } from "msw/browser";
 import { prototypeHandlers } from "./handlers";
 
-export const prototypeWorker = setupWorker(...prototypeHandlers);
+const prototypeWorker = setupWorker(...prototypeHandlers);
 let startup: Promise<unknown> | undefined;
 
 export function startPrototypeBackend() {

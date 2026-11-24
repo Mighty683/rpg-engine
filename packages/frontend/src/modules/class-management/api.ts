@@ -30,7 +30,7 @@ function requestCatalog<T>(path: string, method = "GET", body?: unknown): Promis
   });
 }
 
-export function createCatalogClient(
+function createCatalogClient(
   gameId?: string,
   includeLibrary = true,
   request: CatalogRequest = requestCatalog,

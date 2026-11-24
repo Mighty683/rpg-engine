@@ -4,7 +4,7 @@ import type { ValidationFields } from "../../shared/validation/types.ts";
 export type CredentialsInput = { username: string; password: string };
 export type CredentialsValidation = CredentialsInput & { fields: ValidationFields };
 
-export type Account = { id: string; username: string };
+type Account = { id: string; username: string };
 export interface AuthService {
   requireActor(request: Request): Promise<Actor>;
   requireWriteOrigin(request: Request): void;

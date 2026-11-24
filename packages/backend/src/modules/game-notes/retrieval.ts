@@ -32,11 +32,11 @@ import type {
 const fail = (code: string) => Object.assign(new Error(code), { code });
 const readConfig = { isolationLevel: "repeatable read", accessMode: "read only" } as const;
 
-export const noteExcerptChars = 600;
+const noteExcerptChars = 600;
 export const noteSearchQueryLimit = 512;
 export const noteSearchDefaultMatchLimit = 5;
 export const noteSearchMaxMatchLimit = 10;
-export const noteReadMaxEntries = 3;
+const noteReadMaxEntries = 3;
 
 /**
  * Minimum cosine similarity for a semantic passage match. mistral-embed

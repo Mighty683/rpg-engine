@@ -14,7 +14,7 @@ export type ThrowKind =
   | "opposed-check"
   | "opposed-roll";
 
-export type SetupDice = { label: string | null; size: number };
+type SetupDice = { label: string | null; size: number };
 
 export type AttributeSetup = {
   type: "attribute";
@@ -48,18 +48,18 @@ export type FreeSetup = {
   note: string;
 };
 
-export type NpcAttributeSetup = Omit<AttributeSetup, "type" | "characterId"> & {
+type NpcAttributeSetup = Omit<AttributeSetup, "type" | "characterId"> & {
   type: "npc-attribute";
   npcId: string;
 };
-export type NpcAttackSetup = Omit<WeaponSetup, "type" | "characterId" | "equipmentId"> & {
+type NpcAttackSetup = Omit<WeaponSetup, "type" | "characterId" | "equipmentId"> & {
   type: "npc-attack";
   npcId: string;
   attackId: string;
 };
 export type NpcThrowSetup = NpcAttributeSetup | NpcAttackSetup;
 export type ThrowSetup = AttributeSetup | WeaponSetup | FreeSetup;
-export type AnyThrowSetup = ThrowSetup | NpcThrowSetup;
+type AnyThrowSetup = ThrowSetup | NpcThrowSetup;
 
 export type CreateThrowInput = {
   agentTurnId?: string;
@@ -68,7 +68,7 @@ export type CreateThrowInput = {
   setup: AnyThrowSetup;
 };
 
-export type CharacterResolvedSetup = {
+type CharacterResolvedSetup = {
   type: "attribute" | "weapon" | "free";
   kind: ThrowKind;
   characterId: string | null;

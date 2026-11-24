@@ -23,7 +23,6 @@ import {
 } from "./schema.ts";
 import type { ThrowListQuery } from "./types.ts";
 
-export const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 export const gmActorId = "gm";
 
 const validateUuid = compileSchema(uuidSchema);
@@ -45,7 +44,7 @@ const validateDice = {
 const validateKeys = new Map(
   Object.values(setupKeys).map((keys) => [keys.join(","), compileObjectSchema(keysSchema(keys))]),
 );
-export const isUuid = (value: unknown): value is string => validateUuid(value);
+const isUuid = (value: unknown): value is string => validateUuid(value);
 
 export const fail = (code: string, message = code, field = "") =>
   Object.assign(new Error(message), { code, field: field ? `/${field.replaceAll(".", "/")}` : "" });

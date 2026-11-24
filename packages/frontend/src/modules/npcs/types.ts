@@ -1,10 +1,10 @@
 /** Contracts for the NPC table composition and its prototype-only endpoints. */
 import type { Attribute } from "../game-table/types";
-import type { Tag } from "./tags";
-export type NpcVisibility = "hidden" | "visible" | "known";
+import type { Tag } from "../../shared/types";
+type NpcVisibility = "hidden" | "visible" | "known";
 export type NpcRelationship = "enemy" | "neutral" | "friend";
 
-export type DamageType =
+type DamageType =
   | "physical"
   | "air"
   | "bolt"
@@ -25,7 +25,7 @@ export type NpcAttack = {
   damageType: string;
 };
 
-export type NpcAbility = {
+type NpcAbility = {
   id: string;
   name: string;
   description: string;
@@ -54,22 +54,7 @@ export type Npc = {
   notes: string;
 };
 
-export type TableRole = "GM" | "Player";
-export type TableScenario =
-  | "Mixed"
-  | "Characters only"
-  | "NPCs only"
-  | "Empty"
-  | "Loading"
-  | "Error";
-export interface NpcApi {
-  list(): Promise<{ npcs: Npc[]; tags: Tag[] }>;
-  save(npc: Npc, tags: Tag[]): Promise<{ npc: Npc }>;
-  remove(id: string): Promise<void>;
-  saveCharacterTags(id: string, tags: Tag[]): Promise<{ tags: Tag[] }>;
-}
-
-export type NpcAttackRecord = {
+type NpcAttackRecord = {
   id: string;
   name: string;
   reach: "melee" | "ranged";
@@ -77,7 +62,7 @@ export type NpcAttackRecord = {
   damageBonus: number;
   damageType: string;
 };
-export type NpcProfile = {
+type NpcProfile = {
   name: string;
   relationship: "enemy" | "neutral" | "friend";
   level: number;

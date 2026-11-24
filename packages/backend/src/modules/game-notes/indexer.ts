@@ -20,7 +20,7 @@ import type {
  * one at a time so sweeps never stampede the provider.
  */
 
-export const noteIndexingCooldownMs = 60_000;
+const noteIndexingCooldownMs = 60_000;
 
 const invalidResponse = () =>
   Object.assign(new Error("invalid_embedding_response"), { code: "invalid_embedding_response" });

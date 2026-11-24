@@ -2,7 +2,7 @@ import type { DatabaseTransaction } from "../../database/types.ts";
 import type { Actor } from "../auth/types.ts";
 import type { GameAccess } from "../games/types.ts";
 
-export type MemberRecord = {
+type MemberRecord = {
   id: string;
   accountId: string;
   name: string;

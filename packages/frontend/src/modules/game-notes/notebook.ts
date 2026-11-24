@@ -15,7 +15,7 @@ import type { SaveError } from "../../shared/types";
 import { noteDocument, noteTitleIssue, sameNoteDocument } from "./note-document";
 import type { GameNotesClient, NoteDocument, NoteEntry, NoteEntryChanges } from "./types";
 
-export type NoteNoticeKind = "error" | "success";
+type NoteNoticeKind = "error" | "success";
 export type NoteNotice = {
   title: string;
   kind: NoteNoticeKind;
@@ -24,7 +24,7 @@ export type NoteNotice = {
 };
 export type NoteNotify = (notice: NoteNotice) => void;
 
-export type NoteListState = {
+type NoteListState = {
   ids: string[];
   nextCursor: string | null;
   /** First page in flight; appended pages use `loadingMore`. */
@@ -36,7 +36,7 @@ export type NoteListState = {
   moreFailed: boolean;
 };
 
-export type EntryEditor = {
+type EntryEditor = {
   readonly id: string;
   fields: { title: string; content: NoteDocument };
   readonly displayed: Ref<NoteEntry | null>;

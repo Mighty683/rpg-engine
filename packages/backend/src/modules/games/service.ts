@@ -59,7 +59,7 @@ export async function gameAccess(
 }
 
 /** Serializes mutations and reloads access after acquiring the game lock. */
-export async function lockGame(db: DatabaseTransaction, actor: GameActor, gameId: string) {
+async function lockGame(db: DatabaseTransaction, actor: GameActor, gameId: string) {
   await db.select({ id: games.id }).from(games).where(eq(games.id, gameId)).for("update");
   const access = await gameAccess(db, actor, gameId);
   if (!access) throw Object.assign(new Error("not_found"), { code: "not_found" });

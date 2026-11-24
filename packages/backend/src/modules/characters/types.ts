@@ -5,7 +5,7 @@ import type { Attribute, FabulaSheet, SheetChanges } from "../fabula/types.ts";
 import type { characterEquipment } from "../../database/schema.ts";
 
 export type CreateCharacterInput = { id: string; name: string };
-export type Experience = { current: number; total: number };
+type Experience = { current: number; total: number };
 export type ClassLevel = { gameClassId: string; level: number };
 export type SkillRank = { skillId: string; rank: number };
 export type Progression = {
@@ -26,8 +26,6 @@ export type ManagedSkill = SkillRank & {
   benefits: ClassBenefit[];
 };
 export type ManagedAllocation = { classes: ManagedClass[]; skills: ManagedSkill[] };
-
-export type CharacterActiveInput = { active: boolean };
 export type CharacterControllerInput = { membershipId: string | null };
 
 /** Loaded collections accepted by both single-sheet and batched projection assembly. */
@@ -41,7 +39,7 @@ export type EquipmentInsert = typeof characterEquipment.$inferInsert;
 
 export type CharacterContext = { actor: GameActor; gameId: string; access: GameAccess };
 
-export type CharacterSummary = {
+type CharacterSummary = {
   id: string;
   name: string;
   level: number;
@@ -98,7 +96,7 @@ export interface CharactersService {
   listActiveParty(actor: GameActor, gameId: string): Promise<{ characters: PartyCharacter[] }>;
 }
 
-export type NamedRow = {
+type NamedRow = {
   id: string;
   character_id: string;
   name: string;
@@ -143,8 +141,6 @@ export type PartyCharacter = {
   weapons: PartyWeapon[];
   canRoll: boolean;
 };
-
-export type Sheet = FabulaSheet;
 
 export type Row = {
   id: string;
@@ -221,7 +217,7 @@ export interface ClassProgressionStore {
   reviseAssignedCharacters(gameId: string, classId: string): Promise<string[]>;
 }
 
-export type LearnedSkill = Pick<ManagedSkill, "rank" | "benefits"> & {
+type LearnedSkill = Pick<ManagedSkill, "rank" | "benefits"> & {
   name: string;
   description: string;
 };

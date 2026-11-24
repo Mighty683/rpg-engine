@@ -6,7 +6,7 @@
  */
 
 /** Inline formatting applied to text runs. Value is always the literal `true`. */
-export type NoteInlineAttributes = {
+type NoteInlineAttributes = {
   bold?: true;
   italic?: true;
   underline?: true;
@@ -14,7 +14,7 @@ export type NoteInlineAttributes = {
 };
 
 /** Block formatting applied to the line ending at the op's terminal newline. */
-export type NoteBlockAttributes = {
+type NoteBlockAttributes = {
   header?: 1 | 2 | 3;
   list?: "bullet" | "ordered";
 };
@@ -22,7 +22,7 @@ export type NoteBlockAttributes = {
 export type NoteAttributes = NoteInlineAttributes & NoteBlockAttributes;
 
 /** One document insert as stored by the server normalization. */
-export type NoteInsertOp = { insert: string; attributes?: NoteAttributes };
+type NoteInsertOp = { insert: string; attributes?: NoteAttributes };
 
 /** Canonical, fully-normalized Quill document Delta. */
 export type NoteDocument = { ops: NoteInsertOp[] };
@@ -40,9 +40,9 @@ export type NotePage = { entries: NoteEntry[]; nextCursor: string | null };
 
 export type NoteEntryChanges = { title?: string; content?: NoteDocument };
 
-export type NewNoteEntry = { id: string; title: string; content: NoteDocument };
+type NewNoteEntry = { id: string; title: string; content: NoteDocument };
 
-export type NoteListQuery = { q?: string; cursor?: string; signal?: AbortSignal };
+type NoteListQuery = { q?: string; cursor?: string; signal?: AbortSignal };
 
 /**
  * Game-scoped notes client. The production HTTP adapter implements it; write

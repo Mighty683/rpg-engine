@@ -1,6 +1,6 @@
 import { request } from "../../shared/api";
 import type { GmNpc, NpcRead, NpcWrite } from "./types";
-export type { GmNpc, NpcAttackRecord, NpcProfile, NpcRead, NpcWrite } from "./types";
+export type { GmNpc, NpcRead, NpcWrite } from "./types";
 
 export const api = {
   list: (gameId: string) => request<{ npcs: NpcRead[] }>(`/api/games/${gameId}/npcs`),

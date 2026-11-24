@@ -24,9 +24,9 @@ export type RollDraft = {
 
 export type Attribute = "DEX" | "INS" | "MIG" | "WLP";
 
-export type Die = number;
+type Die = number;
 
-export type ThrowKind =
+type ThrowKind =
   | "attribute-check"
   | "attribute-roll"
   | "weapon-accuracy"
@@ -36,7 +36,7 @@ export type ThrowKind =
 
 export type SetupDice = { label: string | null; size: number };
 
-export type AttributeSetup = {
+type AttributeSetup = {
   type: "attribute";
   characterId: string;
   expectedRevision: number;
@@ -48,7 +48,7 @@ export type AttributeSetup = {
   note: string;
 };
 
-export type WeaponSetup = {
+type WeaponSetup = {
   type: "weapon";
   characterId: string;
   equipmentId: string;
@@ -58,7 +58,7 @@ export type WeaponSetup = {
   note: string;
 };
 
-export type FreeSetup = {
+type FreeSetup = {
   type: "free";
   characterId: string;
   dice: [Die] | [Die, Die] | number[];
@@ -68,11 +68,11 @@ export type FreeSetup = {
   note: string;
 };
 
-export type NpcAttributeSetup = Omit<AttributeSetup, "type" | "characterId"> & {
+type NpcAttributeSetup = Omit<AttributeSetup, "type" | "characterId"> & {
   type: "npc-attribute";
   npcId: string;
 };
-export type NpcAttackSetup = Omit<WeaponSetup, "type" | "characterId" | "equipmentId"> & {
+type NpcAttackSetup = Omit<WeaponSetup, "type" | "characterId" | "equipmentId"> & {
   type: "npc-attack";
   npcId: string;
   attackId: string;
@@ -91,7 +91,7 @@ export type CreateThrowInput = {
   setup: ThrowSetup;
 };
 
-export type CharacterResolvedSetup = {
+type CharacterResolvedSetup = {
   type: "attribute" | "weapon" | "free";
   kind: ThrowKind;
   characterId: string | null;
@@ -106,7 +106,7 @@ export type CharacterResolvedSetup = {
   accuracyDice: [Attribute, Attribute] | null;
 };
 
-export type NpcResolvedSetup = {
+type NpcResolvedSetup = {
   type: "npc-attribute" | "npc-attack";
   kind: ThrowKind;
   npcId: string;
@@ -129,7 +129,7 @@ export type NpcResolvedSetup = {
   weaponBonus?: never;
   accuracyDice?: never;
 };
-export type ResolvedSetup = CharacterResolvedSetup | NpcResolvedSetup;
+type ResolvedSetup = CharacterResolvedSetup | NpcResolvedSetup;
 
 export type SideOutcomeJson = {
   dice: { label: string | null; size: number; face: number }[];
@@ -138,7 +138,7 @@ export type SideOutcomeJson = {
   result: "fumble" | "critical" | "ordinary" | "none";
 };
 
-export type OutcomeJson = {
+type OutcomeJson = {
   first: SideOutcomeJson;
   second?: SideOutcomeJson;
   winner?: "first" | "second" | "tie";

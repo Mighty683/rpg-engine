@@ -30,19 +30,19 @@ export type AgentAction =
       changes: Partial<Omit<NpcWrite, "visibility" | "attacks">>;
     };
 export type AgentTurnInput = { message: string };
-export type AgentTurn = {
+type AgentTurn = {
   id: string;
   reply: string;
   tools: AgentToolSummary[];
   action?: AgentAction;
 };
-export type AgentHistoryTurn = Omit<AgentTurn, "action"> & {
+type AgentHistoryTurn = Omit<AgentTurn, "action"> & {
   message: string;
   author: string;
   roll?: Pick<ThrowRecord, "characterName" | "equipmentName" | "private" | "outcome">;
 };
-export type AgentHistoryPage = { turns: AgentHistoryTurn[]; nextBefore: string | null };
-export type AgentPageQuery = { before: string | null; limit: number };
+type AgentHistoryPage = { turns: AgentHistoryTurn[]; nextBefore: string | null };
+type AgentPageQuery = { before: string | null; limit: number };
 export type AgentContext = { actor: GameActor; gameId: string };
 export type AgentRunContext = AgentContext & {
   requestId?: string;
@@ -68,7 +68,7 @@ export type AgentMessage =
   | { role: "assistant"; content: string; calls: AgentCall[] }
   | { role: "tool"; content: string; callId: string; name: string };
 
-export interface AgentToolDefinition {
+interface AgentToolDefinition {
   name: AgentToolName;
   description: string;
   parameters: ObjectInputSchema;

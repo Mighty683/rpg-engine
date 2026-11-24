@@ -12,7 +12,7 @@ import { applyMigrations } from "../../../backend/src/migrations.ts";
 import { createSession } from "../../../backend/src/modules/auth/sessions.ts";
 import { createWorkspaceCharacter } from "../../../backend/src/modules/characters/workspace-service.ts";
 
-export type ApiRequest = (
+type ApiRequest = (
   path: string,
   actor: string | null,
   method?: string,
@@ -20,7 +20,7 @@ export type ApiRequest = (
   requestOrigin?: string | null,
 ) => Promise<Response>;
 
-export type ApiFixtureIds = {
+type ApiFixtureIds = {
   gm: string;
   player: string;
   outsider: string;

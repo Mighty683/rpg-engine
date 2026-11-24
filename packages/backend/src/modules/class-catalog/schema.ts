@@ -55,7 +55,7 @@ const skill = {
   },
   additionalProperties: false,
 };
-export const classDefinitionSchema: ObjectInputSchema = {
+const classDefinitionSchema: ObjectInputSchema = {
   type: "object",
   required: ["name", "description", "freeBenefits", "skills"],
   properties: {

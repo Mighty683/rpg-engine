@@ -68,7 +68,7 @@ export type Benefit =
       amount: number;
       perRank?: boolean;
     });
-export type Definition = {
+type Definition = {
   name: string;
   description: string;
   freeBenefits: Benefit[];
