@@ -11,14 +11,15 @@ const items = computed<NavigationMenuItem[]>(() => [
     to: "/",
     exact: true,
     "data-testid": "nav-games",
-    "data-section-active": route.path === "/" || typeof route.params.gameId === "string",
+    "data-section-active":
+      route.path === "/" || route.name === "game-new" || typeof route.params.gameId === "string",
   },
   {
     label: "Class library",
     to: "/library/class",
     exact: true,
     "data-testid": "nav-class-library",
-    "data-section-active": route.path === "/library/class",
+    "data-section-active": route.path.startsWith("/library/class"),
   },
 ]);
 </script>

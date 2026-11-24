@@ -17,7 +17,6 @@ Feature: Character setup
     When I set character "Rowan" active
     Then character "Rowan" is active
     When I reload the page
-    And I open character management
     Then character "Rowan" is active
     When I set character "Rowan" inactive
     Then character "Rowan" is inactive

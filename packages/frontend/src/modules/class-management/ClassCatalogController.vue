@@ -29,11 +29,15 @@ const props = defineProps<{
   gameId?: string;
   gameName?: string;
   canManage?: boolean;
-  returnTo?: string;
+  classId?: string;
+  useBreadcrumbs?: boolean;
   contextTo?: string;
   charactersTo?: string;
 }>();
-const emit = defineEmits<{ navigate: [screen: string]; switchContext: [context: string] }>();
+const emit = defineEmits<{
+  navigate: [screen: string, classId?: string];
+  switchContext: [context: string];
+}>();
 const canManage = computed(() => props.canManage !== false);
 const api = useApiServices().classCatalog.forContext(props.gameId, canManage.value);
 const toast = useToast();
@@ -45,7 +49,8 @@ const optimistic = useOptimisticSave<ClassCatalog, ClassCatalogChange[]>({
 });
 const loading = ref(true);
 const loadFailed = ref(false);
-const selectedId = ref("");
+const localSelectedId = ref("");
+const selectedId = computed(() => props.classId ?? localSelectedId.value);
 const pendingCopyId = ref("");
 const scope = computed(() => (props.context === "Library" ? "library" : "game"));
 const entries = computed(() => optimistic.displayed.value?.[scope.value] ?? []);
@@ -81,7 +86,7 @@ const activeScreen = computed(() => {
   if (props.screen === "Manage" || (scope.value === "game" && props.screen === "Create"))
     return "List";
   if (scope.value === "library" && ["Copy", "Character"].includes(props.screen)) return "List";
-  if (props.screen === "Details" && !current.value) return "List";
+  if (props.screen === "Details" && !current.value && props.classId === undefined) return "List";
   return props.screen;
 });
 
@@ -177,8 +182,8 @@ function submit(change: ClassCatalogChange) {
   if (canManage.value && editable.value) optimistic.submit([change]);
 }
 function open(id: string) {
-  selectedId.value = id;
-  emit("navigate", "Details");
+  localSelectedId.value = id;
+  emit("navigate", "Details", id);
 }
 function create(name: string) {
   const id = newUuid();
@@ -380,7 +385,7 @@ watch(
     :show-removal="Boolean(api.removeGameClass)"
     :game-name="gameName"
     :context-to="contextTo"
-    :return-to="returnTo"
+    :use-breadcrumbs="useBreadcrumbs"
     :characters-to="charactersTo"
     :show-characters="Boolean(charactersTo)"
     :actions-enabled="canRunAction"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { nearBottom } from "./list-scroll";
 import NoteCard from "./NoteCard.vue";
@@ -13,7 +13,6 @@ import { useNotebook } from "./useNotebook";
  */
 const props = defineProps<{ gameId: string }>();
 const notebook = useNotebook(props.gameId);
-const route = useRoute();
 const router = useRouter();
 const list = ref<HTMLElement>();
 const entries = computed(() =>
@@ -30,9 +29,8 @@ function onScroll() {
   if (list.value && nearBottom(list.value)) notebook.loadMoreRecent();
 }
 
-async function openEntry(id: string) {
-  if (route.path !== notesPath.value) await router.push(notesPath.value);
-  notebook.selectEntry(id);
+function openEntry(id: string) {
+  void router.push(`${notesPath.value}/${id}`);
 }
 </script>
 

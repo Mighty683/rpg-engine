@@ -588,7 +588,13 @@ async function removeEntry(entry: ThrowRecord) {
           />
         </PartyPanel>
       </div>
-      <EdgeTabs v-model:open-id="historyTab" :tabs="edgeTabs" tabs-only @open="selectEdgeTab" />
+      <EdgeTabs
+        v-if="!sheetOpen"
+        v-model:open-id="historyTab"
+        :tabs="edgeTabs"
+        tabs-only
+        @open="selectEdgeTab"
+      />
       <USlideover
         :open="historyTab === 'history' || customPanelOpen"
         :title="customPanelOpen ? panelTab?.label : 'Throw history'"

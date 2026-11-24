@@ -59,6 +59,7 @@ Then(
   async function (this: BrowserWorld, name: string, effect: string, skill: string, rank: number) {
     await this.page.reload();
     await this.classCatalog.inspect(name);
+    await this.page.reload();
     expect(await this.classCatalog.name.inputValue()).toBe(name);
     expect(await this.classCatalog.name.isEditable()).toBe(true);
     expect(await this.classCatalog.readBenefit()).toBe(effect);

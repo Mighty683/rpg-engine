@@ -7,7 +7,7 @@ import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import { account } from "../auth/session";
 import CharacterView from "../characters/CharacterView.vue";
@@ -29,6 +29,8 @@ import { newUuid } from "../../shared/uuid";
 
 const toast = useToast();
 const route = useRoute();
+const router = useRouter();
+const gamePath = `/games/${String(route.params.gameId)}`;
 const gameId = String(route.params.gameId);
 const game = useGameQuery(gameId);
 const queryClient = useQueryClient();
@@ -58,10 +60,11 @@ const activeTabs = computed(() =>
     })),
 );
 const selectedId = ref("");
-const initialCharacterId = typeof route.query.character === "string" ? route.query.character : "";
-const management = ref(Boolean(initialCharacterId) || route.query.manage === "characters");
-const settings = ref(false);
-const managedCharacterId = ref(initialCharacterId);
+const management = computed(
+  () => route.name === "game-characters" || route.name === "game-character",
+);
+const settings = computed(() => route.name === "game-settings");
+const managedCharacterId = computed(() => String(route.params.characterId ?? ""));
 const createOpen = ref(false);
 const characterName = ref("");
 const createError = ref("");
@@ -143,28 +146,15 @@ async function focusHeading() {
   await nextTick();
   heading.value?.focus();
 }
-function openManagement() {
-  management.value = true;
-  managedCharacterId.value = "";
-  void focusHeading();
-}
-function returnToGame() {
-  management.value = false;
-  settings.value = false;
-  managedCharacterId.value = "";
-  void focusHeading();
-}
-function openSettings() {
-  settings.value = true;
-  void focusHeading();
-}
+watch(heading, () => {
+  if (management.value || settings.value) void focusHeading();
+});
 function refreshSettings() {
   void membersQuery.refetch();
   void roster.refetch();
 }
 function openSheet(characterId: string) {
-  managedCharacterId.value = characterId;
-  void focusHeading();
+  void router.push(`${gamePath}/characters/${characterId}`);
 }
 function openCreate() {
   characterName.value = "";
@@ -191,10 +181,8 @@ async function submitCharacter() {
     const created = refreshed.data?.characters.find(
       (character) => character.id === result.character.id,
     );
-    management.value = !created?.active;
-    managedCharacterId.value = created?.active ? "" : result.character.id;
-    if (created?.active) selectedId.value = result.character.id;
-    void focusHeading();
+    if (created?.active) await router.push(gamePath);
+    else await router.push(`${gamePath}/characters/${result.character.id}`);
   } catch {
     toast.add({
       title: "Could not confirm character creation. Submit again to safely retry.",
@@ -249,9 +237,7 @@ async function removeCharacter() {
 <template>
   <div data-testid="game-view" class="mx-auto max-w-6xl space-y-section">
     <ContentState v-if="game.isLoading.value" kind="loading">Loading game…</ContentState>
-    <p v-else-if="game.isError.value">
-      <UButton to="/" variant="outline" color="neutral">My games</UButton>
-    </p>
+    <ContentState v-else-if="game.isError.value" kind="error" @retry="game.refetch" />
     <template v-else-if="gameRecord">
       <header class="flex flex-wrap items-start justify-between gap-medium">
         <div>
@@ -283,29 +269,11 @@ async function removeCharacter() {
             >Game classes</UButton
           >
           <UButton
-            v-if="management && managedCharacterId"
-            color="neutral"
-            variant="outline"
-            @click="
-              managedCharacterId = '';
-              focusHeading();
-            "
-            >Back to characters</UButton
-          >
-          <UButton
-            v-if="management || settings"
-            color="neutral"
-            variant="outline"
-            data-testid="return-to-game"
-            @click="returnToGame"
-            >{{ gameRecord.name }}</UButton
-          >
-          <UButton
             v-if="!management && !settings"
             data-testid="manage-characters"
             color="neutral"
             variant="outline"
-            @click="openManagement"
+            :to="`${gamePath}/characters`"
             >Characters management</UButton
           >
           <UButton
@@ -313,7 +281,7 @@ async function removeCharacter() {
             color="neutral"
             variant="outline"
             data-testid="open-settings"
-            @click="openSettings"
+            :to="`${gamePath}/settings`"
             >Settings</UButton
           >
         </div>
@@ -321,8 +289,11 @@ async function removeCharacter() {
       <ContentState v-if="roster.isLoading.value" kind="loading">Loading characters…</ContentState>
       <ContentState v-else-if="roster.isError.value" kind="error" @retry="roster.refetch" />
       <template v-else>
+        <ContentState v-if="settings && gameRecord.role !== 'GM'" kind="empty">
+          Settings are only available to the GM of this game.
+        </ContentState>
         <GameSettings
-          v-if="settings"
+          v-else-if="settings"
           :game-id="gameId"
           :members="members"
           :characters="characters"

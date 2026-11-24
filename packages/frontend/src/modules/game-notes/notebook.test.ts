@@ -332,14 +332,13 @@ describe("creating entries", () => {
 });
 
 describe("clearing notebook state", () => {
-  it("ignores late responses and empties lists, drafts and selections after dispose", async () => {
+  it("ignores late responses and empties lists and drafts after dispose", async () => {
     const { api, handlers } = fixture();
     const { notify, notices } = recorder();
     const late = deferred<NotePage>();
     handlers.list = [() => late.promise];
     const notebook = notebookWith(api, notify);
     notebook.refreshRecent();
-    notebook.selectEntry("a");
     notebook.draft.title = "Doomed draft";
     notebook.dispose();
     late.resolve(page([entry("late", "2026-11-05T12:00:00.000Z")], null));
@@ -347,7 +346,6 @@ describe("clearing notebook state", () => {
     expect(notebook.recent.ids).toEqual([]);
     expect(notebook.browse.ids).toEqual([]);
     expect(notebook.browse.term).toBe("");
-    expect(notebook.selectedId.value).toBe("");
     expect(notebook.draft.title).toBe("");
     expect(notices.length).toBe(0);
   });

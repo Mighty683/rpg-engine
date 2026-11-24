@@ -344,7 +344,8 @@ Then("the entry detail opens on the notes screen", async function (this: Browser
   const state = world.call(this);
   await expect
     .poll(() => this.page.url())
-    .toBe(`${frontendUrl()}/games/${state.seed!.gameId}/notes`);
+    .toBe(`${frontendUrl()}/games/${state.seed!.gameId}/notes/${state.openedEntryId}`);
+  await this.page.reload();
   await expect.poll(() => state.notes.noteTitle.inputValue()).toBe(marshTitle(1));
   await expect.poll(() => state.notes.backToResults.isVisible()).toBe(true);
 });
@@ -398,7 +399,7 @@ Then(
     await expect.poll(() => state.notes.createdToast.textContent()).toBe("Entry created.");
     await expect
       .poll(() => this.page.url())
-      .toBe(`${frontendUrl()}/games/${state.seed!.gameId}/notes`);
+      .toBe(`${frontendUrl()}/games/${state.seed!.gameId}/notes/${state.savedEntryIds.at(-1)}`);
     await expect.poll(() => state.notes.noteTitle.inputValue()).toBe("Mirror lake");
     await expect
       .poll(() => state.notes.content.textContent())
@@ -464,7 +465,9 @@ Then(
       .toContain("Bring the crates to the pier");
     await expect
       .poll(() => this.page.url())
-      .toBe(`${frontendUrl()}/games/${state.seed!.gameId}/notes`);
+      .toBe(
+        `${frontendUrl()}/games/${state.seed!.gameId}/notes/${await waitForEntryWithTitle(state.seed!.gameId, "Cannery run")}`,
+      );
   },
 );
 

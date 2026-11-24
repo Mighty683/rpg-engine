@@ -4,18 +4,19 @@ import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { ApiError, Game, System } from "./types";
 
-import { h, nextTick, onMounted, ref } from "vue";
+import { computed, h, nextTick, ref, watch } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import GameListEntry from "./GameListEntry.vue";
 import { useField, useForm } from "vee-validate";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@nuxt/ui/composables";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 import { useGamesQuery, useSystemsQuery, useCreateGameMutation } from "./hooks";
 
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
 const gamesQuery = useGamesQuery();
 const systemsQuery = useSystemsQuery();
 const createGameMutation = useCreateGameMutation();
@@ -42,7 +43,7 @@ const { value: systemId } = useField<string>(
   (value) => Boolean(value) || t("games.systemRequired"),
   { validateOnValueUpdate: false },
 );
-const view = ref<"list" | "form">("list");
+const view = computed(() => (route.name === "game-new" ? "form" : "list"));
 const games = ref<Game[]>([]);
 const systems = ref<System[]>([]);
 const listState = ref<"loading" | "ready" | "error">("loading");
@@ -83,17 +84,26 @@ async function loadSystems() {
     toast.add({ title: t("games.systemsError"), description: t("games.retry"), color: "error" });
   }
 }
-async function showForm() {
-  view.value = "form";
-  if (!checking.value) void loadSystems();
-  await nextTick();
-  nameInput.value?.inputRef?.focus();
-}
-async function showList() {
-  view.value = "list";
-  void loadGames();
-  await nextTick();
-  listHeading.value?.focus();
+watch(
+  view,
+  async (current, previous) => {
+    if (current === "form") {
+      if (!checking.value) void loadSystems();
+      await nextTick();
+      nameInput.value?.inputRef?.focus();
+    } else {
+      void loadGames();
+      if (previous) {
+        await nextTick();
+        listHeading.value?.focus();
+      }
+    }
+  },
+  { immediate: true },
+);
+
+function showList() {
+  return router.push("/");
 }
 function clearDraft() {
   resetForm();
@@ -171,9 +181,6 @@ function checkGames() {
   checking.value = true;
   void showList();
 }
-onMounted(() => {
-  void loadGames();
-});
 </script>
 
 <template>
@@ -184,10 +191,10 @@ onMounted(() => {
           {{ t("games.title") }}
         </h1>
         <div class="flex flex-wrap gap-small">
-          <UButton v-if="!checking" data-testid="open-game-creation" @click="showForm">{{
+          <UButton v-if="!checking" data-testid="open-game-creation" to="/games/new">{{
             t("games.create")
           }}</UButton>
-          <UButton v-else @click="showForm">{{ t("games.returnToSetup") }}</UButton>
+          <UButton v-else to="/games/new">{{ t("games.returnToSetup") }}</UButton>
         </div>
       </div>
       <p v-if="checking" role="status">

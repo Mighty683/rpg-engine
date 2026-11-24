@@ -33,7 +33,10 @@ export class ClassCatalogPage {
     await this.page.getByTestId("switch-class-context").click();
   }
   async backToList() {
-    await this.page.getByTestId("back-to-classes").click();
+    await this.page
+      .getByTestId("breadcrumb-game-classes")
+      .or(this.page.getByTestId("breadcrumb-class-library"))
+      .click();
   }
   async create(name: string) {
     await this.page.getByTestId("create-class").click();

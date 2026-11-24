@@ -29,7 +29,8 @@ test("a GM can retry a failed game list without a backend", async () => {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: "/", component: GamesView },
+      { path: "/", component: GamesView, meta: { pageGroup: "games" } },
+      { path: "/games/new", name: "game-new", component: GamesView, meta: { pageGroup: "games" } },
       { path: "/games/:gameId", component: { template: "<div>Game opened</div>" } },
     ],
   });
@@ -78,7 +79,8 @@ test("game creation validates the name and submits trimmed values", async () => 
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: "/", component: GamesView },
+      { path: "/", component: GamesView, meta: { pageGroup: "games" } },
+      { path: "/games/new", name: "game-new", component: GamesView, meta: { pageGroup: "games" } },
       { path: "/games/:gameId", component: { template: "<div>Game opened</div>" } },
     ],
   });
@@ -153,9 +155,13 @@ test("character creation retry reuses the same client id", async () => {
   );
   const root = document.createElement("div");
   document.body.append(root);
+  const gameView = (await import("./GameView.vue")).default;
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/games/:gameId", component: (await import("./GameView.vue")).default }],
+    routes: [
+      { path: "/games/:gameId", name: "game-table", component: gameView },
+      { path: "/games/:gameId/characters", name: "game-characters", component: gameView },
+    ],
   });
   await router.push("/games/g1");
   const app = createApp(App)

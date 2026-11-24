@@ -12,6 +12,7 @@ import type { Notebook } from "./notebook";
  * Results page with the cursor and append the next batch near the bottom.
  */
 const props = defineProps<{ notebook: Notebook }>();
+const emit = defineEmits<{ open: [entryId: string] }>();
 const browse = computed(() => props.notebook.browse);
 const entries = computed(() =>
   props.notebook.browse.ids.flatMap((id) => {
@@ -57,7 +58,7 @@ onUnmounted(() => window.removeEventListener("scroll", onWindowScroll));
       <template v-else>
         <ul class="space-y-small" data-testid="notes-list">
           <li v-for="entry in entries" :key="entry.id">
-            <NoteCard :entry="entry" clickable @open="notebook.selectEntry(entry.id)" />
+            <NoteCard :entry="entry" clickable @open="emit('open', entry.id)" />
           </li>
         </ul>
         <ContentState v-if="browse.loadingMore" kind="loading">Loading entries…</ContentState>

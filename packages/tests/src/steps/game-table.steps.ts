@@ -194,9 +194,12 @@ Then("the selected sheet and controller are visible", async function (this: Brow
 
 When("the GM closes the drawer, visits Settings and returns", async function (this: BrowserWorld) {
   await this.page.getByTestId("close-character-sheets").click();
+  const gameUrl = this.page.url();
   await this.page.getByTestId("open-settings").click();
+  await expect.poll(() => this.page.url()).toBe(`${gameUrl}/settings`);
+  await this.page.reload();
   await expect.poll(() => this.page.getByTestId("game-heading").textContent()).toBe("Settings");
-  await this.page.getByTestId("return-to-game").click();
+  await this.page.getByTestId("breadcrumb-game-table").click();
 });
 
 Then("the Game Table is visible again", async function (this: BrowserWorld) {
@@ -466,7 +469,7 @@ When(
     await new GameTablePage(this.page).closeHistory();
     await this.page.getByTestId("manage-characters").click();
     await new GameTablePage(this.page).selectCharacter(firstName);
-    await this.page.getByTestId("return-to-game").click();
+    await this.page.getByTestId("breadcrumb-game-table").click();
     await this.page.getByTestId("game-table").waitFor({ state: "visible" });
     await new GameTablePage(this.page).openHistory();
     await this.page.getByTestId("make-roll").click();
@@ -488,7 +491,7 @@ When(
     await new GameTablePage(this.page).closeHistory();
     await this.page.getByTestId("manage-characters").click();
     await new GameTablePage(this.page).selectCharacter(secondName);
-    await this.page.getByTestId("return-to-game").click();
+    await this.page.getByTestId("breadcrumb-game-table").click();
     await this.page.getByTestId("game-table").waitFor({ state: "visible" });
     await new GameTablePage(this.page).openHistory();
     await this.page.getByTestId("make-roll").click();

@@ -79,7 +79,7 @@ export class GameNotesPage {
   }
 
   get backToResults() {
-    return this.page.getByTestId("notes-results");
+    return this.page.getByTestId("breadcrumb-game-notes");
   }
 
   get noteTitle() {
@@ -87,7 +87,7 @@ export class GameNotesPage {
   }
 
   get backToGame() {
-    return this.page.getByTestId("notes-back");
+    return this.page.getByTestId("breadcrumb-game-table");
   }
 
   get unavailable() {
@@ -95,7 +95,7 @@ export class GameNotesPage {
   }
 
   get unavailableBack() {
-    return this.page.getByTestId("notes-unavailable-back");
+    return this.page.getByTestId("breadcrumb-game-table");
   }
 
   get emptyNotebook() {

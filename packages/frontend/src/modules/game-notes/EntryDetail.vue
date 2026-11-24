@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 import NoteEntryFields from "./NoteEntryFields.vue";
 import { useNotebook } from "./useNotebook";
 
@@ -11,9 +12,21 @@ import { useNotebook } from "./useNotebook";
  * client never blocks typing on the in-flight save. Dates come from the
  * server acknowledgement.
  */
-const props = defineProps<{ gameId: string }>();
+const props = defineProps<{ gameId: string; entryId: string }>();
 const notebook = useNotebook(props.gameId);
-const editor = computed(() => notebook.editorFor(notebook.selectedId.value));
+const loaded = ref(false);
+const failed = ref(false);
+const editor = computed(() => (loaded.value ? notebook.editorFor(props.entryId) : undefined));
+async function load() {
+  failed.value = false;
+  try {
+    await notebook.loadEntry(props.entryId);
+    loaded.value = true;
+  } catch {
+    failed.value = true;
+  }
+}
+onMounted(load);
 const entry = computed(() => editor.value?.displayed.value ?? null);
 const date = (value: string) =>
   new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -40,14 +53,8 @@ onUnmounted(() => flush());
 <template>
   <ScreenSection>
     <div class="space-y-medium">
-      <button
-        type="button"
-        class="notes-link text-primary underline"
-        data-testid="notes-results"
-        @click="notebook.closeEntry()"
-      >
-        Back to results
-      </button>
+      <ContentState v-if="failed" kind="error" @retry="load" />
+      <ContentState v-else-if="!editor" kind="loading">Loading entry…</ContentState>
       <NoteEntryFields
         v-if="editor"
         :title="editor.fields.title"
@@ -68,13 +75,3 @@ onUnmounted(() => flush());
     </div>
   </ScreenSection>
 </template>
-
-<style scoped>
-.notes-link {
-  display: inline-block;
-}
-.notes-link:focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring-color);
-  outline-offset: var(--focus-ring-offset);
-}
-</style>

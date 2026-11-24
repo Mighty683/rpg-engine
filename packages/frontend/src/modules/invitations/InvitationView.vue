@@ -42,10 +42,10 @@ async function accept() {
     const result = await invitationApi.accept(token, makeActive.value);
     const inactiveCharacter =
       isCharacter.value && !makeActive.value ? result.characterId : undefined;
-    await router.replace({
-      path: `/games/${result.gameId}`,
-      query: inactiveCharacter ? { character: inactiveCharacter } : {},
-    });
+    const gamePath = `/games/${result.gameId}`;
+    await router.replace(
+      inactiveCharacter ? `${gamePath}/characters/${inactiveCharacter}` : gamePath,
+    );
   } catch {
     toast.add({
       title: "This invitation could not be accepted. Ask the GM for an active link.",

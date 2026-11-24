@@ -36,7 +36,10 @@ test("API failures show toasts while retry and form input remain available", asy
   document.body.append(root);
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/", component: GamesView }],
+    routes: [
+      { path: "/", component: GamesView, meta: { pageGroup: "games" } },
+      { path: "/games/new", name: "game-new", component: GamesView, meta: { pageGroup: "games" } },
+    ],
   });
   await router.push("/");
   const wrapper = defineComponent({

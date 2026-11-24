@@ -53,7 +53,6 @@ export type Notebook = {
   readonly recent: NoteListState;
   readonly browse: NoteListState & { term: string };
   readonly creating: Ref<boolean>;
-  readonly selectedId: Ref<string>;
   setTerm: (value: string) => void;
   ensureBrowse: () => void;
   retryBrowse: () => void;
@@ -64,8 +63,7 @@ export type Notebook = {
   entry: (id: string) => NoteEntry | undefined;
   /** Record shown on cards: the optimistic editor view while one exists. */
   displayEntry: (id: string) => NoteEntry | undefined;
-  selectEntry: (id: string) => void;
-  closeEntry: () => void;
+  loadEntry: (id: string) => Promise<void>;
   editorFor: (id: string) => EntryEditor | undefined;
   /** Creates from the draft; resolves to the saved entry, or null when nothing was saved. */
   createEntry: () => Promise<NoteEntry | null>;
@@ -78,7 +76,8 @@ export function createNotebook(
   notify: NoteNotify,
   searchDelayMs = 250,
 ): Notebook {
-  const scope = effectScope();
+  // The notebook is shared by the drawer and routed pages across component unmounts.
+  const scope = effectScope(true);
   const entries = new Map<string, NoteEntry>();
   const editors = new Map<string, EntryEditor>();
   const recent: NoteListState = reactive({
@@ -100,7 +99,6 @@ export function createNotebook(
   });
   const draft = reactive({ id: newUuid(), title: "", content: noteDocument() });
   const creating = ref(false);
-  const selectedId = ref("");
   let generation = 0;
   let recentVersion = 0;
   let browseVersion = 0;
@@ -374,17 +372,13 @@ export function createNotebook(
     if (existing) return existing;
     const record = entries.get(id);
     if (!record) return undefined;
-    return scope.run(() => makeEditor(record)) ?? makeEditor(record);
+    return scope.run(() => makeEditor(record));
   }
 
-  function selectEntry(id: string) {
-    editorFor(id);
-    selectedId.value = id;
-  }
-
-  function closeEntry() {
-    editors.get(selectedId.value)?.commit();
-    selectedId.value = "";
+  async function loadEntry(id: string) {
+    if (editorFor(id)) return;
+    const entry = await api.read(gameId, id);
+    if (generation === 0 && !entries.has(id)) entries.set(id, entry);
   }
 
   async function createEntry(): Promise<NoteEntry | null> {
@@ -462,7 +456,6 @@ export function createNotebook(
     draft.id = newUuid();
     draft.title = "";
     draft.content = noteDocument();
-    selectedId.value = "";
     entries.clear();
     editors.clear();
     creating.value = false;
@@ -474,7 +467,6 @@ export function createNotebook(
     recent,
     browse,
     creating,
-    selectedId,
     setTerm,
     ensureBrowse,
     retryBrowse,
@@ -483,8 +475,7 @@ export function createNotebook(
     loadMoreRecent,
     entry: (id) => entries.get(id) ?? undefined,
     displayEntry,
-    selectEntry,
-    closeEntry,
+    loadEntry,
     editorFor,
     createEntry,
     dispose,

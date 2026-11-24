@@ -11,7 +11,11 @@ import { useApiServices } from "../../shared/api-services";
 import { createNotebook, type NoteNotice, type Notebook } from "./notebook";
 
 let current: { gameId: string; notebook: Notebook } | undefined;
-let watchingAccount = false;
+watch(account, (next, previous) => {
+  if (next?.id === previous?.id) return;
+  current?.notebook.dispose();
+  current = undefined;
+});
 
 function noticeToast(notice: NoteNotice) {
   return {
@@ -31,13 +35,6 @@ function noticeToast(notice: NoteNotice) {
 export function useNotebook(gameId: string): Notebook {
   const { gameNotes } = useApiServices();
   const toast = useToast();
-  if (!watchingAccount) {
-    watchingAccount = true;
-    watch(account, (next) => {
-      if (!next) current?.notebook.dispose();
-      current = next ? current : undefined;
-    });
-  }
   if (current && current.gameId === gameId) return current.notebook;
   current?.notebook.dispose();
   const notebook = createNotebook(gameId, gameNotes, (notice) => toast.add(noticeToast(notice)));

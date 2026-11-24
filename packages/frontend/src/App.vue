@@ -9,6 +9,7 @@ import { useRouter } from "vue-router";
 import AccountScreen from "./modules/auth/AccountScreen.vue";
 import { useApiServices } from "./shared/api-services";
 import { account } from "./modules/auth/session";
+import PageBreadcrumbs from "./shared/components/PageBreadcrumbs.vue";
 import PrimaryNavigation from "./shared/components/PrimaryNavigation.vue";
 
 const toast = useToast();
@@ -93,8 +94,15 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
           >
         </UDropdownMenu>
       </header>
-      <UContainer as="main" class="py-page sm:py-page-wide">
-        <RouterView :key="$route.fullPath" />
+      <UContainer as="main" class="pt-section pb-page sm:pb-page-wide">
+        <PageBreadcrumbs :key="String($route.params.gameId ?? '')" />
+        <RouterView
+          :key="
+            $route.meta.pageGroup
+              ? `${$route.meta.pageGroup}:${$route.params.gameId ?? ''}`
+              : $route.fullPath
+          "
+        />
       </UContainer>
     </div>
   </UApp>

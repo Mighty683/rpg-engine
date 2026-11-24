@@ -15,7 +15,7 @@ defineProps<{
   canManage: boolean;
   gameName?: string;
   contextTo?: string;
-  returnTo?: string;
+  useBreadcrumbs?: boolean;
   charactersTo?: string;
   showRemoval?: boolean;
   showCharacters?: boolean;
@@ -43,21 +43,15 @@ const editorTabs = [
 </script>
 
 <template>
-  <section class="bg-default p-section text-default">
-    <div class="mx-auto flex max-w-5xl flex-col gap-section">
+  <section class="bg-default text-default" :class="{ 'p-section': !useBreadcrumbs }">
+    <div
+      class="mx-auto flex flex-col gap-section"
+      :class="useBreadcrumbs ? 'max-w-6xl' : 'max-w-5xl'"
+    >
       <header class="flex flex-wrap items-start justify-between gap-medium">
         <div>
           <p class="text-label text-muted">
-            <template v-if="context === 'Game'">
-              <ULink
-                v-if="returnTo"
-                :to="returnTo"
-                class="underline-offset-4 hover:text-highlighted hover:underline"
-                data-testid="return-from-classes"
-                >{{ gameName ?? "Game table" }}</ULink
-              >
-              <span v-else>{{ gameName }}</span> · Fabula Ultima
-            </template>
+            <template v-if="context === 'Game'"> {{ gameName }} · Fabula Ultima </template>
             <template v-else>Fabula Ultima</template>
           </p>
           <h1 class="text-heading font-semibold">
@@ -80,7 +74,7 @@ const editorTabs = [
             color="neutral"
             variant="outline"
             data-testid="switch-class-context"
-            >{{ context === "Library" ? "Back to game classes" : "Class library" }}</UButton
+            >{{ context === "Library" ? "Game classes" : "Class library" }}</UButton
           >
           <UButton
             v-if="screen === 'List' && context === 'Library'"
@@ -108,7 +102,7 @@ const editorTabs = [
             >
           </template>
           <UButton
-            v-else
+            v-else-if="!useBreadcrumbs"
             color="neutral"
             variant="outline"
             data-testid="back-to-classes"
@@ -249,6 +243,7 @@ const editorTabs = [
         </UTabs>
       </template>
 
+      <p v-else-if="screen === 'Details'" role="status">Class unavailable.</p>
       <slot v-else-if="screen === 'Character'" name="characters" />
     </div>
   </section>

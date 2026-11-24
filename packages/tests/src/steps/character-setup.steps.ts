@@ -28,7 +28,7 @@ When(
 
 When("I reload and reopen character {string}", async function (this: BrowserWorld, name: string) {
   await this.page.reload();
-  await this.game.openManagement();
+  await this.game.returnToManagement();
   await this.game.openCharacter(name);
   await expect.poll(() => this.character.theme.isVisible()).toBe(true);
 });

@@ -25,14 +25,7 @@ const canUseNotes = computed(() => Boolean(account.value && gameRecord.value?.ro
     <div v-else-if="!canUseNotes" class="space-y-medium" data-testid="notes-unavailable">
       <h1 class="text-heading font-semibold">Game notes</h1>
       <p class="text-muted">Game notes are only available to the GM of this game.</p>
-      <UButton
-        :to="gameRecord ? `/games/${gameId}` : '/'"
-        color="neutral"
-        variant="outline"
-        data-testid="notes-unavailable-back"
-        >{{ gameRecord ? gameRecord.name : "My games" }}</UButton
-      >
     </div>
-    <NotesController v-else :game-id="gameId" :game-name="gameRecord!.name" />
+    <NotesController v-else :game-id="gameId" />
   </div>
 </template>

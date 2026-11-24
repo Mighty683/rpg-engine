@@ -16,7 +16,11 @@ export class GamePage {
   }
 
   async returnToGame() {
-    await this.page.getByTestId("return-to-game").click();
+    await this.page.getByTestId("breadcrumb-game-table").click();
+  }
+
+  async returnToManagement() {
+    await this.page.getByTestId("breadcrumb-game-characters").click();
   }
 
   async openManagement() {
