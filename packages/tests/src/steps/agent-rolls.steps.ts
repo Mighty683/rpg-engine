@@ -147,7 +147,6 @@ Then(
     expect(rows[1]).toMatchObject({ private: true, kind: "free", setup: rows[0].setup });
     expect(rows[1].id).not.toBe(rows[0].id);
     await this.page.reload();
-    await this.agent.open();
     await expect.poll(() => this.page.getByTestId("agent-roll-result").count()).toBe(2);
     expect(await this.page.getByTestId("agent-make-roll").count()).toBe(0);
   },

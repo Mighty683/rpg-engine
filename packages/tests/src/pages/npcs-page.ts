@@ -76,6 +76,8 @@ export class NpcsPage {
     await change(() => this.page.getByTestId("defense-MAG DEF").fill("10"));
   }
   async savedStats(npc: string) {
+    await this.page.getByTestId("make-roll").waitFor();
+    await this.page.keyboard.press("Escape");
     await this.card(npc).getByTestId("edit-npc").click();
     const values = {
       dex: await this.page.getByTestId("attribute-die-DEX").innerText(),

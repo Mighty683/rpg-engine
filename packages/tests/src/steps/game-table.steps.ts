@@ -419,8 +419,7 @@ Then("the GM sees it appended without reloading", async function (this: BrowserW
 
 Then("the roll remains visible after the GM reloads", async function (this: BrowserWorld) {
   await this.page.reload();
-  await new GameTablePage(this.page).openHistory();
-  await new GameTablePage(this.page).openHistory();
+  await new GameTablePage(this.page).makeRoll.waitFor();
   await expect.poll(() => new GameTablePage(this.page).throwEntries().count()).toBe(1);
 });
 
@@ -634,7 +633,8 @@ When("the GM scrolls back and loads older throws", async function (this: Browser
   const before = await pinned.boundingBox();
   await table.page.getByTestId("load-older-throws").click();
   await expect.poll(() => table.throwEntries().count()).toBe(25);
-  await expect.poll(async () => (await pinned.boundingBox())?.y).toBe(before?.y);
+  expect(before).not.toBeNull();
+  await expect.poll(async () => (await pinned.boundingBox())?.y).toBeCloseTo(before!.y, 0);
 });
 
 Then(

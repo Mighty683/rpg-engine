@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ContentState from "../../shared/design-system/base/ContentState.vue";
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useApiServices } from "../../shared/api-services";
 import type { Attribute } from "../game-table/types";
@@ -208,7 +208,7 @@ async function remove(id: string) {
   removing.value = true;
   try {
     await api.remove(props.gameId, id, npc.revision);
-    await closeEditor();
+    closeEditor();
     await refresh();
   } catch {
     toast.add({ title: "Could not remove NPC. Refresh and try again.", color: "error" });
@@ -217,15 +217,20 @@ async function remove(id: string) {
     removing.value = false;
   }
 }
-async function closeEditor() {
-  const id = props.selected;
+let focusNpcId = "";
+function closeEditor() {
+  focusNpcId = props.selected;
   emit("close");
-  await nextTick();
-  document
-    .querySelector<HTMLElement>(
-      `[data-testid="npc-card-${CSS.escape(id)}"] :is([data-testid="edit-npc"], [data-testid="view-details"])`,
-    )
-    ?.focus();
+}
+function restoreFocus(event: Event) {
+  const target = document.querySelector<HTMLElement>(
+    `[data-testid="npc-card-${CSS.escape(focusNpcId)}"] :is([data-testid="edit-npc"], [data-testid="view-details"])`,
+  );
+  focusNpcId = "";
+  if (target) {
+    event.preventDefault();
+    target.focus();
+  }
 }
 function focus() {
   if (writing.value) refreshPending = true;
@@ -273,6 +278,7 @@ onUnmounted(() => {
   />
   <USlideover
     :open="panelOpen"
+    :content="{ onCloseAutoFocus: restoreFocus }"
     title="NPCs"
     :ui="{ content: 'w-full sm:max-w-4xl' }"
     @update:open="

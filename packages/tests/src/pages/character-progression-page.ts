@@ -82,7 +82,7 @@ export class CharacterProgressionPage {
   }
   async reload() {
     await this.page.reload();
-    await this.table.table.waitFor();
+    await this.currentExp.waitFor();
   }
   async loseNextSaveResponse() {
     let markCommitted!: (value: number) => void;

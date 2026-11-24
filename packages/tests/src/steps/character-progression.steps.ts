@@ -103,6 +103,7 @@ Then(
   "my level and 50 of 50 EXP persist and the class benefit is gone",
   async function (this: BrowserWorld) {
     await this.progression.reload();
+    await this.progression.close();
     await this.progression.partyHp(this.progressionName).filter({ hasText: "35 / 36" }).waitFor();
     await this.progression.open(this.progressionName);
     expect(await this.progression.classCard(this.progressionClass.id).count()).toBe(0);
@@ -151,7 +152,6 @@ Then(
     expect(await this.progression.totalExp.inputValue()).toBe("50");
     await this.progression.changeCurrentExp("39");
     await this.progression.reload();
-    await this.progression.open(this.progressionName);
     expect(await this.progression.currentExp.inputValue()).toBe("39");
   },
 );

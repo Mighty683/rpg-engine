@@ -22,7 +22,7 @@ const emit = defineEmits<{
 
 const historyList = ref<HTMLOListElement>();
 let initialScrolled = false;
-let pendingOlder: { scrollHeight: number; scrollTop: number } | null = null;
+let pendingOlder: { anchor: Element; top: number } | null = null;
 
 onMounted(() => {
   void nextTick(() => {
@@ -40,7 +40,7 @@ watch(
     const list = historyList.value;
     if (!list) return;
     if (pendingOlder) {
-      list.scrollTop = pendingOlder.scrollTop + (list.scrollHeight - pendingOlder.scrollHeight);
+      list.scrollTop += pendingOlder.anchor.getBoundingClientRect().top - pendingOlder.top;
       pendingOlder = null;
       return;
     }
@@ -61,8 +61,8 @@ watch(
 );
 
 function loadOlder() {
-  const list = historyList.value;
-  if (list) pendingOlder = { scrollHeight: list.scrollHeight, scrollTop: list.scrollTop };
+  const anchor = historyList.value?.firstElementChild;
+  if (anchor) pendingOlder = { anchor, top: anchor.getBoundingClientRect().top };
   emit("loadOlder");
 }
 </script>
