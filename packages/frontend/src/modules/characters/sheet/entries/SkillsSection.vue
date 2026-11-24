@@ -3,20 +3,23 @@ import SheetSection from "../../../../shared/design-system/domain/SheetSection.v
 import NamedEntries from "./NamedEntries.vue";
 import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
 import type { NamedEntry } from "../types";
-defineProps<{ entries: NamedEntry[]; locked: boolean }>();
+defineProps<{ entries: NamedEntry[]; locked: boolean; existingOnly?: boolean }>();
 </script>
 
 <template>
   <SheetSection
     ><template #heading
       ><div class="heading-label">
-        ◆ SKILLS
+        ◆ {{ existingOnly ? "MANUAL SKILLS" : "SKILLS" }}
         <InfoTooltip
+          v-if="!existingOnly"
           label="About skills"
           text="Skills are class abilities. Their ranks and effects are not automated here."
         /></div></template
-    ><NamedEntries :entries="entries" :locked="locked" kind="skill" />
-    <p class="note">Manual level; advancement and skill effects are not automated.</p></SheetSection
+    ><NamedEntries :existing-only="existingOnly" :entries="entries" :locked="locked" kind="skill" />
+    <p v-if="!existingOnly" class="note">
+      Manual level; advancement and skill effects are not automated.
+    </p></SheetSection
   >
 </template>
 

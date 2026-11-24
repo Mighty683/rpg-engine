@@ -114,14 +114,18 @@ export async function listActiveParty(
               weapon.accuracyDice[0] && weapon.accuracyDice[1] && weapon.accuracyBonus !== null,
             ),
           }));
+        const classSummary = [
+          ...sheet.classes.map(({ name }) => ({ name, level: null })),
+          ...(allocation?.classes.map(({ name, level }) => ({ name, level })) ?? []),
+        ];
         return {
           id: row.id,
           revision: row.revision,
           name: sheet.name,
-          classes: [
-            ...sheet.classes.map((entry) => entry.name),
-            ...(allocation?.classes.map(({ name, level }) => `${name} ${level}`) ?? []),
-          ],
+          classSummary,
+          classes: classSummary.map(({ name, level }) =>
+            level === null ? name : `${name} ${level}`,
+          ),
           baseDice: { ...sheet.baseDice },
           currentDice: derived.currentDice,
           resources: { ...sheet.resources },

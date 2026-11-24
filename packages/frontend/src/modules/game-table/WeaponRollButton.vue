@@ -28,16 +28,30 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
       class="weapon-card"
       :data-testid="`roll-weapon`"
       :aria-label="`Roll accuracy for ${characterName} using ${weapon.name}`"
+      :aria-description="reach ? `Reach: ${reach}` : undefined"
       :disabled="!canRoll"
       @click="weapon.ready ? emit('roll') : emit('needsSetup')"
     >
       <span>{{ weapon.name }}</span>
-      <span class="flex items-center gap-small">
-        <span
-          v-if="reach && damageBonus !== null && damageBonus !== undefined"
-          class="text-label text-muted"
-          >{{ reach }} · +{{ damageBonus }}{{ damageType ? ` ${damageType}` : "" }}</span
-        >
+      <span class="flex flex-wrap items-center gap-small">
+        <span v-if="reach" :title="reach === 'melee' ? 'Melee' : 'Ranged'" class="inline-flex">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="size-4 text-muted"
+            aria-hidden="true"
+          >
+            <path v-if="reach === 'melee'" d="m4 20 5-5m-3-3 6 6m-4-5L18 3h3v3L11 16" />
+            <path v-else d="M4 4q16 0 16 16L4 4Zm1 15L19 5m-5 0h5v5" />
+          </svg>
+        </span>
+        <span v-if="damageBonus != null" class="text-label text-muted">
+          +{{ damageBonus }}{{ damageType ? ` ${damageType}` : "" }}
+        </span>
         <span v-if="weapon.accuracyDice.every(Boolean)" class="weapon-dice" aria-hidden="true">
           <span v-for="(attribute, index) in weapon.accuracyDice" :key="index" class="weapon-die">
             <template v-if="attribute"
@@ -53,6 +67,7 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
 <style scoped>
 .weapon-card {
   display: flex;
+  flex-wrap: wrap;
   width: 100%;
   align-items: center;
   justify-content: space-between;

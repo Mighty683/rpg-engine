@@ -49,7 +49,7 @@ function attackSummary(npc: Npc): string {
 
 <template>
   <article
-    class="flex h-full flex-col rounded-panel border border-default bg-default p-medium"
+    class="table-card flex h-full flex-col rounded-panel border border-default bg-default p-medium"
     :data-relationship="npc.relationship ?? 'neutral'"
     :data-testid="`npc-card-${npc.id}`"
   >
@@ -95,13 +95,13 @@ function attackSummary(npc: Npc): string {
       <template v-else>
         <div class="vital-resources">
           <div v-for="resource in ['hp', 'mp'] as const" :key="resource" class="vital-resource">
-            <strong>{{ resource.toUpperCase() }}</strong>
             <ResourceBar
               :label="resource.toUpperCase()"
               :value="npc[resource].current"
               :maximum="npc[resource].max"
               :color="resource"
             >
+              <strong class="resource-name">{{ resource.toUpperCase() }}</strong>
               <span :data-testid="resource === 'hp' ? 'npc-hp' : undefined">
                 {{ npc[resource].current }} / {{ npc[resource].max }}
               </span>
@@ -178,15 +178,11 @@ function attackSummary(npc: Npc): string {
   gap: var(--spacing-small);
 }
 .vital-resource {
-  display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-  align-items: center;
-  gap: var(--spacing-small);
   font-size: var(--text-label);
   font-variant-numeric: tabular-nums;
 }
-.vital-resource strong {
-  color: var(--ui-text-muted);
+.resource-name {
+  margin-inline-end: var(--spacing-small);
 }
 article[data-relationship="enemy"] {
   border-color: var(--color-relationship-enemy);

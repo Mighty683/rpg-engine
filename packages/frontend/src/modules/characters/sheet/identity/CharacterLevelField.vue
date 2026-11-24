@@ -16,7 +16,7 @@ defineEmits<{ change: [event: Event] }>();
 </script>
 
 <template>
-  <label class="level-mark"
+  <label class="sheet-stat"
     ><span>LEVEL</span
     ><input
       type="number"
@@ -30,33 +30,4 @@ defineEmits<{ change: [event: Event] }>();
   /></label>
 </template>
 
-<style scoped>
-.level-mark {
-  display: grid;
-  text-align: center;
-  border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-control);
-  padding: var(--spacing-small) var(--spacing-medium);
-  line-height: 1;
-  color: var(--ui-text-muted);
-  font-size: var(--sheet-label-size);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-input {
-  width: 3.5rem;
-  justify-self: center;
-  appearance: textfield;
-  text-align: center;
-  color: var(--ui-text-highlighted);
-  font-size: var(--text-body);
-  line-height: normal;
-  border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-control);
-  background: var(--ui-bg);
-}
-input::-webkit-inner-spin-button {
-  appearance: none;
-  margin: 0;
-}
-</style>
+<style scoped src="./sheet-stat.css"></style>

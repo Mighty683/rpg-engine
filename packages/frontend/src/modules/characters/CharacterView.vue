@@ -63,7 +63,6 @@ useGameEvents(
   refreshSheet,
 );
 
-const locked = ref(localStorage.getItem(`character-lock:${characterId.value}`) === "1");
 function mergeSheet(base: Sheet, changes: Record<string, unknown>) {
   return {
     ...base,
@@ -192,7 +191,7 @@ watch(
     if (!value) return;
     if (draft.value && JSON.stringify(toSheet(draft.value, value)) === JSON.stringify(value))
       return;
-    draft.value = toCharacter(value, characterId.value, locked.value);
+    draft.value = toCharacter(value, characterId.value);
     syncedDraft = JSON.stringify(draft.value);
   },
   { immediate: true },
@@ -204,11 +203,7 @@ watch(
     if (!value || !current) return;
     if (JSON.stringify(value) === syncedDraft) return;
     syncedDraft = JSON.stringify(value);
-    if (value.editingLocked !== locked.value) {
-      locked.value = value.editingLocked;
-      localStorage.setItem(`character-lock:${characterId.value}`, locked.value ? "1" : "0");
-    }
-    if (locked.value || effectiveReadOnly.value) return;
+    if (effectiveReadOnly.value) return;
     const updated = toSheet(value, current);
     const changes: Record<string, unknown> = {};
     for (const key of Object.keys(updated) as (keyof Sheet)[]) {
@@ -238,8 +233,7 @@ const maximumOverrides = computed(() => ({
 }));
 function overrideMaximum(resource: "HP" | "MP" | "IP", value: number | null) {
   const keys = { HP: "maxHp", MP: "maxMp", IP: "maxIp" } as const;
-  if (!locked.value && !effectiveReadOnly.value)
-    optimistic.submit([{ overrides: { [keys[resource]]: value } }]);
+  if (!effectiveReadOnly.value) optimistic.submit([{ overrides: { [keys[resource]]: value } }]);
 }
 const defenseKeys = { DEF: "defense", "MAG DEF": "magicDefense", INIT: "initiative" } as const;
 const baseDefense = computed(
@@ -279,7 +273,7 @@ const defenseDetails = computed(() => {
 });
 const savedSheet = computed(() => optimistic.latestSaved.value?.character.sheet);
 const savedDraft = computed(() =>
-  savedSheet.value ? toCharacter(savedSheet.value, characterId.value, true) : null,
+  savedSheet.value ? toCharacter(savedSheet.value, characterId.value) : null,
 );
 const savedDerived = computed(() => optimistic.latestSaved.value?.character.derived ?? {});
 const savedMaximum = computed(() => ({
@@ -310,11 +304,10 @@ const savedDefense = computed(
 const emptyDefenseDetails = { DEF: [], "MAG DEF": [], INIT: [] };
 const progression = computed(() => snapshot.value?.character.progression);
 const abilities = computed(() => progression.value && managedAbilities(progression.value));
-const progressionReadOnly = computed(() => effectiveReadOnly.value || locked.value);
 const progressionBusy = computed(() => optimistic.saving.value || optimistic.paused.value);
 
 function editProgression(changes: Partial<ManagedProgression>) {
-  if (!progression.value || progressionReadOnly.value || progressionBusy.value) return;
+  if (!progression.value || effectiveReadOnly.value || progressionBusy.value) return;
   const next = managedAbilities(previewManagedProgression(progression.value, changes));
   const message =
     experienceError(next.experience, next.levels) ??
@@ -374,7 +367,6 @@ function changeSkill(id: string, delta: number) {
       :character="draft"
       :read-only="effectiveReadOnly"
       :current-dice="derived.currentDice"
-      show-manual-entries
       :maximum="maximum"
       :maximum-overrides="maximumOverrides"
       @override-maximum="overrideMaximum"
@@ -384,7 +376,7 @@ function changeSkill(id: string, delta: number) {
       <template v-if="abilities" #experience>
         <ExperienceFields
           :experience="abilities.experience"
-          :read-only="progressionReadOnly"
+          :read-only="effectiveReadOnly"
           :disabled="progressionBusy"
           @change="changeExperience"
         />
@@ -403,7 +395,7 @@ function changeSkill(id: string, delta: number) {
           v-else
           :catalog="catalog"
           :character="abilities"
-          :read-only="progressionReadOnly"
+          :read-only="effectiveReadOnly"
           :saving="progressionBusy"
           @change-class="changeClass"
           @change-skill="changeSkill"

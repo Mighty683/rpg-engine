@@ -15,3 +15,15 @@
   --dice-control-gap: var(--spacing-tight);
   --dice-control-padding: var(--spacing-tight) var(--spacing-small);
 }
+
+:root {
+  --table-card-die-size: var(--value-s12);
+  --table-card-grid-gap: var(--value-s8);
+  --table-card-padding: var(--value-s8);
+  --table-card-gap: var(--value-s4);
+  --table-card-detail-gap: 0.125rem;
+  --table-card-bar-height: var(--value-s16);
+  --table-card-label-size: var(--value-font-10);
+  --table-card-body-size: var(--value-font-12);
+  --table-card-title-size: var(--value-font-14);
+}

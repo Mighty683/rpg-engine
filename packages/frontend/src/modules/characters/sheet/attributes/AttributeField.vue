@@ -13,12 +13,8 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
       ><InfoTooltip :label="`About ${label}`" :text="help" />
     </div>
     <div class="die-value">
-      <DieIcon :sides="currentDie ?? value" />
-      <span v-if="currentDie !== undefined" :data-testid="`attribute-die-${label}`"
-        >d{{ currentDie }}</span
-      >
+      <DieIcon :sides="value" />
       <USelect
-        v-else
         v-model="value"
         :items="dice"
         value-key="value"
@@ -26,7 +22,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
         :disabled="disabled"
         :data-testid="`attribute-die-${label}`"
         variant="ghost"
-        class="die-select"
+        class="min-w-0 font-bold enabled:cursor-pointer"
       >
         <template #item-label="{ item }"
           ><span :data-testid="`attribute-die-option-${item.value}`">{{
@@ -39,7 +35,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
       v-if="currentDie !== undefined && currentDie !== Number(value)"
       class="text-small text-muted"
     >
-      Base d{{ value }}
+      Current d{{ currentDie }}
     </p>
   </div>
 </template>
@@ -73,9 +69,5 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
 .die-value :deep(.die-icon) {
   width: 1rem;
   height: 1rem;
-}
-.die-select {
-  min-width: 0;
-  font-weight: 700;
 }
 </style>

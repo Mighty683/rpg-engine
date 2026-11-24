@@ -59,12 +59,11 @@ function toEquipment(entry: NamedEntry): Equipment {
   return { ...base, kind: "other" };
 }
 
-export function toCharacter(sheet: Sheet, id: string, locked: boolean): Character {
+export function toCharacter(sheet: Sheet, id: string): Character {
   return {
     id,
     identity: { name: sheet.name, theme: sheet.theme ?? "" },
     level: sheet.level,
-    editingLocked: locked,
     attributes: {
       DEX: String(sheet.baseDice.DEX),
       INS: String(sheet.baseDice.INS),

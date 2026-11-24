@@ -31,7 +31,6 @@ export type Character = {
   id: string;
   identity: { name: string; theme: string };
   level: number;
-  editingLocked: boolean;
   classes: NamedEntry[];
   skills: NamedEntry[];
   attributes: { DEX: string; INS: string; MIG: string; WLP: string };

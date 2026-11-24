@@ -6,7 +6,7 @@ import UApp from "@nuxt/ui/components/App.vue";
 import AttributeField from "./AttributeField.vue";
 import "../../../../style.css";
 
-test("selecting an attribute die updates its value", async () => {
+test("base dice remain editable when a class-adjusted die is supplied", async () => {
   const value = ref("8");
   const root = document.createElement("div");
   document.body.append(root);
@@ -17,6 +17,7 @@ test("selecting an attribute die updates its value", async () => {
           h(AttributeField, {
             label: "WLP",
             help: "Willpower",
+            currentDie: 10,
             modelValue: value.value,
             "onUpdate:modelValue": (next: string) => {
               value.value = next;

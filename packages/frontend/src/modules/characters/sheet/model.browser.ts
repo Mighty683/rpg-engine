@@ -49,7 +49,7 @@ test("maps existing character data and every equipment type without losing API f
     resources: { hp: 20, mp: 10, ip: 3, fabula: 2 },
     overrides: { maxHp: 55, maxMp: 60, maxIp: 8, defense: 13, magicDefense: null, initiative: -1 },
   };
-  const character = toCharacter(sheet, "character", false);
+  const character = toCharacter(sheet, "character");
   expect(toSheet(character, sheet)).toEqual(sheet);
   character.identity.theme = "Justice";
   character.equipment[1]!.weapon!.attributes[1] = "MIG";

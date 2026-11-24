@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import ScreenSection from "../../../shared/design-system/base/ScreenSection.vue";
 import { computed, ref } from "vue";
-import { useToast } from "@nuxt/ui/composables";
 import CharacterNameField from "./identity/CharacterNameField.vue";
 import CharacterThemeField from "./identity/CharacterThemeField.vue";
 import CharacterLevelField from "./identity/CharacterLevelField.vue";
-import EditingLockButton from "./identity/EditingLockButton.vue";
 import AttributesSection from "./attributes/AttributesSection.vue";
 import ResourcesSection from "./resources/ResourcesSection.vue";
 import ResourceField from "./resources/ResourceField.vue";
@@ -20,7 +18,6 @@ const props = defineProps<{
   controller?: string;
   readOnly?: boolean;
   hideReadOnlyBadge?: boolean;
-  showManualEntries?: boolean;
   currentDice?: Record<Attribute, number>;
   maximum: Record<"HP" | "MP" | "IP", number>;
   maximumOverrides: Record<"HP" | "MP" | "IP", number | null>;
@@ -38,10 +35,8 @@ function updateMaximum(resource: "HP" | "MP" | "IP", value: number | null) {
 }
 const character = computed(() => props.character);
 const nameField = ref<InstanceType<typeof CharacterNameField>>();
-const toast = useToast();
 defineExpose({ focus: () => nameField.value?.focus() });
 const identity = computed(() => character.value.identity);
-const editingLocked = computed(() => props.readOnly || character.value.editingLocked);
 const classes = computed(() => character.value.classes);
 const level = computed(() => character.value.level);
 function setLevel(event: Event) {
@@ -65,31 +60,12 @@ const overrides = computed(() => character.value.overrides);
 const maximum = computed(() => props.maximum);
 const baseDefense = computed(() => props.baseDefense);
 const defenseDetails = computed(() => props.defenseDetails);
-function warnIfEditingLocked(event: PointerEvent) {
-  if (props.readOnly || !editingLocked.value || !(event.target instanceof Element)) return;
-  if (
-    event.target.closest(
-      ".sheet-name, .theme-field, .level-mark, .die, .resource, .defense-stat, .detail-card, .entry-add",
-    )
-  ) {
-    toast.add({
-      id: "editing-locked",
-      title: "Editing is locked",
-      description: "Unlock editing to make changes.",
-      color: "warning",
-    });
-  }
-}
 </script>
 
 <template>
-  <main
-    class="sheet space-y-small rounded-panel border border-default bg-default p-medium"
-    :class="{ 'is-locked': editingLocked }"
-    @pointerdown.capture="warnIfEditingLocked"
-  >
+  <main class="sheet space-y-small rounded-panel border border-default bg-default p-medium">
     <header class="sheet-header border-b border-default pb-small">
-      <fieldset :disabled="editingLocked" class="contents">
+      <fieldset :disabled="readOnly" class="contents">
         <CharacterNameField
           ref="nameField"
           v-model="identity.name"
@@ -99,13 +75,12 @@ function warnIfEditingLocked(event: PointerEvent) {
         <CharacterThemeField v-model="identity.theme" />
       </fieldset>
       <slot name="level">
-        <fieldset :disabled="editingLocked" class="contents">
+        <fieldset :disabled="readOnly" class="contents">
           <CharacterLevelField :level="level" test-id="character-level" @change="setLevel" />
         </fieldset>
       </slot>
       <slot name="experience" />
-      <EditingLockButton v-if="!readOnly" v-model="character.editingLocked" />
-      <fieldset :disabled="editingLocked" class="vital-resources">
+      <fieldset :disabled="readOnly" class="vital-resources">
         <ResourceField
           v-for="resource in ['HP', 'MP'] as const"
           :key="resource"
@@ -118,32 +93,40 @@ function warnIfEditingLocked(event: PointerEvent) {
         />
       </fieldset>
     </header>
-    <p v-if="!readOnly" class="text-small text-muted">
-      Lock editing prevents accidental changes in this browser only. It does not lock the sheet for
-      other people.
-    </p>
-    <slot name="class-progression" />
-    <fieldset :disabled="editingLocked" class="sheet-sections">
+    <fieldset :disabled="readOnly" class="sheet-sections">
       <ScreenSection class="sheet-split attributes-resources" aria-label="Attributes and resources">
-        <AttributesSection :attributes="attributes" :current-dice="currentDice" /><ResourcesSection
+        <AttributesSection
+          :attributes="attributes"
+          :current-dice="currentDice"
+          :read-only="readOnly"
+        /><ResourcesSection
           :current="current"
           :maximum="maximum"
           :maximum-overrides="maximumOverrides"
           @override="updateMaximum"
         />
       </ScreenSection>
+      <slot name="class-progression" />
       <ScreenSection
-        v-if="showManualEntries || !$slots['class-progression']"
+        v-if="!$slots['class-progression'] || classes.length || skills.length"
         class="sheet-split"
-        aria-label="Classes and skills"
+        aria-label="Manual classes and skills"
       >
-        <ClassesSection :entries="classes" :locked="editingLocked" /><SkillsSection
+        <ClassesSection
+          v-if="!$slots['class-progression'] || classes.length"
+          :entries="classes"
+          :locked="readOnly"
+          :existing-only="!!$slots['class-progression']"
+        />
+        <SkillsSection
+          v-if="!$slots['class-progression'] || skills.length"
           :entries="skills"
-          :locked="editingLocked"
+          :locked="readOnly"
+          :existing-only="!!$slots['class-progression']"
         />
       </ScreenSection>
       <ScreenSection class="sheet-split" aria-label="Equipment and defense">
-        <EquipmentSection :entries="equipment" :locked="editingLocked" /><DefenseSection
+        <EquipmentSection :entries="equipment" :locked="readOnly" /><DefenseSection
           :overrides="overrides"
           :calculated="baseDefense"
           :details="defenseDetails"
@@ -171,9 +154,6 @@ function warnIfEditingLocked(event: PointerEvent) {
   gap: var(--spacing-small);
   min-width: 0;
 }
-.is-locked :deep(fieldset :is(input, select, textarea, button)) {
-  pointer-events: none;
-}
 .sheet-sections {
   display: grid;
   gap: var(--spacing-small);
@@ -192,7 +172,7 @@ function warnIfEditingLocked(event: PointerEvent) {
 }
 @media (max-width: 640px) {
   .sheet-header {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
   .vital-resources {
     grid-template-columns: 1fr;

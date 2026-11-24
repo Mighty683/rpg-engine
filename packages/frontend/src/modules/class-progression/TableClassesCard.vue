@@ -1,19 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
+import ClassLevelBars from "./ClassLevelBars.vue";
+import type { PartyCharacter } from "../game-table/types";
 import CharacterAbilities from "./CharacterAbilities.vue";
 import type { ManagedAbilities, ProgressionCharacter, ProgressionClass } from "./types";
 
 const props = defineProps<{
   id?: string;
   name?: string;
-  summary?: string[];
+  summary?: PartyCharacter["classSummary"];
   character?: ProgressionCharacter | ManagedAbilities;
   catalog: ProgressionClass[];
   loading?: boolean;
   failed?: boolean;
+  canAddClass?: boolean;
 }>();
-const emit = defineEmits<{ inspect: []; retry: [] }>();
+const emit = defineEmits<{ inspect: []; retry: []; openSheet: [] }>();
 const detailsOpen = ref(false);
 const id = computed(
   () => props.id ?? (props.character && "id" in props.character ? props.character.id : ""),
@@ -33,8 +36,15 @@ const skills = computed(() =>
 const summary = computed(
   () =>
     props.summary ??
-    classes.value.map((entry) => `${entry.name} ${props.character?.levels[entry.id] ?? 0}`),
+    classes.value.map((entry) => ({
+      name: entry.name,
+      level: props.character?.levels[entry.id] ?? null,
+    })),
 );
+function openSheet() {
+  detailsOpen.value = false;
+  emit("openSheet");
+}
 function open() {
   emit("inspect");
   detailsOpen.value = true;
@@ -45,7 +55,8 @@ function open() {
     <UButton
       color="neutral"
       variant="subtle"
-      class="w-full justify-between bg-elevated text-left"
+      size="xs"
+      class="relative w-full cursor-pointer border border-transparent p-0 text-left hover:border-primary"
       :data-testid="`table-classes-${id}`"
       :aria-label="`View class details for ${name}`"
       aria-haspopup="dialog"
@@ -53,13 +64,8 @@ function open() {
       @focus="emit('inspect')"
       @click="open"
     >
-      <span class="min-w-0">
-        <span class="block text-small text-muted">Classes</span>
-        <span class="block whitespace-normal break-words">{{
-          summary.join(" · ") || "No classes selected"
-        }}</span>
-      </span>
-      <UIcon name="i-lucide-chevron-right" class="shrink-0" />
+      <ClassLevelBars :entries="summary" interactive />
+      <UIcon name="i-lucide-chevron-right" class="pointer-events-none absolute right-small" />
     </UButton>
     <template #content>
       <div class="space-y-small" :data-testid="`class-preview-${id}`">
@@ -93,7 +99,22 @@ function open() {
         :character="character"
         expanded
         read-only
-      />
+      >
+        <template #add-action="{ blockedReason }">
+          <p v-if="blockedReason" class="text-small text-muted">{{ blockedReason }}</p>
+          <UButton
+            v-else-if="canAddClass"
+            block
+            data-testid="open-sheet-to-add-class"
+            @click="openSheet"
+            >+ Add class</UButton
+          >
+          <p v-else class="text-small text-muted">You need edit access to add a class.</p>
+        </template>
+      </CharacterAbilities>
+      <p v-else-if="detailsOpen" class="text-small text-muted">
+        Class progression is unavailable for this character.
+      </p>
     </template>
   </UModal>
 </template>

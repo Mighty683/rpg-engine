@@ -133,6 +133,7 @@ export type PartyCharacter = {
   revision: number;
   name: string;
   classes: string[];
+  classSummary: { name: string; level: number | null }[];
   baseDice: Record<Attribute, number>;
   currentDice: FabulaSheet["baseDice"];
   resources: { hp: number; mp: number; ip: number; fabula: number };

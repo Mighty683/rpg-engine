@@ -177,6 +177,7 @@ export type PartyCharacter = {
   name: string;
   level?: number | null;
   classes: string[];
+  classSummary?: { name: string; level: number | null }[];
   baseDice: Record<Attribute, number>;
   currentDice?: Record<Attribute, number>;
   resources: { hp: number; mp: number; ip: number; fabula: number };

@@ -9,6 +9,7 @@ const props = defineProps<{
   kind: "item" | "skill" | "class";
   limit?: number;
   locked?: boolean;
+  existingOnly?: boolean;
 }>();
 const name = ref("");
 const expanded = ref<string | null>(null);
@@ -64,7 +65,7 @@ function remove(id: string) {
   <p v-if="!entries.length && kind !== 'skill'" class="text-muted">
     No {{ kind === "class" ? "classes" : `${kind}s` }} yet.
   </p>
-  <form v-if="!atLimit" class="entry-add" @submit.prevent="add">
+  <form v-if="!existingOnly && !atLimit" class="entry-add" @submit.prevent="add">
     <label class="sr-only" :for="`${kind}-name`">{{ kind }} name</label
     ><input
       :id="`${kind}-name`"
@@ -72,7 +73,7 @@ function remove(id: string) {
       :placeholder="`${kind === 'item' ? 'Item' : kind === 'class' ? 'Class' : 'Skill'} name`"
     /><UButton type="submit" size="sm" color="neutral" variant="outline">Add</UButton>
   </form>
-  <p v-else class="text-muted">Maximum {{ limit }} classes.</p>
+  <p v-else-if="!existingOnly" class="text-muted">Maximum {{ limit }} classes.</p>
 </template>
 
 <style scoped>

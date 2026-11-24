@@ -1,7 +1,7 @@
 import { expect, test, vi } from "vite-plus/test";
 import { apiServicesKey } from "../../shared/api-services";
 import { browserApiServices } from "../../shared/api-services.browser-support";
-import { page } from "vite-plus/test/browser";
+import { page, userEvent } from "vite-plus/test/browser";
 import { createApp } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { QueryClient, VueQueryPlugin } from "@tanstack/vue-query";
@@ -155,6 +155,41 @@ test("read-only sheets explain control and keep informational help focusable", a
   }
 });
 
+test("an item name keeps its word separator through autosave", async () => {
+  const item = { id: "i1", kind: "other", name: "Old item", notes: "", priceZenit: null };
+  let acknowledge: (() => void) | undefined;
+  const saved = () => response({ equipment: [item] });
+  const mounted = await mount(
+    vi.fn(async (_input, init?: RequestInit) => {
+      if (init?.method === "PATCH") {
+        item.name = JSON.parse(String(init.body)).changes.equipment[0].name.trim();
+        if (item.name === "Magic")
+          await new Promise<void>((resolve) => {
+            acknowledge = resolve;
+          });
+      }
+      return saved();
+    }),
+  );
+  try {
+    await page.getByTestId("open-entry-details").click();
+    const name = page.getByTestId("equipment-name");
+    await name.fill("Magic");
+    await expect.poll(() => !!acknowledge).toBe(true);
+    await userEvent.keyboard("{End}[Space]");
+    acknowledge!();
+    await expect.element(page.getByTestId("save-status")).toHaveTextContent("Saved automatically");
+    await expect.element(name).toHaveValue("Magic ");
+    await userEvent.keyboard("Armor");
+    await expect.poll(() => item.name).toBe("Magic Armor");
+    await expect.element(name).toHaveValue("Magic Armor");
+  } finally {
+    mounted.app.unmount();
+    mounted.root.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
 test("sheet saves edits and preserves a newer input during a slow acknowledgement", async () => {
   let resolvePatch!: (value: Response) => void;
   const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
@@ -183,32 +218,15 @@ test("sheet saves edits and preserves a newer input during a slow acknowledgemen
   }
 });
 
-test("editing lock persists across remount and blocks edits", async () => {
-  const fetchMock = vi.fn(() => Promise.resolve(response()));
-  const first = await mount(fetchMock);
+test("an old browser lock leaves an authorized sheet editable", async () => {
+  localStorage.setItem("character-lock:c1", "1");
+  const mounted = await mount(vi.fn(() => Promise.resolve(response())));
   try {
-    await expect.element(page.getByTestId("editing-lock")).toBeVisible();
-    await page.getByTestId("editing-lock").click();
+    await expect.element(page.getByTestId("character-name")).toBeEnabled();
+    await expect.element(page.getByTestId("editing-lock")).not.toBeInTheDocument();
   } finally {
-    first.app.unmount();
-    first.root.remove();
-  }
-  const second = await mount(fetchMock);
-  try {
-    await expect.element(page.getByTestId("editing-lock")).toHaveTextContent("Unlock editing");
-    await expect.element(page.getByTestId("character-name")).toBeDisabled();
-    const patchesBefore = (fetchMock.mock.calls as unknown[][]).filter(
-      (call) => (call[1] as RequestInit | undefined)?.method === "PATCH",
-    ).length;
-    await expect.element(page.getByTestId("character-name")).toBeDisabled();
-    expect(
-      (fetchMock.mock.calls as unknown[][]).filter(
-        (call) => (call[1] as RequestInit | undefined)?.method === "PATCH",
-      ),
-    ).toHaveLength(patchesBefore);
-  } finally {
-    second.app.unmount();
-    second.root.remove();
+    mounted.app.unmount();
+    mounted.root.remove();
     localStorage.removeItem("character-lock:c1");
     vi.unstubAllGlobals();
   }

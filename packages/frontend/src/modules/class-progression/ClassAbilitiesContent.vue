@@ -81,10 +81,9 @@ const skills = computed(() =>
             :benefits="skill.benefits"
           />
         </li>
-        <li v-if="editable" class="min-w-40 flex-1">
+        <li v-if="editable">
           <ProgressActionButton
-            block
-            class="h-full min-h-20 justify-center rounded-panel"
+            size="sm"
             :blocked-reason="addSkillReason"
             :data-testid="`add-skill-${entry.id}`"
             @click="pickerOpen = true"

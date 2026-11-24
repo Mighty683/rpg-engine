@@ -16,28 +16,24 @@ function change(field: keyof ProgressionExperience, event: Event) {
 </script>
 
 <template>
-  <div class="self-center" role="group" aria-label="Experience">
-    <p class="text-label text-muted">EXP</p>
+  <div class="sheet-stat" role="group" aria-label="Experience">
+    <span>EXP</span>
     <p v-if="readOnly">{{ experience.current }} / {{ experience.total }}</p>
-    <div v-else class="flex items-center gap-small">
-      <UInput
-        :model-value="experience.current"
+    <div v-else class="flex min-w-0 items-center justify-center gap-tight">
+      <input
+        :value="experience.current"
         type="number"
         min="0"
-        size="sm"
-        class="w-18"
         :disabled="disabled"
         aria-label="Current EXP"
         data-testid="current-exp"
         @change="change('current', $event)"
       />
       <span aria-hidden="true">/</span>
-      <UInput
-        :model-value="experience.total"
+      <input
+        :value="experience.total"
         type="number"
         min="0"
-        size="sm"
-        class="w-18"
         :disabled="disabled"
         aria-label="Total EXP"
         data-testid="total-exp"
@@ -46,3 +42,5 @@ function change(field: keyof ProgressionExperience, event: Event) {
     </div>
   </div>
 </template>
+
+<style scoped src="../characters/sheet/identity/sheet-stat.css"></style>

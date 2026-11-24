@@ -37,6 +37,7 @@ const addClassReason = computed(() => {
   if (props.saving) return "Wait for the current change to save.";
   if (acquired.value.length >= MAX_CHARACTER_CLASSES)
     return `A character can have up to ${MAX_CHARACTER_CLASSES} classes.`;
+  if (!props.catalog.length) return "No classes are available in this game.";
   if (!available.value.length) return "No more classes are available.";
   if (classAllocationAtCap.value) return "All 50 class levels are assigned.";
   if (needsExperience.value) return experienceRequired;
@@ -51,6 +52,7 @@ function decreaseReason(entry: ProgressionClass) {
     return "Lower a skill rank in this class before lowering its level.";
 }
 function addClass(id: string) {
+  if (addClassReason.value || !available.value.some((entry) => entry.id === id)) return;
   emit("changeClass", id, 1);
   classPickerOpen.value = false;
 }
@@ -58,7 +60,13 @@ function addClass(id: string) {
 <template>
   <ScreenSection class="space-y-small" data-testid="sheet-abilities">
     <div class="flex flex-wrap items-center justify-between gap-small">
-      <h2 class="text-section font-semibold">Classes & skills</h2>
+      <h2
+        :class="
+          expanded ? 'text-section font-semibold' : 'text-label font-bold uppercase text-primary'
+        "
+      >
+        {{ expanded ? "Classes & skills" : "Classes" }}
+      </h2>
     </div>
     <template v-for="entry in acquired" :key="entry.id">
       <article
@@ -127,22 +135,23 @@ function addClass(id: string) {
         />
       </details>
     </template>
-    <ProgressActionButton
-      v-if="!readOnly"
-      block
-      class="min-h-20 justify-center rounded-panel"
-      :blocked-reason="addClassReason"
-      data-testid="add-class"
-      @click="classPickerOpen = true"
-      >+ Add class</ProgressActionButton
-    >
+    <slot name="add-action" :blocked-reason="addClassReason">
+      <ProgressActionButton
+        v-if="!readOnly"
+        size="sm"
+        :blocked-reason="addClassReason"
+        data-testid="add-class"
+        @click="classPickerOpen = true"
+        >+ Add class</ProgressActionButton
+      >
+    </slot>
     <UModal
       v-model:open="classPickerOpen"
       title="Add class"
       description="Choose a class to add its first level."
     >
       <template #body>
-        <div class="grid gap-small sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-small">
           <article
             v-for="entry in available"
             :key="entry.id"

@@ -32,10 +32,8 @@ function initialState() {
         </div>
       </UApp>
     </template>
-    <template #controls="{ state }"
-      ><HstCheckbox v-model="state.readOnly" title="Read-only" /><HstCheckbox
-        v-model="state.character.editingLocked"
-        title="Editing locked"
-    /></template>
+    <template #controls="{ state }">
+      <HstCheckbox v-model="state.readOnly" title="Read-only" />
+    </template>
   </Story>
 </template>

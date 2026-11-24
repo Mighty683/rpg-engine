@@ -20,14 +20,14 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 
 <template>
   <li
-    class="rounded-panel border border-default bg-default p-medium"
+    class="table-card rounded-panel border border-default bg-default p-medium"
     data-testid="party-card"
     :data-character-id="member.id"
   >
     <div class="space-y-small">
       <div>
         <div class="flex flex-wrap items-center gap-small">
-          <span class="font-semibold">{{ member.name }}</span>
+          <span class="character-name font-semibold">{{ member.name }}</span>
           <UBadge v-if="member.level" color="neutral" variant="outline" size="sm">
             Lv {{ member.level }}
           </UBadge>
@@ -59,13 +59,13 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
       </div>
       <div class="vital-resources">
         <div v-for="resource in ['hp', 'mp'] as const" :key="resource" class="vital-resource">
-          <strong>{{ resource.toUpperCase() }}</strong>
           <ResourceBar
             :label="resource.toUpperCase()"
             :value="member.resources[resource]"
             :maximum="member.maxima[resource]"
             :color="resource"
           >
+            <strong class="resource-name">{{ resource.toUpperCase() }}</strong>
             <span :data-testid="resource === 'hp' ? 'party-hp' : undefined">
               {{ member.resources[resource] }} / {{ member.maxima[resource] }}
             </span>
@@ -83,7 +83,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           @roll="emit('rollAttribute', attribute)"
         />
       </div>
-      <dl class="grid grid-cols-2 gap-small text-label tabular-nums">
+      <dl class="party-stats grid grid-cols-2 gap-small text-label tabular-nums">
         <div class="mini-card">
           <div class="mini-resource">
             <dt>IP <InfoTooltip label="Inventory Points" text="Inventory Points" /></dt>
@@ -138,15 +138,11 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
   gap: var(--spacing-small);
 }
 .vital-resource {
-  display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-  align-items: center;
-  gap: var(--spacing-small);
   font-size: var(--text-label);
   font-variant-numeric: tabular-nums;
 }
-.vital-resource strong {
-  color: var(--ui-text-muted);
+.resource-name {
+  margin-inline-end: var(--spacing-small);
 }
 .attribute-row {
   display: grid;
@@ -192,5 +188,13 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 }
 .mini-resource dd span {
   color: var(--ui-text-muted);
+}
+.character-name {
+  font-size: var(--table-card-title-size);
+}
+@container (max-width: 12rem) {
+  .party-stats {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

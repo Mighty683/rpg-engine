@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import EquipmentIcon from "../../../../shared/design-system/domain/EquipmentIcon.vue";
 import WeaponIcon from "../../../../shared/design-system/domain/WeaponIcon.vue";
 import ZenitIcon from "../../../../shared/design-system/domain/ZenitIcon.vue";
@@ -17,6 +17,22 @@ const emit = defineEmits<{
 const draft = useEditableEntry(
   () => props.entry,
   (entry) => emit("update:entry", entry),
+);
+// Keep unfinished whitespace in the input while autosaving the normalized name.
+const typingName = ref<string | null>(null);
+const itemName = computed({
+  get: () => typingName.value ?? draft.value.name,
+  set: (text: string) => {
+    typingName.value = text;
+    const name = text.trim();
+    if (name) draft.value.name = name;
+  },
+});
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) typingName.value = null;
+  },
 );
 const equipped = computed(() => {
   if (draft.value.itemType === "weapon") return Boolean(draft.value.weapon?.equipped);
@@ -57,7 +73,12 @@ const equipped = computed(() => {
     <template #title
       ><label class="editor-name"
         ><span class="sr-only">Item name</span
-        ><input v-model="draft.name" aria-label="Item name" /></label
+        ><input
+          v-model="itemName"
+          maxlength="100"
+          aria-label="Item name"
+          data-testid="equipment-name"
+          @blur="typingName = null" /></label
     ></template>
     <div class="entry-details">
       <EntryNotesField v-model="draft.notes" :name="draft.name" /><label

@@ -2,13 +2,19 @@
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import NamedEntries from "./NamedEntries.vue";
 import type { NamedEntry } from "../types";
-defineProps<{ entries: NamedEntry[]; locked: boolean }>();
+defineProps<{ entries: NamedEntry[]; locked: boolean; existingOnly?: boolean }>();
 </script>
 
 <template>
   <SheetSection
-    ><template #heading>◆ CLASSES</template><template #hint>UP TO 2</template
-    ><NamedEntries :entries="entries" :locked="locked" kind="class" :limit="2"
+    ><template #heading>◆ {{ existingOnly ? "MANUAL CLASSES" : "CLASSES" }}</template
+    ><template v-if="!existingOnly" #hint>UP TO 2</template
+    ><NamedEntries
+      :existing-only="existingOnly"
+      :entries="entries"
+      :locked="locked"
+      kind="class"
+      :limit="2"
   /></SheetSection>
 </template>
 

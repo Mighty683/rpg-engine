@@ -33,7 +33,11 @@ const emit = defineEmits<{
       retry-test-id="retry-party"
       @retry="emit('retry')"
     />
-    <ul v-else class="relative grid gap-small pt-medium sm:grid-cols-2" data-testid="party-list">
+    <ul
+      v-else
+      class="party-grid relative grid grid-cols-2 pt-small md:grid-cols-3 lg:grid-cols-4"
+      data-testid="party-list"
+    >
       <PartyCharacterCard
         v-for="member in party"
         :key="member.id"
@@ -45,7 +49,11 @@ const emit = defineEmits<{
         @needs-weapon-setup="emit('needsWeaponSetup', member, $event)"
       >
         <template v-if="gameId" #class-progression>
-          <PartyClassSummary :game-id="gameId" :member="member" />
+          <PartyClassSummary
+            :game-id="gameId"
+            :member="member"
+            @open-sheet="emit('openSheet', member.id)"
+          />
         </template>
       </PartyCharacterCard>
       <slot />
@@ -65,3 +73,28 @@ const emit = defineEmits<{
     </p>
   </ScreenSection>
 </template>
+
+<style scoped>
+.party-grid {
+  gap: var(--table-card-grid-gap);
+}
+.party-grid > :deep(.table-card) {
+  --spacing-medium: var(--table-card-padding);
+  --spacing-small: var(--table-card-gap);
+  --spacing-tight: var(--table-card-detail-gap);
+  --spacing-field: var(--table-card-bar-height);
+  --text-label: var(--table-card-label-size);
+  --text-small: var(--table-card-body-size);
+  --text-section: var(--table-card-title-size);
+  --text-section--line-height: 1.25;
+  --dice-label-size: var(--table-card-label-size);
+  --dice-control-padding: var(--table-card-detail-gap);
+  --dice-control-gap: var(--table-card-detail-gap);
+
+  container-type: inline-size;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--table-card-body-size);
+  line-height: 1.3;
+}
+</style>

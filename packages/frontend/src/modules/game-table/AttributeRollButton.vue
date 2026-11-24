@@ -19,8 +19,8 @@ defineEmits<{ roll: [] }>();
       :disabled="!canRoll"
       @click="$emit('roll')"
     >
-      <span>{{ attribute }}</span
-      ><DieIcon :sides="sides" /><strong>d{{ sides }}</strong>
+      <span>{{ attribute }}</span>
+      <strong class="die-value"><DieIcon :sides="sides" />d{{ sides }}</strong>
     </button>
   </UTooltip>
 </template>
@@ -49,8 +49,14 @@ defineEmits<{ roll: [] }>();
   opacity: 0.5;
   cursor: not-allowed;
 }
+.die-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dice-control-gap);
+  white-space: nowrap;
+}
 :deep(.die-icon) {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: var(--table-card-die-size);
+  height: var(--table-card-die-size);
 }
 </style>

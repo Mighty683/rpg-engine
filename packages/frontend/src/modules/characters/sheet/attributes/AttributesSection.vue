@@ -2,7 +2,11 @@
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import AttributeField from "./AttributeField.vue";
 import type { Attribute, Character } from "../types";
-defineProps<{ attributes: Character["attributes"]; currentDice?: Record<Attribute, number> }>();
+defineProps<{
+  attributes: Character["attributes"];
+  readOnly?: boolean;
+  currentDice?: Record<Attribute, number>;
+}>();
 const help = {
   DEX: "Dexterity measures agility and is the usual base for Defense.",
   INS: "Insight measures awareness and is the base for Magic Defense.",
@@ -13,8 +17,7 @@ const help = {
 
 <template>
   <SheetSection class="attributes"
-    ><template #heading>◈ ATTRIBUTES</template
-    ><template #hint>{{ currentDice ? "CURRENT DICE" : "BASE DICE" }}</template>
+    ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
     <div class="grid">
       <AttributeField
         v-for="attribute in ['DEX', 'INS', 'MIG', 'WLP'] as const"
@@ -23,6 +26,7 @@ const help = {
         :label="attribute"
         :current-die="currentDice?.[attribute]"
         :help="help[attribute]"
+        :disabled="readOnly"
       /></div
   ></SheetSection>
 </template>

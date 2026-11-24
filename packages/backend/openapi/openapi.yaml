@@ -2958,6 +2958,7 @@ components:
         - revision
         - name
         - classes
+        - classSummary
         - baseDice
         - currentDice
         - resources
@@ -2974,6 +2975,14 @@ components:
           description: Manual names and managed class summaries. Ranks and EXP are private.
           type: array
           items: { type: string }
+        classSummary:
+          type: array
+          items:
+            type: object
+            required: [name, level]
+            properties:
+              name: { type: string }
+              level: { type: [integer, "null"], minimum: 1, maximum: 10 }
         currentDice: { $ref: "#/components/schemas/CurrentDice" }
         baseDice:
           type: object

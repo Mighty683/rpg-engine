@@ -88,7 +88,6 @@ export function makeCharacter(): Character {
     id: partyMember.id,
     identity: { name: partyMember.name, theme: "Duty" },
     level: 5,
-    editingLocked: false,
     classes: [guardian],
     skills: [skill],
     attributes: { DEX: "8", INS: "8", MIG: "10", WLP: "6" },
