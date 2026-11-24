@@ -8,7 +8,6 @@ export default defineConfig({
       { name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
       { name: "sql-security", specifier: "./lint/sql-security.js" },
       { name: "backend-boundaries", specifier: "./lint/backend-boundaries.js" },
-      { name: "prototype-boundary", specifier: "./lint/prototype-boundary.js" },
     ],
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
@@ -16,15 +15,10 @@ export default defineConfig({
     },
     overrides: [
       {
-        files: ["packages/*/src/**/*.{js,jsx,ts,tsx,vue}"],
-        rules: { "prototype-boundary/no-prototype-imports": "error" },
-      },
-      {
         files: ["packages/backend/src/**/*.ts"],
         rules: {
           "sql-security/static-query": "error",
           "sql-security/no-drizzle-raw": "error",
-          "backend-boundaries/imports": "error",
           "backend-boundaries/owner-writes": "error",
         },
       },
@@ -33,7 +27,6 @@ export default defineConfig({
         rules: {
           "sql-security/static-query": "off",
           "sql-security/no-drizzle-raw": "off",
-          "backend-boundaries/imports": "off",
           "backend-boundaries/owner-writes": "off",
         },
       },

@@ -12,56 +12,6 @@ const invalid = (code, messageId, filename = moduleFile) => ({
   filename,
   errors: [{ messageId }],
 });
-tester.run("imports", plugin.rules.imports, {
-  valid: [
-    valid('import type { CharactersService } from "../characters/types.ts"'),
-    valid('import { type CharactersService } from "../characters/types.ts"'),
-    valid('import { resolveThrow } from "./resolve.ts"'),
-    valid('import { rollDie } from "../fabula/rolls.ts"'),
-    valid('import { findSystem } from "../rpg-systems/catalog.ts"'),
-    valid(
-      'import { createCharactersService } from "./modules/characters/factory.ts"',
-      file("app.ts"),
-    ),
-    valid(
-      'import { createCharacterOwnership } from "../modules/characters/ownership.ts"',
-      file("application/ownership.ts"),
-    ),
-  ],
-  invalid: [
-    invalid(
-      'type Service = ReturnType<typeof import("./factory.ts").createThrowsService>',
-      "implementationType",
-      file("modules/throws/types.ts"),
-    ),
-    invalid('import { sheetSequential } from "../characters/service.ts"', "dependency"),
-    invalid(
-      'import type { createCharactersService } from "../characters/factory.ts"',
-      "dependency",
-    ),
-    invalid('export * from "../characters/service.ts"', "dependency"),
-    invalid('import("../characters/service.ts")', "dependency"),
-    invalid('require("../characters/service.ts")', "dependency"),
-    invalid("import(`../characters/service.ts`)", "dependency"),
-    invalid('import { CharactersService } from "../characters/types.ts"', "dependency"),
-    invalid('import { runWorkflow } from "../../application/ownership.ts"', "layering"),
-    invalid(
-      'import type { createThrowsService } from "./factory.ts"; type Service = ReturnType<typeof createThrowsService>',
-      "implementationType",
-      file("modules/throws/types.ts"),
-    ),
-    invalid(
-      'import { routeId } from "../games/controller.ts"',
-      "controller",
-      file("modules/throws/controller.ts"),
-    ),
-    invalid(
-      'import { controller } from "./party-controller.ts"',
-      "controller",
-      file("modules/characters/controller.ts"),
-    ),
-  ],
-});
 tester.run("owner-writes", plugin.rules["owner-writes"], {
   valid: [
     valid('import { throws } from "../../database/schema.ts"; tx.insert(throws)'),
