@@ -10,6 +10,7 @@ import type {
 } from "./types";
 
 import { computed, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useToast } from "@nuxt/ui/composables";
 import { account } from "../auth/session";
 import { useGameCharactersQuery } from "../characters/hooks";
@@ -56,22 +57,13 @@ const rosterById = computed(
   () => new Map((roster.data.value?.characters ?? []).map((entry) => [entry.id, entry])),
 );
 
-const sheetOpen = ref(false);
-const npcEditorOpen = ref(false);
+const route = useRoute();
+const router = useRouter();
 const npcManager = ref<InstanceType<typeof NpcManager>>();
 function saveReviewedNpc(id: string, revision: number, next: NpcWrite) {
   if (!npcManager.value) throw new Error("NPC editor unavailable");
   return npcManager.value.saveReviewed(id, revision, next);
 }
-const historyTab = ref<string | null>(null);
-watch(historyTab, (id) =>
-  emit("agentOpen", Boolean(props.extraEdgeTab && id === props.extraEdgeTab.id)),
-);
-const customPanelOpen = computed(() =>
-  Boolean(props.panelTab && historyTab.value === props.panelTab.id),
-);
-const npcOpenRequest = ref(0);
-const npcCloseRequest = ref(0);
 const edgeTabs = computed(() => [
   ...(props.panelTab ? [props.panelTab] : []),
   {
@@ -80,41 +72,62 @@ const edgeTabs = computed(() => [
     color: "primary" as const,
     testId: "open-character-sheets",
   },
-  ...(props.role === "GM"
-    ? [{ id: "npcs", label: "NPCs", color: "info" as const, testId: "edge-tab-npcs" }]
-    : []),
+  { id: "npcs", label: "NPCs", color: "info" as const, testId: "edge-tab-npcs" },
   { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
 ]);
-watch(sheetOpen, (open) => {
-  if (open) historyTab.value = "sheets";
-  else if (historyTab.value === "sheets") historyTab.value = null;
+const historyTab = computed({
+  get: () => {
+    const panel = route.query.panel;
+    return typeof panel === "string" &&
+      (edgeTabs.value.some((tab) => tab.id === panel) || panel === props.extraEdgeTab?.id)
+      ? panel
+      : null;
+  },
+  set: (panel: string | null) => navigatePanel(panel),
 });
-watch(npcEditorOpen, (open) => {
-  if (open) historyTab.value = "npcs";
-  else if (historyTab.value === "npcs") historyTab.value = null;
-});
-function selectEdgeTab(id: string | null) {
-  if (id && id === props.panelTab?.id) emit("openPanel");
-  sheetOpen.value = id === "sheets";
-  if (id === "npcs") npcOpenRequest.value++;
-  else if (npcEditorOpen.value) npcCloseRequest.value++;
-}
-const selectedSheetId = ref("");
+const sheetOpen = computed(() => historyTab.value === "sheets");
+const customPanelOpen = computed(() =>
+  Boolean(props.panelTab && historyTab.value === props.panelTab.id),
+);
+const selectedSheetId = computed(() =>
+  typeof route.query.sheetId === "string" ? route.query.sheetId : "",
+);
+const selectedNpcId = computed(() => (typeof route.query.npc === "string" ? route.query.npc : ""));
 const sheetTabs = computed(() =>
   party.value.map((member) => ({ label: member.name, value: member.id })),
 );
+
+function navigatePanel(panel: string | null, selection?: string, replace = false) {
+  const query = { ...route.query };
+  delete query.panel;
+  delete query.sheetId;
+  delete query.npc;
+  if (panel) query.panel = panel;
+  if (panel === "sheets") query.sheetId = selection || sheetTabs.value[0]?.value;
+  if (panel === "npcs" && selection) query.npc = selection;
+  const location = { path: route.path, query, hash: route.hash };
+  if (router.resolve(location).fullPath !== route.fullPath)
+    void (replace ? router.replace(location) : router.push(location));
+}
+function openSheet(id: string) {
+  navigatePanel("sheets", id);
+}
 watch(
-  sheetTabs,
-  (tabs) => {
-    if (!tabs.some((tab) => tab.value === selectedSheetId.value))
-      selectedSheetId.value = tabs[0]?.value ?? "";
+  [sheetOpen, selectedSheetId, sheetTabs],
+  ([open, selected, tabs]) => {
+    if (open && partyQuery.isSuccess.value && !tabs.some((tab) => tab.value === selected))
+      navigatePanel("sheets", tabs[0]?.value, true);
   },
   { immediate: true },
 );
-function openSheet(characterId: string) {
-  selectedSheetId.value = characterId;
-  sheetOpen.value = true;
-}
+watch(
+  historyTab,
+  (panel) => {
+    emit("agentOpen", Boolean(props.extraEdgeTab && panel === props.extraEdgeTab.id));
+    if (props.panelTab && panel === props.panelTab.id) emit("openPanel");
+  },
+  { immediate: true },
+);
 
 const weaponHint = ref<{ character: PartyCharacter; weaponName: string } | null>(null);
 
@@ -565,6 +578,7 @@ async function removeEntry(entry: ThrowRecord) {
         <PartyPanel
           :game-id="gameId"
           :party="party"
+          :player-character="role === 'Player' ? playerActiveCharacter : null"
           :is-loading="partyQuery.isLoading.value"
           :is-error="partyQuery.isError.value"
           :weapon-hint="weaponHint"
@@ -579,24 +593,17 @@ async function removeEntry(entry: ThrowRecord) {
             :game-id="gameId"
             :role="role"
             :hint="npcsHint ?? 0"
-            :panels-blocked="sheetOpen"
-            external-tabs
-            :open-request="npcOpenRequest"
-            :close-request="npcCloseRequest"
-            @editor-open="npcEditorOpen = $event"
+            :panel-open="historyTab === 'npcs'"
+            :selected="selectedNpcId"
+            @open="(id, replace) => navigatePanel('npcs', id, replace)"
+            @close="historyTab = null"
             @changed="npcRecords = $event"
             @roll-attribute="openNpcAttribute"
             @roll-attack="openNpcAttack"
           />
         </PartyPanel>
       </div>
-      <EdgeTabs
-        v-if="!sheetOpen"
-        v-model:open-id="historyTab"
-        :tabs="edgeTabs"
-        tabs-only
-        @open="selectEdgeTab"
-      />
+      <EdgeTabs v-if="!sheetOpen" v-model:open-id="historyTab" :tabs="edgeTabs" tabs-only />
       <USlideover
         :open="historyTab === 'history' || customPanelOpen"
         :title="customPanelOpen ? panelTab?.label : 'Throw history'"
@@ -631,10 +638,7 @@ async function removeEntry(entry: ThrowRecord) {
           variant="soft"
           :aria-expanded="false"
           data-testid="agent-chat-launcher"
-          @click="
-            historyTab = extraEdgeTab.id;
-            selectEdgeTab(historyTab);
-          "
+          @click="historyTab = extraEdgeTab.id"
         >
           {{ extraEdgeTab.label }}
           <span aria-hidden="true">↑</span>
@@ -684,8 +688,10 @@ async function removeEntry(entry: ThrowRecord) {
         </template>
       </USlideover>
       <CharacterSheetsDrawer
-        v-model:open="sheetOpen"
-        v-model:selected-id="selectedSheetId"
+        :open="sheetOpen"
+        :selected-id="selectedSheetId"
+        @update:open="(open) => navigatePanel(open ? 'sheets' : null)"
+        @update:selected-id="(id) => sheetOpen && id && openSheet(id)"
         :show-bookmark="false"
         :tabs="sheetTabs"
       >

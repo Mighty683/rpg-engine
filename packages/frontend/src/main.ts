@@ -44,6 +44,7 @@ const router = createRouter({
             {
               path: "",
               name: "game-table",
+              meta: { pageGroup: "game-table" },
               component: GameView,
             },
             {

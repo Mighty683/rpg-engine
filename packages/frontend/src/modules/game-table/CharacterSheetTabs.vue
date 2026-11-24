@@ -6,7 +6,7 @@ const selectedId = defineModel<string>("selectedId", { required: true });
 watch(
   () => props.tabs,
   (tabs) => {
-    if (!tabs.some((tab) => tab.value === selectedId.value))
+    if (tabs.length && !tabs.some((tab) => tab.value === selectedId.value))
       selectedId.value = tabs[0]?.value ?? "";
   },
   { immediate: true },

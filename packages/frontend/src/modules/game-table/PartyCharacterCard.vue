@@ -3,11 +3,20 @@ import type { Attribute, PartyCharacter } from "./types";
 import AttributeRollButton from "./AttributeRollButton.vue";
 import WeaponRollButton from "./WeaponRollButton.vue";
 import ResourceBar from "../../shared/design-system/domain/ResourceBar.vue";
+import ViewDetailsButton from "../../shared/design-system/base/ViewDetailsButton.vue";
 import InfoTooltip from "../../shared/design-system/base/InfoTooltip.vue";
 
-const props = withDefaults(defineProps<{ member: PartyCharacter; canEdit?: boolean }>(), {
-  canEdit: false,
-});
+const props = withDefaults(
+  defineProps<{
+    member: PartyCharacter;
+    canEdit?: boolean;
+    canView?: boolean;
+    playerLabelId?: string;
+  }>(),
+  {
+    canEdit: false,
+  },
+);
 const emit = defineEmits<{
   rollAttribute: [attribute: Attribute];
   rollWeapon: [weaponId: string];
@@ -26,6 +35,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
   >
     <div class="space-y-small">
       <div>
+        <p v-if="playerLabelId" :id="playerLabelId" class="text-label text-muted">Your character</p>
         <div class="flex flex-wrap items-center gap-small">
           <span class="character-name font-semibold">{{ member.name }}</span>
           <UBadge v-if="member.level" color="neutral" variant="outline" size="sm">
@@ -52,6 +62,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
             data-testid="edit-character"
             @click="emit('edit')"
           />
+          <ViewDetailsButton v-else-if="canView" :name="member.name" @open="emit('edit')" />
         </div>
         <p v-if="!$slots['class-progression']" class="text-label text-muted">
           {{ member.classes.join(", ") || "No classes" }}
@@ -127,6 +138,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           </dd>
         </div>
       </dl>
+      <slot name="equipment" />
       <slot name="actions" />
     </div>
   </li>

@@ -228,7 +228,8 @@ onUnmounted(() => {
         </ScreenSection>
         <ScreenSection aria-label="Defenses">
           <SheetSection>
-            <template #heading>◈ DEFENSES</template><template #hint>EDIT VALUES MANUALLY</template>
+            <template #heading>◈ DEFENSES</template
+            ><template v-if="!readOnly" #hint>EDIT VALUES MANUALLY</template>
             <div class="defense-grid">
               <DefenseField
                 v-for="stat in ['defense', 'magicDefense'] as const"
@@ -259,7 +260,22 @@ onUnmounted(() => {
           </SheetSection>
         </ScreenSection>
         <ScreenSection aria-label="Attacks">
-          <NpcAttacksEditor :attacks="form.attacks" />
+          <NpcAttacksEditor v-if="!readOnly" :attacks="form.attacks" />
+          <SheetSection v-else>
+            <template #heading>⚔ ATTACKS</template>
+            <p v-if="!form.attacks.length" class="text-muted">No attacks.</p>
+            <ul v-else class="space-y-small">
+              <li v-for="attack in form.attacks" :key="attack.id">
+                <strong>{{ attack.name }}</strong>
+                <span class="text-small text-muted">
+                  · {{ attack.range }} · {{ attack.attributes.join(" + ") }} · +{{
+                    attack.damageBonus
+                  }}
+                  {{ attack.damageType }}</span
+                >
+              </li>
+            </ul>
+          </SheetSection>
         </ScreenSection>
         <ScreenSection v-if="!readOnly" aria-label="Notes">
           <SheetSection

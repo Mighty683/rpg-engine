@@ -99,9 +99,11 @@ export class NpcsPage {
   }
   async attackVisible(name: string) {
     await this.closeEditor();
-    const toggle = this.page.getByTestId("toggle-attacks").first();
-    if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
-    return this.page.locator('[data-testid^="npc-card-"]').filter({ hasText: name }).count();
+    return this.page
+      .locator('[data-testid^="npc-card-"]')
+      .getByTestId("roll-weapon")
+      .filter({ hasText: name, visible: true })
+      .count();
   }
   async failNameChange(name: string) {
     await this.page.route("**/api/games/*/npcs/*", async (route) => {

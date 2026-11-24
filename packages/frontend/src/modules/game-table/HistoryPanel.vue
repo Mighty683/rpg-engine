@@ -88,9 +88,8 @@ function loadOlder() {
         >No throws yet.</ContentState
       >
       <template v-else>
-        <div class="load-older-row flex justify-center">
+        <div v-if="hasOlder" class="flex justify-center">
           <UButton
-            v-if="hasOlder"
             color="neutral"
             variant="outline"
             size="sm"
@@ -122,9 +121,6 @@ function loadOlder() {
 </template>
 
 <style scoped>
-.load-older-row {
-  min-height: 2.25rem;
-}
 .throw-history {
   max-height: min(60vh, 36rem);
   overflow-y: auto;

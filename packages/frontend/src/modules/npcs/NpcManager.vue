@@ -14,23 +14,19 @@ const props = defineProps<{
   gameId: string;
   role: "GM" | "Player";
   hint: number;
-  panelsBlocked?: boolean;
-  externalTabs?: boolean;
-  openRequest?: number;
-  closeRequest?: number;
+  panelOpen: boolean;
+  selected: string;
 }>();
 const emit = defineEmits<{
   rollAttribute: [npc: GmNpc, attribute: Attribute];
   rollAttack: [npc: GmNpc, attack: NpcAttack];
   changed: [npcs: GmNpc[]];
-  editorOpen: [open: boolean];
+  open: [id: string, replace?: boolean];
+  close: [];
 }>();
 const api = useApiServices().npcs;
 const toast = useToast();
 const records = ref<NpcRead[]>([]);
-const selected = ref("");
-const panelOpen = ref(false);
-watch(panelOpen, (open) => emit("editorOpen", open));
 const resetToken = ref(0);
 watch(
   records,
@@ -89,29 +85,21 @@ function toWrite(npc: Npc): NpcWrite {
     attacks: npc.attacks.map(({ range, ...attack }) => ({ ...attack, reach: range })),
   };
 }
-const active = computed(() =>
-  records.value.find((npc) => npc.id === selected.value && npc.view === "gm"),
+const active = computed(() => records.value.find((npc) => npc.id === props.selected));
+const selectedNpc = computed(() =>
+  active.value && active.value.view !== "visible" ? prototypeNpc(active.value) : null,
 );
-const selectedNpc = computed(() => (active.value ? prototypeNpc(active.value) : null));
 function openEditor(id = "") {
-  selected.value = id || records.value.find((npc) => npc.view === "gm")?.id || "";
-  panelOpen.value = true;
+  emit("open", id || records.value[0]?.id || "");
 }
 watch(
-  () => props.openRequest,
-  (request) => {
-    if (request) openEditor();
+  [() => props.panelOpen, () => props.selected, records],
+  ([open, id, list]) => {
+    if (open && list.length && !list.some((record) => record.id === id))
+      emit("open", list[0]!.id, true);
   },
   { immediate: true },
 );
-watch(
-  () => props.closeRequest,
-  () => void closeEditor(),
-);
-function setPanelOpen(open: boolean) {
-  if (open) panelOpen.value = true;
-  else void closeEditor();
-}
 async function refresh() {
   const version = ++requestVersion;
   loading.value = true;
@@ -129,7 +117,7 @@ async function refresh() {
   }
 }
 async function create() {
-  if (creating.value) return;
+  if (props.role !== "GM" || creating.value) return;
   creating.value = true;
   const npc: NpcWrite = {
     name: "New NPC",
@@ -146,8 +134,8 @@ async function create() {
   };
   try {
     const result = await api.create(props.gameId, crypto.randomUUID(), npc);
-    openEditor(result.npc.id);
     await refresh();
+    openEditor(result.npc.id);
   } catch {
     toast.add({ title: "Could not create NPC.", color: "error" });
   } finally {
@@ -163,7 +151,7 @@ async function writeProfile(id: string, expectedRevision: number, next: NpcWrite
 }
 
 async function saveReviewed(id: string, expectedRevision: number, next: NpcWrite) {
-  if (writing.value || removing.value || panelOpen.value)
+  if (writing.value || removing.value || props.panelOpen)
     throw new Error("Finish the open NPC edit and review the change again.");
   requestVersion++;
   writing.value = true;
@@ -230,12 +218,13 @@ async function remove(id: string) {
   }
 }
 async function closeEditor() {
-  const id = selected.value;
-  panelOpen.value = false;
-  selected.value = "";
+  const id = props.selected;
+  emit("close");
   await nextTick();
   document
-    .querySelector<HTMLElement>(`[data-testid="npc-card-${id}"] [data-testid="edit-npc"]`)
+    .querySelector<HTMLElement>(
+      `[data-testid="npc-card-${CSS.escape(id)}"] :is([data-testid="edit-npc"], [data-testid="view-details"])`,
+    )
     ?.focus();
 }
 function focus() {
@@ -272,6 +261,7 @@ onUnmounted(() => {
     :key="record.id"
     :npc="prototypeNpc(record)"
     :redacted="record.view === 'visible'"
+    can-view
     :can-edit="record.view === 'gm'"
     :can-roll="record.view === 'gm'"
     :show-notes="record.view === 'gm'"
@@ -281,23 +271,19 @@ onUnmounted(() => {
     "
     @roll-attack="(_, attack) => record.view === 'gm' && emit('rollAttack', record, attack)"
   />
-  <UButton
-    v-if="role === 'GM' && !panelOpen && !panelsBlocked && !externalTabs"
-    class="npc-bookmark"
-    color="info"
-    data-testid="edge-tab-npcs"
-    @click="openEditor()"
-    >NPCs</UButton
-  >
   <USlideover
     :open="panelOpen"
     title="NPCs"
     :ui="{ content: 'w-full sm:max-w-4xl' }"
-    @update:open="setPanelOpen"
+    @update:open="
+      (open: boolean) => {
+        if (!open && panelOpen) closeEditor();
+      }
+    "
   >
     <template #body>
       <div class="space-y-small">
-        <div class="flex justify-end">
+        <div v-if="role === 'GM'" class="flex justify-end">
           <UButton
             color="neutral"
             variant="outline"
@@ -316,11 +302,14 @@ onUnmounted(() => {
         >
           Saving changes…
         </p>
-        <ContentState v-if="!loading && !records.length" kind="empty"
-          >No NPCs yet. Create an NPC to get started.</ContentState
-        >
+        <ContentState v-if="!loading && !records.length" kind="empty">{{
+          role === "GM"
+            ? "No NPCs yet. Create an NPC to get started."
+            : "No NPCs are visible to you."
+        }}</ContentState>
         <CharacterSheetTabs
-          v-model:selected-id="selected"
+          :selected-id="selected"
+          @update:selected-id="(id) => id && panelOpen && openEditor(id)"
           :tabs="records.map((record) => ({ label: record.name, value: record.id }))"
         >
           <template #sheet>
@@ -328,26 +317,24 @@ onUnmounted(() => {
               v-if="selectedNpc"
               :key="selected"
               :npc="selectedNpc"
+              :read-only="role !== 'GM' || active?.view !== 'gm'"
               :reset-token="resetToken"
               :pending="writing || removing"
               @save="save"
               @remove="remove"
             />
+            <section
+              v-else-if="active?.view === 'visible'"
+              class="space-y-small rounded-panel border border-default p-medium"
+              data-testid="npc-public-details"
+            >
+              <h2 class="text-section font-semibold">{{ active.name }}</h2>
+              <p class="capitalize">{{ active.relationship }}</p>
+              <p class="text-small text-muted">Stats and attacks are unknown.</p>
+            </section>
           </template>
         </CharacterSheetTabs>
       </div>
     </template>
   </USlideover>
 </template>
-
-<style scoped>
-.npc-bookmark {
-  position: fixed;
-  right: 0;
-  top: calc(30% + 150px);
-  z-index: 20;
-  writing-mode: vertical-rl;
-  border-radius: var(--radius-panel) 0 0 var(--radius-panel);
-  padding: var(--spacing-medium) var(--spacing-small);
-}
-</style>

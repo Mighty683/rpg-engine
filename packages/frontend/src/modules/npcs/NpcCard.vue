@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import AttributeRollButton from "../game-table/AttributeRollButton.vue";
 import WeaponRollButton from "../game-table/WeaponRollButton.vue";
+import ViewDetailsButton from "../../shared/design-system/base/ViewDetailsButton.vue";
 import ResourceBar from "../../shared/design-system/domain/ResourceBar.vue";
 import type { Attribute, PartyWeapon } from "../game-table/types";
 import type { Npc, NpcAttack } from "./types";
@@ -11,6 +12,7 @@ const props = withDefaults(
     npc: Npc;
     canRoll?: boolean;
     canEdit?: boolean;
+    canView?: boolean;
     redacted?: boolean;
     showNotes?: boolean;
   }>(),
@@ -39,12 +41,6 @@ function toWeapon(attack: NpcAttack): PartyWeapon {
 const weapons = computed(() => props.npc.attacks.map(toWeapon));
 
 const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
-
-const attacksOpen = ref(false);
-
-function attackSummary(npc: Npc): string {
-  return npc.attacks.map((a) => `${a.name} (+${a.damageBonus} ${a.damageType})`).join(", ");
-}
 </script>
 
 <template>
@@ -74,6 +70,7 @@ function attackSummary(npc: Npc): string {
             data-testid="edit-npc"
             @click="emit('edit', npc)"
           />
+          <ViewDetailsButton v-else-if="canView" :name="npc.name" @open="emit('edit', npc)" />
         </div>
       </header>
 
@@ -132,19 +129,8 @@ function attackSummary(npc: Npc): string {
         </dl>
 
         <section>
-          <UTooltip :text="attackSummary(npc) || 'No attacks'">
-            <button
-              type="button"
-              class="flex w-full items-center justify-between text-label font-semibold uppercase tracking-wide text-muted"
-              :aria-expanded="attacksOpen"
-              data-testid="toggle-attacks"
-              @click="attacksOpen = !attacksOpen"
-            >
-              Attacks
-              <span aria-hidden="true">{{ attacksOpen ? "▴" : "▾" }}</span>
-            </button>
-          </UTooltip>
-          <ul v-if="attacksOpen" class="mt-tight space-y-tight">
+          <h4 class="text-label font-semibold uppercase tracking-wide text-muted">Attacks</h4>
+          <ul class="mt-tight space-y-tight">
             <li v-for="(attack, index) in npc.attacks" :key="attack.id">
               <WeaponRollButton
                 :weapon="weapons[index]!"
