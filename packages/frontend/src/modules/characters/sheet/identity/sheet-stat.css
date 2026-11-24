@@ -10,7 +10,7 @@
   color: var(--ui-text-muted);
   font-size: var(--sheet-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sheet-label-tracking);
 }
 .sheet-stat input {
   min-width: 0;

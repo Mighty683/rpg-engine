@@ -8,9 +8,6 @@
 }
 
 :root {
-  --sheet-label-size: var(--text-label);
-  --sheet-meta-size: var(--text-meta);
-  --sheet-tight: var(--spacing-tight);
   --dice-label-size: var(--text-label);
   --dice-control-gap: var(--spacing-tight);
   --dice-control-padding: var(--spacing-tight) var(--spacing-small);
@@ -19,11 +16,43 @@
 :root {
   --table-card-die-size: var(--value-s12);
   --table-card-grid-gap: var(--value-s8);
-  --table-card-padding: var(--value-s8);
-  --table-card-gap: var(--value-s4);
+  --table-card-padding: var(--spacing-medium);
+  --table-card-gap: var(--spacing-small);
+  --table-card-detail-gap: var(--spacing-tight);
+  --table-card-bar-height: var(--spacing-field);
+  --table-card-label-size: var(--text-label);
+  --table-card-body-size: var(--text-small);
+  --table-card-title-size: var(--text-small);
+  --table-card-heading-size: var(--text-section);
+  --table-card-label-tracking: var(--tracking-wider);
+  --table-card-die-padding: var(--dice-control-padding);
+}
+
+:root {
+  --class-progress-fill: var(--value-slate-600);
+}
+
+.table-cards-featured {
+  --table-card-title-size: var(--text-section);
+  --table-card-body-size: var(--text-body);
+  --table-card-die-size: var(--spacing-field);
+}
+
+.table-cards-compact > .table-card {
+  --table-card-padding: var(--spacing-small);
+  --table-card-gap: var(--spacing-tight);
   --table-card-detail-gap: 0.125rem;
-  --table-card-bar-height: var(--value-s16);
-  --table-card-label-size: var(--value-font-10);
-  --table-card-body-size: var(--value-font-12);
-  --table-card-title-size: var(--value-font-14);
+  --table-card-bar-height: var(--spacing-large);
+  --table-card-label-size: var(--text-meta);
+  --table-card-body-size: var(--text-label);
+  --table-card-heading-size: var(--table-card-title-size);
+  --table-card-die-padding: var(--table-card-detail-gap);
+}
+
+@theme inline {
+  --spacing-card-padding: var(--table-card-padding);
+  --spacing-card-gap: var(--table-card-gap);
+  --spacing-card-detail: var(--table-card-detail-gap);
+  --text-card-label: var(--table-card-label-size);
+  --text-card-heading: var(--table-card-heading-size);
 }

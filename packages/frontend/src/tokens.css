@@ -20,6 +20,8 @@
   --value-blue-500: #3b82f6;
   --value-blue-400: #60a5fa;
 
+  --value-hairline: 1px;
+  --value-list-indent: 1.5em;
   --value-s8: 0.5rem;
   --value-s4: 0.25rem;
   --value-s12: 0.75rem;
@@ -76,6 +78,8 @@
 
 /* Keep semantic variables available to the gallery even without a matching utility. */
 @theme static {
+  --spacing-divider: var(--value-hairline);
+  --spacing-list-indent: var(--value-list-indent);
   --spacing-small: var(--value-s8);
   --spacing-tight: var(--value-s4);
   --spacing-input-label: var(--value-s4);

@@ -61,6 +61,8 @@ const palettes = [
 ];
 const cardNotes = ref("A versatile adventurer.");
 const spacing = [
+  "divider",
+  "list-indent",
   "tight",
   "input-label",
   "small",

@@ -33,7 +33,7 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
       @click="weapon.ready ? emit('roll') : emit('needsSetup')"
     >
       <span>{{ weapon.name }}</span>
-      <span class="flex flex-wrap items-center gap-small">
+      <span class="flex flex-wrap items-center gap-card-gap">
         <span v-if="reach" :title="reach === 'melee' ? 'Melee' : 'Ranged'" class="inline-flex">
           <svg
             viewBox="0 0 24 24"
@@ -49,7 +49,7 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
             <path v-else d="M4 4q16 0 16 16L4 4Zm1 15L19 5m-5 0h5v5" />
           </svg>
         </span>
-        <span v-if="damageBonus != null" class="text-label text-muted">
+        <span v-if="damageBonus != null" class="text-card-label text-muted">
           +{{ damageBonus }}{{ damageType ? ` ${damageType}` : "" }}
         </span>
         <span v-if="weapon.accuracyDice.every(Boolean)" class="weapon-dice" aria-hidden="true">
@@ -71,8 +71,8 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-small);
-  padding: var(--spacing-small);
+  gap: var(--table-card-gap);
+  padding: var(--table-card-gap);
   border: 1px solid var(--ui-border-accented);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
@@ -83,13 +83,13 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
 .weapon-die {
   display: inline-flex;
   align-items: center;
-  gap: var(--dice-control-gap);
+  gap: var(--table-card-detail-gap);
 }
 .weapon-dice {
-  gap: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
 }
 .weapon-die {
-  font-size: var(--dice-label-size);
+  font-size: var(--table-card-label-size);
   font-weight: 700;
 }
 .weapon-card:hover:not(:disabled) {

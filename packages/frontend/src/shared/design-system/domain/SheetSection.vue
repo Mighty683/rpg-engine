@@ -19,7 +19,7 @@
   margin-bottom: var(--sheet-tight, var(--spacing-tight));
   font-size: var(--sheet-label-size, var(--text-label));
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sheet-label-tracking);
 }
 .sheet-heading span {
   color: var(--ui-text-muted);

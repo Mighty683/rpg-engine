@@ -66,8 +66,8 @@ const emit = defineEmits<{
         class="relative grid"
         :class="
           section.featured
-            ? 'featured-character'
-            : 'party-grid grid-cols-2 pt-small md:grid-cols-3 lg:grid-cols-4'
+            ? 'featured-character table-cards-featured'
+            : 'party-grid table-cards-compact grid-cols-2 pt-small md:grid-cols-3 lg:grid-cols-4'
         "
         :data-testid="section.featured ? 'player-character' : 'party-list'"
       >
@@ -139,9 +139,6 @@ const emit = defineEmits<{
 .featured-character {
   min-width: 0;
   overflow-wrap: anywhere;
-  --table-card-title-size: var(--text-section);
-  --table-card-body-size: var(--text-body);
-  --table-card-die-size: var(--spacing-field);
 }
 .empty-player-table {
   display: none;
@@ -161,18 +158,6 @@ const emit = defineEmits<{
   gap: var(--table-card-grid-gap);
 }
 .party-grid > :deep(.table-card) {
-  --spacing-medium: var(--table-card-padding);
-  --spacing-small: var(--table-card-gap);
-  --spacing-tight: var(--table-card-detail-gap);
-  --spacing-field: var(--table-card-bar-height);
-  --text-label: var(--table-card-label-size);
-  --text-small: var(--table-card-body-size);
-  --text-section: var(--table-card-title-size);
-  --text-section--line-height: 1.25;
-  --dice-label-size: var(--table-card-label-size);
-  --dice-control-padding: var(--table-card-detail-gap);
-  --dice-control-gap: var(--table-card-detail-gap);
-
   container-type: inline-size;
   min-width: 0;
   overflow-wrap: anywhere;

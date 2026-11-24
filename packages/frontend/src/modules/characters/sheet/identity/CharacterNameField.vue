@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LabeledInput from "../../../../shared/design-system/base/LabeledInput.vue";
 import { ref } from "vue";
 defineProps<{ showReadOnlyBadge?: boolean; controller?: string }>();
 const value = defineModel<string>({ required: true });
@@ -14,10 +15,14 @@ defineExpose({ focus: () => heading.value?.focus() });
     </div>
     <h1 ref="heading" tabindex="-1" class="sr-only">Character sheet</h1>
     <div class="flex min-w-0 items-center gap-small">
-      <label class="sheet-name min-w-0 flex-1"
-        ><span class="sr-only">Character name</span
-        ><input data-testid="character-name" v-model="value" placeholder="Character name"
-      /></label>
+      <LabeledInput
+        class="min-w-0 flex-1"
+        label="Character name"
+        hide-label
+        data-testid="character-name"
+        v-model="value"
+        placeholder="Character name"
+      />
       <UBadge
         v-if="showReadOnlyBadge"
         color="neutral"
@@ -40,24 +45,7 @@ defineExpose({ focus: () => heading.value?.focus() });
   color: var(--ui-primary);
   font-size: var(--sheet-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
-}
-input {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  color: var(--ui-text-highlighted);
-  background: var(--ui-bg);
-  border: 1px solid var(--ui-border-accented);
-  border-radius: var(--radius-control);
-  padding: var(--sheet-tight) var(--spacing-small);
-  font-size: var(--text-body);
-  line-height: var(--text-body--line-height);
-  font-weight: 400;
-  letter-spacing: normal;
-}
-input::placeholder {
-  color: var(--ui-text-muted);
+  letter-spacing: var(--sheet-label-tracking);
 }
 @media (max-width: 640px) {
   .name-field {

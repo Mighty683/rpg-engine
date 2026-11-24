@@ -21,7 +21,7 @@ defineProps<{ entries: NonNullable<PartyCharacter["classSummary"]>; interactive?
 <style scoped>
 .class-bars {
   display: grid;
-  gap: 1px;
+  gap: var(--spacing-divider);
   width: 100%;
   overflow: hidden;
   border-radius: var(--radius-control);
@@ -44,13 +44,13 @@ defineProps<{ entries: NonNullable<PartyCharacter["classSummary"]>; interactive?
   inset: 0;
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 1px;
+  gap: var(--spacing-divider);
   background: var(--ui-border-accented);
 }
 .segments > span {
   background: var(--ui-bg-muted);
 }
 .segments > .filled {
-  background: var(--value-slate-600);
+  background: var(--class-progress-fill);
 }
 </style>

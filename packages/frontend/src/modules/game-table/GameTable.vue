@@ -633,7 +633,7 @@ async function removeEntry(entry: ThrowRecord) {
       <Teleport to="body">
         <UButton
           v-if="extraEdgeTab && historyTab !== extraEdgeTab.id"
-          class="fixed bottom-3 left-3 z-[110] w-40 justify-between shadow-lg"
+          class="fixed bottom-medium left-medium z-[110] w-40 justify-between shadow-lg"
           color="neutral"
           variant="soft"
           :aria-expanded="false"
@@ -652,7 +652,7 @@ async function removeEntry(entry: ThrowRecord) {
         :transition="false"
         :ui="{
           content:
-            '!z-[110] !top-auto !bottom-3 !left-3 !h-[420px] !max-h-[calc(100dvh-1.5rem)] !w-[360px] !max-w-[calc(100vw-1.5rem)] rounded-panel shadow-xl ring ring-default',
+            '!z-[110] !top-auto !bottom-medium !left-medium !h-[420px] !max-h-[calc(100dvh-1.5rem)] !w-[360px] !max-w-[calc(100vw-1.5rem)] rounded-panel shadow-xl ring ring-default',
           header: 'p-small min-h-0',
           title: 'text-small',
           body: 'p-0 sm:p-0 flex min-h-0 flex-col',

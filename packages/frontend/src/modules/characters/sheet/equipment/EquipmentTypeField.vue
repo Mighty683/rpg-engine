@@ -36,7 +36,7 @@ defineEmits<{ select: [type: "other" | "weapon" | "armor"] }>();
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--spacing-small);
-  margin-top: var(--sheet-tight, 0.25rem);
+  margin-top: var(--sheet-tight);
 }
 .type-option {
   display: flex;

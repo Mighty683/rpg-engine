@@ -3,4 +3,8 @@
 @import "./tokens.css";
 @import "./shared/design-system/domain/tokens.css";
 
+@import "./shared/design-system/domain/sheet-tokens.css";
+
+@import "./shared/design-system/domain/die-tile.css";
+
 @source ".";

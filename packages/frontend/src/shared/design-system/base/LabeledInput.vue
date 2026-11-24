@@ -4,6 +4,7 @@ import { computed, ref, useAttrs } from "vue";
 defineOptions({ inheritAttrs: false });
 defineProps<{
   label: string;
+  hideLabel?: boolean;
   hint?: string;
   error?: string;
   name?: string;
@@ -28,7 +29,10 @@ defineExpose({ inputRef: computed(() => input.value?.inputRef) });
     :error="error"
     :name="name"
     :required="required"
-    :ui="{ container: 'mt-input-label' }"
+    :ui="{
+      label: hideLabel ? 'sr-only' : undefined,
+      container: hideLabel ? 'mt-0' : 'mt-input-label',
+    }"
   >
     <UTextarea
       v-if="multiline"

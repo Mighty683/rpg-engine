@@ -30,12 +30,12 @@ defineEmits<{ roll: [] }>();
   min-width: 0;
   display: grid;
   justify-items: center;
-  gap: var(--dice-control-gap);
-  padding: var(--dice-control-padding);
+  gap: var(--table-card-detail-gap);
+  padding: var(--table-card-die-padding);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  font-size: var(--dice-label-size);
+  font-size: var(--table-card-label-size);
   cursor: pointer;
 }
 .attribute-card:hover:not(:disabled) {
@@ -52,7 +52,7 @@ defineEmits<{ roll: [] }>();
 .die-value {
   display: inline-flex;
   align-items: center;
-  gap: var(--dice-control-gap);
+  gap: var(--table-card-detail-gap);
   white-space: nowrap;
 }
 :deep(.die-icon) {

@@ -81,7 +81,7 @@ function toggleSecond(attribute: Attribute) {
                             : `die-size-${attribute}-${size}`
                         "
                       />
-                      <span class="die-choice-content"
+                      <span class="die-tile"
                         ><DieIcon :sides="size" /><span>d{{ size }}</span></span
                       >
                     </label>
@@ -106,7 +106,7 @@ function toggleSecond(attribute: Attribute) {
                     v-for="choice in attributes"
                     :key="choice"
                     type="button"
-                    class="attribute-choice die-choice-content"
+                    class="attribute-choice die-tile"
                     :data-testid="`second-attribute-${choice}`"
                     :aria-pressed="draft.second === choice"
                     @click="toggleSecond(choice)"
@@ -156,18 +156,6 @@ function toggleSecond(attribute: Attribute) {
 .die-choice {
   cursor: pointer;
 }
-.die-choice-content {
-  min-width: 2.75rem;
-  display: grid;
-  justify-items: center;
-  gap: var(--dice-control-gap);
-  padding: var(--dice-control-padding);
-  border: 1px solid var(--ui-border);
-  border-radius: var(--radius-panel);
-  background: var(--ui-bg-muted);
-  font-size: var(--dice-label-size);
-  font-weight: 700;
-}
 .modifier-card {
   display: grid;
   align-content: center;
@@ -194,15 +182,11 @@ function toggleSecond(attribute: Attribute) {
   appearance: none;
   margin: 0;
 }
-.die-choice-content :deep(.die-icon) {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-.die-choice input:checked + .die-choice-content {
+.die-choice input:checked + .die-tile {
   border-color: var(--ui-primary);
   background: var(--ui-bg-elevated);
 }
-.die-choice input:focus-visible + .die-choice-content {
+.die-choice input:focus-visible + .die-tile {
   outline: var(--focus-ring-width) solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
 }

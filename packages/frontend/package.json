@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "vue-tsc -b && vp build",
+    "build": "pnpm run check:tokens && vue-tsc -b && vp build",
     "preview": "vp preview",
-    "check": "vp check",
+    "check": "pnpm run check:tokens && vp check",
     "test:browser": "vp test --config vitest.browser.config.ts",
     "prototypes:dev": "histoire dev",
     "prototypes:build": "vue-tsc --noEmit -p prototypes/tsconfig.json && histoire build",
-    "prototypes:preview": "histoire preview"
+    "prototypes:preview": "histoire preview",
+    "check:tokens": "eslint src && eslint --config eslint.styles.config.mjs src && stylelint \"src/**/*.{css,vue}\""
   },
   "dependencies": {
     "@nuxt/ui": "4.12.0",
@@ -23,18 +24,29 @@
     "vue-router": "5.4.0"
   },
   "devDependencies": {
+    "@eslint/css": "^2.0.1",
     "@histoire/plugin-vue": "1.0.0-beta.1",
     "@types/node": "26.6.6",
+    "@typescript-eslint/parser": "^8.74.0",
     "@vitejs/plugin-vue": "6.0.10",
     "@vitest/browser-playwright": "5.1.0",
+    "@vue/compiler-sfc": "3.5.44",
     "@vue/tsconfig": "0.9.1",
+    "eslint": "^10.15.0",
+    "eslint-plugin-better-tailwindcss": "^4.11.0",
+    "eslint-processor-vue-blocks": "^2.0.0",
     "histoire": "1.0.0-beta.1",
     "msw": "^2.15.0",
     "playwright": "^1.64.1",
+    "postcss": "8.5.32",
+    "postcss-html": "^2.0.1",
     "quill": "^2.0.3",
+    "stylelint": "^18.1.0",
+    "tailwind-csstree": "^0.4.2",
     "typescript": "6.0.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.5.0",
     "vite-plus": "1.5.0",
+    "vue-eslint-parser": "^10.4.2",
     "vue-tsc": "3.3.13"
   },
   "msw": {

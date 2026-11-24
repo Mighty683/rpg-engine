@@ -48,7 +48,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  padding: var(--sheet-tight) var(--spacing-small);
+  padding: var(--sheet-field-padding);
 }
 .stat-label {
   display: flex;
@@ -58,7 +58,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
   color: var(--ui-text-muted);
   font-size: var(--sheet-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sheet-label-tracking);
 }
 .die-value {
   display: flex;

@@ -13,6 +13,12 @@
 - Use `text-small` for supporting copy, `text-label` for labels, and `text-meta` only for dense, nonessential metadata. Dice labels use the shared domain size. Nuxt UI's xs/sm/base typography and control radius map to the base scale without removing its remaining theme defaults.
 - Custom keyboard focus uses `--focus-ring-color`, `--focus-ring-width`, and `--focus-ring-offset`. Nuxt UI buttons use the same outline tokens; inputs retain Nuxt UI's focus-ring behavior. Use `--radius-control` for control geometry and `--radius-panel` for containers.
 
+## Enforced spacing and sheet extensions
+
+Frontend builds and checks run ESLint and Stylelint via `check:tokens` over production source outside the design system. Use public spacing utilities such as `gap-small` and `px-medium`, or their semantic variables in CSS. Zero resets, automatic positioning, percentage offsets and explicit control dimensions are supported. Feature styles consume the registered tokens. Define primitives and density variants in the design system.
+
+Character and NPC sheets share the `--sheet-*` namespace in `src/shared/design-system/domain/sheet-tokens.css`. Add sheet-specific variables there and document them in the domain token story. Ordinary features use base or RPG tokens. Keep Tailwind classes statically discoverable, including variants and Nuxt UI slot overrides.
+
 ## Form fields
 
 Use the shared `LabeledInput` for standard text, numeric and multiline inputs; it combines a label and Nuxt UI control with consistent spacing. Use the shared `LabeledSelect` for single-value selection fields; supply `{ label, value }` options. The default control size is Nuxt UI **medium** (`size="md"`); use a smaller size only for dense interfaces. Keep control width appropriate to its content: short selections and numeric inputs need not fill an entire row, while descriptions may use the available width. Use `--spacing-input-label` (4px) between a label and its control, via `:ui="{ container: 'mt-input-label' }"` on `UFormField`. Arrange related fields with semantic spacing tokens. The gallery's Form field story demonstrates this pattern.

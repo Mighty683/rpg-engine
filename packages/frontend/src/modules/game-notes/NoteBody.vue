@@ -60,11 +60,11 @@ function renderBody() {
 <style scoped>
 .note-body :deep(ol) {
   list-style: decimal;
-  padding-inline-start: 1.5em;
+  padding-inline-start: var(--spacing-list-indent);
 }
 .note-body :deep(ul) {
   list-style: disc;
-  padding-inline-start: 1.5em;
+  padding-inline-start: var(--spacing-list-indent);
 }
 .note-body :deep(h1) {
   font-size: 1.5em;

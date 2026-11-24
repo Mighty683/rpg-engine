@@ -3,7 +3,7 @@ import { computed } from "vue";
 import AttributeRollButton from "../game-table/AttributeRollButton.vue";
 import WeaponRollButton from "../game-table/WeaponRollButton.vue";
 import ViewDetailsButton from "../../shared/design-system/base/ViewDetailsButton.vue";
-import ResourceBar from "../../shared/design-system/domain/ResourceBar.vue";
+import VitalResourceSummary from "../../shared/design-system/domain/VitalResourceSummary.vue";
 import type { Attribute, PartyWeapon } from "../game-table/types";
 import type { Npc, NpcAttack } from "./types";
 
@@ -45,14 +45,14 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 
 <template>
   <article
-    class="table-card flex h-full flex-col rounded-panel border border-default bg-default p-medium"
+    class="table-card flex h-full flex-col rounded-panel border border-default bg-default p-card-padding"
     :data-relationship="npc.relationship ?? 'neutral'"
     :data-testid="`npc-card-${npc.id}`"
   >
-    <div class="flex flex-1 flex-col space-y-medium">
+    <div class="flex flex-1 flex-col space-y-card-padding">
       <header>
-        <div class="flex flex-wrap items-center gap-small">
-          <h3 class="npc-name text-section font-semibold">{{ npc.name }}</h3>
+        <div class="flex flex-wrap items-center gap-card-gap">
+          <h3 class="npc-name text-card-heading font-semibold">{{ npc.name }}</h3>
           <UBadge v-if="!redacted" color="neutral" variant="outline" size="sm"
             >Lv {{ npc.level }}</UBadge
           >
@@ -81,30 +81,16 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
             <dd>???</dd>
           </div>
         </dl>
-        <dl class="grid grid-cols-2 gap-small text-label">
+        <dl class="grid grid-cols-2 gap-card-gap text-card-label">
           <div v-for="stat in ['HP', 'MP', 'DEF', 'MAG DEF']" :key="stat" class="mini-resource">
             <dt>{{ stat }}</dt>
             <dd>???</dd>
           </div>
         </dl>
-        <p class="text-label text-muted">Attacks: ???</p>
+        <p class="text-card-label text-muted">Attacks: ???</p>
       </template>
       <template v-else>
-        <div class="vital-resources">
-          <div v-for="resource in ['hp', 'mp'] as const" :key="resource" class="vital-resource">
-            <ResourceBar
-              :label="resource.toUpperCase()"
-              :value="npc[resource].current"
-              :maximum="npc[resource].max"
-              :color="resource"
-            >
-              <strong class="resource-name">{{ resource.toUpperCase() }}</strong>
-              <span :data-testid="resource === 'hp' ? 'npc-hp' : undefined">
-                {{ npc[resource].current }} / {{ npc[resource].max }}
-              </span>
-            </ResourceBar>
-          </div>
-        </div>
+        <VitalResourceSummary :hp="npc.hp" :mp="npc.mp" hp-test-id="npc-hp" />
         <div class="attribute-row" aria-label="Attributes">
           <AttributeRollButton
             v-for="attribute in attributes"
@@ -117,7 +103,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           />
         </div>
 
-        <dl class="defense-card text-label tabular-nums">
+        <dl class="defense-card text-card-label tabular-nums">
           <div class="mini-resource">
             <dt>DEF</dt>
             <dd>{{ npc.defense }}</dd>
@@ -129,8 +115,8 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
         </dl>
 
         <section>
-          <h4 class="text-label font-semibold uppercase tracking-wide text-muted">Attacks</h4>
-          <ul class="mt-tight space-y-tight">
+          <h4 class="text-card-label font-semibold uppercase tracking-wide text-muted">Attacks</h4>
+          <ul class="mt-card-detail space-y-card-detail">
             <li v-for="(attack, index) in npc.attacks" :key="attack.id">
               <WeaponRollButton
                 :weapon="weapons[index]!"
@@ -143,13 +129,16 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
                 @roll="emit('rollAttack', npc, attack)"
               />
             </li>
-            <li v-if="!npc.attacks.length" class="text-label text-muted">No attacks</li>
+            <li v-if="!npc.attacks.length" class="text-card-label text-muted">No attacks</li>
           </ul>
         </section>
 
         <section v-if="showNotes && npc.notes">
-          <h4 class="text-label font-semibold uppercase tracking-wide text-muted">Notes</h4>
-          <p class="mt-tight whitespace-pre-wrap text-label text-muted" data-testid="npc-notes">
+          <h4 class="text-card-label font-semibold uppercase tracking-wide text-muted">Notes</h4>
+          <p
+            class="mt-card-detail whitespace-pre-wrap text-card-label text-muted"
+            data-testid="npc-notes"
+          >
             {{ npc.notes }}
           </p>
         </section>
@@ -159,17 +148,6 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 </template>
 
 <style scoped>
-.vital-resources {
-  display: grid;
-  gap: var(--spacing-small);
-}
-.vital-resource {
-  font-size: var(--text-label);
-  font-variant-numeric: tabular-nums;
-}
-.resource-name {
-  margin-inline-end: var(--spacing-small);
-}
 article[data-relationship="enemy"] {
   border-color: var(--color-relationship-enemy);
 }
@@ -188,14 +166,14 @@ article[data-relationship="neutral"] .npc-name {
 .attribute-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
 }
 
 .mini-resource {
   min-width: 0;
   display: grid;
-  gap: var(--dice-control-gap);
-  padding: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
+  padding: var(--table-card-detail-gap);
   text-align: center;
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
@@ -204,7 +182,7 @@ article[data-relationship="neutral"] .npc-name {
 .defense-card {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
@@ -215,15 +193,15 @@ article[data-relationship="neutral"] .npc-name {
 }
 .mini-resource dt {
   color: var(--ui-text-muted);
-  font-size: var(--text-label);
+  font-size: var(--table-card-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--table-card-label-tracking);
   text-transform: uppercase;
 }
 .mini-resource dd {
   align-self: end;
   color: var(--ui-text-highlighted);
-  font-size: var(--text-small);
+  font-size: var(--table-card-body-size);
   font-weight: 700;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);

@@ -192,7 +192,7 @@ function dieLabel(die: { label: string | null; size: number }) {
 .throw-dice {
   flex-wrap: wrap;
   gap: var(--spacing-medium);
-  margin: 0.375rem 0;
+  margin: var(--spacing-small) 0;
 }
 .throw-die :deep(.die-icon) {
   width: 1.25rem;

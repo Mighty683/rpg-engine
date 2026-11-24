@@ -1,0 +1,8 @@
+/* Character and NPC sheet presentation. */
+:root {
+  --sheet-label-size: var(--text-label);
+  --sheet-meta-size: var(--text-meta);
+  --sheet-tight: var(--spacing-tight);
+  --sheet-field-padding: var(--sheet-tight) var(--spacing-small);
+  --sheet-label-tracking: 0.05em;
+}

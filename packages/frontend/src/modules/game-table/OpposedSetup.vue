@@ -33,7 +33,7 @@ const opponent = defineModel<OpponentDraft>({ required: true });
       <span
         v-for="(size, index) in friendlyDice"
         :key="index"
-        class="friendly-die"
+        class="die-tile"
         :aria-label="`Friendly d${size}`"
       >
         <DieIcon :sides="size" /><span>d{{ size }}</span>
@@ -46,21 +46,5 @@ const opponent = defineModel<OpponentDraft>({ required: true });
 .opposed-setup {
   border-top: 1px solid var(--ui-border);
   padding-top: var(--spacing-small);
-}
-.friendly-die {
-  min-width: 2.75rem;
-  display: grid;
-  justify-items: center;
-  gap: var(--dice-control-gap);
-  padding: var(--dice-control-padding);
-  border: 1px solid var(--ui-border);
-  border-radius: var(--radius-panel);
-  background: var(--ui-bg-muted);
-  font-size: var(--dice-label-size);
-  font-weight: 700;
-}
-.friendly-die :deep(.die-icon) {
-  width: 1.25rem;
-  height: 1.25rem;
 }
 </style>

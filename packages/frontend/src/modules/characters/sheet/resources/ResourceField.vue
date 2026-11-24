@@ -109,13 +109,13 @@ function updateMaximum(event: Event) {
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-control);
   background: var(--ui-bg-muted);
-  padding: var(--sheet-tight) var(--spacing-small);
+  padding: var(--sheet-field-padding);
 }
 strong {
   color: var(--ui-text-muted);
   font-size: var(--sheet-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sheet-label-tracking);
 }
 .resource-label {
   display: flex;

@@ -61,7 +61,7 @@ function update(event: Event) {
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  padding: var(--sheet-tight) var(--spacing-small);
+  padding: var(--sheet-field-padding);
 }
 .defense-stat.compact {
   border: 0;
@@ -76,7 +76,7 @@ function update(event: Event) {
   color: var(--ui-text-muted);
   font-size: var(--sheet-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sheet-label-tracking);
 }
 input {
   width: 4ch;

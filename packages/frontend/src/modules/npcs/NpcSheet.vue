@@ -345,7 +345,7 @@ onUnmounted(() => {
   color: var(--ui-primary);
   font-size: var(--sheet-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sheet-label-tracking);
 }
 .name-field {
   display: flex;
@@ -389,7 +389,7 @@ onUnmounted(() => {
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
   border-radius: var(--radius-control);
-  padding: var(--sheet-tight) var(--spacing-small);
+  padding: var(--sheet-field-padding);
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
 }
@@ -414,7 +414,7 @@ onUnmounted(() => {
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  padding: var(--sheet-tight) var(--spacing-small);
+  padding: var(--sheet-field-padding);
 }
 .sheet-split {
   display: grid;
@@ -436,7 +436,7 @@ onUnmounted(() => {
   color: var(--ui-text-muted);
   font-size: var(--sheet-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sheet-label-tracking);
 }
 .select-field select {
   color: var(--ui-text-highlighted);

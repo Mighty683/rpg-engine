@@ -61,7 +61,7 @@ const help = {
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
-  padding: var(--sheet-tight) var(--spacing-small);
+  padding: var(--sheet-field-padding);
 }
 .note {
   font-size: var(--sheet-label-size);

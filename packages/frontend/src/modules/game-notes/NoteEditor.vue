@@ -131,9 +131,9 @@ function commitOnExit(event: FocusEvent) {
 <style scoped>
 .note-toolbar :is(button, select) {
   border: 1px solid var(--ui-border);
-  border-radius: 0.25rem;
+  border-radius: var(--radius-control);
   background: var(--ui-bg);
-  padding: 0.25rem 0.5rem;
+  padding: var(--spacing-tight) var(--spacing-small);
 }
 
 .note-toolbar .ql-active {
@@ -160,8 +160,8 @@ function commitOnExit(event: FocusEvent) {
 }
 
 .note-surface :deep(.ql-editor:focus-visible) {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: -2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: calc(-1 * var(--focus-ring-offset));
 }
 
 .note-surface :deep(h1) {

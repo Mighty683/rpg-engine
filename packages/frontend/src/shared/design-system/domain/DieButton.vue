@@ -4,28 +4,14 @@ withDefaults(defineProps<{ sides: number; opposing?: boolean }>(), { opposing: f
 </script>
 
 <template>
-  <button type="button" class="die-button" :class="{ opposing }">
+  <button type="button" class="die-button die-tile" :class="{ opposing }">
     <DieIcon :sides="sides" /><span>d{{ sides }}</span>
   </button>
 </template>
 
 <style scoped>
 .die-button {
-  min-width: 2.75rem;
-  display: grid;
-  justify-items: center;
-  gap: var(--dice-control-gap);
-  padding: var(--dice-control-padding);
-  border: 1px solid var(--ui-border);
-  border-radius: var(--radius-panel);
-  background: var(--ui-bg-muted);
-  font-size: var(--dice-label-size);
-  font-weight: 700;
   cursor: pointer;
-}
-.die-button :deep(.die-icon) {
-  width: 1.25rem;
-  height: 1.25rem;
 }
 .die-button.opposing :deep(.die-icon) {
   color: var(--ui-error);

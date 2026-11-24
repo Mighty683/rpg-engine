@@ -2,7 +2,7 @@
 import type { Attribute, PartyCharacter } from "./types";
 import AttributeRollButton from "./AttributeRollButton.vue";
 import WeaponRollButton from "./WeaponRollButton.vue";
-import ResourceBar from "../../shared/design-system/domain/ResourceBar.vue";
+import VitalResourceSummary from "../../shared/design-system/domain/VitalResourceSummary.vue";
 import ViewDetailsButton from "../../shared/design-system/base/ViewDetailsButton.vue";
 import InfoTooltip from "../../shared/design-system/base/InfoTooltip.vue";
 
@@ -29,14 +29,16 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 
 <template>
   <li
-    class="table-card rounded-panel border border-default bg-default p-medium"
+    class="table-card rounded-panel border border-default bg-default p-card-padding"
     data-testid="party-card"
     :data-character-id="member.id"
   >
-    <div class="space-y-small">
+    <div class="space-y-card-gap">
       <div>
-        <p v-if="playerLabelId" :id="playerLabelId" class="text-label text-muted">Your character</p>
-        <div class="flex flex-wrap items-center gap-small">
+        <p v-if="playerLabelId" :id="playerLabelId" class="text-card-label text-muted">
+          Your character
+        </p>
+        <div class="flex flex-wrap items-center gap-card-gap">
           <span class="character-name font-semibold">{{ member.name }}</span>
           <UBadge v-if="member.level" color="neutral" variant="outline" size="sm">
             Lv {{ member.level }}
@@ -64,25 +66,15 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           />
           <ViewDetailsButton v-else-if="canView" :name="member.name" @open="emit('edit')" />
         </div>
-        <p v-if="!$slots['class-progression']" class="text-label text-muted">
+        <p v-if="!$slots['class-progression']" class="text-card-label text-muted">
           {{ member.classes.join(", ") || "No classes" }}
         </p>
       </div>
-      <div class="vital-resources">
-        <div v-for="resource in ['hp', 'mp'] as const" :key="resource" class="vital-resource">
-          <ResourceBar
-            :label="resource.toUpperCase()"
-            :value="member.resources[resource]"
-            :maximum="member.maxima[resource]"
-            :color="resource"
-          >
-            <strong class="resource-name">{{ resource.toUpperCase() }}</strong>
-            <span :data-testid="resource === 'hp' ? 'party-hp' : undefined">
-              {{ member.resources[resource] }} / {{ member.maxima[resource] }}
-            </span>
-          </ResourceBar>
-        </div>
-      </div>
+      <VitalResourceSummary
+        :hp="{ current: member.resources.hp, max: member.maxima.hp }"
+        :mp="{ current: member.resources.mp, max: member.maxima.mp }"
+        hp-test-id="party-hp"
+      />
       <div class="attribute-row" aria-label="Attributes">
         <AttributeRollButton
           v-for="attribute in attributes"
@@ -94,7 +86,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
           @roll="emit('rollAttribute', attribute)"
         />
       </div>
-      <dl class="party-stats grid grid-cols-2 gap-small text-label tabular-nums">
+      <dl class="party-stats grid grid-cols-2 gap-card-gap text-card-label tabular-nums">
         <div class="mini-card">
           <div class="mini-resource">
             <dt>IP <InfoTooltip label="Inventory Points" text="Inventory Points" /></dt>
@@ -119,11 +111,11 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
         </div>
       </dl>
       <slot name="class-progression" />
-      <dl class="space-y-small pt-small text-label" data-testid="party-weapons">
+      <dl class="space-y-card-gap pt-card-gap text-card-label" data-testid="party-weapons">
         <div>
           <dt class="font-semibold text-muted">Weapons</dt>
           <dd v-if="!member.weapons.length">None</dd>
-          <dd v-for="weapon in member.weapons" :key="weapon.id" class="mt-small">
+          <dd v-for="weapon in member.weapons" :key="weapon.id" class="mt-card-gap">
             <WeaponRollButton
               :weapon="weapon"
               :base-dice="member.currentDice ?? member.baseDice"
@@ -145,34 +137,23 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 </template>
 
 <style scoped>
-.vital-resources {
-  display: grid;
-  gap: var(--spacing-small);
-}
-.vital-resource {
-  font-size: var(--text-label);
-  font-variant-numeric: tabular-nums;
-}
-.resource-name {
-  margin-inline-end: var(--spacing-small);
-}
 .attribute-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
 }
 .mini-resource {
   min-width: 0;
   display: grid;
-  gap: var(--dice-control-gap);
-  padding: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
+  padding: var(--table-card-detail-gap);
   text-align: center;
 }
 .mini-card {
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
   border: 1px solid var(--ui-border);
   border-radius: var(--radius-panel);
   background: var(--ui-bg-muted);
@@ -181,18 +162,18 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--spacing-tight);
+  gap: var(--table-card-detail-gap);
   color: var(--ui-text-muted);
-  font-size: var(--text-label);
+  font-size: var(--table-card-label-size);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--table-card-label-tracking);
   text-transform: uppercase;
 }
 .mini-resource dd {
   align-self: end;
   cursor: default;
   color: var(--ui-text-highlighted);
-  font-size: var(--text-small);
+  font-size: var(--table-card-body-size);
   font-weight: 700;
   background: var(--ui-bg);
   border: 1px solid var(--ui-border-accented);
