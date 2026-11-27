@@ -286,8 +286,14 @@ async function removeCharacter() {
           >
         </div>
       </header>
-      <ContentState v-if="roster.isLoading.value" kind="loading">Loading characters…</ContentState>
-      <ContentState v-else-if="roster.isError.value" kind="error" @retry="roster.refetch" />
+      <ContentState v-if="(settings || management) && roster.isLoading.value" kind="loading">
+        Loading characters…
+      </ContentState>
+      <ContentState
+        v-else-if="(settings || management) && roster.isError.value"
+        kind="error"
+        @retry="roster.refetch"
+      />
       <template v-else>
         <ContentState v-if="settings && gameRecord.role !== 'GM'" kind="empty">
           Settings are only available to the GM of this game.

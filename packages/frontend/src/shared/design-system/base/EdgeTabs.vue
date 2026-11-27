@@ -64,13 +64,17 @@ function select(id: string) {
 .edge-tabs {
   position: fixed;
   right: 0;
-  top: 45%;
+  top: 45dvh;
+  transform: translateY(-45%);
+  max-height: 100dvh;
+  overflow-y: auto;
   z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
 .edge-tab {
+  flex-shrink: 0;
   writing-mode: vertical-rl;
   border-radius: var(--radius-panel) 0 0 var(--radius-panel);
   padding: var(--spacing-medium) var(--spacing-small);

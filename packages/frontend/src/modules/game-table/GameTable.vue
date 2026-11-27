@@ -9,7 +9,7 @@ import type {
   OpponentDraft,
 } from "./types";
 
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "@nuxt/ui/composables";
 import { account } from "../auth/session";
@@ -75,29 +75,39 @@ const edgeTabs = computed(() => [
   { id: "npcs", label: "NPCs", color: "info" as const, testId: "edge-tab-npcs" },
   { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
 ]);
+function validPanel(panel: unknown) {
+  return typeof panel === "string" &&
+    (edgeTabs.value.some((tab) => tab.id === panel) || panel === props.extraEdgeTab?.id)
+    ? panel
+    : null;
+}
+const openPanel = ref(validPanel(route.query.panel));
+function restorePanelFromHistory() {
+  openPanel.value = validPanel(new URLSearchParams(window.location.search).get("panel"));
+}
+onMounted(() => window.addEventListener("popstate", restorePanelFromHistory));
+onUnmounted(() => window.removeEventListener("popstate", restorePanelFromHistory));
 const historyTab = computed({
-  get: () => {
-    const panel = route.query.panel;
-    return typeof panel === "string" &&
-      (edgeTabs.value.some((tab) => tab.id === panel) || panel === props.extraEdgeTab?.id)
-      ? panel
-      : null;
-  },
+  get: () => openPanel.value,
   set: (panel: string | null) => navigatePanel(panel),
 });
 const sheetOpen = computed(() => historyTab.value === "sheets");
 const customPanelOpen = computed(() =>
   Boolean(props.panelTab && historyTab.value === props.panelTab.id),
 );
-const selectedSheetId = computed(() =>
-  typeof route.query.sheetId === "string" ? route.query.sheetId : "",
-);
 const selectedNpcId = computed(() => (typeof route.query.npc === "string" ? route.query.npc : ""));
 const sheetTabs = computed(() =>
   party.value.map((member) => ({ label: member.name, value: member.id })),
 );
+const selectedSheetId = computed(
+  () =>
+    sheetTabs.value.find((tab) => tab.value === route.query.sheetId)?.value ??
+    sheetTabs.value[0]?.value ??
+    "",
+);
 
 function navigatePanel(panel: string | null, selection?: string, replace = false) {
+  openPanel.value = panel;
   const query = { ...route.query };
   delete query.panel;
   delete query.sheetId;
@@ -106,20 +116,12 @@ function navigatePanel(panel: string | null, selection?: string, replace = false
   if (panel === "sheets") query.sheetId = selection || sheetTabs.value[0]?.value;
   if (panel === "npcs" && selection) query.npc = selection;
   const location = { path: route.path, query, hash: route.hash };
-  if (router.resolve(location).fullPath !== route.fullPath)
-    void (replace ? router.replace(location) : router.push(location));
+  // Even a duplicate navigation cancels an earlier pending navigation.
+  void (replace ? router.replace(location) : router.push(location));
 }
 function openSheet(id: string) {
   navigatePanel("sheets", id);
 }
-watch(
-  [sheetOpen, selectedSheetId, sheetTabs],
-  ([open, selected, tabs]) => {
-    if (open && partyQuery.isSuccess.value && !tabs.some((tab) => tab.value === selected))
-      navigatePanel("sheets", tabs[0]?.value, true);
-  },
-  { immediate: true },
-);
 watch(
   historyTab,
   (panel) => {
@@ -603,9 +605,14 @@ async function removeEntry(entry: ThrowRecord) {
           />
         </PartyPanel>
       </div>
-      <EdgeTabs v-if="!sheetOpen" v-model:open-id="historyTab" :tabs="edgeTabs" tabs-only />
+      <Teleport to="body">
+        <EdgeTabs v-if="!sheetOpen" v-model:open-id="historyTab" :tabs="edgeTabs" tabs-only />
+      </Teleport>
       <USlideover
         :open="historyTab === 'history' || customPanelOpen"
+        :modal="false"
+        :overlay="false"
+        :content="{ onInteractOutside: (event: Event) => event.preventDefault() }"
         :title="customPanelOpen ? panelTab?.label : 'Throw history'"
         @update:open="
           (open: boolean) => {
@@ -649,6 +656,7 @@ async function removeEntry(entry: ThrowRecord) {
         side="left"
         :modal="false"
         :overlay="false"
+        :dismissible="false"
         :transition="false"
         :ui="{
           content:
@@ -693,7 +701,11 @@ async function removeEntry(entry: ThrowRecord) {
         @update:open="(open) => navigatePanel(open ? 'sheets' : null)"
         @update:selected-id="(id) => sheetOpen && id && openSheet(id)"
         :show-bookmark="false"
+        :modal="false"
         :tabs="sheetTabs"
+        :loading="partyQuery.isPending.value"
+        :failed="partyQuery.isError.value"
+        @retry="partyQuery.refetch()"
       >
         <template #sheet="{ characterId }">
           <CharacterView

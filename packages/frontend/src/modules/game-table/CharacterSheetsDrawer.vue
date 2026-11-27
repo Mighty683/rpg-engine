@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import CharacterSheetTabs from "./CharacterSheetTabs.vue";
+import ContentState from "../../shared/design-system/base/ContentState.vue";
 
-withDefaults(defineProps<{ tabs: { label: string; value: string }[]; showBookmark?: boolean }>(), {
-  showBookmark: true,
-});
+withDefaults(
+  defineProps<{
+    tabs: { label: string; value: string }[];
+    showBookmark?: boolean;
+    modal?: boolean;
+    loading?: boolean;
+    failed?: boolean;
+  }>(),
+  { showBookmark: true, modal: true },
+);
+defineEmits<{ retry: [] }>();
 defineSlots<{ sheet(props: { characterId: string }): unknown }>();
 
 const open = defineModel<boolean>("open", { required: true });
@@ -11,7 +20,14 @@ const selectedId = defineModel<string>("selectedId", { required: true });
 </script>
 
 <template>
-  <USlideover v-model:open="open" title="Character sheets" :ui="{ content: 'w-full sm:max-w-4xl' }">
+  <USlideover
+    v-model:open="open"
+    title="Character sheets"
+    :modal="modal"
+    :overlay="modal"
+    :dismissible="modal"
+    :ui="{ content: 'w-full sm:max-w-4xl' }"
+  >
     <UButton
       v-if="showBookmark && !open"
       class="sheet-bookmark"
@@ -29,7 +45,12 @@ const selectedId = defineModel<string>("selectedId", { required: true });
         @click="open = false"
         >Character sheets</UButton
       >
-      <CharacterSheetTabs v-model:selected-id="selectedId" :tabs="tabs">
+      <ContentState v-if="loading && !tabs.length" kind="loading">Loading characters…</ContentState>
+      <ContentState v-else-if="failed && !tabs.length" kind="error" @retry="$emit('retry')">
+        Could not load characters.
+      </ContentState>
+      <ContentState v-else-if="!tabs.length" kind="empty">No character sheets yet.</ContentState>
+      <CharacterSheetTabs v-else v-model:selected-id="selectedId" :tabs="tabs">
         <template #sheet="{ characterId }">
           <slot name="sheet" :character-id="characterId" />
         </template>

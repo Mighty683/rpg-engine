@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { newUuid } from "../../src/shared/uuid";
 import { ref } from "vue";
 import GameTable from "../../src/modules/game-table/GameTable.vue";
 import type { PartyCharacter } from "../../src/modules/game-table/types";
@@ -12,25 +13,25 @@ const props = defineProps<{ available: boolean }>();
 const agentTab: EdgeTab = { id: "agent", label: "Agent", color: "neutral" };
 const draft = ref("");
 const messages = ref<ChatMessage[]>([
-  { id: crypto.randomUUID(), role: "user", text: "Who is in the party?" },
-  { id: crypto.randomUUID(), role: "tool", text: "Read active party" },
-  { id: crypto.randomUUID(), role: "agent", text: "At the table today: Rowan Ash, Nera Vale." },
+  { id: newUuid(), role: "user", text: "Who is in the party?" },
+  { id: newUuid(), role: "tool", text: "Read active party" },
+  { id: newUuid(), role: "agent", text: "At the table today: Rowan Ash, Nera Vale." },
 ]);
 
 function runCommand(party: readonly PartyCharacter[]) {
   const command = draft.value.trim().toLowerCase();
   if (!props.available || !command) return;
 
-  messages.value.push({ id: crypto.randomUUID(), role: "user", text: draft.value.trim() });
+  messages.value.push({ id: newUuid(), role: "user", text: draft.value.trim() });
   const names = party.map(({ name }) => name).join(", ");
   let text = "In this prototype, I can tell you who’s at the table. Ask me about the party.";
   if (/party|who.*table/i.test(command)) {
-    messages.value.push({ id: crypto.randomUUID(), role: "tool", text: "Read active party" });
+    messages.value.push({ id: newUuid(), role: "tool", text: "Read active party" });
     text = names
       ? `At the table today: ${names}.`
       : "There are no active characters at the table yet.";
   }
-  messages.value.push({ id: crypto.randomUUID(), role: "agent", text });
+  messages.value.push({ id: newUuid(), role: "agent", text });
   draft.value = "";
 }
 </script>

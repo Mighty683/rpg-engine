@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { newUuid } from "../../src/shared/uuid";
 import { computed, reactive, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useRoute, useRouter } from "vue-router";
@@ -31,7 +32,7 @@ const loading = ref(false);
 const failed = ref(false);
 const term = ref("");
 const selected = ref("");
-const draft = reactive({ id: crypto.randomUUID(), title: "", content: noteDocument() });
+const draft = reactive({ id: newUuid(), title: "", content: noteDocument() });
 const records = reactive(new Map<string, ReturnType<typeof entryController>>());
 
 function entryController(entry: Entry) {
@@ -146,7 +147,7 @@ async function create() {
       entry = found;
     }
     records.set(entry.id, entryController(entry));
-    Object.assign(draft, { id: crypto.randomUUID(), title: "", content: noteDocument() });
+    Object.assign(draft, { id: newUuid(), title: "", content: noteDocument() });
     if (creating.value) {
       await router.replace(notesPath);
       selected.value = entry.id;

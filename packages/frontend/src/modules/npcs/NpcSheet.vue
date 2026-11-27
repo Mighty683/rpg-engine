@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { newUuid } from "../../shared/uuid";
 import ConfirmDialog from "../../shared/design-system/base/ConfirmDialog.vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import { computed, ref, watch, onUnmounted } from "vue";
@@ -31,7 +32,7 @@ const attributeHelp = {
 
 function newNpc(): Npc {
   return {
-    id: `npc-${crypto.randomUUID()}`,
+    id: `npc-${newUuid()}`,
     name: "",
     relationship: "neutral",
     level: 5,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { newUuid } from "../../shared/uuid";
 import EditorFieldGrid from "../../shared/design-system/base/EditorFieldGrid.vue";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
@@ -10,7 +11,7 @@ const props = defineProps<{ attacks: NpcAttack[] }>();
 
 function addAttack() {
   props.attacks.push({
-    id: crypto.randomUUID(),
+    id: newUuid(),
     name: "New attack",
     range: "melee",
     attributes: ["DEX", "MIG"],

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { newUuid } from "../../shared/uuid";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
@@ -85,21 +86,15 @@ function toWrite(npc: Npc): NpcWrite {
     attacks: npc.attacks.map(({ range, ...attack }) => ({ ...attack, reach: range })),
   };
 }
-const active = computed(() => records.value.find((npc) => npc.id === props.selected));
+const active = computed(
+  () => records.value.find((npc) => npc.id === props.selected) ?? records.value[0],
+);
 const selectedNpc = computed(() =>
   active.value && active.value.view !== "visible" ? prototypeNpc(active.value) : null,
 );
 function openEditor(id = "") {
   emit("open", id || records.value[0]?.id || "");
 }
-watch(
-  [() => props.panelOpen, () => props.selected, records],
-  ([open, id, list]) => {
-    if (open && list.length && !list.some((record) => record.id === id))
-      emit("open", list[0]!.id, true);
-  },
-  { immediate: true },
-);
 async function refresh() {
   const version = ++requestVersion;
   loading.value = true;
@@ -133,9 +128,9 @@ async function create() {
     attacks: [],
   };
   try {
-    const result = await api.create(props.gameId, crypto.randomUUID(), npc);
+    const result = await api.create(props.gameId, newUuid(), npc);
     await refresh();
-    openEditor(result.npc.id);
+    if (props.panelOpen) openEditor(result.npc.id);
   } catch {
     toast.add({ title: "Could not create NPC.", color: "error" });
   } finally {
@@ -208,7 +203,7 @@ async function remove(id: string) {
   removing.value = true;
   try {
     await api.remove(props.gameId, id, npc.revision);
-    closeEditor();
+    if (props.panelOpen) closeEditor();
     await refresh();
   } catch {
     toast.add({ title: "Could not remove NPC. Refresh and try again.", color: "error" });
@@ -278,7 +273,12 @@ onUnmounted(() => {
   />
   <USlideover
     :open="panelOpen"
-    :content="{ onCloseAutoFocus: restoreFocus }"
+    :modal="false"
+    :overlay="false"
+    :content="{
+      onCloseAutoFocus: restoreFocus,
+      onInteractOutside: (event: Event) => event.preventDefault(),
+    }"
     title="NPCs"
     :ui="{ content: 'w-full sm:max-w-4xl' }"
     @update:open="
@@ -308,20 +308,23 @@ onUnmounted(() => {
         >
           Saving changes…
         </p>
-        <ContentState v-if="!loading && !records.length" kind="empty">{{
+        <ContentState v-if="loading && !records.length" kind="loading">
+          Loading NPCs…
+        </ContentState>
+        <ContentState v-else-if="!records.length" kind="empty">{{
           role === "GM"
             ? "No NPCs yet. Create an NPC to get started."
             : "No NPCs are visible to you."
         }}</ContentState>
         <CharacterSheetTabs
-          :selected-id="selected"
+          :selected-id="active?.id ?? ''"
           @update:selected-id="(id) => id && panelOpen && openEditor(id)"
           :tabs="records.map((record) => ({ label: record.name, value: record.id }))"
         >
           <template #sheet>
             <NpcSheet
               v-if="selectedNpc"
-              :key="selected"
+              :key="selectedNpc.id"
               :npc="selectedNpc"
               :read-only="role !== 'GM' || active?.view !== 'gm'"
               :reset-token="resetToken"

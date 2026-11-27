@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { newUuid } from "../../../../shared/uuid";
 import ClassCard from "./ClassCard.vue";
 import SkillCard from "./SkillCard.vue";
 import EquipmentCard from "../equipment/EquipmentCard.vue";
@@ -17,7 +18,7 @@ const atLimit = computed(() => props.limit !== undefined && props.entries.length
 function add() {
   const value = name.value.trim();
   if (!value || atLimit.value) return;
-  const entry = { id: crypto.randomUUID(), name: value, notes: "", price: null };
+  const entry = { id: newUuid(), name: value, notes: "", price: null };
   props.entries.push(entry);
   name.value = "";
   expanded.value = entry.id;
