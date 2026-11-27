@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import { computed } from "vue";
@@ -17,14 +18,22 @@ const items = computed(
 </script>
 
 <template>
-  <section aria-label="Equipment" class="space-y-small text-label" data-testid="player-equipment">
-    <h3 class="font-semibold text-muted">Equipment</h3>
-    <SkeletonRegion v-if="sheet.isPending.value" label="Loading equipment…" class="grid gap-tight">
+  <section
+    :aria-label="tr('ui.equipment2')"
+    class="space-y-small text-label"
+    data-testid="player-equipment"
+  >
+    <h3 class="font-semibold text-muted">{{ tr("ui.equipment2") }}</h3>
+    <SkeletonRegion
+      v-if="sheet.isPending.value"
+      :label="tr('ui.loadingEquipment')"
+      class="grid gap-tight"
+    >
       <SkeletonBlock v-for="row in 2" :key="row" class="h-5" />
     </SkeletonRegion>
-    <ContentState v-else-if="sheet.isError.value" kind="error" @retry="sheet.refetch()"
-      >Could not load equipment.</ContentState
-    >
+    <ContentState v-else-if="sheet.isError.value" kind="error" @retry="sheet.refetch()">{{
+      tr("ui.couldNotLoadEquipment")
+    }}</ContentState>
     <ul v-else-if="items.length" class="grid gap-tight">
       <li
         v-for="item in items"
@@ -33,11 +42,17 @@ const items = computed(
       >
         <span>{{ item.name }}</span>
         <span class="text-muted"
-          >{{ item.kind === "other" ? "Item" : item.kind === "armor" ? "Armor" : "Shield" }} ·
-          {{ item.equipped ? "Equipped" : "Carried" }}</span
+          >{{
+            item.kind === "other"
+              ? tr("ui.item")
+              : item.kind === "armor"
+                ? tr("ui.armor")
+                : tr("ui.shield")
+          }}
+          · {{ item.equipped ? tr("ui.equipped") : tr("ui.carried") }}</span
         >
       </li>
     </ul>
-    <p v-else class="text-muted">No other equipment.</p>
+    <p v-else class="text-muted">{{ tr("ui.noOtherEquipment") }}</p>
   </section>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SurfaceCard from "../../shared/design-system/base/SurfaceCard.vue";
 import NoteBody from "./NoteBody.vue";
 import { visibleNoteText } from "./note-document";
@@ -30,7 +31,12 @@ const date = (value: string) =>
           <template v-else>{{ entry.title }}</template>
         </h3>
         <p class="note-metadata text-muted" data-testid="note-metadata">
-          Created {{ date(entry.createdAt) }} · Updated {{ date(entry.updatedAt) }}
+          {{
+            tr("ui.createdValue1UpdatedValue2", {
+              value1: date(entry.createdAt),
+              value2: date(entry.updatedAt),
+            })
+          }}
         </p>
       </header>
       <NoteBody v-if="visibleNoteText(entry.content)" :document="entry.content" class="note-text" />

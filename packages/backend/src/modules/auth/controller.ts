@@ -43,7 +43,7 @@ async function withAvailabilityResponse<T>(operation: () => Promise<T>) {
   } catch (error) {
     if ((error as { code?: string }).code === "auth_busy") {
       throw new RequestError(503, {
-        error: { code: "auth_busy", message: "Sign-in service busy. Try again." },
+        error: { code: "auth_busy" },
       });
     }
     throw error;
@@ -68,7 +68,7 @@ export function authController(services: { auth: AuthService; config: Configurat
           const { username, password, fields } = validateCredentials(request.body);
           if (Object.keys(fields).length)
             throw new RequestError(422, {
-              error: { code: "validation", message: "Check the fields.", fields },
+              error: { code: "validation", fields },
             });
           let account;
           try {
@@ -79,7 +79,7 @@ export function authController(services: { auth: AuthService; config: Configurat
             const databaseError = (error as { cause?: unknown }).cause ?? error;
             if ((databaseError as { code?: string }).code === "23505") {
               throw new RequestError(409, {
-                error: { code: "username_taken", message: "Username is already in use." },
+                error: { code: "username_taken" },
               });
             }
             throw error;
@@ -98,7 +98,7 @@ export function authController(services: { auth: AuthService; config: Configurat
           );
           if (result.status === "invalid")
             throw new RequestError(401, {
-              error: { code: "invalid_credentials", message: "Invalid username or password." },
+              error: { code: "invalid_credentials" },
             });
           await issueSession(
             services.auth,
@@ -116,7 +116,7 @@ export function authController(services: { auth: AuthService; config: Configurat
           const account = await services.auth.getAccount(actor.accountId);
           if (!account)
             throw new RequestError(401, {
-              error: { code: "unauthorized", message: "Sign in to continue." },
+              error: { code: "unauthorized" },
             });
           return { account };
         }),

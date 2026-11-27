@@ -108,7 +108,7 @@ function normalizeClassLevels(entries: ClassLevel[]) {
   return entries
     .map(({ gameClassId, level }) => {
       const id = gameClassId.toLowerCase();
-      if (ids.has(id)) invalid("classLevels", "Choose each class once.");
+      if (ids.has(id)) invalid("classLevels", "choose_each_class_once");
       ids.add(id);
       return { gameClassId: id, level };
     })
@@ -120,7 +120,7 @@ function normalizeSkillRanks(entries: SkillRank[]) {
   return entries
     .map(({ skillId, rank }) => {
       const id = skillId.toLowerCase();
-      if (ids.has(id)) invalid("skillRanks", "Choose each skill once.");
+      if (ids.has(id)) invalid("skillRanks", "choose_each_skill_once");
       ids.add(id);
       return { skillId: id, rank };
     })
@@ -139,15 +139,11 @@ export async function applyProgression(
   const used = (levels: ClassLevel[]) => levels.reduce((sum, entry) => sum + entry.level, 0) * 10;
   const balance = changes.experience ?? before.experience;
   if (balance.current > balance.total || balance.total - balance.current < used(before.classLevels))
-    invalid("experience", "Total EXP must cover current EXP and the cost of saved class levels.");
+    invalid("experience", "exp_saved_levels");
   const current = balance.current - (used(classLevels) - used(before.classLevels));
-  if (current < 0)
-    invalid("experience", "There is not enough current EXP to add those class levels.");
+  if (current < 0) invalid("experience", "insufficient_exp");
   if (current > balance.total || balance.total - current < used(classLevels))
-    invalid(
-      "experience",
-      "Total EXP must cover current EXP and the cost of assigned class levels.",
-    );
+    invalid("experience", "exp_assigned_levels");
 
   const classes = classLevels.length
     ? await tx
@@ -170,7 +166,7 @@ export async function applyProgression(
   const classById = new Map(classes.map((entry) => [entry.id, entry]));
   const allocationClasses: ManagedClass[] = classLevels.map((level) => {
     const entry = classById.get(level.gameClassId);
-    if (!entry) invalid("classLevels", "Choose classes available in this game.");
+    if (!entry) invalid("classLevels", "choose_classes_available_in_this_game");
     return { ...level, characterId, name: entry.name, freeBenefits: entry.freeBenefits };
   });
 
@@ -199,10 +195,10 @@ export async function applyProgression(
   const allocationSkills: ManagedSkill[] = skillRanks.map((rank) => {
     const skill = skillById.get(rank.skillId);
     if (!skill || rank.rank > skill.maxRank)
-      invalid("skillRanks", "Choose valid skill ranks within their limits.");
+      invalid("skillRanks", "choose_valid_skill_ranks_within_their_limits");
     const allocated = rank.rank + (usedRanks.get(skill.gameClassId) ?? 0);
     if (allocated > (levelById.get(skill.gameClassId) ?? 0))
-      invalid("skillRanks", "Skill ranks cannot exceed their class level.");
+      invalid("skillRanks", "skill_ranks_cannot_exceed_their_class_level");
     usedRanks.set(skill.gameClassId, allocated);
     return { ...rank, characterId, gameClassId: skill.gameClassId, benefits: skill.benefits };
   });

@@ -58,7 +58,7 @@ describe("API event capacity, revocation, and private delivery", () => {
     expect(excessAccount.headers.get("content-type")).toContain("application/json");
     expect(excessAccount.headers.get("retry-after")).toBe("15");
     expect(await excessAccount.json()).toEqual({
-      error: { code: "stream_capacity", message: "Too many live connections." },
+      error: { code: "ERR01" },
     });
     await open("player");
     const excessGlobal = await request(`/games/${ids.otherGame}/events`, "outsider");

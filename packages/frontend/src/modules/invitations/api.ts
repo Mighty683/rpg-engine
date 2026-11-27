@@ -1,22 +1,17 @@
 import type { GameInvitation, InvitationPreview } from "./types";
-import { secureFetch } from "../../shared/secure-fetch.ts";
-import { request as apiRequest } from "../../shared/api";
+import { publicRequest, request as apiRequest } from "../../shared/api";
 
-async function request<T>(token: string, accept?: { makeActive: boolean }): Promise<T> {
-  const response = await secureFetch(
+function request<T>(token: string, accept?: { makeActive: boolean }): Promise<T> {
+  return publicRequest<T>(
     `/api/invitations/${encodeURIComponent(token)}${accept ? "/accept" : ""}`,
     accept
       ? {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(accept),
           referrerPolicy: "no-referrer",
         }
       : { referrerPolicy: "no-referrer" },
   );
-  if (!response.ok)
-    throw Object.assign(new Error("Invitation unavailable"), { status: response.status });
-  return response.json() as Promise<T>;
 }
 export const invitationApi = {
   listGameInvitations: (gameId: string) =>

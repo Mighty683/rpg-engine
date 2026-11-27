@@ -21,7 +21,7 @@ export function partyController(services: { auth: AuthService; characters: Chara
           } catch (error) {
             if ((error as { code?: string }).code === "not_found")
               throw new RequestError(404, {
-                error: { code: "not_found", message: "Game not found." },
+                error: { code: "not_found" },
               });
             throw error;
           }

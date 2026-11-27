@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import FormActions from "../../shared/design-system/base/FormActions.vue";
@@ -35,10 +36,12 @@ function cancelCreate() {
     <header class="flex flex-wrap items-center justify-between gap-medium">
       <div>
         <h1 class="text-heading font-semibold" data-testid="notes-heading">
-          {{ creating ? "New entry" : entryId ? "Entry details" : "Game notes" }}
+          {{ creating ? tr("ui.newEntry") : entryId ? tr("ui.entryDetails") : tr("ui.gameNotes") }}
         </h1>
       </div>
-      <UButton v-if="!creating" :to="`${notesPath}/new`" data-testid="note-new">New entry</UButton>
+      <UButton v-if="!creating" :to="`${notesPath}/new`" data-testid="note-new">{{
+        tr("ui.newEntry")
+      }}</UButton>
     </header>
     <ScreenSection v-if="creating">
       <form class="space-y-medium" @submit.prevent="submitCreate">
@@ -50,7 +53,7 @@ function cancelCreate() {
           @content="notebook.draft.content = $event"
         />
         <FormActions
-          submit-label="Create entry"
+          :submit-label="tr('ui.createEntry')"
           submit-test-id="note-create"
           cancel-test-id="note-cancel"
           :pending="notebook.creating.value"

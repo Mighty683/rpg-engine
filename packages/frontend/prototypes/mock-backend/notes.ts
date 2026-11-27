@@ -49,11 +49,11 @@ export function handleNotes(
 ) {
   if (method === "GET" && !entryId) return HttpResponse.json({ entries });
   const current = entries.find((entry) => entry.id === (entryId ?? body.id));
-  const fail = (status: number) => HttpResponse.json({ error: { code: "note_error" } }, { status });
+  const fail = (status: number, code: string) => HttpResponse.json({ error: { code } }, { status });
   const now = new Date().toISOString();
   if (method === "POST" && !entryId) {
-    if (current) return fail(409);
-    if (!body.title?.trim() || !validContent(body.content)) return fail(422);
+    if (current) return fail(409, "ERR01");
+    if (!body.title?.trim() || !validContent(body.content)) return fail(422, "ERR84");
     const entry = {
       id: body.id,
       title: body.title.trim(),
@@ -65,12 +65,12 @@ export function handleNotes(
     entries.unshift(entry);
     return HttpResponse.json({ entry }, { status: 201 });
   }
-  if (method !== "PATCH" || !current) return fail(404);
-  if (body.expectedRevision !== current.revision) return fail(409);
+  if (method !== "PATCH" || !current) return fail(404, method === "GET" ? "ERR01" : "ERR83");
+  if (body.expectedRevision !== current.revision) return fail(409, "ERR01");
   const changes = body.changes as Partial<EntryText>;
   const title = (changes.title ?? current.title).trim();
   const content = changes.content ?? current.content;
-  if (!title || title.length > 160 || !validContent(content)) return fail(422);
+  if (!title || title.length > 160 || !validContent(content)) return fail(422, "ERR84");
   if (title !== current.title || !sameNoteDocument(content, current.content))
     Object.assign(current, { title, content, updatedAt: now, revision: current.revision + 1 });
   return HttpResponse.json({ entry: current });

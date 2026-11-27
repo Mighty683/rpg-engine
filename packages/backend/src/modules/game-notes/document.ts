@@ -27,8 +27,7 @@ export const noteDocumentJsonByteLimit = 64 * 1024;
 
 const inlineKeys = ["bold", "italic", "underline", "strike"] as const;
 const blockKeys = ["header", "list"] as const;
-const placementMessage =
-  "Inline formatting applies to text; headings and lists apply to whole lines.";
+const placementMessage = "inline_formatting_applies_to_text_headings_and_lists";
 
 /** Postgres text and jsonb storage cannot hold NUL; lone surrogates cannot round-trip. */
 function isStorableText(value: string) {
@@ -43,10 +42,9 @@ function codePoints(value: string) {
 
 /** Reject titles that are blank or over the limit after trimming. */
 export function noteTitleIssue(trimmedTitle: string) {
-  if (!trimmedTitle) return "Enter a title of 1 to 160 characters.";
-  if (codePoints(trimmedTitle) > noteTitleCodePointLimit)
-    return "Use 160 characters or fewer for the title.";
-  if (!isStorableText(trimmedTitle)) return "The title contains unsupported characters.";
+  if (!trimmedTitle) return "note_title_required";
+  if (codePoints(trimmedTitle) > noteTitleCodePointLimit) return "note_title_length";
+  if (!isStorableText(trimmedTitle)) return "note_title_encoding";
   return null;
 }
 
@@ -102,7 +100,7 @@ export function sameNoteDocument(a: NoteDocument, b: NoteDocument) {
 
 /** Placement and storage violations of one structurally valid op, if any. */
 function opIssue(op: NoteInputOp, value: NoteAttributes | undefined): string | null {
-  if (!isStorableText(op.insert)) return "The body contains unsupported characters.";
+  if (!isStorableText(op.insert)) return "the_body_contains_unsupported_characters";
   const block = op.insert.endsWith("\n");
   const hasInline = inlineKeys.some((key) => value?.[key]);
   const hasHeader = value?.header !== undefined;
@@ -124,7 +122,7 @@ export function normalizeNoteDocument(input: NoteInputDocument): NoteDocumentRes
   for (const op of input.ops) {
     const attributes = readAttributes(op.attributes);
     const value = attributes.kind === "some" ? attributes.attributes : undefined;
-    const issue = attributes.kind === "unknown" ? "Unsupported formatting." : opIssue(op, value);
+    const issue = attributes.kind === "unknown" ? "unsupported_formatting" : opIssue(op, value);
     if (issue) {
       messages.push(issue);
       break;
@@ -134,15 +132,15 @@ export function normalizeNoteDocument(input: NoteInputDocument): NoteDocumentRes
     else ops.push(value ? { insert: op.insert, attributes: value } : { insert: op.insert });
   }
   if (!messages.length && !ops.at(-1)?.insert.endsWith("\n"))
-    messages.push("The document must end with a newline.");
+    messages.push("the_document_must_end_with_a_newline");
   const document = { ops };
   if (!messages.length && codePoints(visibleNoteText(document)) > noteBodyCodePointLimit)
-    messages.push("Keep the body to 5,000 characters or fewer.");
+    messages.push("note_body_length");
   if (
     !messages.length &&
     Buffer.byteLength(canonicalJson(document), "utf8") > noteDocumentJsonByteLimit
   )
-    messages.push("The formatted document is too large.");
+    messages.push("the_formatted_document_is_too_large");
   return messages.length
     ? { ok: false, issues: { field: "content", messages } }
     : { ok: true, document };

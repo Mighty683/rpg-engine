@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import CharacterSheetSkeleton from "./sheet/CharacterSheetSkeleton.vue";
 import AbilitiesSkeleton from "../class-progression/AbilitiesSkeleton.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
@@ -39,16 +40,16 @@ const props = defineProps<{ gameId?: string; characterId?: string; readOnly?: bo
 const gameId = computed(() => props.gameId ?? String(route.params.gameId));
 const characterId = computed(() => props.characterId ?? String(route.params.characterId));
 const query = useGameCharacterQuery(gameId.value, characterId.value);
-useQueryErrorToast(query, "Could not load character. Try again or return to your games.");
+useQueryErrorToast(query, tr("ui.couldNotLoadCharacterTryAgainOrReturnTo"));
 const roster = useGameCharactersQuery(gameId.value);
-if (!props.gameId) useQueryErrorToast(roster, "Could not load character access. Try again.");
+if (!props.gameId) useQueryErrorToast(roster, tr("ui.couldNotLoadCharacterAccessTryAgain"));
 const mutation = useSaveGameCharacterMutation(gameId.value, characterId.value);
 const snapshot = ref<Snapshot | null>(null);
 const catalogQuery = useGameClassCatalogQuery(
   gameId.value,
   computed(() => Boolean(snapshot.value?.character.progression)),
 );
-useQueryErrorToast(catalogQuery, "Could not load classes. Try again.");
+useQueryErrorToast(catalogQuery, tr("ui.couldNotLoadClassesTryAgain"));
 const catalog = computed(() => catalogQuery.data.value ?? []);
 
 function refreshSheet() {
@@ -118,13 +119,13 @@ const optimistic = useOptimisticSave<Snapshot, CharacterEdit[]>({
       }
     } catch (error) {
       if (latest === base) throw error;
-      throw new Error("Some edits may have been saved. Reload the latest sheet.");
+      throw new Error(tr("ui.someEditsMayHaveBeenSavedReloadTheLatest"));
     }
     return latest;
   },
   refresh: async () => {
     const result = await query.refetch();
-    if (result.isError || !result.data) throw new Error("Character could not be refreshed");
+    if (result.isError || !result.data) throw new Error(tr("ui.characterCouldNotBeRefreshed"));
     return result.data as unknown as Snapshot;
   },
   merge: (a, b) => {
@@ -140,12 +141,12 @@ watch(optimistic.error, (error) => {
   if (!error) return;
   const message =
     error.status === 403
-      ? "Your edit access changed. Your local draft is preserved."
+      ? tr("ui.yourEditAccessChangedYourLocalDraftIsPreserved")
       : error.status === 400 || error.status === 422
-        ? "The change was rejected and has been reverted."
-        : "Your changes could not be confirmed. Your local draft is preserved.";
+        ? tr("ui.theChangeWasRejectedAndHasBeenReverted")
+        : tr("ui.yourChangesCouldNotBeConfirmedYourLocalDraft");
   const reload = {
-    label: "Reload saved sheet",
+    label: tr("ui.reloadSavedSheet"),
     "data-testid": "reload-saved-sheet",
     onClick: () => void optimistic.retry(),
   };
@@ -264,12 +265,13 @@ const defenseDetails = computed(() => {
             !fixedBase &&
             (part.source === "armor" || part.source === "shield" || part.source === "class");
           if (modifier && part.value === 0) return [];
-          const name = entry?.name ?? (part.source === "class" ? "Class effects" : part.source);
+          const name =
+            entry?.name ?? (part.source === "class" ? tr("ui.classEffects") : part.source);
           return [{ name: fixedBase ? `${name} (fixed)` : name, value: part.value, modifier }];
         },
       );
       if (key === "initiative" && baseDefense.value.INIT !== null)
-        details.unshift({ name: "Base", value: 0, modifier: false });
+        details.unshift({ name: tr("ui.base"), value: 0, modifier: false });
       return [label, details];
     }),
   ) as Record<keyof typeof defenseKeys, { name: string; value: number; modifier?: boolean }[]>;
@@ -355,13 +357,15 @@ function changeSkill(id: string, delta: number) {
     >
       {{
         rosterCharacter.controllerMembershipId
-          ? `Controlled by ${rosterCharacter.controllerName}`
-          : "Controlled by the GM"
+          ? tr("ui.controlledByValue1", { value1: rosterCharacter.controllerName })
+          : tr("ui.controlledByTheGm")
       }}.
-      <span v-if="effectiveReadOnly">You can view this sheet but cannot edit it.</span>
+      <span v-if="effectiveReadOnly">{{ tr("ui.youCanViewThisSheetButCannotEditIt") }}</span>
     </p>
-    <UButton v-if="readAccessLost" to="/" color="neutral" variant="outline">My games</UButton>
-    <SkeletonRegion v-else-if="query.isPending.value && !draft" label="Loading character…"
+    <UButton v-if="readAccessLost" to="/" color="neutral" variant="outline">{{
+      tr("ui.myGames")
+    }}</UButton>
+    <SkeletonRegion v-else-if="query.isPending.value && !draft" :label="tr('ui.loadingCharacter')"
       ><CharacterSheetSkeleton
     /></SkeletonRegion>
     <ContentState v-else-if="query.isError.value && !draft" kind="error" @retry="query.refetch" />
@@ -389,7 +393,7 @@ function changeSkill(id: string, delta: number) {
         <ContentState
           v-else-if="catalogQuery.isError.value"
           kind="error"
-          retry-label="Retry loading classes"
+          :retry-label="tr('ui.retryLoadingClasses')"
           @retry="catalogQuery.refetch"
         />
         <CharacterAbilities
@@ -403,23 +407,26 @@ function changeSkill(id: string, delta: number) {
         />
       </template>
     </CharacterSheet>
-    <p v-if="optimistic.saving.value" data-testid="save-status" role="status">Saving…</p>
+    <p v-if="optimistic.saving.value" data-testid="save-status" role="status">
+      {{ tr("ui.saving") }}
+    </p>
     <div
       v-else-if="optimistic.error.value"
       data-testid="save-status"
       role="alert"
       class="space-y-small"
     >
-      <p v-if="optimistic.paused.value">
-        Your changes could not be confirmed. Your local draft is shown above.
+      <p v-if="optimistic.paused.value" data-testid="save-conflict-message">
+        {{ tr("ui.yourChangesCouldNotBeConfirmedYourLocalDraft2") }}
       </p>
-      <p v-else>The change was rejected and has been reverted.</p>
+      <p v-else>{{ tr("ui.theChangeWasRejectedAndHasBeenReverted") }}</p>
       <UButton
         v-if="optimistic.paused.value"
         color="neutral"
         variant="outline"
         @click="optimistic.retry"
-        >Discard draft and reload</UButton
+        data-testid="discard-draft-and-reload"
+        >{{ tr("ui.discardDraftAndReload") }}</UButton
       >
     </div>
     <p
@@ -428,10 +435,12 @@ function changeSkill(id: string, delta: number) {
       data-testid="save-status"
       role="status"
     >
-      Saved automatically
+      {{ tr("ui.savedAutomatically") }}
     </p>
     <details v-if="optimistic.paused.value && savedDraft && !readAccessLost" class="space-y-small">
-      <summary class="cursor-pointer font-semibold">Review latest saved version</summary>
+      <summary class="cursor-pointer font-semibold">
+        {{ tr("ui.reviewLatestSavedVersion") }}
+      </summary>
       <CharacterSheet
         :character="savedDraft"
         :current-dice="savedDerived.currentDice"

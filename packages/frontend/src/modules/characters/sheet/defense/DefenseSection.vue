@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import type { Stat } from "../types";
 
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
@@ -12,15 +13,16 @@ defineProps<{
   details: Record<Stat, { name: string; value: number; modifier?: boolean }[]>;
 }>();
 const help = {
-  DEF: "Defense is the difficulty for attacks targeting physical Defense.",
-  "MAG DEF": "Magic Defense is the difficulty for effects targeting Magic Defense.",
-  INIT: "Initiative modifies checks to determine turn order.",
+  DEF: tr("ui.defenseIsTheDifficultyForAttacksTargetingPhysicalDefense"),
+  "MAG DEF": tr("ui.magicDefenseIsTheDifficultyForEffectsTargetingMagic"),
+  INIT: tr("ui.initiativeModifiesChecksToDetermineTurnOrder"),
 };
 </script>
 
 <template>
   <SheetSection
-    ><template #heading>⬡ DEFENSE</template><template #hint>BASE / OVERRIDE</template>
+    ><template #heading>{{ tr("ui.defense") }}</template
+    ><template #hint>{{ tr("ui.baseOverride") }}</template>
     <div class="grid">
       <div class="defense-card">
         <DefenseField
@@ -36,14 +38,14 @@ const help = {
       </div>
       <DefenseField
         v-model="overrides.INIT"
-        label="INIT"
+        :label="tr('ui.init')"
         :help="help.INIT"
         :calculated="calculated.INIT"
         :contributions="details.INIT"
       />
     </div>
     <p v-if="!includesClassEffects" class="note">
-      Skill and other effects are not included.
+      {{ tr("ui.skillAndOtherEffectsAreNotIncluded") }}
     </p></SheetSection
   >
 </template>

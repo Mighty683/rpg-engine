@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import NoteCardSkeleton from "./NoteCardSkeleton.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, onMounted, ref } from "vue";
@@ -38,12 +39,15 @@ function openEntry(id: string) {
 
 <template>
   <div class="space-y-medium" data-testid="notes-panel">
-    <ULink :to="notesPath" data-testid="notes-open-search" class="notes-link text-primary underline"
-      >Search all entries</ULink
+    <ULink
+      :to="notesPath"
+      data-testid="notes-open-search"
+      class="notes-link text-primary underline"
+      >{{ tr("ui.searchAllEntries") }}</ULink
     >
     <SkeletonRegion
       v-if="notebook.recent.loading"
-      label="Loading entries…"
+      :label="tr('ui.loadingEntries')"
       data-testid="notes-loading"
       class="space-y-small"
     >
@@ -55,9 +59,9 @@ function openEntry(id: string) {
       retry-test-id="notes-drawer-retry"
       @retry="notebook.refreshRecent()"
     />
-    <ContentState v-else-if="!entries.length" kind="empty" data-testid="notes-empty"
-      >No entries yet.</ContentState
-    >
+    <ContentState v-else-if="!entries.length" kind="empty" data-testid="notes-empty">{{
+      tr("ui.noEntriesYet")
+    }}</ContentState>
     <div
       v-else
       ref="list"
@@ -73,7 +77,7 @@ function openEntry(id: string) {
         :test-id="'recent-note-' + entry.id"
         @open="openEntry(entry.id)"
       />
-      <SkeletonRegion v-if="notebook.recent.loadingMore" label="Loading entries…"
+      <SkeletonRegion v-if="notebook.recent.loadingMore" :label="tr('ui.loadingEntries')"
         ><NoteCardSkeleton
       /></SkeletonRegion>
       <ContentState

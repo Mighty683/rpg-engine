@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import { ref } from "vue";
 import SurfaceCard from "../../shared/design-system/base/SurfaceCard.vue";
@@ -15,8 +16,8 @@ withDefaults(
     readOnly?: boolean;
   }>(),
   {
-    title: "Free benefits",
-    description: "Granted once when the class is acquired.",
+    title: tr("ui.freeBenefits"),
+    description: tr("ui.grantedOnceWhenTheClassIsAcquired"),
   },
 );
 const emit = defineEmits<{
@@ -32,8 +33,8 @@ function addBenefit() {
   newName.value = "";
 }
 const types = [
-  { label: "Text effect", value: "text" },
-  { label: "Stat modifier", value: "modifier" },
+  { label: tr("ui.textEffect"), value: "text" },
+  { label: tr("ui.statModifier"), value: "modifier" },
 ];
 const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ label, value }));
 </script>
@@ -47,7 +48,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
       </div>
     </div>
     <p v-if="benefits.length === 0" class="mt-medium text-muted">
-      No benefits added yet.{{ readOnly ? "" : " Add a text effect or a stat modifier." }}
+      {{ tr(readOnly ? "ui.emptyBenefits" : "ui.emptyEditableBenefits") }}
     </p>
     <div v-else class="mt-medium flex flex-col gap-small">
       <article
@@ -59,7 +60,7 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
         <div class="flex items-center justify-between gap-small">
           <LabeledInput
             :readonly="readOnly"
-            label="Benefit name"
+            :label="tr('ui.benefitName')"
             class="w-64 max-w-full"
             :model-value="benefit.name"
             :data-testid="`benefit-name-${benefit.id}`"
@@ -70,16 +71,16 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
             color="error"
             variant="outline"
             size="sm"
-            :aria-label="`Remove benefit ${index + 1}`"
+            :aria-label="tr('ui.removeBenefitValue1', { value1: index + 1 })"
             :data-testid="`remove-benefit-${benefit.id}`"
             @click="emit('remove', benefit.id)"
-            >Remove</UButton
+            >{{ tr("ui.remove") }}</UButton
           >
         </div>
         <div class="mt-small flex flex-wrap items-end gap-medium">
           <LabeledSelect
             :disabled="readOnly"
-            label="Type"
+            :label="tr('ui.type')"
             :model-value="benefit.kind"
             :items="types"
             size="md"
@@ -98,10 +99,10 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
           <template v-if="benefit.kind === 'modifier'">
             <LabeledSelect
               :disabled="readOnly"
-              label="Stat"
+              :label="tr('ui.stat')"
               :model-value="benefit.stat || undefined"
               :items="stats"
-              placeholder="Select a stat"
+              :placeholder="tr('ui.selectAStat')"
               size="md"
               class="w-44 max-w-full"
               :data-testid="`benefit-stat-${benefit.id}`"
@@ -115,18 +116,18 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
             </LabeledSelect>
             <LabeledInput
               :readonly="readOnly"
-              :label="isDieModifier(benefit.stat) ? 'Die steps' : 'Modifier'"
+              :label="isDieModifier(benefit.stat) ? tr('ui.dieSteps') : tr('ui.modifier')"
               type="number"
               class="w-24"
               :model-value="benefit.amount"
-              :placeholder="isDieModifier(benefit.stat) ? 'e.g. 1' : 'e.g. 5'"
+              :placeholder="tr('ui.exampleNumber', { number: isDieModifier(benefit.stat) ? 1 : 5 })"
               :data-testid="`benefit-amount-${benefit.id}`"
               @update:model-value="emit('update', benefit.id, { amount: String($event) })"
             />
             <UCheckbox
               v-if="allowRankScaling"
               :disabled="readOnly"
-              label="Apply per rank"
+              :label="tr('ui.applyPerRank')"
               :model-value="benefit.perRank ?? false"
               @update:model-value="emit('update', benefit.id, { perRank: $event === true })"
             />
@@ -134,21 +135,20 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
         </div>
         <LabeledInput
           :readonly="readOnly"
-          :label="benefit.kind === 'text' ? 'Effect' : 'Description'"
+          :label="benefit.kind === 'text' ? tr('ui.effect') : tr('ui.description')"
           multiline
           :rows="2"
           class="mt-small"
           :model-value="benefit.description"
-          placeholder="Describe the effect"
+          :placeholder="tr('ui.describeTheEffect')"
           :data-testid="`benefit-description-${benefit.id}`"
           @update:model-value="emit('update', benefit.id, { description: String($event) })"
         />
         <p v-if="benefit.kind === 'text'" class="mt-small text-muted">
-          Text effects are interpreted during play.
+          {{ tr("ui.textEffectsAreInterpretedDuringPlay") }}
         </p>
         <p v-else-if="isDieModifier(benefit.stat)" class="mt-small text-muted">
-          Enter die steps: +1 changes a d8 to a d10; −1 changes a d8 to a d6. Dice stay between d6
-          and d12.
+          {{ tr("ui.enterDieSteps1ChangesAD8ToA") }}
         </p>
       </article>
     </div>
@@ -159,15 +159,15 @@ const stats = Object.entries(classModifierLabels).map(([value, label]) => ({ lab
     >
       <LabeledInput
         v-model="newName"
-        label="Benefit name"
-        placeholder="Name the benefit"
+        :label="tr('ui.benefitName')"
+        :placeholder="tr('ui.nameTheBenefit')"
         class="w-64 max-w-full"
         data-testid="new-benefit-name"
         required
       />
-      <UButton type="submit" color="neutral" variant="outline" data-testid="add-benefit"
-        >Add benefit</UButton
-      >
+      <UButton type="submit" color="neutral" variant="outline" data-testid="add-benefit">{{
+        tr("ui.addBenefit")
+      }}</UButton>
     </form>
   </SurfaceCard>
 </template>

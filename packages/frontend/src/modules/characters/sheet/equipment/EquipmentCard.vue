@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import { computed, ref, watch } from "vue";
 import EquipmentIcon from "../../../../shared/design-system/domain/EquipmentIcon.vue";
 import WeaponIcon from "../../../../shared/design-system/domain/WeaponIcon.vue";
@@ -46,11 +47,13 @@ const equipped = computed(() => {
     :title="draft.name"
     :notes="draft.notes"
     :remove-test-id="`remove-${draft.id}`"
-    :remove-label="`Remove item ${draft.name}`"
+    :remove-label="tr('ui.removeItemValue1', { value1: draft.name })"
     :locked="locked"
     :open="open"
-    :edit-label="draft.itemType === 'weapon' ? `Edit ${draft.name}, weapon` : undefined"
-    :remove-description="`Remove ${draft.name} from this character?`"
+    :edit-label="
+      draft.itemType === 'weapon' ? tr('ui.editValue1Weapon', { value1: draft.name }) : undefined
+    "
+    :remove-description="tr('ui.removeValue1FromThisCharacter', { value1: draft.name })"
     @update:open="emit('update:open', $event)"
     @remove="emit('remove')"
   >
@@ -64,25 +67,26 @@ const equipped = computed(() => {
         class="equipment-status"
         :class="equipped ? 'text-primary' : 'text-muted'"
       >
-        <EquipmentIcon kind="equipped" />{{ equipped ? "Equipped" : "Not equipped" }}
+        <EquipmentIcon kind="equipped" />{{ equipped ? tr("ui.equipped") : tr("ui.notEquipped") }}
       </span>
     </template>
     <template v-if="draft.price !== null" #trailing>
-      <ZenitIcon /> {{ draft.price }} <span class="sr-only">zenits</span>
+      <ZenitIcon /> {{ draft.price }} <span class="sr-only">{{ tr("ui.zenits") }}</span>
     </template>
     <template #title
       ><label class="editor-name"
-        ><span class="sr-only">Item name</span
+        ><span class="sr-only">{{ tr("ui.itemName") }}</span
         ><input
           v-model="itemName"
           maxlength="100"
-          aria-label="Item name"
+          :aria-label="tr('ui.itemName')"
           data-testid="equipment-name"
           @blur="typingName = null" /></label
     ></template>
     <div class="entry-details">
       <EntryNotesField v-model="draft.notes" :name="draft.name" /><label
-        >Price (ZNT)<input
+        >{{ tr("ui.priceZnt")
+        }}<input
           :value="draft.price"
           @input="
             draft.price =
@@ -90,7 +94,7 @@ const equipped = computed(() => {
                 ? null
                 : ($event.target as HTMLInputElement).valueAsNumber
           "
-          :aria-label="`Price for ${draft.name}`"
+          :aria-label="tr('ui.priceForValue1', { value1: draft.name })"
           type="number"
           min="0"
           placeholder="—"

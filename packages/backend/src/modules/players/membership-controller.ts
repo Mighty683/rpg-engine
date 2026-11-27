@@ -9,7 +9,6 @@ const deny = (code: string) =>
   new RequestError(code === "forbidden" ? 403 : code === "stale_revision" ? 409 : 404, {
     error: {
       code,
-      message: code === "stale_revision" ? "Revision is stale." : "Resource unavailable.",
     },
   });
 const param = (value: string | string[]) => (Array.isArray(value) ? value[0]! : value);

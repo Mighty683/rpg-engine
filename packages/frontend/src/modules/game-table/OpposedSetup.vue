@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type { OpponentDraft } from "./types";
 import DicePoolEditor from "./DicePoolEditor.vue";
 import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
@@ -34,9 +35,9 @@ const opponent = defineModel<OpponentDraft>({ required: true });
         v-for="(size, index) in friendlyDice"
         :key="index"
         class="die-tile"
-        :aria-label="`Friendly d${size}`"
+        :aria-label="tr('ui.friendlyDValue1', { value1: size })"
       >
-        <DieIcon :sides="size" /><span>d{{ size }}</span>
+        <DieIcon :sides="size" /><span>{{ tr("ui.dValue1", { value1: size }) }}</span>
       </span>
     </template>
   </DicePoolEditor>

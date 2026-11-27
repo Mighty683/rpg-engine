@@ -138,7 +138,7 @@ test("a pending roll cannot be submitted twice, and an uncertain response refres
 
 test("a stale character roll closes and a new roll uses the refreshed revision", async () => {
   const table = await mountTable(async () =>
-    Response.json({ error: { code: "stale_revision", message: "Sheet changed" } }, { status: 409 }),
+    Response.json({ error: { code: "ERR01" } }, { status: 409 }),
   );
   try {
     await page.getByTestId("roll-attribute-DEX").click();

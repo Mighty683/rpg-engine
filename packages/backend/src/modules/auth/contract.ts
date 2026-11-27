@@ -14,9 +14,9 @@ export function validateCredentials(input: unknown): CredentialsValidation {
   const fields: Record<string, string> = {};
   const checked = checkSchema(validate, { username, password }, "credentials");
   if (!checked.success && checked.issues.some((issue) => issue.field === "username"))
-    fields.username = "Use 3–32 letters, numbers, dots, underscores, or hyphens.";
+    fields.username = "username_format";
   if (password.length < 8 || Buffer.byteLength(password, "utf8") > 1024)
-    fields.password = "Use at least 8 characters and at most 1024 bytes.";
+    fields.password = "password_length";
   return { username, password, fields };
 }
 

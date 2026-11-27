@@ -44,7 +44,7 @@ export async function resolveNpcThrow(
       );
     if (!row) throw fail("not_found");
     if (row.setup.type !== setup.type || row.setup.npcId !== setup.npcId)
-      throw fail("validation", "A reroll keeps the original NPC and roll type", "setup");
+      throw fail("validation", "a_reroll_keeps_the_original_npc_and_roll", "setup");
     previous = row.setup;
   }
   const baseDice = { DEX: npc.dexDie, INS: npc.insDie, MIG: npc.migDie, WLP: npc.wlpDie } as Record<
@@ -58,7 +58,7 @@ export async function resolveNpcThrow(
     const saved = await reader.attack(npc.id, setup.attackId);
     if (!saved) throw fail("not_found");
     if (previous && previous.attack?.id !== setup.attackId)
-      throw fail("validation", "A reroll keeps the original attack", "attackId");
+      throw fail("validation", "a_reroll_keeps_the_original_attack", "attackId");
     attack = previous?.attack ?? {
       id: saved.id,
       name: saved.name,

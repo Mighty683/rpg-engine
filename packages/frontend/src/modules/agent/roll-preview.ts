@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 import type { PartyCharacter } from "../game-table/types";
 import type { AgentAction } from "./types";
 export function rollPreview(
@@ -21,14 +22,16 @@ export function rollPreview(
     dice.join(" + ") + (modifier ? " " + (modifier > 0 ? "+" : "−") + Math.abs(modifier) : "");
   const opponent =
     "redDice" in setup && setup.redDice.length
-      ? " vs " +
+      ? " " +
+        tr("ui.vs") +
+        " " +
         setup.redDice.map((d) => "d" + d).join(" + ") +
         (setup.redModifier
           ? " " + (setup.redModifier > 0 ? "+" : "−") + Math.abs(setup.redModifier)
           : "")
       : "";
   return {
-    name: [actor?.name ?? (id === "gm" ? "GM" : "Roll"), weapon?.name, setup.note]
+    name: [actor?.name ?? (id === "gm" ? tr("ui.gm") : tr("ui.roll")), weapon?.name, setup.note]
       .filter(Boolean)
       .join(" · "),
     formula: formula + opponent,

@@ -29,50 +29,38 @@ describe("request schema compatibility", () => {
     const game = `/games/${fixture.ids.game}`;
     const before = await persisted();
     const cases: [string, string, unknown, number, string][] = [
-      ["/games", "POST", [], 400, "bad_request"],
-      ["/games", "POST", { name: "", systemId: "unknown" }, 422, "validation"],
-      [`${game}/characters`, "POST", { id: "bad", name: "Hero" }, 400, "bad_request"],
+      ["/games", "POST", [], 400, "ERR80"],
+      ["/games", "POST", { name: "", systemId: "unknown" }, 422, "ERR01"],
+      [`${game}/characters`, "POST", { id: "bad", name: "Hero" }, 400, "ERR80"],
       [
         `${game}/characters/${fixture.ids.gmCharacter}`,
         "PATCH",
         { expectedRevision: "0", changes: {} },
         400,
-        "bad_request",
+        "ERR80",
       ],
       [
         `${game}/npcs`,
         "POST",
         { id: randomUUID(), npc: {}, gmAccountId: fixture.ids.outsider },
         400,
-        "bad_request",
+        "ERR80",
       ],
-      [
-        `${game}/npcs`,
-        "POST",
-        { id: randomUUID(), npc: { name: "Incomplete" } },
-        422,
-        "validation",
-      ],
-      [
-        `${game}/invitations`,
-        "POST",
-        { kind: "character", characterId: "bad" },
-        400,
-        "bad_request",
-      ],
+      [`${game}/npcs`, "POST", { id: randomUUID(), npc: { name: "Incomplete" } }, 422, "ERR84"],
+      [`${game}/invitations`, "POST", { kind: "character", characterId: "bad" }, 400, "ERR80"],
       [
         `${game}/members/${fixture.ids.member}/active-character`,
         "PUT",
         { expectedRevision: "0", characterId: null },
         400,
-        "bad_request",
+        "ERR80",
       ],
       [
         `${game}/throws`,
         "POST",
         { setup: {}, authorAccountId: fixture.ids.outsider },
         422,
-        "validation",
+        "ERR84",
       ],
     ];
     for (const [path, method, body, status, code] of cases) {
@@ -92,7 +80,7 @@ describe("request schema compatibility", () => {
       password: {},
     });
     expect(login.status).toBe(401);
-    expect(await login.json()).toMatchObject({ error: { code: "invalid_credentials" } });
+    expect(await login.json()).toMatchObject({ error: { code: "ERR01" } });
     const invalid = await fixture.request("/auth/register", null, "POST", {
       username: "!",
       password: "short",
@@ -100,10 +88,10 @@ describe("request schema compatibility", () => {
     expect(invalid.status).toBe(422);
     expect(await invalid.json()).toMatchObject({
       error: {
-        code: "validation",
+        code: "ERR84",
         fields: {
-          username: "Use 3–32 letters, numbers, dots, underscores, or hyphens.",
-          password: "Use at least 8 characters and at most 1024 bytes.",
+          username: "ERR40",
+          password: "ERR41",
         },
       },
     });

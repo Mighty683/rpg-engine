@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import { computed, ref } from "vue";
 import { newUuid } from "../../../../shared/uuid";
 import ClassCard from "./ClassCard.vue";
@@ -64,17 +65,21 @@ function remove(id: string) {
     </li>
   </ul>
   <p v-if="!entries.length && kind !== 'skill'" class="text-muted">
-    No {{ kind === "class" ? "classes" : `${kind}s` }} yet.
+    {{ tr(kind === "class" ? "ui.noClassesYet" : "ui.noItems") }}
   </p>
   <form v-if="!existingOnly && !atLimit" class="entry-add" @submit.prevent="add">
-    <label class="sr-only" :for="`${kind}-name`">{{ kind }} name</label
-    ><input
-      :id="`${kind}-name`"
-      v-model="name"
-      :placeholder="`${kind === 'item' ? 'Item' : kind === 'class' ? 'Class' : 'Skill'} name`"
-    /><UButton type="submit" size="sm" color="neutral" variant="outline">Add</UButton>
+    <label class="sr-only" :for="`${kind}-name`">{{ tr(`ui.${kind}Name`) }}</label
+    ><input :id="`${kind}-name`" v-model="name" :placeholder="tr(`ui.${kind}Name`)" /><UButton
+      type="submit"
+      size="sm"
+      color="neutral"
+      variant="outline"
+      >{{ tr("ui.add") }}</UButton
+    >
   </form>
-  <p v-else-if="!existingOnly" class="text-muted">Maximum {{ limit }} classes.</p>
+  <p v-else-if="!existingOnly" class="text-muted">
+    {{ tr("ui.maximumValue1Classes", { value1: limit }) }}
+  </p>
 </template>
 
 <style scoped>

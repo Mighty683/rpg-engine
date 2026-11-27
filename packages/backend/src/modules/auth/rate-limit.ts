@@ -66,7 +66,7 @@ export function authenticationLimiters(stores: {
     windowMs: 15 * 60_000,
     standardHeaders: "draft-8" as const,
     legacyHeaders: false,
-    message: { error: { code: "rate_limited", message: "Too many attempts. Try again later." } },
+    message: { error: { code: "ERR86" } },
   };
   return {
     loginAddress: rateLimit({

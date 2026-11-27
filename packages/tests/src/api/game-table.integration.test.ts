@@ -368,7 +368,7 @@ describe("API game table throws", () => {
     expect((await submit("player", ids.game, freeSetup("gm"))).status).toBe(403);
     const notOwnActive = await submit("player", ids.game, freeSetup(ids.gmCharacter));
     expect(notOwnActive.status).toBe(409);
-    expect((await notOwnActive.json()).error.code).toBe("no_active_character");
+    expect((await notOwnActive.json()).error.code).toBe("ERR02");
     expect((await submit("player", ids.game, attributeSetup(ids.gmCharacter, 0))).status).toBe(403);
     expect((await submit("player", ids.game, attributeSetup(ids.foreignCharacter, 0))).status).toBe(
       404,
@@ -386,13 +386,13 @@ describe("API game table throws", () => {
     const before = await readPersistedState(fixture);
     const missing = await submit("player", ids.game, freeSetup(ids.playerCharacter));
     expect(missing.status).toBe(409);
-    expect((await missing.json()).error.code).toBe("no_active_character");
+    expect((await missing.json()).error.code).toBe("ERR02");
     expect(await throwCount(ids.game)).toBe(0);
     expect(await readPersistedState(fixture)).toEqual(before);
 
     const inactiveForGm = await submit("gm", ids.game, freeSetup(ids.playerCharacter));
     expect(inactiveForGm.status).toBe(409);
-    expect((await inactiveForGm.json()).error.code).toBe("inactive_character");
+    expect((await inactiveForGm.json()).error.code).toBe("ERR03");
 
     const select = await request(`/games/${ids.game}/active-character`, "player", "PUT", {
       characterId: ids.playerCharacter,
@@ -412,7 +412,7 @@ describe("API game table throws", () => {
     const { ids, request } = fixture;
     const stale = await submit("gm", ids.game, attributeSetup(ids.gmCharacter, 7));
     expect(stale.status).toBe(409);
-    expect((await stale.json()).error.code).toBe("stale_revision");
+    expect((await stale.json()).error.code).toBe("ERR01");
     expect(await throwCount(ids.game)).toBe(0);
 
     expect(
@@ -425,7 +425,7 @@ describe("API game table throws", () => {
     ).toBe(200);
     const afterSheetChange = await submit("gm", ids.game, attributeSetup(ids.gmCharacter, 0));
     expect(afterSheetChange.status).toBe(409);
-    expect((await afterSheetChange.json()).error.code).toBe("stale_revision");
+    expect((await afterSheetChange.json()).error.code).toBe("ERR01");
     expect(await throwCount(ids.game)).toBe(0);
     const fresh = await createThrow("gm", ids.game, attributeSetup(ids.gmCharacter, 1));
     expect(fresh.private).toBe(false);
@@ -440,7 +440,7 @@ describe("API game table throws", () => {
     const stateBefore = await readPersistedState(fixture);
     const deactivated = await submit("gm", ids.game, attributeSetup(ids.gmCharacter, 1));
     expect(deactivated.status).toBe(409);
-    expect((await deactivated.json()).error.code).toBe("inactive_character");
+    expect((await deactivated.json()).error.code).toBe("ERR03");
     expect(await throwCount(ids.game)).toBe(1);
     expect(await readPersistedState(fixture)).toEqual(stateBefore);
     expect(
@@ -463,10 +463,10 @@ describe("API game table throws", () => {
     ).toBe(200);
     const reassigned = await submit("player", ids.game, freeSetup(ids.playerCharacter));
     expect(reassigned.status).toBe(409);
-    expect((await reassigned.json()).error.code).toBe("no_active_character");
+    expect((await reassigned.json()).error.code).toBe("ERR02");
     const gmOnReassigned = await submit("gm", ids.game, freeSetup(ids.playerCharacter));
     expect(gmOnReassigned.status).toBe(409);
-    expect((await gmOnReassigned.json()).error.code).toBe("inactive_character");
+    expect((await gmOnReassigned.json()).error.code).toBe("ERR03");
     expect(await throwCount(ids.game)).toBe(1);
 
     expect(
@@ -533,7 +533,7 @@ describe("API game table throws", () => {
       ).toBe(status);
     }
     const validationError = await submit("gm", ids.game, freeSetup("gm", { faces: [1, 1] }));
-    expect((await validationError.json()).error.code).toBe("validation");
+    expect((await validationError.json()).error.code).toBe("ERR84");
 
     const singleDie = await createThrow("gm", ids.game, freeSetup("gm", { dice: [8] }));
     expect(singleDie.kind).toBe("free");

@@ -13,17 +13,15 @@ import {
 
 function requestError(error: unknown): never {
   const e = error as { code?: string; message?: string; field?: string };
-  if (e.code === "not_found")
-    throw new RequestError(404, { error: { code: e.code, message: "Character not found." } });
-  if (e.code === "forbidden")
-    throw new RequestError(403, { error: { code: e.code, message: "Action not permitted." } });
+  if (e.code === "not_found") throw new RequestError(404, { error: { code: e.code } });
+  if (e.code === "forbidden") throw new RequestError(403, { error: { code: e.code } });
   if (e.code === "stale_revision" || e.code === "id_conflict")
     throw new RequestError(409, {
-      error: { code: e.code, message: "The request conflicts with current state." },
+      error: { code: e.code },
     });
   if (e.code === "validation")
     throw new RequestError(422, {
-      error: { code: e.code, message: e.message, fields: { [e.field ?? "sheet"]: e.message } },
+      error: { code: e.code, fields: { [e.field ?? "sheet"]: e.message } },
     });
   throw error;
 }
@@ -39,8 +37,7 @@ export function charactersController(services: {
       const actor = await services.auth.requireActor(request);
       const gameId = routeId(request.params.gameId);
       const access = await services.games.gameAccess(actor, gameId);
-      if (!access)
-        throw new RequestError(404, { error: { code: "not_found", message: "Game not found." } });
+      if (!access) throw new RequestError(404, { error: { code: "not_found" } });
       if (request.params.characterId && request.method !== "GET") {
         const characterId = routeId(request.params.characterId);
         try {
@@ -53,7 +50,7 @@ export function charactersController(services: {
             request.path.endsWith("/active") || request.path.endsWith("/controller");
           if ((isGmAction && access.role !== "GM") || (!isGmAction && !character.canEdit)) {
             throw new RequestError(403, {
-              error: { code: "forbidden", message: "Action not permitted." },
+              error: { code: "forbidden" },
             });
           }
         } catch (error) {

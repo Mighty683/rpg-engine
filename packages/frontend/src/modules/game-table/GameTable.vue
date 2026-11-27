@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type {
   Attribute,
   PartyCharacter,
@@ -61,19 +62,24 @@ const route = useRoute();
 const router = useRouter();
 const npcManager = ref<InstanceType<typeof NpcManager>>();
 function saveReviewedNpc(id: string, revision: number, next: NpcWrite) {
-  if (!npcManager.value) throw new Error("NPC editor unavailable");
+  if (!npcManager.value) throw new Error(tr("ui.npcEditorUnavailable"));
   return npcManager.value.saveReviewed(id, revision, next);
 }
 const edgeTabs = computed(() => [
   ...(props.panelTab ? [props.panelTab] : []),
   {
     id: "sheets",
-    label: "Character sheets",
+    label: tr("ui.characterSheets"),
     color: "primary" as const,
     testId: "open-character-sheets",
   },
-  { id: "npcs", label: "NPCs", color: "info" as const, testId: "edge-tab-npcs" },
-  { id: "history", label: "Throw history", color: "warning" as const, testId: "edge-tab-history" },
+  { id: "npcs", label: tr("ui.npcs"), color: "info" as const, testId: "edge-tab-npcs" },
+  {
+    id: "history",
+    label: tr("ui.throwHistory"),
+    color: "warning" as const,
+    testId: "edge-tab-history",
+  },
 ]);
 function validPanel(panel: unknown) {
   return typeof panel === "string" &&
@@ -208,7 +214,7 @@ const playerActiveCharacter = computed(() => {
 });
 
 const rollAsOptions = computed(() => [
-  { label: "GM", value: "gm" },
+  { label: tr("ui.gm"), value: "gm" },
   ...party.value.map((member) => ({ label: member.name, value: member.id })),
   ...npcRecords.value.map((npc) => ({ label: npc.name, value: npc.id })),
 ]);
@@ -259,7 +265,7 @@ function openWeaponRoll(character: PartyCharacter, weaponId: string) {
 
 function needsWeaponSetup(character: PartyCharacter, weaponId: string) {
   const weapon = character.weapons.find((entry) => entry.id === weaponId);
-  weaponHint.value = { character, weaponName: weapon?.name ?? "this weapon" };
+  weaponHint.value = { character, weaponName: weapon?.name ?? tr("ui.thisWeapon") };
 }
 
 function openReroll(entry: ThrowRecord) {
@@ -270,13 +276,13 @@ function openReroll(entry: ThrowRecord) {
     const setup = entry.setup;
     const npc = npcRecords.value.find((item) => item.id === setup.npcId);
     if (!npc || props.role !== "GM") {
-      toast.add({ title: "This NPC roll cannot be rerolled.", color: "error" });
+      toast.add({ title: tr("ui.thisNpcRollCannotBeRerolled"), color: "error" });
       return;
     }
     if (setup.type === "npc-attack") {
       const attack = npc.attacks.find((item) => item.id === setup.attack?.id);
       if (!attack) {
-        toast.add({ title: "The original NPC attack is no longer available.", color: "error" });
+        toast.add({ title: tr("ui.theOriginalNpcAttackIsNoLongerAvailable"), color: "error" });
         return;
       }
       openNpcAttack(npc, { ...attack, range: attack.reach });
@@ -306,8 +312,7 @@ function openReroll(entry: ThrowRecord) {
   if (entry.setup.type === "weapon" && entry.equipmentId) {
     if (!character) {
       toast.add({
-        title:
-          "The original character is no longer active, so this weapon roll cannot be rerolled. Make a free roll instead.",
+        title: tr("ui.theOriginalCharacterIsNoLongerActiveSoThis"),
         color: "error",
       });
       return;
@@ -319,7 +324,7 @@ function openReroll(entry: ThrowRecord) {
       mode: "weapon",
       character,
       weaponId: entry.equipmentId,
-      weaponName: entry.equipmentName ?? "Weapon",
+      weaponName: entry.equipmentName ?? tr("ui.weapon"),
       weaponBonus: entry.setup.weaponBonus ?? 0,
       first: entry.setup.accuracyDice?.[0] ?? "DEX",
       second: entry.setup.accuracyDice?.[1] ?? null,
@@ -335,8 +340,7 @@ function openReroll(entry: ThrowRecord) {
   if (entry.setup.type === "attribute") {
     if (!character) {
       toast.add({
-        title:
-          "The original character is no longer active, so this roll cannot be rerolled. Make a free roll instead.",
+        title: tr("ui.theOriginalCharacterIsNoLongerActiveSoThis2"),
         color: "error",
       });
       return;
@@ -413,7 +417,7 @@ function rollSetup(draft: RollDraft): ThrowSetup | null {
   const modifier = wholeNumber(draft.modifier);
   const redModifier = wholeNumber(rollOpponent.value.modifier);
   if (modifier === null || redModifier === null) {
-    rollError.value = "Enter a whole number for the modifier.";
+    rollError.value = tr("ui.enterAWholeNumberForTheModifier");
     return null;
   }
   if (draft.mode === "weapon" && draft.weaponId) {
@@ -473,19 +477,19 @@ async function submitRoll() {
     if (!status || status >= 500) {
       rollDraft.value = null;
       toast.add({
-        title: "Could not confirm the roll. Check history before rolling again.",
+        title: tr("ui.couldNotConfirmTheRollCheckHistoryBeforeRolling"),
         color: "error",
       });
     } else if (payload?.code === "stale_revision" || payload?.code === "inactive_character") {
       rollDraft.value = null;
       void partyQuery.refetch();
       toast.add({
-        title: "The character changed. Open the roll again to use the latest sheet.",
+        title: tr("ui.theCharacterChangedOpenTheRollAgainToUse"),
         color: "error",
       });
     } else
       toast.add({
-        title: payload?.message ?? "The roll could not be submitted. Try again.",
+        title: payload?.message ?? tr("ui.theRollCouldNotBeSubmittedTryAgain"),
         color: "error",
       });
   }
@@ -495,11 +499,11 @@ function freeSetup(draft: FreeDraft): ThrowSetup | null {
   const modifier = wholeNumber(draft.modifier);
   const redModifier = wholeNumber(freeOpponent.value.modifier);
   if (draft.dice.length < 1 || draft.dice.length > 2) {
-    freeError.value = "Choose one or two friendly dice.";
+    freeError.value = tr("ui.chooseOneOrTwoFriendlyDice");
     return null;
   }
   if (modifier === null || redModifier === null) {
-    freeError.value = "Enter a whole number for the modifier.";
+    freeError.value = tr("ui.enterAWholeNumberForTheModifier");
     return null;
   }
   const redDice = freeOpponent.value.dice;
@@ -538,12 +542,12 @@ async function submitFreeRoll() {
     if (!status || status >= 500) {
       freeDraft.value = null;
       toast.add({
-        title: "Could not confirm the roll. Check history before rolling again.",
+        title: tr("ui.couldNotConfirmTheRollCheckHistoryBeforeRolling"),
         color: "error",
       });
     } else {
       toast.add({
-        title: payload?.message ?? "The roll could not be submitted. Try again.",
+        title: payload?.message ?? tr("ui.theRollCouldNotBeSubmittedTryAgain"),
         color: "error",
       });
       if (payload?.code === "no_active_character" || payload?.code === "inactive_character")
@@ -556,7 +560,7 @@ async function removeEntry(entry: ThrowRecord) {
   try {
     await removeThrow.mutateAsync(entry.id);
   } catch {
-    toast.add({ title: "Could not remove the throw. Try again.", color: "error" });
+    toast.add({ title: tr("ui.couldNotRemoveTheThrowTryAgain"), color: "error" });
   }
 }
 </script>
@@ -613,7 +617,7 @@ async function removeEntry(entry: ThrowRecord) {
         :modal="false"
         :overlay="false"
         :content="{ onInteractOutside: (event: Event) => event.preventDefault() }"
-        :title="customPanelOpen ? panelTab?.label : 'Throw history'"
+        :title="customPanelOpen ? panelTab?.label : tr('ui.throwHistory')"
         @update:open="
           (open: boolean) => {
             if (!open && (historyTab === 'history' || customPanelOpen)) historyTab = null;
@@ -678,7 +682,7 @@ async function removeEntry(entry: ThrowRecord) {
             class="ml-auto"
             color="neutral"
             variant="ghost"
-            aria-label="Close Agent chat"
+            :aria-label="tr('ui.closeAgentChat')"
             data-testid="agent-chat-close"
           >
             <span aria-hidden="true">×</span>

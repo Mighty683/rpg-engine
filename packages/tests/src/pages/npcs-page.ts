@@ -110,7 +110,7 @@ export class NpcsPage {
   async failNameChange(name: string) {
     await this.page.route("**/api/games/*/npcs/*", async (route) => {
       if (route.request().method() === "PUT")
-        await route.fulfill({ status: 409, json: { error: { code: "stale_revision" } } });
+        await route.fulfill({ status: 409, json: { error: { code: "ERR01" } } });
       else await route.continue();
     });
     await this.page.getByTestId("npc-name").fill(name);

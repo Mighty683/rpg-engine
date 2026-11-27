@@ -139,7 +139,7 @@ describe.skipIf(!url)("Game notes API", () => {
       (await fixture.request(`${path}/${entryId}`, "invalid-session", "PATCH", patched)).status,
     ).toBe(401);
 
-    const hidden = { error: { code: "not_found", message: "Game not found." } };
+    const hidden = { error: { code: "ERR01" } };
     for (const gamePath of [path, `${path}/${entryId}`]) {
       const outsider = await fixture.request(gamePath, "outsider");
       expect(outsider.status).toBe(404);
@@ -156,7 +156,7 @@ describe.skipIf(!url)("Game notes API", () => {
       404,
     );
 
-    const forbidden = { error: { code: "forbidden", message: "Action not permitted." } };
+    const forbidden = { error: { code: "ERR82" } };
     for (const gamePath of [path, `${path}/${entryId}`]) {
       const player = await fixture.request(gamePath, "player");
       expect(player.status).toBe(403);
@@ -333,7 +333,7 @@ describe.skipIf(!url)("Game notes API", () => {
       content: entry.content,
     });
     expect(repeat.status).toBe(409);
-    expect(await repeat.json()).toMatchObject({ error: { code: "id_conflict" } });
+    expect(await repeat.json()).toMatchObject({ error: { code: "ERR01" } });
     const conflicting = await fixture.request(path, "gm", "POST", {
       id,
       title: "A different story",
@@ -467,7 +467,7 @@ describe.skipIf(!url)("Game notes API", () => {
       const expected = badRequests.find(([candidate]) => candidate === body) ? 400 : 422;
       expect(response.status, name).toBe(expected);
       expect(await response.json()).toMatchObject({
-        error: { code: expected === 400 ? "bad_request" : "validation" },
+        error: { code: expected === 400 ? "ERR80" : "ERR84" },
       });
     }
     const oversized = await fixture.request(path, "gm", "POST", {
@@ -476,7 +476,7 @@ describe.skipIf(!url)("Game notes API", () => {
       content: { ops: [{ insert: "x".repeat(97 * 1024) }] },
     });
     expect(oversized.status).toBe(413);
-    expect(await oversized.json()).toMatchObject({ error: { code: "payload_too_large" } });
+    expect(await oversized.json()).toMatchObject({ error: { code: "ERR87" } });
     expect(await noteRows()).toEqual(beforeRejected);
   });
 
@@ -529,7 +529,7 @@ describe.skipIf(!url)("Game notes API", () => {
       changes: { title: "Should not apply" },
     });
     expect(stale.status).toBe(409);
-    expect(await stale.json()).toMatchObject({ error: { code: "stale_revision" } });
+    expect(await stale.json()).toMatchObject({ error: { code: "ERR01" } });
     expect(await fullRow(entry.id)).toEqual(staleBefore);
 
     const noOp = await fixture.request(`${path}/${entry.id}`, "gm", "PATCH", {
@@ -687,7 +687,7 @@ describe.skipIf(!url)("Game notes API", () => {
       body: patchBody,
     });
     expect(noCsrf.status).toBe(403);
-    expect(await noCsrf.json()).toMatchObject({ error: { code: "invalid_csrf" } });
+    expect(await noCsrf.json()).toMatchObject({ error: { code: "ERR85" } });
     const playerBound = await csrfHeaders(fixture.origin, `rpg_session=${fixture.tokens.player}`);
     const mismatched = await fetch(target, {
       method: "PATCH",
@@ -700,7 +700,7 @@ describe.skipIf(!url)("Game notes API", () => {
       body: patchBody,
     });
     expect(mismatched.status).toBe(403);
-    expect(await mismatched.json()).toMatchObject({ error: { code: "invalid_csrf" } });
+    expect(await mismatched.json()).toMatchObject({ error: { code: "ERR85" } });
     for (const badOrigin of [null, "https://evil.example"]) {
       const hostile = await fetch(target, {
         method: "PATCH",
@@ -1028,7 +1028,7 @@ describe.skipIf(!url)("Game notes API", () => {
       complete.mockReset().mockResolvedValueOnce(invalid).mockResolvedValue(finish());
       const response = await sendTurn("Read the ledger");
       expect(response.status, JSON.stringify(invalid.calls[0])).toBe(502);
-      expect(await response.json()).toMatchObject({ error: { code: "agent_failed" } });
+      expect(await response.json()).toMatchObject({ error: { code: "ERR05" } });
       expect(
         (await fixture.pool.query("SELECT count(*) FROM agent_turns WHERE game_id=$1", [turnGame]))
           .rows[0].count,
@@ -1041,7 +1041,7 @@ describe.skipIf(!url)("Game notes API", () => {
     complete.mockReset().mockResolvedValue(tool("search_notes", { query: "ledger" }));
     const refused = await sendTurn("Read the ledger", "player");
     expect(refused.status).toBe(403);
-    expect(await refused.json()).toMatchObject({ error: { code: "forbidden" } });
+    expect(await refused.json()).toMatchObject({ error: { code: "ERR82" } });
     expect(
       (await fixture.pool.query("SELECT count(*) FROM agent_turns WHERE game_id=$1", [turnGame]))
         .rows[0].count,

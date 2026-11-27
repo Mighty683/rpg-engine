@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import type { GameCharacterSummary } from "../characters/types";
 import type { GameMember } from "./types";
@@ -29,7 +30,7 @@ const groups = computed(() => {
   }
   return Array.from(groups, ([id, characters]) => ({
     id,
-    label: id === "gm" ? "GM characters" : (characters[0]?.controllerName ?? "Player"),
+    label: id === "gm" ? tr("ui.gmCharacters") : (characters[0]?.controllerName ?? "Player"),
     own: props.role === "GM" ? id === "gm" : characters.some((character) => character.canEdit),
     characters,
   })).sort((a, b) => Number(b.own) - Number(a.own) || a.label.localeCompare(b.label));
@@ -37,9 +38,9 @@ const groups = computed(() => {
 </script>
 
 <template>
-  <ContentState v-if="!groups.length" kind="empty"
-    >There are no characters to manage yet.</ContentState
-  >
+  <ContentState v-if="!groups.length" kind="empty">{{
+    tr("ui.thereAreNoCharactersToManageYet")
+  }}</ContentState>
   <div v-else class="space-y-medium">
     <details
       v-for="group in groups"

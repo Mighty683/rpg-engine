@@ -1,4 +1,5 @@
 import { agentTurnInputSchema } from "./modules/agent/schema.ts";
+import { operationErrors } from "../../contracts/http-errors.ts";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import { parse } from "yaml";
@@ -17,6 +18,7 @@ import { systems } from "./modules/rpg-systems/catalog.ts";
 
 type Operation = {
   operationId?: string;
+  "x-error-codes"?: Record<string, string>;
   requestBody?: { required?: boolean; content: { "application/json": { schema: Schema } } };
   parameters?: { name: string; schema: Schema }[];
 };
@@ -33,6 +35,19 @@ const resolve = (ref: string): Schema => {
   return result;
 };
 const schema = (name: string) => resolve(`#/components/schemas/${name}`);
+it("assigns an unambiguous error namespace to every documented HTTP operation", () => {
+  for (const [path, methods] of Object.entries(document.paths)) {
+    for (const [method, operation] of Object.entries(methods)) {
+      if (!operation.operationId) continue;
+      const codes = operationErrors(method, path.replace(/\{[^}]+\}/g, "example"));
+      expect(operation["x-error-codes"], operation.operationId).toEqual(codes);
+      expect(codes.ERR01, operation.operationId).toBeTruthy();
+      expect(new Set(Object.values(codes)).size, operation.operationId).toBe(
+        Object.keys(codes).length,
+      );
+    }
+  }
+});
 function operation(id: string): Operation {
   const result = Object.values(document.paths)
     .flatMap((path) => Object.values(path))

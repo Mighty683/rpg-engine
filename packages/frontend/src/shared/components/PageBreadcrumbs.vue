@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../i18n";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useGameQuery } from "../../modules/games/hooks";
@@ -11,7 +12,9 @@ const items = computed(() =>
     const crumb = meta.breadcrumb;
     if (!crumb) return [];
     const label =
-      crumb.route === "game-table" ? (game.data.value?.game.name ?? crumb.label) : crumb.label;
+      crumb.route === "game-table"
+        ? (game.data.value?.game.name ?? tr(crumb.labelKey))
+        : tr(crumb.labelKey);
     return [
       {
         label,
@@ -32,7 +35,7 @@ const items = computed(() =>
 </script>
 
 <template>
-  <nav v-if="items.length" aria-label="Breadcrumb" class="mx-auto mb-small max-w-6xl">
+  <nav v-if="items.length" :aria-label="tr('ui.breadcrumb')" class="mx-auto mb-small max-w-6xl">
     <ol class="flex flex-wrap items-center gap-small text-small text-muted">
       <li v-for="(item, index) in items" :key="index" class="flex items-center gap-small">
         <UIcon v-if="index > 0" name="i-lucide-chevron-right" aria-hidden="true" />

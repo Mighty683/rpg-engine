@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
@@ -32,7 +33,7 @@ const invitations = useQuery({
   queryKey: key,
   queryFn: () => invitationApi.listGameInvitations(props.gameId),
 });
-useQueryErrorToast(invitations, "Could not load invitations. Try again.");
+useQueryErrorToast(invitations, tr("ui.couldNotLoadInvitationsTryAgain"));
 const rows = computed(() => invitations.data.value?.invitations ?? []);
 const availableCharacters = computed(() =>
   props.characters
@@ -54,11 +55,11 @@ async function perform(action: () => Promise<unknown>, success: string) {
     const status = (cause as { status?: number })?.status;
     const description =
       status === 403
-        ? "You do not have permission to make this change."
+        ? tr("ui.youDoNotHavePermissionToMakeThisChange")
         : status === 404 || status === 409
-          ? "The game or invitation changed. Refresh the page and try again."
-          : "The change could not be confirmed. Refresh the page before trying again.";
-    toast.add({ title: "Could not update game settings", description, color: "error" });
+          ? tr("ui.theGameOrInvitationChangedRefreshThePageAnd")
+          : tr("ui.theChangeCouldNotBeConfirmedRefreshThePage");
+    toast.add({ title: tr("ui.couldNotUpdateGameSettings"), description, color: "error" });
     void client.invalidateQueries({ queryKey: key.value });
   } finally {
     pending.value = false;
@@ -66,7 +67,7 @@ async function perform(action: () => Promise<unknown>, success: string) {
 }
 function create(kind: "game" | "character") {
   if (kind === "character" && !selectedCharacterId.value) {
-    toast.add({ title: "Select a character to create an invitation link.", color: "error" });
+    toast.add({ title: tr("ui.selectACharacterToCreateAnInvitationLink"), color: "error" });
     return;
   }
   void perform(
@@ -75,29 +76,29 @@ function create(kind: "game" | "character") {
         kind,
         ...(kind === "character" ? { characterId: selectedCharacterId.value } : {}),
       }),
-    "Invitation created.",
+    tr("ui.invitationCreated"),
   );
 }
 function toggle(invitation: GameInvitation) {
   void perform(
     () => invitationApi.updateGameInvitation(props.gameId, invitation.id, !invitation.enabled),
-    "Invitation updated.",
+    tr("ui.invitationUpdated"),
   );
 }
 function rotate(invitation: GameInvitation) {
   void perform(
     () => invitationApi.rotateGameInvitation(props.gameId, invitation.id),
-    "Invitation link replaced.",
+    tr("ui.invitationLinkReplaced"),
   );
 }
 async function copy(invitation: GameInvitation) {
   try {
     await navigator.clipboard.writeText(invitationUrl(invitation));
-    toast.add({ title: "Invitation link copied.", color: "success" });
+    toast.add({ title: tr("ui.invitationLinkCopied"), color: "success" });
   } catch {
     toast.add({
-      title: "Could not copy the link",
-      description: "Select and copy it instead.",
+      title: tr("ui.couldNotCopyTheLink"),
+      description: tr("ui.selectAndCopyItInstead"),
       color: "error",
     });
   }
@@ -108,22 +109,22 @@ function invitationUrl(invitation: GameInvitation) {
 function changeMember(member: GameMember, action: "remove" | "restore") {
   void perform(
     () => api.setGameMembership(props.gameId, member.id, action),
-    action === "remove" ? "Player access removed." : "Player access restored.",
+    action === "remove" ? tr("ui.playerAccessRemoved") : tr("ui.playerAccessRestored"),
   );
   removingMember.value = null;
 }
 function characterName(id: string | null) {
-  return props.characters.find((character) => character.id === id)?.name ?? "Character";
+  return props.characters.find((character) => character.id === id)?.name ?? tr("ui.character");
 }
 </script>
 
 <template>
   <div class="space-y-section">
     <ScreenSection class="space-y-medium p-large">
-      <h2 class="text-section font-semibold">Players</h2>
-      <ContentState v-if="!members.length" kind="empty"
-        >No players have joined this game yet.</ContentState
-      >
+      <h2 class="text-section font-semibold">{{ tr("ui.players") }}</h2>
+      <ContentState v-if="!members.length" kind="empty">{{
+        tr("ui.noPlayersHaveJoinedThisGameYet")
+      }}</ContentState>
       <ul v-else class="space-y-small">
         <PlayerAccessRow
           v-for="member in members"
@@ -137,10 +138,10 @@ function characterName(id: string | null) {
       </ul>
     </ScreenSection>
     <ScreenSection class="space-y-medium p-large">
-      <h2 class="text-section font-semibold">Invitations</h2>
+      <h2 class="text-section font-semibold">{{ tr("ui.invitations") }}</h2>
       <SkeletonRegion
         v-if="invitations.isLoading.value"
-        label="Loading invitations…"
+        :label="tr('ui.loadingInvitations')"
         class="space-y-medium"
       >
         <SkeletonBlock class="h-8 w-32" />
@@ -161,7 +162,7 @@ function characterName(id: string | null) {
           v-if="!rows.some((row) => row.kind === 'game')"
           :disabled="pending"
           @click="create('game')"
-          >Create game link</UButton
+          >{{ tr("ui.createGameLink") }}</UButton
         >
         <ul class="space-y-medium">
           <InvitationLinkCard
@@ -169,8 +170,8 @@ function characterName(id: string | null) {
             :key="invitation.id"
             :title="
               invitation.kind === 'game'
-                ? 'Game link'
-                : `${characterName(invitation.characterId)} character link`
+                ? tr('ui.gameLink')
+                : tr('ui.value1CharacterLink', { value1: characterName(invitation.characterId) })
             "
             :url="invitationUrl(invitation)"
             :enabled="invitation.enabled"
@@ -182,33 +183,34 @@ function characterName(id: string | null) {
         </ul>
         <form class="flex flex-wrap items-end gap-small" @submit.prevent="create('character')">
           <LabeledSelect
-            label="Create character link"
+            :label="tr('ui.createCharacterLink')"
             v-model="selectedCharacterId"
             :items="availableCharacters"
             :disabled="pending || !availableCharacters.length"
-            placeholder="Select character"
+            :placeholder="tr('ui.selectCharacter')"
           />
           <UButton
             type="submit"
             :disabled="pending || !availableCharacters.length"
             :loading="pending"
-            >Create link</UButton
+            >{{ tr("ui.createLink") }}</UButton
           >
         </form>
       </template>
     </ScreenSection>
     <ConfirmDialog
       :open="Boolean(removingMember)"
-      title="Remove player access"
-      confirm-label="Remove access"
+      :title="tr('ui.removePlayerAccess')"
+      :confirm-label="tr('ui.removeAccess')"
       destructive
       :pending="pending"
       @cancel="removingMember = null"
       @confirm="removingMember && changeMember(removingMember, 'remove')"
     >
       <p>
-        Remove {{ removingMember?.name }} from the game? Their characters stay in the game under GM
-        control and become inactive.
+        {{
+          tr("ui.removeValue1FromTheGameTheirCharactersStayIn", { value1: removingMember?.name })
+        }}
       </p>
     </ConfirmDialog>
   </div>

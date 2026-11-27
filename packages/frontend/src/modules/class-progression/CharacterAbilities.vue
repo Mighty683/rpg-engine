@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { computed, ref } from "vue";
 import ProgressActionButton from "../../shared/design-system/base/ProgressActionButton.vue";
 import SegmentedProgress from "../../shared/design-system/base/SegmentedProgress.vue";
@@ -32,24 +33,26 @@ const acquired = computed(() =>
 const currentLevels = computed(() => props.levels ?? props.character.levels);
 const classAllocationAtCap = computed(() => totalRanks(currentLevels.value) >= 50);
 const needsExperience = computed(() => props.character.experience.current < CLASS_LEVEL_EXP_COST);
-const experienceRequired = `You need ${CLASS_LEVEL_EXP_COST} current EXP to add a class level.`;
+const experienceRequired = tr("ui.youNeedValue1CurrentExpToAddAClass", {
+  value1: CLASS_LEVEL_EXP_COST,
+});
 const addClassReason = computed(() => {
-  if (props.saving) return "Wait for the current change to save.";
+  if (props.saving) return tr("ui.waitForTheCurrentChangeToSave");
   if (acquired.value.length >= MAX_CHARACTER_CLASSES)
-    return `A character can have up to ${MAX_CHARACTER_CLASSES} classes.`;
-  if (!props.catalog.length) return "No classes are available in this game.";
-  if (!available.value.length) return "No more classes are available.";
-  if (classAllocationAtCap.value) return "All 50 class levels are assigned.";
+    return tr("ui.aCharacterCanHaveUpToValue1Classes", { value1: MAX_CHARACTER_CLASSES });
+  if (!props.catalog.length) return tr("ui.noClassesAreAvailableInThisGame");
+  if (!available.value.length) return tr("ui.noMoreClassesAreAvailable");
+  if (classAllocationAtCap.value) return tr("ui.all50ClassLevelsAreAssigned");
   if (needsExperience.value) return experienceRequired;
 });
 function increaseReason(entry: ProgressionClass) {
-  if (level(entry) >= 10) return "This class is at level 10.";
-  if (classAllocationAtCap.value) return "All 50 class levels are assigned.";
+  if (level(entry) >= 10) return tr("ui.thisClassIsAtLevel10");
+  if (classAllocationAtCap.value) return tr("ui.all50ClassLevelsAreAssigned");
   if (needsExperience.value) return experienceRequired;
 }
 function decreaseReason(entry: ProgressionClass) {
   if (level(entry) <= assignedRanks(entry, props.character.ranks))
-    return "Lower a skill rank in this class before lowering its level.";
+    return tr("ui.lowerASkillRankInThisClassBeforeLowering");
 }
 function addClass(id: string) {
   if (addClassReason.value || !available.value.some((entry) => entry.id === id)) return;
@@ -65,7 +68,7 @@ function addClass(id: string) {
           expanded ? 'text-section font-semibold' : 'text-label font-bold uppercase text-primary'
         "
       >
-        {{ expanded ? "Classes & skills" : "Classes" }}
+        {{ expanded ? tr("ui.classesSkills") : tr("ui.classes2") }}
       </h2>
     </div>
     <template v-for="entry in acquired" :key="entry.id">
@@ -81,7 +84,7 @@ function addClass(id: string) {
           class="mt-small"
           :value="level(entry)"
           :maximum="10"
-          :label="`${entry.name} level`"
+          :label="tr('ui.namedLevel', { name: entry.name })"
           :data-testid="`class-progress-${entry.id}`"
           :editable="!readOnly"
           :disabled="saving"
@@ -90,7 +93,7 @@ function addClass(id: string) {
           @increase="emit('changeClass', entry.id, 1)"
           @decrease="emit('changeClass', entry.id, -1)"
         />
-        <p v-if="level(entry) === 10" class="text-small text-muted">Mastered</p>
+        <p v-if="level(entry) === 10" class="text-small text-muted">{{ tr("ui.mastered") }}</p>
         <ClassAbilitiesContent
           :entry="entry"
           :character="character"
@@ -114,7 +117,7 @@ function addClass(id: string) {
             class="mt-small"
             :value="level(entry)"
             :maximum="10"
-            :label="`${entry.name} level`"
+            :label="tr('ui.namedLevel', { name: entry.name })"
             :data-testid="`class-progress-${entry.id}`"
             :editable="!readOnly"
             :disabled="saving"
@@ -124,7 +127,7 @@ function addClass(id: string) {
             @decrease="emit('changeClass', entry.id, -1)"
           />
         </summary>
-        <p v-if="level(entry) === 10" class="text-small text-muted">Mastered</p>
+        <p v-if="level(entry) === 10" class="text-small text-muted">{{ tr("ui.mastered") }}</p>
         <ClassAbilitiesContent
           :entry="entry"
           :character="character"
@@ -142,13 +145,13 @@ function addClass(id: string) {
         :blocked-reason="addClassReason"
         data-testid="add-class"
         @click="classPickerOpen = true"
-        >+ Add class</ProgressActionButton
+        >{{ tr("ui.addClass2") }}</ProgressActionButton
       >
     </slot>
     <UModal
       v-model:open="classPickerOpen"
-      title="Add class"
-      description="Choose a class to add its first level."
+      :title="tr('ui.addClass')"
+      :description="tr('ui.chooseAClassToAddItsFirstLevel')"
     >
       <template #body>
         <div class="grid grid-cols-1 gap-small">
@@ -160,7 +163,9 @@ function addClass(id: string) {
             <h3 class="font-semibold">{{ entry.name }}</h3>
             <p class="text-small text-muted">{{ entry.description }}</p>
             <details :data-testid="`preview-class-${entry.id}`">
-              <summary class="cursor-pointer text-small">Preview benefits and skills</summary>
+              <summary class="cursor-pointer text-small">
+                {{ tr("ui.previewBenefitsAndSkills") }}
+              </summary>
               <FreeBenefitPills
                 v-if="entry.benefits.length"
                 class="mt-small"
@@ -174,7 +179,9 @@ function addClass(id: string) {
                 >
                   <strong>{{ skill.name }}</strong>
                   <p class="text-small">{{ skill.description }}</p>
-                  <p class="text-small text-muted">Maximum rank {{ skill.maxRank }}</p>
+                  <p class="text-small text-muted">
+                    {{ tr("ui.maximumRankValue1", { value1: skill.maxRank }) }}
+                  </p>
                 </li>
               </ul>
             </details>
@@ -182,7 +189,7 @@ function addClass(id: string) {
               :blocked-reason="addClassReason"
               :data-testid="`choose-class-${entry.id}`"
               @click="addClass(entry.id)"
-              >Select {{ entry.name }}</ProgressActionButton
+              >{{ tr("ui.selectValue1", { value1: entry.name }) }}</ProgressActionButton
             >
           </article>
         </div>

@@ -1,3 +1,4 @@
+import { operationErrors, errorCode } from "../../../contracts/http-errors.ts";
 import { handleNotes } from "./notes";
 /** MSW HTTP boundary for offline prototypes, including production character clients. */
 import { delay, http, HttpResponse } from "msw";
@@ -5,8 +6,6 @@ import type { Sheet } from "../../src/modules/characters/sheet/types";
 import type { CreateThrowInput } from "../../src/modules/game-table/types";
 import { createPrototypeThrow } from "./throws";
 import { projectCharacter, projectParty, prototypeStore as store } from "./store";
-
-const missing = () => HttpResponse.json({ error: { code: "not_found" } }, { status: 404 });
 
 export const prototypeHandlers = [
   http.get(
@@ -25,9 +24,14 @@ export const prototypeHandlers = [
   http.all("*/api/*", async ({ request }) => {
     if (store.scenario === "loading") await delay(1500);
     if (store.scenario === "error")
-      return HttpResponse.json({ error: { code: "prototype_error" } }, { status: 500 });
+      return HttpResponse.json({ error: { code: "ERR99" } }, { status: 500 });
     const path = new URL(request.url).pathname;
     const method = request.method;
+    const missing = () =>
+      HttpResponse.json(
+        { error: { code: errorCode(operationErrors(method, path), "not_found") } },
+        { status: 404 },
+      );
     const body =
       method === "GET" ||
       (method === "DELETE" && !request.headers.get("content-type")?.includes("application/json"))
@@ -94,7 +98,7 @@ export const prototypeHandlers = [
     if (method === "PATCH") {
       if (body.expectedRevision !== character.revision)
         return HttpResponse.json(
-          { error: { code: "revision_conflict" }, character: projectCharacter(character) },
+          { error: { code: "ERR01" }, character: projectCharacter(character) },
           { status: 409 },
         );
       const sheet = character.sheet as Sheet;

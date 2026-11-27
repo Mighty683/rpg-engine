@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 import type { HistoryTurn } from "./types";
 defineProps<{ roll: NonNullable<HistoryTurn["roll"]> }>();
@@ -10,15 +11,14 @@ defineProps<{ roll: NonNullable<HistoryTurn["roll"]> }>();
   >
     <strong>{{ roll.characterName }}</strong
     ><span v-if="roll.equipmentName"> · {{ roll.equipmentName }}</span
-    ><span v-if="roll.private"> · Private</span>
+    ><span v-if="roll.private"> {{ tr("ui.private") }}</span>
     <div v-for="(side, i) in [roll.outcome.first, roll.outcome.second].filter((s) => !!s)" :key="i">
-      <span v-if="i">vs </span
+      <span v-if="i">{{ tr("ui.vs") }} </span
       ><template v-for="(die, j) in side.dice" :key="j"
         >{{ j ? " + " : ""
         }}<DieIcon :sides="die.size" class="inline-block !size-3.5 align-text-bottom" />
-        {{ die.label ? die.label + " " : "" }}d{{ die.size }} (<span
-          data-testid="agent-roll-face"
-          >{{ die.face }}</span
+        {{ tr("ui.value1DValue2", { value1: die.label ? die.label + " " : "", value2: die.size })
+        }}<span data-testid="agent-roll-face">{{ die.face }}</span
         >)</template
       >
       <span v-if="side.modifier">
@@ -26,7 +26,7 @@ defineProps<{ roll: NonNullable<HistoryTurn["roll"]> }>();
       >
       = <strong data-testid="agent-roll-total">{{ side.total }}</strong
       ><span v-if="side.result === 'critical' || side.result === 'fumble'">
-        · {{ side.result }}</span
+        · {{ tr(side.result === "critical" ? "ui.criticalSuccess" : "ui.fumble") }}</span
       >
     </div>
   </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import LabeledInput from "../../../../shared/design-system/base/LabeledInput.vue";
 import { ref } from "vue";
 defineProps<{ showReadOnlyBadge?: boolean; controller?: string }>();
@@ -10,18 +11,22 @@ defineExpose({ focus: () => heading.value?.focus() });
 <template>
   <div class="name-field min-w-0">
     <div class="flex flex-wrap items-baseline justify-between gap-x-small">
-      <p class="sheet-kicker">FABULA ULTIMA <span> / CHARACTER SHEET</span></p>
-      <p v-if="controller" class="text-label text-muted">Controlled by {{ controller }}.</p>
+      <p class="sheet-kicker">
+        {{ tr("ui.fabulaUltima") }} <span> {{ tr("ui.characterSheet2") }}</span>
+      </p>
+      <p v-if="controller" class="text-label text-muted">
+        {{ tr("ui.controlledByValue12", { value1: controller }) }}
+      </p>
     </div>
-    <h1 ref="heading" tabindex="-1" class="sr-only">Character sheet</h1>
+    <h1 ref="heading" tabindex="-1" class="sr-only">{{ tr("ui.characterSheet") }}</h1>
     <div class="flex min-w-0 items-center gap-small">
       <LabeledInput
         class="min-w-0 flex-1"
-        label="Character name"
+        :label="tr('ui.characterName')"
         hide-label
         data-testid="character-name"
         v-model="value"
-        placeholder="Character name"
+        :placeholder="tr('ui.characterName')"
       />
       <UBadge
         v-if="showReadOnlyBadge"
@@ -29,7 +34,7 @@ defineExpose({ focus: () => heading.value?.focus() });
         variant="subtle"
         class="whitespace-normal"
         data-testid="sheet-editability"
-        >Read-only</UBadge
+        >{{ tr("ui.readOnly") }}</UBadge
       >
     </div>
   </div>

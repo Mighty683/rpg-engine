@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import type { InvitationPreview } from "./types";
@@ -29,7 +30,7 @@ onMounted(async () => {
   } catch {
     unavailable.value = true;
     toast.add({
-      title: "This invitation is unavailable. Ask the GM for an active link.",
+      title: tr("ui.thisInvitationIsUnavailableAskTheGmForAn"),
       color: "error",
     });
   } finally {
@@ -49,7 +50,7 @@ async function accept() {
     );
   } catch {
     toast.add({
-      title: "This invitation could not be accepted. Ask the GM for an active link.",
+      title: tr("ui.thisInvitationCouldNotBeAcceptedAskTheGm"),
       color: "error",
     });
   } finally {
@@ -60,37 +61,37 @@ async function accept() {
 
 <template>
   <div class="mx-auto max-w-xl space-y-section">
-    <h1 class="text-heading font-semibold">Game invitation</h1>
-    <SkeletonRegion v-if="loading" label="Loading invitation…" class="space-y-section">
+    <h1 class="text-heading font-semibold">{{ tr("ui.gameInvitation") }}</h1>
+    <SkeletonRegion v-if="loading" :label="tr('ui.loadingInvitation')" class="space-y-section">
       <SkeletonBlock class="h-6 w-4/5" />
       <div class="flex gap-small">
         <SkeletonBlock class="h-8 w-24" /><SkeletonBlock class="h-8 w-20" />
       </div>
     </SkeletonRegion>
     <template v-else-if="unavailable">
-      <UButton to="/" color="neutral" variant="outline">My games</UButton>
+      <UButton to="/" color="neutral" variant="outline">{{ tr("ui.myGames") }}</UButton>
     </template>
     <template v-else-if="invitation">
       <p v-if="isCharacter">
-        You have been invited to control <strong>{{ invitation.characterName }}</strong> in
-        <strong>{{ invitation.gameName }}</strong
+        {{ tr("ui.youHaveBeenInvitedToControl") }} <strong>{{ invitation.characterName }}</strong>
+        {{ tr("ui.in") }} <strong>{{ invitation.gameName }}</strong
         >.
       </p>
       <p v-else>
-        You have been invited to join <strong>{{ invitation.gameName }}</strong
+        {{ tr("ui.youHaveBeenInvitedToJoin") }} <strong>{{ invitation.gameName }}</strong
         >.
       </p>
       <UCheckbox
         v-if="isCharacter"
         v-model="makeActive"
         :disabled="accepting"
-        label="Make this character active"
+        :label="tr('ui.makeThisCharacterActive')"
       />
       <div class="flex flex-wrap gap-small">
         <UButton :loading="accepting" data-testid="accept-invitation" @click="accept">{{
-          isCharacter ? "Accept character" : "Join game"
+          isCharacter ? tr("ui.acceptCharacter") : tr("ui.joinGame")
         }}</UButton>
-        <UButton to="/" color="neutral" variant="outline">My games</UButton>
+        <UButton to="/" color="neutral" variant="outline">{{ tr("ui.myGames") }}</UButton>
       </div>
     </template>
   </div>

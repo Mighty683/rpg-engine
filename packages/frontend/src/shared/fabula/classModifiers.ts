@@ -1,13 +1,14 @@
+import { tr } from "../i18n";
 export const classModifierLabels = {
-  maxHp: "Maximum HP",
-  maxMp: "Maximum MP",
-  maxIp: "Maximum IP",
-  defense: "Defense",
-  magicDefense: "Magic Defense",
-  dieDex: "DEX die",
-  dieIns: "INS die",
-  dieMig: "MIG die",
-  dieWlp: "WLP die",
+  maxHp: tr("ui.maximumHp"),
+  maxMp: tr("ui.maximumMp"),
+  maxIp: tr("ui.maximumIp"),
+  defense: tr("ui.defense2"),
+  magicDefense: tr("ui.magicDefense"),
+  dieDex: tr("ui.dexDie"),
+  dieIns: tr("ui.insDie"),
+  dieMig: tr("ui.migDie"),
+  dieWlp: tr("ui.wlpDie"),
 } as const;
 
 export type ClassModifierStat = keyof typeof classModifierLabels;

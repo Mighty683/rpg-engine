@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { computed } from "vue";
 import AttributeRollButton from "../game-table/AttributeRollButton.vue";
 import WeaponRollButton from "../game-table/WeaponRollButton.vue";
@@ -53,12 +54,12 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
       <header>
         <div class="flex flex-wrap items-center gap-card-gap">
           <h3 class="npc-name text-card-heading font-semibold">{{ npc.name }}</h3>
-          <UBadge v-if="!redacted" color="neutral" variant="outline" size="sm"
-            >Lv {{ npc.level }}</UBadge
-          >
-          <UBadge v-if="!redacted && npc.hp.current === 0" color="error" variant="subtle"
-            >0 HP</UBadge
-          >
+          <UBadge v-if="!redacted" color="neutral" variant="outline" size="sm">{{
+            tr("ui.lvValue1", { value1: npc.level })
+          }}</UBadge>
+          <UBadge v-if="!redacted && npc.hp.current === 0" color="error" variant="subtle">{{
+            tr("ui.label0Hp")
+          }}</UBadge>
           <UButton
             v-if="canEdit"
             class="ml-auto"
@@ -66,7 +67,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
             variant="outline"
             size="sm"
             icon="i-lucide-pencil"
-            aria-label="Edit NPC"
+            :aria-label="tr('ui.editNpc')"
             data-testid="edit-npc"
             @click="emit('edit', npc)"
           />
@@ -75,7 +76,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
       </header>
 
       <template v-if="redacted">
-        <dl class="attribute-row" aria-label="Unknown attributes">
+        <dl class="attribute-row" :aria-label="tr('ui.unknownAttributes')">
           <div v-for="attribute in attributes" :key="attribute" class="mini-resource">
             <dt>{{ attribute }}</dt>
             <dd>???</dd>
@@ -87,11 +88,11 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
             <dd>???</dd>
           </div>
         </dl>
-        <p class="text-card-label text-muted">Attacks: ???</p>
+        <p class="text-card-label text-muted">{{ tr("ui.attacks2") }}</p>
       </template>
       <template v-else>
         <VitalResourceSummary :hp="npc.hp" :mp="npc.mp" hp-test-id="npc-hp" />
-        <div class="attribute-row" aria-label="Attributes">
+        <div class="attribute-row" :aria-label="tr('ui.attributes2')">
           <AttributeRollButton
             v-for="attribute in attributes"
             :key="attribute"
@@ -105,17 +106,19 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 
         <dl class="defense-card text-card-label tabular-nums">
           <div class="mini-resource">
-            <dt>DEF</dt>
+            <dt>{{ tr("ui.def") }}</dt>
             <dd>{{ npc.defense }}</dd>
           </div>
           <div class="mini-resource">
-            <dt>MAG DEF</dt>
+            <dt>{{ tr("ui.magDef") }}</dt>
             <dd>{{ npc.magicDefense }}</dd>
           </div>
         </dl>
 
         <section>
-          <h4 class="text-card-label font-semibold uppercase tracking-wide text-muted">Attacks</h4>
+          <h4 class="text-card-label font-semibold uppercase tracking-wide text-muted">
+            {{ tr("ui.attacks3") }}
+          </h4>
           <ul class="mt-card-detail space-y-card-detail">
             <li v-for="(attack, index) in npc.attacks" :key="attack.id">
               <WeaponRollButton
@@ -129,12 +132,16 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
                 @roll="emit('rollAttack', npc, attack)"
               />
             </li>
-            <li v-if="!npc.attacks.length" class="text-card-label text-muted">No attacks</li>
+            <li v-if="!npc.attacks.length" class="text-card-label text-muted">
+              {{ tr("ui.noAttacks") }}
+            </li>
           </ul>
         </section>
 
         <section v-if="showNotes && npc.notes">
-          <h4 class="text-card-label font-semibold uppercase tracking-wide text-muted">Notes</h4>
+          <h4 class="text-card-label font-semibold uppercase tracking-wide text-muted">
+            {{ tr("ui.notes") }}
+          </h4>
           <p
             class="mt-card-detail whitespace-pre-wrap text-card-label text-muted"
             data-testid="npc-notes"

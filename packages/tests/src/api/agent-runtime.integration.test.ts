@@ -139,7 +139,7 @@ it("GM-API-06 reauthorizes before subsequent calls and publication after roster 
   });
   const narrowed = await send("Describe the party");
   expect(narrowed.status).toBe(409);
-  expect((await narrowed.json()).error.code).toBe("agent_context_changed");
+  expect((await narrowed.json()).error.code).toBe("ERR03");
   complete.mockImplementationOnce(async () => {
     await f.pool.query("delete from sessions where account_id=$1", [f.ids.gm]);
     return finish();

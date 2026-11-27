@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import NoteEditor from "./NoteEditor.vue";
 import type { NoteDocument } from "./types";
@@ -11,7 +12,7 @@ defineEmits<{ title: [value: string]; content: [value: NoteDocument]; commit: []
 <template>
   <div class="space-y-medium">
     <LabeledInput
-      label="Title"
+      :label="tr('ui.title')"
       :model-value="title"
       :disabled="pending"
       :maxlength="160"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 import { ref } from "vue";
 import type { RollPreview } from "./types";
@@ -26,7 +27,7 @@ const privateRoll = ref(props.initiallyPrivate);
     <div class="mt-tight flex items-center justify-between gap-small">
       <UCheckbox
         v-model="privateRoll"
-        label="Private roll"
+        :label="tr('ui.privateRoll')"
         data-testid="agent-roll-private"
         :disabled="submitting"
       />
@@ -35,7 +36,7 @@ const privateRoll = ref(props.initiallyPrivate);
         data-testid="agent-make-roll"
         :loading="submitting"
         @click="onRoll(privateRoll)"
-        >Make a roll</UButton
+        >{{ tr("ui.makeARoll") }}</UButton
       >
     </div>
   </div>

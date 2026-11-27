@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import TableCardSkeleton from "../game-table/TableCardSkeleton.vue";
@@ -104,12 +105,12 @@ async function refresh() {
   loading.value = true;
   try {
     const data = await api.list(props.gameId);
-    if (!Array.isArray(data.npcs)) throw new Error("Invalid NPC response");
+    if (!Array.isArray(data.npcs)) throw new Error(tr("ui.invalidNpcResponse"));
     if (version === requestVersion) records.value = data.npcs;
   } catch {
     if (version === requestVersion) {
       records.value = [];
-      toast.add({ title: "Could not load NPCs.", color: "error" });
+      toast.add({ title: tr("ui.couldNotLoadNpcs"), color: "error" });
     }
   } finally {
     if (version === requestVersion) loading.value = false;
@@ -119,7 +120,7 @@ async function create() {
   if (props.role !== "GM" || creating.value) return;
   creating.value = true;
   const npc: NpcWrite = {
-    name: "New NPC",
+    name: tr("ui.newNpc"),
     relationship: "neutral",
     level: 5,
     visibility: "hidden",
@@ -136,7 +137,7 @@ async function create() {
     await refresh();
     if (props.panelOpen) openEditor(result.npc.id);
   } catch {
-    toast.add({ title: "Could not create NPC.", color: "error" });
+    toast.add({ title: tr("ui.couldNotCreateNpc"), color: "error" });
   } finally {
     creating.value = false;
   }
@@ -151,7 +152,7 @@ async function writeProfile(id: string, expectedRevision: number, next: NpcWrite
 
 async function saveReviewed(id: string, expectedRevision: number, next: NpcWrite) {
   if (writing.value || removing.value || props.panelOpen)
-    throw new Error("Finish the open NPC edit and review the change again.");
+    throw new Error(tr("ui.finishTheOpenNpcEditAndReviewTheChange"));
   requestVersion++;
   writing.value = true;
   try {
@@ -186,7 +187,7 @@ async function drainQueue() {
     } catch {
       queued.clear();
       toast.add({
-        title: "NPC changes could not be saved. The latest version was restored.",
+        title: tr("ui.npcChangesCouldNotBeSavedTheLatestVersion"),
         color: "error",
       });
       await refresh();
@@ -210,7 +211,7 @@ async function remove(id: string) {
     if (props.panelOpen) closeEditor();
     await refresh();
   } catch {
-    toast.add({ title: "Could not remove NPC. Refresh and try again.", color: "error" });
+    toast.add({ title: tr("ui.couldNotRemoveNpcRefreshAndTryAgain"), color: "error" });
     await refresh();
   } finally {
     removing.value = false;
@@ -253,7 +254,7 @@ onUnmounted(() => {
 
 <template>
   <li v-if="loading && !records.length" class="table-card" data-testid="npc-loading" role="status">
-    <span class="sr-only">Loading NPCs…</span>
+    <span class="sr-only">{{ tr("ui.loadingNpcs") }}</span>
     <TableCardSkeleton />
   </li>
   <NpcCard
@@ -279,7 +280,7 @@ onUnmounted(() => {
       onCloseAutoFocus: restoreFocus,
       onInteractOutside: (event: Event) => event.preventDefault(),
     }"
-    title="NPCs"
+    :title="tr('ui.npcs')"
     :ui="{ content: 'w-full sm:max-w-4xl' }"
     @update:open="
       (open: boolean) => {
@@ -297,7 +298,7 @@ onUnmounted(() => {
             :loading="creating"
             :disabled="creating"
             @click="create"
-            >+ New NPC</UButton
+            >{{ tr("ui.newNpc2") }}</UButton
           >
         </div>
         <p
@@ -306,11 +307,11 @@ onUnmounted(() => {
           class="sticky top-0 z-10 rounded-panel bg-elevated p-small text-label"
           data-testid="npc-saving"
         >
-          Saving changes…
+          {{ tr("ui.savingChanges") }}
         </p>
         <SkeletonRegion
           v-if="loading && !records.length"
-          label="Loading NPCs…"
+          :label="tr('ui.loadingNpcs')"
           class="space-y-small"
         >
           <SkeletonBlock class="h-9 w-1/3" />
@@ -322,9 +323,7 @@ onUnmounted(() => {
           </div>
         </SkeletonRegion>
         <ContentState v-else-if="!records.length" kind="empty">{{
-          role === "GM"
-            ? "No NPCs yet. Create an NPC to get started."
-            : "No NPCs are visible to you."
+          role === "GM" ? tr("ui.noNpcsYetCreateAnNpcToGetStarted") : tr("ui.noNpcsAreVisibleToYou")
         }}</ContentState>
         <CharacterSheetTabs
           :selected-id="active?.id ?? ''"
@@ -348,8 +347,8 @@ onUnmounted(() => {
               data-testid="npc-public-details"
             >
               <h2 class="text-section font-semibold">{{ active.name }}</h2>
-              <p class="capitalize">{{ active.relationship }}</p>
-              <p class="text-small text-muted">Stats and attacks are unknown.</p>
+              <p class="capitalize">{{ tr(`ui.${active.relationship ?? "neutral"}`) }}</p>
+              <p class="text-small text-muted">{{ tr("ui.statsAndAttacksAreUnknown") }}</p>
             </section>
           </template>
         </CharacterSheetTabs>

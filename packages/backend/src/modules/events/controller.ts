@@ -20,7 +20,7 @@ export function gameEventsController(
       const actor = await services.auth.requireActor(request);
       const gameId = routeId(request.params.gameId);
       if (!(await services.games.gameAccess(actor, gameId)))
-        throw new RequestError(404, { error: { code: "not_found", message: "Game not found." } });
+        throw new RequestError(404, { error: { code: "not_found" } });
       return { actor, gameId };
     })
     .registerRoutes(
@@ -43,8 +43,6 @@ export function gameEventsController(
             throw new RequestError(code === "stream_capacity" ? 429 : 503, {
               error: {
                 code,
-                message:
-                  code === "stream_capacity" ? "Too many live connections." : "Server is stopping.",
               },
             });
           }
@@ -56,7 +54,7 @@ export function gameEventsController(
               !(await services.games.gameAccess(current, gameId))
             )
               throw new RequestError(404, {
-                error: { code: "not_found", message: "Game not found." },
+                error: { code: "not_found" },
               });
             if (!stream.start()) return;
             const closed = new Promise<void>((resolve) => response.once("close", resolve));

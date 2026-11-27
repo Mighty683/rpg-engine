@@ -1,23 +1,16 @@
+import { publicRequest } from "../../shared/api";
 import type { Account } from "./types";
-import { secureFetch } from "../../shared/secure-fetch.ts";
 
-async function authRequest<T>(path: string, body?: Record<string, string>): Promise<T> {
-  const response = await secureFetch(
+function authRequest<T>(path: string, body?: Record<string, string>): Promise<T> {
+  return publicRequest<T>(
     `/api/auth/${path}`,
     body
       ? {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         }
       : undefined,
   );
-  if (!response.ok) {
-    const error = new Error("Authentication request failed") as Error & { status: number };
-    error.status = response.status;
-    throw error;
-  }
-  return response.json() as Promise<T>;
 }
 
 export const authApi = {

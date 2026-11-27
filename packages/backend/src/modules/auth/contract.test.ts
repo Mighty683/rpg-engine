@@ -8,8 +8,8 @@ it("preserves registration normalization and collects both credential errors", (
     fields: {},
   });
   expect(validateCredentials(null).fields).toEqual({
-    username: "Use 3–32 letters, numbers, dots, underscores, or hyphens.",
-    password: "Use at least 8 characters and at most 1024 bytes.",
+    username: "username_format",
+    password: "password_length",
   });
   expect(validateCredentials([]).fields).toEqual(validateCredentials(null).fields);
 });
@@ -19,7 +19,7 @@ it("preserves password byte limits and intentionally ignored extra fields", () =
     validateCredentials({ username: "Player", password: "😀".repeat(256), ignored: true }).fields,
   ).toEqual({});
   expect(validateCredentials({ username: "Player", password: "😀".repeat(257) }).fields).toEqual({
-    password: "Use at least 8 characters and at most 1024 bytes.",
+    password: "password_length",
   });
 });
 

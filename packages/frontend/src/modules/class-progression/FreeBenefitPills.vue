@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { classModifierLabels, isDieModifier } from "../../shared/fabula/classModifiers";
 import type { ProgressionBenefit } from "./types";
 defineProps<{ benefits: ProgressionBenefit[] }>();
@@ -9,7 +10,7 @@ defineProps<{ benefits: ProgressionBenefit[] }>();
       <UBadge v-if="benefit.stat" color="primary" variant="subtle" class="rounded-full">
         {{ benefit.name }} · {{ classModifierLabels[benefit.stat] }}
         {{ (benefit.amount ?? 0) >= 0 ? "+" : "" }}{{ benefit.amount ?? 0
-        }}{{ isDieModifier(benefit.stat) ? " die steps" : "" }}
+        }}{{ isDieModifier(benefit.stat) ? " " + tr("ui.dieStepsUnit") : "" }}
       </UBadge>
       <UPopover v-else>
         <UButton

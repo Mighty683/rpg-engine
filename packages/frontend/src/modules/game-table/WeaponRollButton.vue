@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type { Attribute, PartyWeapon } from "./types";
 import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 
@@ -18,8 +19,8 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
   <UTooltip
     :text="
       weapon.ready
-        ? `Roll accuracy with ${weapon.name}`
-        : `Set both attributes and the accuracy bonus for ${weapon.name} on the character sheet`
+        ? tr('ui.rollAccuracyWithValue1', { value1: weapon.name })
+        : tr('ui.setBothAttributesAndTheAccuracyBonusForValue12', { value1: weapon.name })
     "
     :content="{ side: 'top' }"
   >
@@ -27,14 +28,20 @@ const emit = defineEmits<{ roll: []; needsSetup: [] }>();
       type="button"
       class="weapon-card"
       :data-testid="`roll-weapon`"
-      :aria-label="`Roll accuracy for ${characterName} using ${weapon.name}`"
-      :aria-description="reach ? `Reach: ${reach}` : undefined"
+      :aria-label="
+        tr('ui.rollAccuracyForValue1UsingValue2', { value1: characterName, value2: weapon.name })
+      "
+      :aria-description="reach ? tr('ui.reachValue1', { value1: reach }) : undefined"
       :disabled="!canRoll"
       @click="weapon.ready ? emit('roll') : emit('needsSetup')"
     >
       <span>{{ weapon.name }}</span>
       <span class="flex flex-wrap items-center gap-card-gap">
-        <span v-if="reach" :title="reach === 'melee' ? 'Melee' : 'Ranged'" class="inline-flex">
+        <span
+          v-if="reach"
+          :title="reach === 'melee' ? tr('ui.melee') : tr('ui.ranged')"
+          class="inline-flex"
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"

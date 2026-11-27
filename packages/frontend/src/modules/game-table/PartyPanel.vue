@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { computed, useId } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
@@ -21,11 +22,11 @@ const headingId = useId();
 const sections = computed(() => {
   const own = props.playerCharacter;
   if (!own || props.isLoading || props.isError)
-    return [{ title: "Table", members: props.party, featured: false }];
+    return [{ title: tr("ui.table"), members: props.party, featured: false }];
   return [
-    { title: "Your character", members: [own], featured: true },
+    { title: tr("ui.yourCharacter"), members: [own], featured: true },
     {
-      title: "Table",
+      title: tr("ui.table"),
       members: props.party.filter((member) => member.id !== own.id),
       featured: false,
     },
@@ -58,7 +59,7 @@ const emit = defineEmits<{
       </h2>
       <SkeletonRegion
         v-if="isLoading"
-        label="Loading party…"
+        :label="tr('ui.loadingParty')"
         class="party-grid table-cards-compact grid grid-cols-2 pt-small md:grid-cols-3 lg:grid-cols-4"
       >
         <TableCardSkeleton v-for="card in 2" :key="card" />
@@ -109,13 +110,13 @@ const emit = defineEmits<{
         class="text-muted"
         data-testid="party-empty"
       >
-        No active characters.
+        {{ tr("ui.noActiveCharacters") }}
       </p>
       <p
         v-if="playerCharacter && !section.featured && !isLoading && !isError"
         class="empty-player-table text-muted"
       >
-        No other characters or NPCs at the table.
+        {{ tr("ui.noOtherCharactersOrNpcsAtTheTable") }}
       </p>
       <p
         v-if="
@@ -125,13 +126,14 @@ const emit = defineEmits<{
         class="text-error pt-medium"
         data-testid="weapon-setup-hint"
       >
-        Set both attributes and the accuracy bonus for {{ weaponHint.weaponName }} on the character
-        sheet.
+        {{
+          tr("ui.setBothAttributesAndTheAccuracyBonusForValue1", { value1: weaponHint.weaponName })
+        }}
         <UButton
           variant="link"
           data-testid="open-sheet-for-weapon"
           @click="emit('openSheet', weaponHint.character.id)"
-          >Open character sheet</UButton
+          >{{ tr("ui.openCharacterSheet") }}</UButton
         >
       </p>
     </component>

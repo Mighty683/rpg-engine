@@ -76,10 +76,10 @@ function validateNamed(entries: unknown, label: string, max: number) {
 
 function validateEquipment(entries: unknown) {
   if (!Array.isArray(entries) || entries.length > 100)
-    throw error("Invalid equipment", "equipment");
+    throw error("invalid_equipment", "equipment");
   const ids = new Set<string>();
   for (const entry of entries) {
-    if (!entry || typeof entry !== "object") throw error("Invalid equipment", "equipment");
+    if (!entry || typeof entry !== "object") throw error("invalid_equipment", "equipment");
     const value = entry as Record<string, unknown>;
     if (
       typeof value.id !== "string" ||
@@ -92,10 +92,10 @@ function validateEquipment(entries: unknown) {
       value.notes.length > 500 ||
       (value.priceZenit !== null && !nonNegative(value.priceZenit))
     )
-      throw error("Invalid equipment", "equipment");
+      throw error("invalid_equipment", "equipment");
     ids.add(value.id);
     if (!["other", "weapon", "armor", "shield"].includes(String(value.kind)))
-      throw error("Invalid equipment", "equipment");
+      throw error("invalid_equipment", "equipment");
     if (value.kind === "weapon") {
       exactKeys(
         value,
@@ -109,7 +109,7 @@ function validateEquipment(entries: unknown) {
         value.accuracyDice.some((v) => v !== null && !attributes.includes(v as Attribute)) ||
         (value.accuracyBonus !== null && !integer32(value.accuracyBonus))
       )
-        throw error("Invalid weapon", "equipment");
+        throw error("invalid_weapon", "equipment");
     }
     if (value.kind === "armor" || value.kind === "shield") {
       exactKeys(
@@ -146,9 +146,9 @@ function validateEquipment(entries: unknown) {
         !integer32(value.magicDefenseBonus) ||
         !integer32(value.initiativeModifier)
       )
-        throw error("Invalid equipment modifiers", "equipment");
+        throw error("invalid_equipment_modifiers", "equipment");
       if (value.kind === "armor" && value.fixedDefense !== null && !nonNegative(value.fixedDefense))
-        throw error("Invalid armor", "equipment");
+        throw error("invalid_armor", "equipment");
     }
     if (value.kind === "other")
       exactKeys(value, ["id", "name", "notes", "priceZenit", "kind"], "equipment");
@@ -156,7 +156,7 @@ function validateEquipment(entries: unknown) {
 }
 
 export function validateSheet(sheet: unknown): FabulaSheet {
-  if (!sheet || typeof sheet !== "object") throw error("Invalid sheet");
+  if (!sheet || typeof sheet !== "object") throw error("invalid_sheet");
   const value = sheet as Record<string, unknown>;
   exactKeys(
     value,
@@ -174,15 +174,15 @@ export function validateSheet(sheet: unknown): FabulaSheet {
     "sheet",
   );
   if (typeof value.name !== "string" || !value.name.trim() || value.name.length > 100)
-    throw error("Enter a character name", "name");
+    throw error("enter_a_character_name", "name");
   if (value.theme !== null && (typeof value.theme !== "string" || value.theme.length > 200))
-    throw error("Invalid theme", "theme");
+    throw error("invalid_theme", "theme");
   if (!integer32(value.level) || (value.level as number) < 5 || (value.level as number) > 50)
-    throw error("Level must be between 5 and 50", "level");
+    throw error("level_must_be_between_5_and_50", "level");
   const baseDice = value.baseDice as Record<string, unknown>;
   if (baseDice && typeof baseDice === "object") exactKeys(baseDice, attributes, "baseDice");
   if (!baseDice || attributes.some((attribute) => !dice.has(baseDice[attribute] as number)))
-    throw error("Invalid attribute dice", "baseDice");
+    throw error("invalid_attribute_dice", "baseDice");
   validateNamed(value.classes, "classes", 2);
   validateNamed(value.skills, "skills", 100);
   validateEquipment(value.equipment);
@@ -190,7 +190,7 @@ export function validateSheet(sheet: unknown): FabulaSheet {
   if (resources && typeof resources === "object")
     exactKeys(resources, ["hp", "mp", "ip", "fabula"], "resources");
   if (!resources || ["hp", "mp", "ip", "fabula"].some((key) => !nonNegative(resources[key])))
-    throw error("Invalid resources", "resources");
+    throw error("invalid_resources", "resources");
   const overrides = value.overrides as Record<string, unknown>;
   if (overrides && typeof overrides === "object")
     exactKeys(
@@ -207,7 +207,7 @@ export function validateSheet(sheet: unknown): FabulaSheet {
       (key) => overrides[key] !== null && !integer32(overrides[key]),
     )
   )
-    throw error("Invalid overrides", "overrides");
+    throw error("invalid_overrides", "overrides");
   const normalized = structuredClone(sheet) as FabulaSheet;
   normalized.name = normalized.name.trim();
   normalized.theme = normalized.theme?.trim() || null;
@@ -218,7 +218,7 @@ export function validateSheet(sheet: unknown): FabulaSheet {
 
 export function mergeSheet(current: FabulaSheet, changes: SheetChanges): FabulaSheet {
   if (!changes || typeof changes !== "object" || Object.keys(changes).length === 0)
-    throw error("At least one change is required");
+    throw error("at_least_one_change_is_required");
   const allowed = new Set([
     "name",
     "theme",
@@ -230,7 +230,7 @@ export function mergeSheet(current: FabulaSheet, changes: SheetChanges): FabulaS
     "resources",
     "overrides",
   ]);
-  if (Object.keys(changes).some((key) => !allowed.has(key))) throw error("Unknown sheet field");
+  if (Object.keys(changes).some((key) => !allowed.has(key))) throw error("unknown_sheet_field");
   const next = {
     ...current,
     ...changes,

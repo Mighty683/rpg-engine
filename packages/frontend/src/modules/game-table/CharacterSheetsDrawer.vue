@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import CharacterSheetSkeleton from "../characters/sheet/CharacterSheetSkeleton.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
@@ -25,7 +26,7 @@ const selectedId = defineModel<string>("selectedId", { required: true });
 <template>
   <USlideover
     v-model:open="open"
-    title="Character sheets"
+    :title="tr('ui.characterSheets')"
     :modal="modal"
     :overlay="modal"
     :dismissible="modal"
@@ -37,29 +38,31 @@ const selectedId = defineModel<string>("selectedId", { required: true });
       color="primary"
       data-testid="open-character-sheets"
       @click="open = true"
-      >Character sheets</UButton
+      >{{ tr("ui.characterSheets") }}</UButton
     >
     <template #body>
       <UButton
         class="sheet-bookmark sheet-bookmark-close"
         color="primary"
         data-testid="close-character-sheets"
-        aria-label="Close character sheets"
+        :aria-label="tr('ui.closeCharacterSheets')"
         @click="open = false"
-        >Character sheets</UButton
+        >{{ tr("ui.characterSheets") }}</UButton
       >
       <SkeletonRegion
         v-if="loading && !tabs.length"
-        label="Loading characters…"
+        :label="tr('ui.loadingCharacters')"
         class="space-y-small"
       >
         <SkeletonBlock class="h-9 w-1/3" />
         <CharacterSheetSkeleton />
       </SkeletonRegion>
       <ContentState v-else-if="failed && !tabs.length" kind="error" @retry="$emit('retry')">
-        Could not load characters.
+        {{ tr("ui.couldNotLoadCharacters") }}
       </ContentState>
-      <ContentState v-else-if="!tabs.length" kind="empty">No character sheets yet.</ContentState>
+      <ContentState v-else-if="!tabs.length" kind="empty">{{
+        tr("ui.noCharacterSheetsYet")
+      }}</ContentState>
       <CharacterSheetTabs v-else v-model:selected-id="selectedId" :tabs="tabs">
         <template #sheet="{ characterId }">
           <slot name="sheet" :character-id="characterId" />

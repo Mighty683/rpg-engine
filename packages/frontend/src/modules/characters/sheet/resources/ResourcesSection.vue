@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import type { Resource } from "../types";
 
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
@@ -15,7 +16,7 @@ const emit = defineEmits<{ override: [resource: Resource, value: number | null] 
 
 <template>
   <SheetSection
-    ><template #heading>✚ RESOURCES</template>
+    ><template #heading>{{ tr("ui.resources") }}</template>
     <div class="resource-card">
       <ResourceField
         v-for="resource in ['IP'] as const"
@@ -24,10 +25,15 @@ const emit = defineEmits<{ override: [resource: Resource, value: number | null] 
         :label="resource"
         :maximum="maximum[resource]"
         :maximum-override="maximumOverrides[resource]"
-        help="Inventory Points"
+        :help="tr('ui.inventoryPoints')"
         compact
         @override="emit('override', resource, $event)"
-      /><ResourceField v-model="current.Fabula" label="FP" help="Fabula Points" compact /></div
+      /><ResourceField
+        v-model="current.Fabula"
+        :label="tr('ui.fp')"
+        :help="tr('ui.fabulaPoints')"
+        compact
+      /></div
   ></SheetSection>
 </template>
 

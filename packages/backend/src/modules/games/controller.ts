@@ -27,7 +27,7 @@ export function gamesController(services: { auth: AuthService; games: GamesServi
           const { name, systemId, fields } = validateGame(body);
           if (Object.keys(fields).length) {
             throw new RequestError(422, {
-              error: { code: "validation", message: "Check the fields.", fields },
+              error: { code: "validation", fields },
             });
           }
           const game = await services.games.createActorGame(actor, name, systemId);
@@ -42,7 +42,7 @@ export function gamesController(services: { auth: AuthService; games: GamesServi
           const game = await services.games.getActorGame(actor, gameId);
           if (!game)
             throw new RequestError(404, {
-              error: { code: "not_found", message: "Game not found." },
+              error: { code: "not_found" },
             });
           return { game };
         }),

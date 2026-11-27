@@ -94,7 +94,7 @@ describe("class catalog API", () => {
       body: JSON.stringify(edit),
     });
     expect(withoutCsrf.status).toBe(403);
-    expect((await withoutCsrf.json()).error.code).toBe("invalid_csrf");
+    expect((await withoutCsrf.json()).error.code).toBe("ERR85");
     expect(await listTemplates("gm")).toEqual([ownerBefore]);
 
     const copy = { id: randomUUID(), templateId: create.id, expectedTemplateRevision: 0 };
@@ -179,10 +179,10 @@ describe("class catalog API", () => {
     expect(await copyReplay.json()).toEqual({ gameClass: first });
     const staleCopy = await request(path, "gm", "POST", { ...copy, id: randomUUID() });
     expect(staleCopy.status).toBe(409);
-    expect((await staleCopy.json()).error.code).toBe("stale_revision");
+    expect((await staleCopy.json()).error.code).toBe("ERR02");
     const conflicting = await request(path, "gm", "POST", { ...copy, expectedTemplateRevision: 1 });
     expect(conflicting.status).toBe(409);
-    expect((await conflicting.json()).error.code).toBe("id_conflict");
+    expect((await conflicting.json()).error.code).toBe("ERR01");
 
     const savePath = `${path}/${first.id}/save-to-library`;
     const update = { mode: "update", templateId: create.id, expectedTemplateRevision: 1 };
@@ -225,7 +225,7 @@ describe("class catalog API", () => {
     await pool.query("DELETE FROM game_classes WHERE id = $1", [copy.id]);
     const removedRetry = await request(path, "gm", "POST", copy);
     expect(removedRetry.status).toBe(409);
-    expect((await removedRetry.json()).error.code).toBe("id_conflict");
+    expect((await removedRetry.json()).error.code).toBe("ERR01");
     expect((await listClasses(ids.game, "gm")).some(({ id }) => id === copy.id)).toBe(false);
   });
 });

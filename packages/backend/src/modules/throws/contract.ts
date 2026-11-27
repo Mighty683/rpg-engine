@@ -56,14 +56,14 @@ function exactKeys(value: Record<string, unknown>, keys: readonly string[], fiel
 }
 
 function readNote(value: unknown): string {
-  if (!validateString(value)) throw fail("validation", "Invalid note", "note");
+  if (!validateString(value)) throw fail("validation", "invalid_note", "note");
   const note = value.trim();
-  if (!validateNote(note)) throw fail("validation", "Note must be 500 characters or fewer", "note");
+  if (!validateNote(note)) throw fail("validation", "note_must_be_500_characters_or_fewer", "note");
   return note;
 }
 
 function readModifier(value: unknown, field: string): number {
-  if (!validateInteger(value)) throw fail("validation", "Modifier must be a 32-bit integer", field);
+  if (!validateInteger(value)) throw fail("validation", "modifier_must_be_a_32_bit_integer", field);
   return value as number;
 }
 
@@ -89,26 +89,26 @@ function readDice(
 
 function readAttributes(value: unknown): [Attribute, Attribute?] {
   if (!validateAttributes(value))
-    throw fail("validation", "Choose one or two attributes", "attributes");
+    throw fail("validation", "choose_one_or_two_attributes", "attributes");
   return value as [Attribute, Attribute?];
 }
 
 function parseAttributeSetup(value: Record<string, unknown>): AttributeSetup {
   exactKeys(value, setupKeys.attribute, "setup");
-  if (!isUuid(value.characterId)) throw fail("validation", "Invalid character", "characterId");
+  if (!isUuid(value.characterId)) throw fail("validation", "invalid_character", "characterId");
   if (!validateRevision(value.expectedRevision))
-    throw fail("validation", "Invalid expected revision", "expectedRevision");
+    throw fail("validation", "invalid_expected_revision", "expectedRevision");
   const chosen = readAttributes(value.attributes);
   const dice = value.dice;
-  if (!validateObject(dice)) throw fail("validation", "Invalid dice", "dice");
+  if (!validateObject(dice)) throw fail("validation", "invalid_dice", "dice");
   const requested = dice as Record<string, unknown>;
   if (
     !validateAttributeDice(requested) &&
     validateAttributeDice.errors?.some((error) => error.keyword === "propertyNames")
   )
-    throw fail("validation", "Unknown attribute die", "dice");
+    throw fail("validation", "unknown_attribute_die", "dice");
   if (Object.values(requested).some((die) => !validateStandardDie(die)))
-    throw fail("validation", "Attribute dice use d6, d8, d10 or d12", "dice");
+    throw fail("validation", "attribute_dice_use_d6_d8_d10_or_d12", "dice");
   return {
     type: "attribute",
     characterId: value.characterId,
@@ -125,9 +125,9 @@ function parseAttributeSetup(value: Record<string, unknown>): AttributeSetup {
 function parseWeaponSetup(value: Record<string, unknown>): WeaponSetup {
   exactKeys(value, setupKeys.weapon, "setup");
   if (!isUuid(value.characterId) || !isUuid(value.equipmentId))
-    throw fail("validation", "Invalid character or weapon", "characterId");
+    throw fail("validation", "invalid_character_or_weapon", "characterId");
   if (!validateRevision(value.expectedRevision))
-    throw fail("validation", "Invalid expected revision", "expectedRevision");
+    throw fail("validation", "invalid_expected_revision", "expectedRevision");
   return {
     type: "weapon",
     characterId: value.characterId,
@@ -142,7 +142,7 @@ function parseWeaponSetup(value: Record<string, unknown>): WeaponSetup {
 function parseFreeSetup(value: Record<string, unknown>): FreeSetup {
   exactKeys(value, setupKeys.free, "setup");
   if (value.characterId !== gmActorId && !isUuid(value.characterId))
-    throw fail("validation", "Invalid roll attribution", "characterId");
+    throw fail("validation", "invalid_roll_attribution", "characterId");
   const dice = readDice(value.dice, freeDice, "dice", 1, 2);
   const redDice = readDice(value.redDice, freeDice, "redDice", 0, 2);
   return {
@@ -159,7 +159,7 @@ function parseFreeSetup(value: Record<string, unknown>): FreeSetup {
 function parseNpcAttribute(record: Record<string, unknown>) {
   exactKeys(record, setupKeys.npcAttribute, "setup");
   const { npcId, ...rest } = record;
-  if (!isUuid(npcId)) throw fail("validation", "Invalid NPC", "npcId");
+  if (!isUuid(npcId)) throw fail("validation", "invalid_npc", "npcId");
   const parsed = parseAttributeSetup({ ...rest, type: "attribute", characterId: npcId });
   const { characterId: _characterId, ...setup } = parsed;
   return { ...setup, type: "npc-attribute" as const, npcId };
@@ -169,7 +169,7 @@ function parseNpcAttack(record: Record<string, unknown>) {
   exactKeys(record, setupKeys.npcAttack, "setup");
   const { npcId, attackId, ...rest } = record;
   if (!isUuid(npcId) || !isUuid(attackId))
-    throw fail("validation", "Invalid NPC or attack", "npcId");
+    throw fail("validation", "invalid_npc_or_attack", "npcId");
   const parsed = parseWeaponSetup({
     ...rest,
     type: "weapon",
@@ -186,29 +186,29 @@ export function parseCreateRequest(body: unknown): CreateThrowInput {
   const value = body as Record<string, unknown>;
   exactKeys(value, setupKeys.request, "");
   if (value.private !== undefined && !validateBoolean(value.private))
-    throw fail("validation", "Invalid privacy setting", "private");
+    throw fail("validation", "invalid_privacy_setting", "private");
   if (
     value.sourceThrowId !== null &&
     value.sourceThrowId !== undefined &&
     !isUuid(value.sourceThrowId)
   )
-    throw fail("validation", "Invalid source throw", "sourceThrowId");
+    throw fail("validation", "invalid_source_throw", "sourceThrowId");
   if (value.agentTurnId !== undefined && !isUuid(value.agentTurnId))
-    throw fail("validation", "Invalid Agent turn", "agentTurnId");
+    throw fail("validation", "invalid_agent_turn", "agentTurnId");
   const common = {
     ...(value.agentTurnId ? { agentTurnId: value.agentTurnId } : {}),
     private: value.private === true,
     sourceThrowId: (value.sourceThrowId as string) ?? null,
   };
   const setup = value.setup;
-  if (!validateObject(setup)) throw fail("validation", "Invalid setup", "setup");
+  if (!validateObject(setup)) throw fail("validation", "invalid_setup", "setup");
   const record = setup as Record<string, unknown>;
   if (record.type === "npc-attribute") return { ...common, setup: parseNpcAttribute(record) };
   if (record.type === "npc-attack") return { ...common, setup: parseNpcAttack(record) };
   if (record.type === "attribute") return { ...common, setup: parseAttributeSetup(record) };
   if (record.type === "weapon") return { ...common, setup: parseWeaponSetup(record) };
   if (record.type === "free") return { ...common, setup: parseFreeSetup(record) };
-  throw fail("validation", "Unknown setup type", "setup.type");
+  throw fail("validation", "unknown_setup_type", "setup.type");
 }
 
 /** Query normalization is intentionally permissive and independent of body coercion. */

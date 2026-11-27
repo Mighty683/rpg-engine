@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import NamedEntries from "./NamedEntries.vue";
 import type { NamedEntry } from "../types";
@@ -7,8 +8,8 @@ defineProps<{ entries: NamedEntry[]; locked: boolean; existingOnly?: boolean }>(
 
 <template>
   <SheetSection
-    ><template #heading>◆ {{ existingOnly ? "MANUAL CLASSES" : "CLASSES" }}</template
-    ><template v-if="!existingOnly" #hint>UP TO 2</template
+    ><template #heading>◆ {{ existingOnly ? tr("ui.manualClasses") : tr("ui.classes") }}</template
+    ><template v-if="!existingOnly" #hint>{{ tr("ui.upTo2") }}</template
     ><NamedEntries
       :existing-only="existingOnly"
       :entries="entries"

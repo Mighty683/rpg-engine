@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import LabeledInput from "../../../../shared/design-system/base/LabeledInput.vue";
 import EditorFieldGrid from "../../../../shared/design-system/base/EditorFieldGrid.vue";
 import AttributePairSelect from "../../../../shared/design-system/domain/AttributePairSelect.vue";
@@ -17,9 +18,9 @@ defineEmits<{
       @change="$emit('equipped', ($event.target as HTMLInputElement).checked)"
       type="checkbox"
       :data-testid="`equip-weapon-${entry.id}`"
-      :aria-label="`Equip ${entry.name}`"
+      :aria-label="tr('ui.equipValue1', { value1: entry.name })"
     />
-    Equipped</label
+    {{ tr("ui.equipped") }}</label
   >
   <EditorFieldGrid v-if="entry.itemType === 'weapon' && entry.weapon" class="mt-small">
     <AttributePairSelect
@@ -31,10 +32,10 @@ defineEmits<{
       @change="(index, value) => $emit('attribute', index, value)"
     />
     <LabeledInput
-      label="Accuracy bonus"
+      :label="tr('ui.accuracyBonus')"
       :model-value="entry.weapon.accuracyBonus ?? undefined"
       type="number"
-      :aria-label="`Accuracy bonus for ${entry.name}`"
+      :aria-label="tr('ui.accuracyBonusForValue1', { value1: entry.name })"
       data-testid="weapon-accuracy-bonus"
       placeholder="—"
       @input="

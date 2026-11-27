@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import GameBodySkeleton from "./GameBodySkeleton.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
@@ -39,9 +40,9 @@ const game = useGameQuery(gameId);
 const queryClient = useQueryClient();
 const membersQuery = useGameMembersQuery(gameId);
 const roster = useGameCharactersQuery(gameId);
-useQueryErrorToast(game, "Could not open this game. Return to your games and try again.");
-useQueryErrorToast(roster, "Could not load characters. Try again.");
-useQueryErrorToast(membersQuery, "Could not load membership details. Try again.");
+useQueryErrorToast(game, tr("ui.couldNotOpenThisGameReturnToYourGames"));
+useQueryErrorToast(roster, tr("ui.couldNotLoadCharactersTryAgain"));
+useQueryErrorToast(membersQuery, tr("ui.couldNotLoadMembershipDetailsTryAgain"));
 const createCharacter = useCreateGameCharacterMutation(gameId);
 const setActive = useGameCharacterActiveMutation(gameId);
 const selectCharacter = useSelectGameCharacterMutation(gameId);
@@ -124,7 +125,7 @@ onMounted(() => {
   events.onerror = () => {
     if (!eventConnectionFailed) {
       toast.add({
-        title: "Live updates disconnected. Reconnecting automatically.",
+        title: tr("ui.liveUpdatesDisconnectedReconnectingAutomatically"),
         color: "error",
       });
       eventConnectionFailed = true;
@@ -169,7 +170,7 @@ function openCreate() {
 async function submitCharacter() {
   const name = characterName.value.trim();
   if (!name) {
-    createError.value = "Enter a character name.";
+    createError.value = tr("ui.enterACharacterName");
     return;
   }
   if (pendingName.value !== name) pendingId.value = null;
@@ -188,7 +189,7 @@ async function submitCharacter() {
     else await router.push(`${gamePath}/characters/${result.character.id}`);
   } catch {
     toast.add({
-      title: "Could not confirm character creation. Submit again to safely retry.",
+      title: tr("ui.couldNotConfirmCharacterCreationSubmitAgainToSafely"),
       color: "error",
     });
   }
@@ -196,7 +197,7 @@ async function submitCharacter() {
 async function changeActive(characterId: string, active: boolean) {
   try {
     const character = characters.value.find((entry) => entry.id === characterId);
-    if (!character) throw new Error("Character unavailable");
+    if (!character) throw new Error(tr("ui.characterUnavailable"));
     if (gameRecord.value?.role === "GM" && !character.controllerMembershipId) {
       await setActive.mutateAsync({ characterId, active });
     } else {
@@ -206,7 +207,7 @@ async function changeActive(characterId: string, active: boolean) {
               (entry) => entry.id === character.controllerMembershipId && !entry.removed,
             )
           : currentMember.value;
-      if (!member) throw new Error("Membership unavailable");
+      if (!member) throw new Error(tr("ui.membershipUnavailable"));
       await selectCharacter.mutateAsync({
         characterId: active ? characterId : null,
         expectedRevision: member.revision,
@@ -214,7 +215,7 @@ async function changeActive(characterId: string, active: boolean) {
       });
     }
   } catch {
-    toast.add({ title: "Could not update the active character. Try again.", color: "error" });
+    toast.add({ title: tr("ui.couldNotUpdateTheActiveCharacterTryAgain"), color: "error" });
   }
 }
 async function assign(characterId: string, membershipId: string | null) {
@@ -222,7 +223,7 @@ async function assign(characterId: string, membershipId: string | null) {
     await assignCharacter.mutateAsync({ characterId, membershipId });
     await membersQuery.refetch();
   } catch {
-    toast.add({ title: "Could not update character control. Try again.", color: "error" });
+    toast.add({ title: tr("ui.couldNotUpdateCharacterControlTryAgain"), color: "error" });
   }
 }
 async function removeCharacter() {
@@ -232,14 +233,18 @@ async function removeCharacter() {
     removingId.value = "";
     await membersQuery.refetch();
   } catch {
-    toast.add({ title: "Could not remove the character. Try again.", color: "error" });
+    toast.add({ title: tr("ui.couldNotRemoveTheCharacterTryAgain"), color: "error" });
   }
 }
 </script>
 
 <template>
   <div data-testid="game-view" class="mx-auto max-w-6xl space-y-section">
-    <SkeletonRegion v-if="game.isLoading.value" label="Loading game…" class="space-y-section">
+    <SkeletonRegion
+      v-if="game.isLoading.value"
+      :label="tr('ui.loadingGame')"
+      class="space-y-section"
+    >
       <div class="flex flex-wrap items-start justify-between gap-medium">
         <div class="space-y-tight">
           <SkeletonBlock class="h-9 w-44" /><SkeletonBlock class="h-5 w-32" />
@@ -266,15 +271,17 @@ async function removeCharacter() {
           >
             {{
               settings
-                ? "Settings"
+                ? tr("ui.settings")
                 : management
                   ? managedCharacterId
-                    ? "Character sheet"
-                    : "Characters management"
+                    ? tr("ui.characterSheet")
+                    : tr("ui.charactersManagement")
                   : gameRecord.name
             }}
           </h1>
-          <p class="text-muted">{{ gameRecord.system.name }} · {{ gameRecord.role }}</p>
+          <p class="text-muted">
+            {{ gameRecord.system.name }} · {{ tr(`ui.${gameRecord.role.toLowerCase()}`) }}
+          </p>
         </div>
         <div class="flex flex-wrap gap-small">
           <UButton
@@ -283,7 +290,7 @@ async function removeCharacter() {
             data-testid="open-game-classes"
             color="neutral"
             variant="outline"
-            >Game classes</UButton
+            >{{ tr("ui.gameClasses") }}</UButton
           >
           <UButton
             v-if="!management && !settings"
@@ -291,7 +298,7 @@ async function removeCharacter() {
             color="neutral"
             variant="outline"
             :to="`${gamePath}/characters`"
-            >Characters management</UButton
+            >{{ tr("ui.charactersManagement") }}</UButton
           >
           <UButton
             v-if="!management && !settings && gameRecord.role === 'GM'"
@@ -299,13 +306,13 @@ async function removeCharacter() {
             variant="outline"
             data-testid="open-settings"
             :to="`${gamePath}/settings`"
-            >Settings</UButton
+            >{{ tr("ui.settings") }}</UButton
           >
         </div>
       </header>
       <SkeletonRegion
         v-if="(settings || management) && (roster.isLoading.value || membersQuery.isLoading.value)"
-        label="Loading characters…"
+        :label="tr('ui.loadingCharacters')"
       >
         <GameBodySkeleton
           :settings="settings"
@@ -320,7 +327,7 @@ async function removeCharacter() {
       />
       <template v-else>
         <ContentState v-if="settings && gameRecord.role !== 'GM'" kind="empty">
-          Settings are only available to the GM of this game.
+          {{ tr("ui.settingsAreOnlyAvailableToTheGmOfThis") }}
         </ContentState>
         <GameSettings
           v-else-if="settings"
@@ -339,10 +346,14 @@ async function removeCharacter() {
         </template>
         <template v-else-if="management">
           <div class="flex justify-end">
-            <UButton data-testid="create-character" @click="openCreate">Create character</UButton>
+            <UButton data-testid="create-character" @click="openCreate">{{
+              tr("ui.createCharacter")
+            }}</UButton>
           </div>
           <p v-if="membersQuery.isError.value" role="alert">
-            <UButton variant="outline" color="neutral" @click="membersQuery.refetch">Retry</UButton>
+            <UButton variant="outline" color="neutral" @click="membersQuery.refetch">{{
+              tr("games.retry")
+            }}</UButton>
           </p>
           <CharacterManagement
             v-else
@@ -381,14 +392,14 @@ async function removeCharacter() {
     </template>
     <CreateFormDialog
       v-model:open="createOpen"
-      title="Create a character"
-      submit-label="Create character"
+      :title="tr('ui.createACharacter')"
+      :submit-label="tr('ui.createCharacter')"
       submit-test-id="confirm-create-character"
       :pending="createCharacter.isPending.value"
       @submit="submitCharacter"
     >
       <LabeledInput
-        label="Character name"
+        :label="tr('ui.characterName')"
         :error="createError"
         v-model="characterName"
         :disabled="createCharacter.isPending.value"
@@ -397,8 +408,8 @@ async function removeCharacter() {
     </CreateFormDialog>
     <ConfirmDialog
       :open="Boolean(removingId)"
-      title="Remove character"
-      confirm-label="Remove permanently"
+      :title="tr('ui.removeCharacter')"
+      :confirm-label="tr('ui.removePermanently')"
       confirm-test-id="confirm-character-removal"
       destructive
       :pending="deleteCharacter.isPending.value"
@@ -406,7 +417,11 @@ async function removeCharacter() {
       @confirm="removeCharacter"
     >
       <p>
-        Remove {{ removingCharacter?.name }}? This permanently removes the character and its sheet.
+        {{
+          tr("ui.removeValue1ThisPermanentlyRemovesTheCharacterAndIts", {
+            value1: removingCharacter?.name,
+          })
+        }}
       </p>
     </ConfirmDialog>
   </div>

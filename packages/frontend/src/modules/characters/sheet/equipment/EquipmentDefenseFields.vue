@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import ArmorFields from "./ArmorFields.vue";
 import ShieldFields from "./ShieldFields.vue";
 import type { DefenseKind, NamedEntry } from "../types";
@@ -27,14 +28,15 @@ function setEquipped(event: Event) {
 <template>
   <div class="defense-settings">
     <label
-      >Defense equipment<select
+      >{{ tr("ui.defenseEquipment")
+      }}<select
         :value="entry.defenseKind ?? ''"
-        :aria-label="`Defense equipment type for ${entry.name}`"
+        :aria-label="tr('ui.defenseEquipmentTypeForValue1', { value1: entry.name })"
         @change="setKind"
       >
-        <option value="">None</option>
-        <option value="armor">Armor</option>
-        <option value="shield">Shield</option>
+        <option value="">{{ tr("ui.none") }}</option>
+        <option value="armor">{{ tr("ui.armor") }}</option>
+        <option value="shield">{{ tr("ui.shield") }}</option>
       </select></label
     >
     <template v-if="entry.defenseKind">
@@ -43,12 +45,14 @@ function setEquipped(event: Event) {
           type="checkbox"
           :checked="entry.equipped"
           :data-testid="`equip-${entry.id}`"
-          :aria-label="`Equip ${entry.name}`"
+          :aria-label="tr('ui.equipValue1', { value1: entry.name })"
           @change="setEquipped"
         />
-        Equipped</label
+        {{ tr("ui.equipped") }}</label
       >
-      <p class="hint">Equipping another {{ entry.defenseKind }} replaces this one.</p>
+      <p class="hint">
+        {{ tr("ui.equippingAnotherValue1ReplacesThisOne", { value1: entry.defenseKind }) }}
+      </p>
     </template>
     <ArmorFields :entry="entry" @update="updateArmor" />
     <ShieldFields :entry="entry" @update="updateShield" />

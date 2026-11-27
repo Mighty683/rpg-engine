@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 import DieIcon from "./DieIcon.vue";
 withDefaults(defineProps<{ sides: number; opposing?: boolean }>(), { opposing: false });
 </script>
 
 <template>
   <button type="button" class="die-button die-tile" :class="{ opposing }">
-    <DieIcon :sides="sides" /><span>d{{ sides }}</span>
+    <DieIcon :sides="sides" /><span>{{ tr("ui.dValue1", { value1: sides }) }}</span>
   </button>
 </template>
 

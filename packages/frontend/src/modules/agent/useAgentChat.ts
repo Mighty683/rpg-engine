@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 import { useToast } from "@nuxt/ui/composables";
 import { computed, onScopeDispose, ref, shallowRef } from "vue";
 import { useApiServices } from "../../shared/api-services";
@@ -94,7 +95,7 @@ export function useAgentChat(gameId: string) {
       failed = false;
     } catch (error) {
       available.value = false;
-      report(error, "Could not load Agent chat", !failed);
+      report(error, tr("ui.couldNotLoadAgentChat"), !failed);
       failed = true;
     } finally {
       checking.value = false;
@@ -112,7 +113,7 @@ export function useAgentChat(gameId: string) {
       turns.value = uniqueTurns([...page.turns, ...turns.value]);
       nextBefore.value = page.nextBefore;
     } catch (error) {
-      report(error, "Could not load older messages. Scroll up to retry.");
+      report(error, tr("ui.couldNotLoadOlderMessagesScrollUpToRetry"));
     } finally {
       loadingOlder = false;
     }
@@ -136,7 +137,7 @@ export function useAgentChat(gameId: string) {
       action.value = turn.action;
     } catch (error) {
       pending.value = undefined;
-      report(error, "Could not complete the Agent turn");
+      report(error, tr("ui.couldNotCompleteTheAgentTurn"));
       await refresh();
     } finally {
       sending.value = false;

@@ -1,4 +1,6 @@
 import { createI18n } from "vue-i18n";
+import ui from "./ui.en.json";
+import errors from "./errors.en.json";
 
 export function createFrontendI18n() {
   return createI18n({
@@ -7,6 +9,8 @@ export function createFrontendI18n() {
     fallbackLocale: "en",
     messages: {
       en: {
+        ui,
+        errors,
         games: {
           title: "Games",
           create: "Create game",
@@ -44,3 +48,7 @@ export function createFrontendI18n() {
     },
   });
 }
+
+export const frontendI18n = createFrontendI18n();
+export const tr = (key: string, values: Record<string, unknown> = {}) =>
+  frontendI18n.global.t(key, values);

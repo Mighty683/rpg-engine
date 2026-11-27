@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { computed } from "vue";
 import DieButton from "../../shared/design-system/domain/DieButton.vue";
 
@@ -29,15 +30,17 @@ function remove(index: number) {
 
 <template>
   <div :class="opposing ? 'space-y-small' : 'space-y-medium'">
-    <p class="text-small font-medium">{{ opposing ? "Opposing dice" : "Friendly dice" }}</p>
+    <p class="text-small font-medium">
+      {{ opposing ? tr("ui.opposingDice") : tr("ui.friendlyDice") }}
+    </p>
     <div
       class="flex flex-wrap items-center gap-small"
-      :aria-label="opposing ? undefined : 'Add dice and modifier'"
+      :aria-label="opposing ? undefined : tr('ui.addDiceAndModifier')"
     >
       <UTooltip
         v-for="size in sizes"
         :key="size"
-        text="Maximum 2 dice"
+        :text="tr('ui.maximum2Dice')"
         :disabled="!full"
         :content="{ side: 'top' }"
       >
@@ -47,13 +50,17 @@ function remove(index: number) {
             :opposing="opposing"
             :disabled="full"
             :data-testid="opposing ? `opponent-add-d${size}` : `add-die-d${size}`"
-            :aria-label="opposing ? `Add opposing d${size}` : `Add d${size} to dice pool`"
+            :aria-label="
+              opposing
+                ? tr('ui.addOpposingDValue1', { value1: size })
+                : tr('ui.addDValue1ToDicePool', { value1: size })
+            "
             @click="add(size)"
           />
         </span>
       </UTooltip>
       <label class="modifier-card" :class="{ opposing }">
-        <span>Modifier</span>
+        <span>{{ tr("ui.modifier") }}</span>
         <input
           :value="modifier"
           type="number"
@@ -65,7 +72,7 @@ function remove(index: number) {
     </div>
     <slot />
     <div v-if="showPool">
-      <p class="mb-small text-small font-medium">Dice pool</p>
+      <p class="mb-small text-small font-medium">{{ tr("ui.dicePool") }}</p>
       <div
         v-if="dice.length || opposingDice?.length || hasPoolPrefix"
         class="flex flex-wrap gap-small"
@@ -77,7 +84,11 @@ function remove(index: number) {
           :sides="size"
           :opposing="opposing"
           :data-testid="opposing ? `opponent-pool-d${size}` : `pool-die-d${size}`"
-          :aria-label="opposing ? `Remove opposing d${size}` : `Remove d${size} from dice pool`"
+          :aria-label="
+            opposing
+              ? tr('ui.removeOpposingDValue1', { value1: size })
+              : tr('ui.removeDValue1FromDicePool', { value1: size })
+          "
           @click="remove(index)"
         />
         <DieButton
@@ -86,12 +97,12 @@ function remove(index: number) {
           :sides="size"
           opposing
           :data-testid="`opponent-pool-d${size}`"
-          :aria-label="`Remove opposing d${size} from dice pool`"
+          :aria-label="tr('ui.removeOpposingDValue1FromDicePool', { value1: size })"
           @click="emit('removeOpposing', index)"
         />
       </div>
       <p v-else class="text-small text-muted" :data-testid="opposing ? undefined : 'pool-empty'">
-        Select dice to add them to the pool.
+        {{ tr("ui.selectDiceToAddThemToThePool") }}
       </p>
     </div>
   </div>

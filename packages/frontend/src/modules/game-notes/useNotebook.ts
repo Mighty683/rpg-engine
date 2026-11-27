@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 /**
  * Composition hook for game notes: resolves the per-game notebook against the
  * injected notes client, routes controller notices to toasts, and keeps one
@@ -27,7 +28,7 @@ function noticeToast(notice: NoteNotice) {
     description: notice.description,
     color: notice.kind,
     ...(notice.retry
-      ? { actions: [{ label: "Retry edits", onClick: () => void notice.retry?.() }] }
+      ? { actions: [{ label: tr("ui.retryEdits"), onClick: () => void notice.retry?.() }] }
       : {}),
   };
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { computed, ref } from "vue";
 import ProgressActionButton from "../../shared/design-system/base/ProgressActionButton.vue";
 import SegmentedProgress from "../../shared/design-system/base/SegmentedProgress.vue";
@@ -24,16 +25,16 @@ const noCapacity = computed(() => assigned.value >= (props.level ?? assigned.val
 const capacityReason = computed(() => {
   if (!noCapacity.value) return;
   if ((props.level ?? 0) >= 10 || totalRanks(props.character.levels) >= 50)
-    return "Lower another skill rank in this class to free up a rank.";
-  return "Increase the class level or lower another skill rank to free up a rank.";
+    return tr("ui.lowerAnotherSkillRankInThisClassToFree");
+  return tr("ui.increaseTheClassLevelOrLowerAnotherSkillRank");
 });
 const addSkillReason = computed(() => {
-  if (props.saving) return "Wait for the current change to save.";
-  if (!props.entry.skills.length) return "This class has no skills.";
-  if (!available.value.length) return "All skills in this class are already learned.";
+  if (props.saving) return tr("ui.waitForTheCurrentChangeToSave");
+  if (!props.entry.skills.length) return tr("ui.thisClassHasNoSkills");
+  if (!available.value.length) return tr("ui.allSkillsInThisClassAreAlreadyLearned");
 });
 function increaseReason(skill: ProgressionSkill) {
-  if ((props.character.ranks[skill.id] ?? 0) >= skill.maxRank) return "Maximum rank reached.";
+  if ((props.character.ranks[skill.id] ?? 0) >= skill.maxRank) return tr("ui.maximumRankReached");
   return capacityReason.value;
 }
 function selectSkill(id: string) {
@@ -52,7 +53,7 @@ const skills = computed(() =>
       :data-testid="`class-benefits-${entry.id}`"
     />
     <section v-if="skills.length || editable" :data-testid="`class-skills-${entry.id}`">
-      <h4 class="mb-small text-label font-semibold">Skills</h4>
+      <h4 class="mb-small text-label font-semibold">{{ tr("ui.skills2") }}</h4>
       <ul class="flex flex-wrap items-stretch gap-small">
         <li
           v-for="skill in skills"
@@ -66,7 +67,7 @@ const skills = computed(() =>
             class="mt-small"
             :value="character.ranks[skill.id] ?? 0"
             :maximum="Math.min(skill.maxRank, 10)"
-            :label="`${skill.name} rank`"
+            :label="tr('ui.namedRank', { name: skill.name })"
             :data-testid="`skill-progress-${skill.id}`"
             :editable="editable"
             :disabled="saving"
@@ -87,15 +88,15 @@ const skills = computed(() =>
             :blocked-reason="addSkillReason"
             :data-testid="`add-skill-${entry.id}`"
             @click="pickerOpen = true"
-            >+ Add skill</ProgressActionButton
+            >{{ tr("ui.addSkill2") }}</ProgressActionButton
           >
         </li>
       </ul>
     </section>
     <UModal
       v-model:open="pickerOpen"
-      :title="`Add a ${entry.name} skill`"
-      description="Choose a skill card to assign one available class rank."
+      :title="tr('ui.addAValue1Skill', { value1: entry.name })"
+      :description="tr('ui.chooseASkillCardToAssignOneAvailableClass')"
     >
       <template #body>
         <div class="grid gap-small sm:grid-cols-2">
@@ -110,7 +111,9 @@ const skills = computed(() =>
           >
             <strong>{{ skill.name }}</strong
             ><span class="text-small">{{ skill.description }}</span
-            ><span class="text-small text-muted">Maximum rank {{ skill.maxRank }}</span>
+            ><span class="text-small text-muted">{{
+              tr("ui.maximumRankValue1", { value1: skill.maxRank })
+            }}</span>
           </ProgressActionButton>
         </div>
       </template>

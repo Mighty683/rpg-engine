@@ -61,7 +61,7 @@ function resolveAttribute(
 ): ResolvedThrow {
   const setup = input.setup as Extract<ThrowSetup, { type: "attribute" }>;
   if (context.source && setup.characterId !== context.source.characterId)
-    throw fail("validation", "A reroll keeps the original character", "characterId");
+    throw fail("validation", "a_reroll_keeps_the_original_character", "characterId");
   const character = requireRollableCharacter(context, setup.characterId);
   if (setup.expectedRevision !== character.revision)
     throw fail("stale_revision", "The sheet changed since this roll was prepared");
@@ -145,7 +145,7 @@ function resolveWeapon(
     (setup.characterId !== context.source.characterId ||
       setup.equipmentId !== context.source.equipmentId)
   )
-    throw fail("validation", "A reroll keeps the original character and weapon", "equipmentId");
+    throw fail("validation", "a_reroll_keeps_the_original_character_and_weapon", "equipmentId");
   const character = requireRollableCharacter(context, setup.characterId);
   if (setup.expectedRevision !== character.revision)
     throw fail("stale_revision", "The sheet changed since this roll was prepared");
@@ -154,17 +154,14 @@ function resolveWeapon(
   const accuracyDice = reroll?.accuracyDice ?? context.weapon.accuracyDice;
   const weaponBonus = reroll?.weaponBonus ?? context.weapon.accuracyBonus;
   if (!accuracyDice[0] || !accuracyDice[1] || weaponBonus === null)
-    throw fail(
-      "weapon_incomplete",
-      "Set both accuracy attributes and the accuracy bonus on the character sheet",
-    );
+    throw fail("weapon_incomplete", "weapon_setup_incomplete");
   const accuracyPair: [Attribute, Attribute] = [accuracyDice[0], accuracyDice[1]];
   const firstSize =
     setup.dice[0] ?? effectiveDie(character.currentDice, accuracyPair[0], undefined);
   const secondSize =
     setup.dice[1] ?? effectiveDie(character.currentDice, accuracyPair[1], undefined);
   if (!standardDice.includes(firstSize as Die) || !standardDice.includes(secondSize as Die))
-    throw fail("validation", "Weapon dice use d6, d8, d10 or d12", "dice");
+    throw fail("validation", "weapon_dice_use_d6_d8_d10_or_d12", "dice");
   const friendly = [
     rollDie(accuracyPair[0], firstSize, source),
     rollDie(accuracyPair[1], secondSize, source),
@@ -267,7 +264,7 @@ export function resolveThrow(
   source: DieSource,
 ): ResolvedThrow {
   if (context.source && context.source.setup.type !== input.setup.type)
-    throw fail("validation", "The reroll setup does not match the original throw", "setup.type");
+    throw fail("validation", "reroll_setup_changed", "setup.type");
   if (input.setup.type === "attribute") return resolveAttribute(input, context, source);
   if (input.setup.type === "weapon") return resolveWeapon(input, context, source);
   return resolveFree(input, context, source);

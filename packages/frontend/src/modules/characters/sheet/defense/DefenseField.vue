@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
 defineProps<{
   label: string;
@@ -19,7 +20,7 @@ function update(event: Event) {
   <div class="defense-stat" :class="{ compact }" :data-testid="`defense-card-${label}`">
     <div class="stat-label">
       <span>{{ label }}</span
-      ><InfoTooltip :label="`About ${label}`" :text="help" />
+      ><InfoTooltip :label="tr('ui.aboutValue1', { value1: label })" :text="help" />
     </div>
     <input
       type="number"
@@ -31,7 +32,7 @@ function update(event: Event) {
     <ul
       v-if="!manual"
       class="defense-calculation"
-      :aria-label="`${label} calculated contributions`"
+      :aria-label="tr('ui.value1CalculatedContributions', { value1: label })"
     >
       <li v-for="(contribution, index) in contributions" :key="index">
         <span>{{ contribution.name }}</span
@@ -41,14 +42,14 @@ function update(event: Event) {
         >
       </li>
     </ul>
-    <span v-if="!manual && value !== null" class="override-label">Overridden</span
+    <span v-if="!manual && value !== null" class="override-label">{{ tr("ui.overridden") }}</span
     ><button
       v-if="!manual && value !== null"
       :data-testid="`restore-${label}`"
       type="button"
       @click="value = null"
     >
-      Use calculated
+      {{ tr("ui.useCalculated") }}
     </button>
   </div>
 </template>

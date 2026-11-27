@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "./shared/i18n";
 import SkeletonBlock from "./shared/design-system/base/SkeletonBlock.vue";
 import SkeletonRegion from "./shared/design-system/base/SkeletonRegion.vue";
 import type { DropdownMenuItem } from "@nuxt/ui";
@@ -22,7 +23,7 @@ const loading = ref(true);
 const sessionError = ref("");
 const accountItems = computed<DropdownMenuItem[]>(() => [
   { label: account.value?.username ?? "", type: "label" },
-  { label: "Sign out", color: "error", "data-testid": "sign-out", onSelect: signOut },
+  { label: tr("ui.signOut"), color: "error", "data-testid": "sign-out", onSelect: signOut },
 ]);
 
 async function setAccount(next: Account | null) {
@@ -40,7 +41,7 @@ async function loadSession() {
   } catch (cause) {
     if ((cause as { status?: number }).status === 401) await setAccount(null);
     else {
-      sessionError.value = "Could not check your session. Please try again.";
+      sessionError.value = tr("ui.couldNotCheckYourSessionPleaseTryAgain");
       toast.add({ title: sessionError.value, color: "error" });
     }
   } finally {
@@ -55,7 +56,7 @@ async function signOut() {
     await setAccount(null);
     await router.push("/");
   } catch {
-    toast.add({ title: "Could not sign out. Please try again.", color: "error" });
+    toast.add({ title: tr("ui.couldNotSignOutPleaseTryAgain"), color: "error" });
   }
 }
 
@@ -72,7 +73,7 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
 
 <template>
   <UApp>
-    <SkeletonRegion v-if="loading" label="Loading account…">
+    <SkeletonRegion v-if="loading" :label="tr('ui.loadingAccount')">
       <div
         class="grid grid-cols-[1fr_auto] items-center gap-x-small border-b border-default px-large sm:grid-cols-[auto_1fr_auto] sm:gap-x-section"
       >
@@ -91,14 +92,16 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
       /></UContainer>
     </SkeletonRegion>
     <div v-else-if="sessionError && !account" class="p-large" role="alert">
-      <UButton @click="loadSession">Try again</UButton>
+      <UButton @click="loadSession">{{ tr("ui.tryAgain") }}</UButton>
     </div>
     <AccountScreen v-else-if="!account" @authenticated="setAccount" />
     <div v-else class="min-h-screen bg-default text-default">
       <header
         class="grid grid-cols-[1fr_auto] items-center gap-x-small border-b border-default px-large sm:grid-cols-[auto_1fr_auto] sm:gap-x-section"
       >
-        <RouterLink to="/" class="col-start-1 row-start-1 font-semibold">RPG Engine</RouterLink>
+        <RouterLink to="/" class="col-start-1 row-start-1 font-semibold">{{
+          tr("ui.rpgEngine")
+        }}</RouterLink>
         <PrimaryNavigation
           class="col-span-2 col-start-1 row-start-2 sm:col-span-1 sm:col-start-2 sm:row-start-1"
         />
@@ -109,7 +112,7 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
             trailing-icon="i-lucide-chevron-down"
             class="col-start-2 row-start-1 min-h-page justify-self-end sm:col-start-3"
             data-testid="open-account-menu"
-            >Account</UButton
+            >{{ tr("ui.account") }}</UButton
           >
         </UDropdownMenu>
       </header>

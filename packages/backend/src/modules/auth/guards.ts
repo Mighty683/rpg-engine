@@ -12,7 +12,7 @@ export function requireWriteOrigin(config: Configuration, request: Request) {
   const allowed = configuredOrigin ? origin === configuredOrigin : !config.production;
   if (!allowed) {
     throw new RequestError(403, {
-      error: { code: "forbidden", message: "Invalid request origin." },
+      error: { code: "forbidden" },
     });
   }
 }
@@ -28,7 +28,7 @@ export async function requireActor(
   const actor = cookie ? await resolve(cookie.slice("rpg_session=".length)) : null;
   if (!actor) {
     throw new RequestError(401, {
-      error: { code: "unauthorized", message: "Sign in to continue." },
+      error: { code: "unauthorized" },
     });
   }
   return actor;

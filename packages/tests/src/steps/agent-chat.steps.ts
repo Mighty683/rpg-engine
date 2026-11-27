@@ -248,7 +248,7 @@ Then(
       await gate.promise;
       await route.fulfill({
         status: 502,
-        json: { error: { code: "agent_failed", message: "Roll unavailable" } },
+        json: { error: { code: "ERR05" } },
       });
     });
     try {

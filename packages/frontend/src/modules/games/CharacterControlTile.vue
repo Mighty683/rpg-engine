@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import type { GameCharacterSummary } from "../characters/types";
 import type { GameMember } from "./types";
@@ -22,7 +23,7 @@ const emit = defineEmits<{
 const gm = "gm";
 const controller = ref(props.character.controllerMembershipId ?? gm);
 const choices = computed(() => [
-  { label: "GM", value: gm },
+  { label: tr("ui.gm"), value: gm },
   ...props.members
     .filter((member) => !member.removed)
     .map((member) => ({ label: member.name, value: member.id })),
@@ -42,14 +43,14 @@ watch(
     <div class="flex flex-wrap items-center justify-between gap-small">
       <h3 class="font-semibold">{{ character.name }}</h3>
       <UBadge :color="character.active ? 'success' : 'neutral'" variant="subtle">{{
-        character.active ? "Active" : "Inactive"
+        character.active ? tr("ui.active") : tr("ui.inactive")
       }}</UBadge>
     </div>
     <p class="text-muted">
       {{
         character.controllerMembershipId
-          ? `Controlled by ${character.controllerName}`
-          : "GM controlled"
+          ? tr("ui.controlledByValue1", { value1: character.controllerName })
+          : tr("ui.gmControlled")
       }}
     </p>
     <form
@@ -58,7 +59,7 @@ watch(
       @submit.prevent="!pending && changed && emit('assign', controller === gm ? null : controller)"
     >
       <LabeledSelect
-        :label="`Assign control for ${character.name}`"
+        :label="tr('ui.assignControlForValue1', { value1: character.name })"
         v-model="controller"
         :disabled="pending"
         :items="choices"
@@ -69,11 +70,13 @@ watch(
         :disabled="!changed || pending"
         :color="changed ? 'primary' : 'neutral'"
         :variant="changed ? 'solid' : 'outline'"
-        >Update control</UButton
+        >{{ tr("ui.updateControl") }}</UButton
       >
     </form>
     <div class="flex flex-wrap gap-small">
-      <UButton color="neutral" variant="outline" @click="emit('open')">Open sheet</UButton>
+      <UButton color="neutral" variant="outline" @click="emit('open')">{{
+        tr("ui.openSheet")
+      }}</UButton>
       <UButton
         v-if="canActivate"
         data-testid="set-active"
@@ -81,7 +84,7 @@ watch(
         variant="outline"
         :disabled="pending"
         @click="emit('setActive', !character.active)"
-        >{{ character.active ? "Make inactive" : "Make active" }}</UButton
+        >{{ character.active ? tr("ui.makeInactive") : tr("ui.makeActive") }}</UButton
       >
       <UButton
         v-if="role === 'GM' || character.canEdit"
@@ -89,7 +92,7 @@ watch(
         variant="outline"
         :disabled="pending"
         @click="emit('remove')"
-        >Remove</UButton
+        >{{ tr("ui.remove") }}</UButton
       >
     </div>
   </ScreenSection>

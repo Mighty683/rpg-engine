@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SurfaceCard from "../../shared/design-system/base/SurfaceCard.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import FreeBenefitsEditor from "./FreeBenefitsEditor.vue";
@@ -25,12 +26,12 @@ function removeBenefit(skill: SkillDraft, id: string) {
 
 <template>
   <SurfaceCard>
-    <h2 class="text-section font-semibold">Skills</h2>
+    <h2 class="text-section font-semibold">{{ tr("ui.skills2") }}</h2>
     <p v-if="!readOnly" class="text-muted">
-      Define each skill's description, rank limit and benefits.
+      {{ tr("ui.defineEachSkillSDescriptionRankLimitAndBenefits") }}
     </p>
     <p v-if="skills.length === 0" class="mt-medium text-muted" data-testid="skills-empty">
-      No skills added yet.
+      {{ tr("ui.noSkillsAddedYet") }}
     </p>
     <div class="mt-medium flex flex-col gap-medium">
       <article
@@ -42,7 +43,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
         <div class="flex flex-wrap items-end justify-between gap-medium">
           <LabeledInput
             :readonly="readOnly"
-            label="Skill name"
+            :label="tr('ui.skillName')"
             class="w-64 max-w-full"
             :model-value="skill.name"
             :data-testid="`skill-name-${skill.id}`"
@@ -53,16 +54,16 @@ function removeBenefit(skill: SkillDraft, id: string) {
             color="error"
             variant="outline"
             :disabled="removeDisabled"
-            :aria-label="`Remove skill ${skill.name || index + 1}`"
+            :aria-label="tr('ui.removeSkillValue1', { value1: skill.name || index + 1 })"
             :data-testid="`remove-skill-${skill.id}`"
             @click="emit('remove', skill.id)"
-            >Remove skill</UButton
+            >{{ tr("ui.removeSkill") }}</UButton
           >
         </div>
         <LabeledInput
           :readonly="readOnly"
           class="mt-small"
-          label="Description"
+          :label="tr('ui.description')"
           multiline
           :rows="3"
           :model-value="skill.description"
@@ -72,20 +73,20 @@ function removeBenefit(skill: SkillDraft, id: string) {
         <LabeledInput
           :readonly="readOnly"
           class="mt-small w-32"
-          label="Maximum rank"
+          :label="tr('ui.maximumRank')"
           type="number"
           min="1"
           step="1"
-          hint="Use 1 for a single-purchase skill."
+          :hint="tr('ui.use1ForASinglePurchaseSkill')"
           :model-value="skill.maxRank"
           :data-testid="`skill-rank-${skill.id}`"
           @update:model-value="emit('update', skill.id, { maxRank: String($event) })"
         />
         <FreeBenefitsEditor
           class="mt-medium"
-          title="Skill benefits"
+          :title="tr('ui.skillBenefits')"
           allow-rank-scaling
-          description="Add effects and choose whether stat modifiers scale with rank."
+          :description="tr('ui.addEffectsAndChooseWhetherStatModifiersScaleWith')"
           :benefits="skill.benefits"
           :read-only="readOnly"
           @add="emit('addBenefit', skill.id, $event)"
@@ -101,7 +102,7 @@ function removeBenefit(skill: SkillDraft, id: string) {
       variant="solid"
       data-testid="add-skill"
       @click="emit('add')"
-      >Add skill</UButton
+      >{{ tr("ui.addSkill") }}</UButton
     >
   </SurfaceCard>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
@@ -6,7 +7,7 @@ defineProps<{ expanded?: boolean }>();
 </script>
 
 <template>
-  <SkeletonRegion label="Loading classes…">
+  <SkeletonRegion :label="tr('ui.loadingClasses')">
     <ScreenSection class="space-y-small">
       <SkeletonBlock class="h-5 w-20" />
       <div class="space-y-small rounded-panel border border-default p-small">

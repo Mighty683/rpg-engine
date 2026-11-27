@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type { ThrowRecord } from "./types";
 import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 
@@ -6,32 +7,39 @@ defineProps<{ entry: ThrowRecord; highlighted?: boolean }>();
 defineEmits<{ reroll: []; remove: [] }>();
 
 const kindLabel: Record<ThrowRecord["kind"], string> = {
-  "attribute-check": "Attribute check",
-  "attribute-roll": "Attribute roll",
-  "weapon-accuracy": "Weapon accuracy",
-  free: "Dice roll",
-  "opposed-check": "Opposed check",
-  "opposed-roll": "Opposed roll",
+  "attribute-check": tr("ui.attributeCheck"),
+  "attribute-roll": tr("ui.attributeRoll"),
+  "weapon-accuracy": tr("ui.weaponAccuracy"),
+  free: tr("ui.diceRoll"),
+  "opposed-check": tr("ui.opposedCheck"),
+  "opposed-roll": tr("ui.opposedRoll"),
 };
 
-const resultLabel = { fumble: "Fumble", critical: "Critical success", ordinary: "", none: "" };
+const resultLabel = {
+  fumble: tr("ui.fumble"),
+  critical: tr("ui.criticalSuccess"),
+  ordinary: "",
+  none: "",
+};
 
 function title(entry: ThrowRecord) {
   const actor =
     entry.setup.type === "npc-attribute" || entry.setup.type === "npc-attack" || entry.setup.npcId
-      ? `GM · ${entry.characterName}`
+      ? tr("ui.gmValue1", { value1: entry.characterName })
       : entry.characterId
-        ? `${entry.role} · ${entry.characterName}`
+        ? `${tr(`ui.${entry.role.toLowerCase()}`)} · ${entry.characterName}`
         : entry.role === "GM"
-          ? "GM"
+          ? tr("ui.gm")
           : entry.characterName;
   return [actor, entry.equipmentName ?? kindLabel[entry.kind]].filter(Boolean).join(" · ");
 }
 function outcomeText(entry: ThrowRecord) {
   if (!entry.outcome.second || !entry.outcome.winner) return "";
   return entry.outcome.winner === "tie"
-    ? "Tie — reroll"
-    : `${entry.outcome.winner === "first" ? entry.characterName : "Opponent"} wins`;
+    ? tr("ui.tieReroll")
+    : tr("ui.winner", {
+        name: entry.outcome.winner === "first" ? entry.characterName : tr("ui.opponent"),
+      });
 }
 function dieLabel(die: { label: string | null; size: number }) {
   return die.label ?? `d${die.size}`;
@@ -47,7 +55,8 @@ function dieLabel(die: { label: string | null; size: number }) {
   >
     <div class="flex items-start justify-between gap-small">
       <p class="font-semibold" data-testid="throw-title">
-        {{ title(entry) }} <span v-if="entry.private" data-testid="private-throw">· Private</span>
+        {{ title(entry) }}
+        <span v-if="entry.private" data-testid="private-throw">{{ tr("ui.private") }}</span>
       </p>
       <div class="flex items-center gap-tight">
         <UButton
@@ -55,9 +64,9 @@ function dieLabel(die: { label: string | null; size: number }) {
           variant="ghost"
           size="xs"
           :data-testid="`reroll-throw`"
-          :aria-label="`Reroll ${title(entry)}`"
+          :aria-label="tr('ui.rerollValue1', { value1: title(entry) })"
           @click="$emit('reroll')"
-          >Reroll</UButton
+          >{{ tr("ui.reroll") }}</UButton
         >
         <UButton
           v-if="entry.canRemove"
@@ -66,7 +75,7 @@ function dieLabel(die: { label: string | null; size: number }) {
           variant="ghost"
           size="xs"
           :data-testid="`remove-throw`"
-          :aria-label="`Remove ${title(entry)} throw`"
+          :aria-label="tr('ui.removeValue1Throw', { value1: title(entry) })"
           @click="$emit('remove')"
         />
       </div>
@@ -76,16 +85,20 @@ function dieLabel(die: { label: string | null; size: number }) {
       :aria-label="
         [
           ...entry.outcome.first.dice.map((die) => `${dieLabel(die)} d${die.size}: ${die.face}`),
-          ...(entry.outcome.first.modifier ? [`modifier ${entry.outcome.first.modifier}`] : []),
+          ...(entry.outcome.first.modifier
+            ? [tr('ui.modifierValue1', { value1: entry.outcome.first.modifier })]
+            : []),
           ...(entry.outcome.second
             ? [
-                'opponent: ' +
-                  entry.outcome.second.dice
-                    .map((die) => `${dieLabel(die)} d${die.size}: ${die.face}`)
-                    .join(', ') +
-                  (entry.outcome.second.modifier
-                    ? `; modifier ${entry.outcome.second.modifier}`
-                    : ''),
+                tr('ui.opponentDice', {
+                  dice:
+                    entry.outcome.second.dice
+                      .map((die) => `${dieLabel(die)} d${die.size}: ${die.face}`)
+                      .join(', ') +
+                    (entry.outcome.second.modifier
+                      ? tr('ui.modifierValue12', { value1: entry.outcome.second.modifier })
+                      : ''),
+                }),
               ]
             : []),
         ].join('; ')
@@ -111,7 +124,7 @@ function dieLabel(die: { label: string | null; size: number }) {
         {{ Math.abs(entry.outcome.first.modifier) }}</strong
       >
       <template v-if="entry.outcome.second">
-        <span class="text-small text-muted" aria-hidden="true">vs</span>
+        <span class="text-small text-muted" aria-hidden="true">{{ tr("ui.vs") }}</span>
         <span
           v-for="(die, dieIndex) in entry.outcome.second.dice"
           :key="`opponent-${dieIndex}`"
@@ -133,12 +146,12 @@ function dieLabel(die: { label: string | null; size: number }) {
       </template>
     </div>
     <p data-testid="throw-result">
-      {{ entry.kind === "weapon-accuracy" ? "Accuracy" : "Total" }}:
+      {{ entry.kind === "weapon-accuracy" ? tr("ui.accuracy") : tr("ui.total") }}:
       <strong>{{ entry.outcome.first.total }}</strong
       ><span v-if="resultLabel[entry.outcome.first.result]">
         ({{ resultLabel[entry.outcome.first.result] }})</span
       ><template v-if="entry.outcome.second">
-        vs <strong>{{ entry.outcome.second.total }}</strong
+        {{ tr("ui.vs") }} <strong>{{ entry.outcome.second.total }}</strong
         ><span v-if="resultLabel[entry.outcome.second.result]">
           ({{ resultLabel[entry.outcome.second.result] }})</span
         >

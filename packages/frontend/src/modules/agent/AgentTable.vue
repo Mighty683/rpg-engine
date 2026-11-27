@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { ref } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useCreateThrowMutation } from "../game-table/hooks";
@@ -44,7 +45,7 @@ async function makeRoll(privateRoll: boolean) {
   } catch (error) {
     const problem = error as { payload?: { error?: { message?: string } } };
     toast.add({
-      title: "Could not confirm the roll",
+      title: tr("ui.couldNotConfirmTheRoll"),
       description: problem.payload?.error?.message,
       color: "error",
     });
@@ -60,8 +61,8 @@ async function makeRoll(privateRoll: boolean) {
     role="GM"
     :throws-hint="throwsHint"
     :npcs-hint="npcsHint"
-    :extra-edge-tab="{ id: 'agent', label: 'Agent', color: 'neutral' }"
-    :panel-tab="{ id: 'notes', label: 'Game notes', color: 'neutral' }"
+    :extra-edge-tab="{ id: 'agent', label: tr('ui.agent'), color: 'neutral' }"
+    :panel-tab="{ id: 'notes', label: tr('ui.gameNotes'), color: 'neutral' }"
     @agent-open="setOpen"
   >
     <template #edge-panel>

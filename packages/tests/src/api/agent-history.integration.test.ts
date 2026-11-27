@@ -46,7 +46,7 @@ describe("GM Agent admission and history", () => {
     expect(csrf.status).toBe(403);
     const disabled = await f.request(base + "/turns", "gm", "POST", { message: "hello" });
     expect(disabled.status).toBe(503);
-    expect((await disabled.json()).error.code).toBe("agent_disabled");
+    expect((await disabled.json()).error.code).toBe("ERR01");
     const empty = await f.request(base + "/status", "gm");
     expect(empty.headers.get("cache-control")).toBe("no-store");
     expect(await empty.json()).toEqual({

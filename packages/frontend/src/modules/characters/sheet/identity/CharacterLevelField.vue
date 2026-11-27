@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 withDefaults(
   defineProps<{
     level: number;
@@ -9,7 +10,7 @@ withDefaults(
   }>(),
   {
     max: 50,
-    label: "Character level",
+    label: tr("ui.characterLevel"),
   },
 );
 defineEmits<{ change: [event: Event] }>();
@@ -17,7 +18,7 @@ defineEmits<{ change: [event: Event] }>();
 
 <template>
   <label class="sheet-stat"
-    ><span>LEVEL</span
+    ><span>{{ tr("ui.level") }}</span
     ><input
       type="number"
       min="5"

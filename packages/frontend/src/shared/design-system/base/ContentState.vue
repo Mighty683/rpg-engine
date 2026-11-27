@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 withDefaults(
   defineProps<{ kind: "empty" | "error"; retryLabel?: string; retryTestId?: string }>(),
   {
-    retryLabel: "Retry",
+    retryLabel: tr("games.retry"),
   },
 );
 defineEmits<{ retry: [] }>();

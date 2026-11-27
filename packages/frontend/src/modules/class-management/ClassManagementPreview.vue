@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { ref } from "vue";
 import SurfaceCard from "../../shared/design-system/base/SurfaceCard.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
@@ -36,9 +37,9 @@ defineEmits<{
 const activeTab = ref("details");
 const newName = ref("");
 const editorTabs = [
-  { label: "Class details", value: "details", slot: "details" },
-  { label: "Free benefits", value: "benefits", slot: "benefits" },
-  { label: "Skills", value: "skills", slot: "skills" },
+  { label: tr("ui.classDetails"), value: "details", slot: "details" },
+  { label: tr("ui.freeBenefits"), value: "benefits", slot: "benefits" },
+  { label: tr("ui.skills2"), value: "skills", slot: "skills" },
 ];
 </script>
 
@@ -51,19 +52,21 @@ const editorTabs = [
       <header class="flex flex-wrap items-start justify-between gap-medium">
         <div>
           <p class="text-label text-muted">
-            <template v-if="context === 'Game'"> {{ gameName }} · Fabula Ultima </template>
-            <template v-else>Fabula Ultima</template>
+            <template v-if="context === 'Game'">
+              {{ tr("ui.value1FabulaUltima", { value1: gameName }) }}
+            </template>
+            <template v-else>{{ tr("ui.fabulaUltima2") }}</template>
           </p>
           <h1 class="text-heading font-semibold">
             {{
               {
-                List: context === "Library" ? "Class library" : "Game classes",
-                Create: "Create class",
-                Copy: "Copy from library",
-                Character: "Characters",
+                List: context === "Library" ? tr("ui.classLibrary") : tr("ui.gameClasses"),
+                Create: tr("ui.createClass"),
+                Copy: tr("ui.copyFromLibrary"),
+                Character: tr("ui.characters"),
               }[screen] ??
               current?.name ??
-              "Class details"
+              tr("ui.classDetails")
             }}
           </h1>
         </div>
@@ -74,14 +77,14 @@ const editorTabs = [
             color="neutral"
             variant="outline"
             data-testid="switch-class-context"
-            >{{ context === "Library" ? "Game classes" : "Class library" }}</UButton
+            >{{ context === "Library" ? tr("ui.gameClasses") : tr("ui.classLibrary") }}</UButton
           >
           <UButton
             v-if="screen === 'List' && context === 'Library'"
             data-testid="create-class"
             :disabled="!editable"
             @click="$emit('navigate', 'Create')"
-            >Create class</UButton
+            >{{ tr("ui.createClass") }}</UButton
           >
           <template v-else-if="screen === 'List'">
             <UButton
@@ -89,7 +92,7 @@ const editorTabs = [
               data-testid="copy-from-library"
               :disabled="!editable"
               @click="$emit('navigate', 'Copy')"
-              >Copy from library</UButton
+              >{{ tr("ui.copyFromLibrary") }}</UButton
             >
             <UButton
               color="neutral"
@@ -98,7 +101,7 @@ const editorTabs = [
               :to="charactersTo"
               data-testid="view-characters"
               @click="!charactersTo && $emit('navigate', 'Character')"
-              >Characters</UButton
+              >{{ tr("ui.characters") }}</UButton
             >
           </template>
           <UButton
@@ -108,20 +111,20 @@ const editorTabs = [
             data-testid="back-to-classes"
             @click="$emit('navigate', 'List')"
           >
-            Back to classes
+            {{ tr("ui.backToClasses") }}
           </UButton>
         </div>
       </header>
 
       <template v-if="screen === 'List' || screen === 'Copy'">
         <p v-if="screen === 'Copy'" class="text-muted">
-          Copy into {{ gameName }}. The game copy is independent of the library.
+          {{ tr("ui.copyIntoValue1TheGameCopyIsIndependentOf", { value1: gameName }) }}
         </p>
         <p v-if="!entries.length" class="text-muted" data-testid="empty-class-list">
           {{
             screen === "Copy"
-              ? "Create a class in the library before copying it into this game."
-              : "No classes yet."
+              ? tr("ui.createAClassInTheLibraryBeforeCopyingIt")
+              : tr("ui.noClassesYet")
           }}
         </p>
         <SurfaceCard v-for="entry in entries" :key="entry.id" data-testid="class-catalog-entry">
@@ -136,7 +139,7 @@ const editorTabs = [
                 :disabled="!editable"
                 :data-testid="`copy-class-${entry.id}`"
                 @click="$emit('copy', entry.id)"
-                >Copy class</UButton
+                >{{ tr("ui.copyClass") }}</UButton
               >
               <template v-else>
                 <UButton
@@ -147,7 +150,7 @@ const editorTabs = [
                     activeTab = 'details';
                     $emit('open', entry.id);
                   "
-                  >View class</UButton
+                  >{{ tr("ui.viewClass") }}</UButton
                 >
                 <UButton
                   v-if="context === 'Game' && canManage"
@@ -156,7 +159,7 @@ const editorTabs = [
                   :disabled="!actionsEnabled"
                   :data-testid="`save-to-library-${entry.id}`"
                   @click="$emit('saveToLibrary', entry.id)"
-                  >Save to library</UButton
+                  >{{ tr("ui.saveToLibrary") }}</UButton
                 >
                 <UButton
                   v-if="context === 'Game' && showRemoval && canManage"
@@ -165,7 +168,7 @@ const editorTabs = [
                   :disabled="!actionsEnabled"
                   :data-testid="`remove-class-${entry.id}`"
                   @click="$emit('removeClass', entry.id)"
-                  >Remove class</UButton
+                  >{{ tr("ui.removeClass") }}</UButton
                 >
               </template>
             </div>
@@ -184,7 +187,7 @@ const editorTabs = [
       >
         <LabeledInput
           v-model="newName"
-          label="Class name"
+          :label="tr('ui.className')"
           data-testid="create-class-name"
           maxlength="100"
         />
@@ -192,13 +195,13 @@ const editorTabs = [
           type="submit"
           :disabled="!editable || !newName.trim()"
           data-testid="add-library-class"
-          >Add class</UButton
+          >{{ tr("ui.addClass") }}</UButton
         >
       </form>
 
       <template v-else-if="screen === 'Details' && current">
         <p v-if="hasDraft" class="text-small text-muted" role="status">
-          Complete the draft fields to save changes.
+          {{ tr("ui.completeTheDraftFieldsToSaveChanges") }}
         </p>
         <UTabs v-model="activeTab" :items="editorTabs" :ui="{ content: 'mt-medium' }">
           <template #default="{ item }"
@@ -209,16 +212,16 @@ const editorTabs = [
               <p class="text-muted">
                 {{
                   context === "Library"
-                    ? "Library changes do not update existing game copies."
+                    ? tr("ui.libraryChangesDoNotUpdateExistingGameCopies")
                     : readOnlyDefinition
-                      ? "This class belongs to this game."
-                      : "You are editing this game’s copy."
+                      ? tr("ui.thisClassBelongsToThisGame")
+                      : tr("ui.youAreEditingThisGameSCopy")
                 }}
               </p>
               <LabeledInput
                 :key="current.id"
                 class="mt-medium max-w-xs"
-                label="Name"
+                :label="tr('ui.name')"
                 :model-value="current.name"
                 :readonly="!definitionEditable"
                 data-testid="class-name"
@@ -229,7 +232,7 @@ const editorTabs = [
               <LabeledInput
                 :key="`${current.id}-description`"
                 class="mt-medium"
-                label="Description"
+                :label="tr('ui.description')"
                 multiline
                 :model-value="current.description"
                 :readonly="!definitionEditable"
@@ -243,7 +246,7 @@ const editorTabs = [
         </UTabs>
       </template>
 
-      <p v-else-if="screen === 'Details'" role="status">Class unavailable.</p>
+      <p v-else-if="screen === 'Details'" role="status">{{ tr("ui.classUnavailable") }}</p>
       <slot v-else-if="screen === 'Character'" name="characters" />
     </div>
   </section>

@@ -36,7 +36,7 @@ it("keeps envelope errors at 400 and name errors at 422", () => {
         error: {
           code: "validation",
           message: "Check the fields.",
-          fields: { name: "Enter a character name of at most 100 characters." },
+          fields: { name: "character_name_length" },
         },
       },
     }),

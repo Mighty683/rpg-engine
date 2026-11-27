@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import CatalogSkeleton from "./CatalogSkeleton.vue";
 import { computed } from "vue";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
@@ -11,7 +12,7 @@ const route = useRoute();
 const router = useRouter();
 const gameId = typeof route.params.gameId === "string" ? route.params.gameId : undefined;
 const game = useGameQuery(gameId ?? "");
-useQueryErrorToast(game, "Could not open this game. Try again.");
+useQueryErrorToast(game, tr("ui.couldNotOpenThisGameTryAgain"));
 const gameRecord = computed(() => game.data.value?.game);
 const classId = computed(() => String(route.params.classId ?? ""));
 const screen = computed(() => {

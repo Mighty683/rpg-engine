@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import EquipmentIcon from "../../../../shared/design-system/domain/EquipmentIcon.vue";
 import WeaponIcon from "../../../../shared/design-system/domain/WeaponIcon.vue";
 import type { NamedEntry } from "../types";
@@ -7,7 +8,7 @@ defineEmits<{ select: [type: "other" | "weapon" | "armor"] }>();
 </script>
 <template>
   <fieldset class="item-type">
-    <legend>Item type</legend>
+    <legend>{{ tr("ui.itemType") }}</legend>
     <div class="type-options">
       <label
         v-for="type in ['other', 'weapon', 'armor'] as const"

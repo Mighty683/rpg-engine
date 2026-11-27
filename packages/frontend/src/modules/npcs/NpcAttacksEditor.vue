@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { newUuid } from "../../shared/uuid";
 import EditorFieldGrid from "../../shared/design-system/base/EditorFieldGrid.vue";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
@@ -12,7 +13,7 @@ const props = defineProps<{ attacks: NpcAttack[] }>();
 function addAttack() {
   props.attacks.push({
     id: newUuid(),
-    name: "New attack",
+    name: tr("ui.newAttack"),
     range: "melee",
     attributes: ["DEX", "MIG"],
     damageBonus: 5,
@@ -23,8 +24,8 @@ function addAttack() {
 
 <template>
   <SheetSection>
-    <template #heading>⚔ ATTACKS</template>
-    <p v-if="!attacks.length" class="text-label text-muted">No attacks yet.</p>
+    <template #heading>{{ tr("ui.attacks") }}</template>
+    <p v-if="!attacks.length" class="text-label text-muted">{{ tr("ui.noAttacksYet") }}</p>
     <div
       v-for="(attack, index) in attacks"
       :key="attack.id"
@@ -33,7 +34,7 @@ function addAttack() {
     >
       <div class="attack-header">
         <LabeledInput
-          label="Name"
+          :label="tr('ui.name')"
           v-model="attack.name"
           class="min-w-0 flex-1"
           :data-testid="`attack-name-${index}`"
@@ -43,18 +44,18 @@ function addAttack() {
           variant="outline"
           type="button"
           :data-testid="`remove-attack-${index}`"
-          :aria-label="`Remove ${attack.name}`"
+          :aria-label="tr('ui.removeValue12', { value1: attack.name })"
           @click="attacks.splice(index, 1)"
-          >Remove</UButton
+          >{{ tr("ui.remove") }}</UButton
         >
       </div>
       <EditorFieldGrid class="mt-small">
         <LabeledSelect
-          label="Reach"
+          :label="tr('ui.reach')"
           v-model="attack.range"
           :items="[
-            { label: 'Melee', value: 'melee' },
-            { label: 'Ranged', value: 'ranged' },
+            { label: tr('ui.melee'), value: 'melee' },
+            { label: tr('ui.ranged'), value: 'ranged' },
           ]"
           :data-testid="`attack-range-${index}`"
         />
@@ -70,13 +71,13 @@ function addAttack() {
           "
         />
         <LabeledInput
-          label="Damage bonus"
+          :label="tr('ui.damageBonus')"
           v-model.number="attack.damageBonus"
           type="number"
           :data-testid="`attack-damage-${index}`"
         />
         <LabeledInput
-          label="Damage type"
+          :label="tr('ui.damageType')"
           v-model="attack.damageType"
           :data-testid="`attack-damage-type-${index}`"
         />
@@ -89,7 +90,7 @@ function addAttack() {
       type="button"
       data-testid="add-attack"
       @click="addAttack"
-      >Add attack</UButton
+      >{{ tr("ui.addAttack") }}</UButton
     >
   </SheetSection>
 </template>

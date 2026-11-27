@@ -154,7 +154,7 @@ test("character creation retry reuses the same client id", async () => {
         });
       if (url.endsWith("/characters") && init?.method === "POST") {
         ids.push((JSON.parse(init.body as string) as { id: string }).id);
-        return json({ error: { code: "unknown" } }, 500);
+        return json({ error: { code: "ERR99" } }, 500);
       }
       if (url.endsWith("/characters")) return json({ characters: [] });
       if (url.endsWith("/members")) return json({ members: [] });

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import EntryFieldsSkeleton from "./EntryFieldsSkeleton.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, onMounted, onUnmounted, ref } from "vue";
@@ -56,7 +57,7 @@ onUnmounted(() => flush());
   <ScreenSection>
     <div class="space-y-medium">
       <ContentState v-if="failed" kind="error" @retry="load" />
-      <SkeletonRegion v-else-if="!editor" label="Loading entry…"
+      <SkeletonRegion v-else-if="!editor" :label="tr('ui.loadingEntry')"
         ><EntryFieldsSkeleton
       /></SkeletonRegion>
       <NoteEntryFields
@@ -74,7 +75,12 @@ onUnmounted(() => flush());
         @commit="flush"
       />
       <p v-if="entry" class="text-small text-muted" data-testid="note-detail-metadata">
-        Created {{ date(entry.createdAt) }} · Updated {{ date(entry.updatedAt) }}
+        {{
+          tr("ui.createdValue1UpdatedValue2", {
+            value1: date(entry.createdAt),
+            value2: date(entry.updatedAt),
+          })
+        }}
       </p>
     </div>
   </ScreenSection>

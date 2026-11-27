@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import type { ThrowRecord } from "./types";
@@ -75,19 +76,27 @@ function loadOlder() {
     class="history-panel space-y-medium p-large"
   >
     <div class="flex flex-wrap items-center justify-between gap-small">
-      <h2 id="roll-history-heading" class="text-section font-semibold">Throw history</h2>
-      <UButton color="neutral" variant="outline" data-testid="make-roll" @click="$emit('makeRoll')"
-        >Make a roll</UButton
+      <h2 id="roll-history-heading" class="text-section font-semibold">
+        {{ tr("ui.throwHistory") }}
+      </h2>
+      <UButton
+        color="neutral"
+        variant="outline"
+        data-testid="make-roll"
+        @click="$emit('makeRoll')"
+        >{{ tr("ui.makeARoll") }}</UButton
       >
     </div>
     <p v-if="isError" role="alert" class="text-error">
-      Could not load throws.
-      <UButton variant="link" data-testid="retry-history" @click="emit('retry')">Retry</UButton>
+      {{ tr("ui.couldNotLoadThrows") }}
+      <UButton variant="link" data-testid="retry-history" @click="emit('retry')">{{
+        tr("games.retry")
+      }}</UButton>
     </p>
     <template v-else>
       <SkeletonRegion
         v-if="isLoading && !throws.length"
-        label="Loading throws…"
+        :label="tr('ui.loadingThrows')"
         class="throw-history space-y-small"
       >
         <div
@@ -101,9 +110,9 @@ function loadOlder() {
           <SkeletonBlock class="w-2/3" />
         </div>
       </SkeletonRegion>
-      <ContentState v-else-if="!throws.length" kind="empty" data-testid="history-empty"
-        >No throws yet.</ContentState
-      >
+      <ContentState v-else-if="!throws.length" kind="empty" data-testid="history-empty">{{
+        tr("ui.noThrowsYet")
+      }}</ContentState>
       <template v-else>
         <div v-if="hasOlder" class="flex justify-center">
           <UButton
@@ -112,14 +121,14 @@ function loadOlder() {
             size="sm"
             data-testid="load-older-throws"
             @click="loadOlder"
-            >Load older throws</UButton
+            >{{ tr("ui.loadOlderThrows") }}</UButton
           >
         </div>
         <ol
           ref="historyList"
           class="throw-history space-y-small"
           aria-live="polite"
-          aria-label="Recent throws"
+          :aria-label="tr('ui.recentThrows')"
           tabindex="0"
           data-testid="throw-history"
         >

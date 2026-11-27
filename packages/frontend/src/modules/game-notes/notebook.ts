@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 /**
  * Game notes controller state: one notebook per game, with cursor-paged
  * drawer and search lists, entry editors with `useOptimisticSave` queues,
@@ -114,7 +115,7 @@ export function createNotebook(
   function report(error: unknown, title: string, retry?: () => Promise<void> | void) {
     const problem = error as SaveError & { payload?: { error?: { message?: string } } };
     if (isLostAccess(error)) {
-      notify({ title: "You no longer have access to game notes for this game.", kind: "error" });
+      notify({ title: tr("ui.youNoLongerHaveAccessToGameNotesFor"), kind: "error" });
       dispose();
       return;
     }
@@ -175,7 +176,7 @@ export function createNotebook(
       } catch (error) {
         if (version !== recentVersion || generation !== 0) return;
         recent.failed = true;
-        report(error, "Could not load game notes. Retry to load the entries.");
+        report(error, tr("ui.couldNotLoadGameNotesRetryToLoadThe"));
       } finally {
         if (version === recentVersion) {
           recent.loading = false;
@@ -200,7 +201,7 @@ export function createNotebook(
       } catch (error) {
         if (version !== recentVersion || generation !== 0) return;
         recent.moreFailed = true;
-        report(error, "Could not load older entries.");
+        report(error, tr("ui.couldNotLoadOlderEntries"));
       } finally {
         if (version === recentVersion) recent.loadingMore = false;
       }
@@ -223,7 +224,7 @@ export function createNotebook(
     } catch (error) {
       if (version !== browseVersion || generation !== 0) return;
       browse.failed = true;
-      report(error, "Could not load game notes. Retry to load the entries.");
+      report(error, tr("ui.couldNotLoadGameNotesRetryToLoadThe"));
     } finally {
       if (version === browseVersion) browse.loading = false;
     }
@@ -269,7 +270,7 @@ export function createNotebook(
       } catch (error) {
         if (version !== browseVersion || generation !== 0) return;
         browse.moreFailed = true;
-        report(error, "Could not load older entries.");
+        report(error, tr("ui.couldNotLoadOlderEntries"));
       } finally {
         if (version === browseVersion) browse.loadingMore = false;
       }
@@ -306,7 +307,7 @@ export function createNotebook(
       if (!base) return;
       const title = fields.title.trim();
       if (!title) {
-        notify({ title: "Enter a title to save this entry.", kind: "error" });
+        notify({ title: tr("ui.enterATitleToSaveThisEntry"), kind: "error" });
         return;
       }
       const issue = noteTitleIssue(title);
@@ -329,7 +330,7 @@ export function createNotebook(
         if (!failure) return;
         if (isLostAccess(failure)) {
           notify({
-            title: "You no longer have access to game notes for this game.",
+            title: tr("ui.youNoLongerHaveAccessToGameNotesFor"),
             kind: "error",
           });
           dispose();
@@ -340,7 +341,7 @@ export function createNotebook(
         const confirmed = failure.status === 400 || failure.status === 422;
         report(
           failure,
-          "Could not save this entry. Your text is available in the editor.",
+          tr("ui.couldNotSaveThisEntryYourTextIsAvailable"),
           confirmed ? undefined : retry,
         );
       },
@@ -385,7 +386,7 @@ export function createNotebook(
     if (creating.value) return null;
     const title = draft.title.trim();
     if (!title) {
-      notify({ title: "Give the entry a title.", kind: "error" });
+      notify({ title: tr("ui.giveTheEntryATitle"), kind: "error" });
       return null;
     }
     const issue = noteTitleIssue(title);
@@ -423,10 +424,10 @@ export function createNotebook(
       draft.id = newUuid();
       draft.title = "";
       draft.content = noteDocument();
-      notify({ title: "Entry created.", kind: "success" });
+      notify({ title: tr("ui.entryCreated"), kind: "success" });
       return entry;
     } catch (error) {
-      report(error, "Could not create the entry. Your draft is still here.");
+      report(error, tr("ui.couldNotCreateTheEntryYourDraftIsStill"));
       return null;
     } finally {
       creating.value = false;

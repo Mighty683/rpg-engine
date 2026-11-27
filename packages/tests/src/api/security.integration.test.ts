@@ -19,7 +19,7 @@ describe.skipIf(!url)("API security middleware", () => {
     const target = `${origin}/api/games/${ids.game}/characters/${ids.gmCharacter}`;
     const missing = await fetch(target, { method: "DELETE", headers: { cookie, origin } });
     expect(missing.status).toBe(403);
-    expect((await missing.json()).error.code).toBe("invalid_csrf");
+    expect((await missing.json()).error.code).toBe("ERR85");
     expect(missing.headers.get("x-content-type-options")).toBe("nosniff");
     const wrong = await csrfHeaders(origin, `rpg_session=${tokens.player}`);
     const mismatch = await fetch(target, {

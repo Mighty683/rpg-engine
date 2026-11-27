@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import EditorFieldGrid from "../../../../shared/design-system/base/EditorFieldGrid.vue";
 import LabeledInput from "../../../../shared/design-system/base/LabeledInput.vue";
 import type { NamedEntry } from "../types";
@@ -12,23 +13,23 @@ function numericValue(event: Event): number {
 <template>
   <EditorFieldGrid v-if="entry.defenseKind === 'shield' && entry.shield" class="mt-small">
     <LabeledInput
-      label="Defense bonus"
+      :label="tr('ui.defenseBonus')"
       type="number"
-      :aria-label="`Defense bonus for ${entry.name}`"
+      :aria-label="tr('ui.defenseBonusForValue1', { value1: entry.name })"
       :model-value="entry.shield.physicalBonus"
       @input="$emit('update', 'physicalBonus', numericValue($event))"
     />
     <LabeledInput
-      label="Magic Defense bonus"
+      :label="tr('ui.magicDefenseBonus')"
       type="number"
-      :aria-label="`Magic Defense bonus for ${entry.name}`"
+      :aria-label="tr('ui.magicDefenseBonusForValue1', { value1: entry.name })"
       :model-value="entry.shield.magicBonus"
       @input="$emit('update', 'magicBonus', numericValue($event))"
     />
     <LabeledInput
-      label="Initiative modifier"
+      :label="tr('ui.initiativeModifier')"
       type="number"
-      :aria-label="`Initiative modifier for ${entry.name}`"
+      :aria-label="tr('ui.initiativeModifierForValue1', { value1: entry.name })"
       :model-value="entry.shield.initiative"
       @input="$emit('update', 'initiative', numericValue($event))"
     />

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type { PartyCharacter } from "../game-table/types";
 
 defineProps<{ entries: NonNullable<PartyCharacter["classSummary"]>; interactive?: boolean }>();
@@ -6,7 +7,7 @@ defineProps<{ entries: NonNullable<PartyCharacter["classSummary"]>; interactive?
 
 <template>
   <span class="class-bars" :class="{ interactive }">
-    <span v-if="!entries.length" class="class-row">No classes selected</span>
+    <span v-if="!entries.length" class="class-row">{{ tr("ui.noClassesSelected") }}</span>
     <span v-for="(entry, index) in entries" :key="index" class="class-row">
       <span v-if="entry.level !== null" class="segments" aria-hidden="true">
         <span v-for="step in 10" :key="step" :class="{ filled: step <= entry.level }" />

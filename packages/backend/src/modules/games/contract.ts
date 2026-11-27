@@ -15,8 +15,8 @@ export function validateGame(input: unknown): GameValidation {
   const fields: Record<string, string> = {};
   const checked = checkSchema(validate, { name, systemId }, "game");
   if (!checked.success && checked.issues.some((issue) => issue.field === "name"))
-    fields.name = !name ? "Enter a game name" : "Use 20 characters or fewer";
-  if (!findSystem(systemId)) fields.systemId = "Select an RPG system";
+    fields.name = !name ? "name_required" : "name_length";
+  if (!findSystem(systemId)) fields.systemId = "system_required";
   return { name, systemId, fields };
 }
 

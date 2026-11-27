@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { wireError } from "./wire-error.ts";
 import { RequestError } from "arrow-express";
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import type { HttpErrorLogger } from "./types.ts";
@@ -22,19 +23,19 @@ function errorResponse(error: unknown, invalidCsrfTokenError: Error) {
   if (error === invalidCsrfTokenError)
     return {
       status: 403,
-      body: { error: { code: "invalid_csrf", message: "Invalid CSRF token." } },
+      body: { error: { code: "invalid_csrf" } },
     };
   if (error instanceof RequestError) return { status: error.httpCode, body: error.response };
   const value = error as { code?: string; status?: number } | null;
   if (value?.code === "auth_busy")
     return {
       status: 503,
-      body: { error: { code: "auth_busy", message: "Sign-in service busy. Try again." } },
+      body: { error: { code: "auth_busy" } },
     };
   if (["57014", "55P03"].includes(databaseCode(error) ?? ""))
     return {
       status: 503,
-      body: { error: { code: "database_busy", message: "Database busy. Try again." } },
+      body: { error: { code: "database_busy" } },
     };
   if (value?.status === 400 || value?.status === 413)
     return {
@@ -42,11 +43,10 @@ function errorResponse(error: unknown, invalidCsrfTokenError: Error) {
       body: {
         error: {
           code: value.status === 413 ? "payload_too_large" : "bad_request",
-          message: value.status === 413 ? "Request body is too large." : "Malformed JSON.",
         },
       },
     };
-  return { status: 500, body: { error: { code: "server_error", message: "Request failed." } } };
+  return { status: 500, body: { error: { code: "server_error" } } };
 }
 
 /** One response boundary for middleware, controller guards, and service failures. */
@@ -68,6 +68,6 @@ export function errorBoundary(
       response.destroy();
       return;
     }
-    response.status(status).json(body);
+    response.status(status).json(wireError(request.method, request.originalUrl, body));
   };
 }

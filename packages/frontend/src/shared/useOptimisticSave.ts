@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 import type { OptimisticSaveOptions, SaveError } from "./types";
 import { computed, ref, type Ref } from "vue";
 
@@ -67,7 +68,9 @@ export function useOptimisticSave<TSnapshot, TInput>(
         displayed.value = result as TSnapshot;
       }
     } catch (cause) {
-      const failure = (cause instanceof Error ? cause : new Error("Save failed")) as SaveError;
+      const failure = (
+        cause instanceof Error ? cause : new Error(tr("ui.saveFailed"))
+      ) as SaveError;
       error.value = failure;
       const known =
         options.isKnownRejection?.(failure) ?? (failure.status === 400 || failure.status === 422);
@@ -108,7 +111,9 @@ export function useOptimisticSave<TSnapshot, TInput>(
       setSnapshot(refreshed);
     } catch (cause) {
       paused.value = true;
-      error.value = (cause instanceof Error ? cause : new Error("Refresh failed")) as SaveError;
+      error.value = (
+        cause instanceof Error ? cause : new Error(tr("ui.refreshFailed"))
+      ) as SaveError;
       return;
     }
     await dispatch();

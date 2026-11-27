@@ -20,7 +20,7 @@ function messageFrom(body: unknown) {
   const normalized = { ...body, message: body.message.trim() };
   if (!validateInput(normalized)) {
     if (validateInput.errors?.[0]?.keyword === "additionalProperties") badRequest();
-    validationError({ message: "Enter between 1 and 2000 characters." });
+    validationError({ message: "agent_message_length" });
   }
   return normalized.message;
 }
@@ -34,23 +34,23 @@ function pageFrom(query: Record<string, unknown>) {
   return { before, limit };
 }
 
-const accessErrors: Record<string, [number, string]> = {
-  agent_game_busy: [409, "Another Agent turn is active for this game."],
-  agent_context_changed: [409, "Game information changed. Send your message again."],
-  agent_busy: [429, "Agent is busy. Try again shortly."],
-  rate_limited: [429, "Too many Agent turns. Try again later."],
-  agent_failed: [502, "The Agent could not complete this turn."],
-  agent_unavailable: [503, "Agent is temporarily unavailable."],
-  agent_timeout: [504, "The Agent turn timed out."],
-  unauthorized: [401, "Sign in to access the game."],
-  forbidden: [403, "GM access required."],
-  not_found: [404, "Game or turn unavailable."],
+const accessErrors: Record<string, number> = {
+  agent_game_busy: 409,
+  agent_context_changed: 409,
+  agent_busy: 429,
+  rate_limited: 429,
+  agent_failed: 502,
+  agent_unavailable: 503,
+  agent_timeout: 504,
+  unauthorized: 401,
+  forbidden: 403,
+  not_found: 404,
 };
 function translate(error: unknown): never {
   const code = (error as { code?: string })?.code;
   const mapped = code && accessErrors[code];
   if (!mapped) throw error;
-  throw new RequestError(mapped[0], { error: { code, message: mapped[1] } });
+  throw new RequestError(mapped, { error: { code } });
 }
 export function agentController({
   auth,
@@ -129,7 +129,7 @@ export const disabledAgent: AgentRuntime = {
   busy: () => false,
   async run() {
     throw new RequestError(503, {
-      error: { code: "agent_disabled", message: "Agent is disabled." },
+      error: { code: "agent_disabled" },
     });
   },
 };

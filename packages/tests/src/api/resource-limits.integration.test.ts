@@ -38,7 +38,7 @@ it("shares a mutation budget across sessions and routes, isolates accounts, and 
   expect(rejected.status).toBe(429);
   expect(Number(rejected.headers.get("retry-after"))).toBeGreaterThan(0);
   expect(rejected.headers.get("x-request-id")).toBeTruthy();
-  expect(await rejected.json()).toMatchObject({ error: { code: "rate_limited" } });
+  expect(await rejected.json()).toMatchObject({ error: { code: "ERR86" } });
   expect((await pool.query("SELECT id FROM characters WHERE id=$1", [rejectedId])).rows).toEqual(
     [],
   );

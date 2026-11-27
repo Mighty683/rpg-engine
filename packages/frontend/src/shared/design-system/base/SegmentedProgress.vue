@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 import { computed } from "vue";
 import ProgressActionButton from "./ProgressActionButton.vue";
 /** Discrete progress with optional endpoint controls; segment count excludes the controls. */
@@ -20,13 +21,14 @@ const value = computed(() =>
   Number.isFinite(props.value) ? Math.min(maximum.value, Math.max(0, Math.floor(props.value))) : 0,
 );
 const decreaseReason = computed(() => {
-  if (props.disabled) return "Wait for the current change to save.";
-  if (value.value <= 0) return "Already at the minimum.";
+  if (props.disabled) return tr("ui.waitForTheCurrentChangeToSave");
+  if (value.value <= 0) return tr("ui.alreadyAtTheMinimum");
   return props.decreaseBlockedReason;
 });
 const increaseReason = computed(() => {
-  if (props.disabled) return "Wait for the current change to save.";
-  if (value.value >= maximum.value) return props.increaseBlockedReason ?? "Already at the maximum.";
+  if (props.disabled) return tr("ui.waitForTheCurrentChangeToSave");
+  if (value.value >= maximum.value)
+    return props.increaseBlockedReason ?? tr("ui.alreadyAtTheMaximum");
   return props.increaseBlockedReason;
 });
 </script>
@@ -35,7 +37,7 @@ const increaseReason = computed(() => {
     <ProgressActionButton
       v-if="editable"
       class="h-6 w-6 justify-center p-0"
-      :aria-label="`Decrease ${label}`"
+      :aria-label="tr('ui.decreaseValue1', { value1: label })"
       :blocked-reason="decreaseReason"
       data-testid="decrease-progress"
       @click="$emit('decrease')"
@@ -47,7 +49,7 @@ const increaseReason = computed(() => {
       :aria-valuemin="0"
       :aria-valuemax="maximum"
       :aria-valuenow="value"
-      :aria-valuetext="valueText ?? `${value} of ${maximum}`"
+      :aria-valuetext="valueText ?? tr('ui.value1OfValue2', { value1: value, value2: maximum })"
       class="flex min-w-0 flex-1 gap-tight"
       data-testid="progress-meter"
     >
@@ -63,7 +65,7 @@ const increaseReason = computed(() => {
     <ProgressActionButton
       v-if="editable"
       class="h-6 w-6 justify-center p-0"
-      :aria-label="`Increase ${label}`"
+      :aria-label="tr('ui.increaseValue1', { value1: label })"
       :blocked-reason="increaseReason"
       data-testid="increase-progress"
       @click="$emit('increase')"

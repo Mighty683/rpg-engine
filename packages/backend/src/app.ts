@@ -227,6 +227,9 @@ export function createApplication(
       rpgSystemsController(),
     );
   mountRoutes(app, routes);
+  app.use("/api", (_request, response) => {
+    response.status(404).json({ error: { code: "ERR83" } });
+  });
   app.use(errorBoundary(invalidCsrfTokenError, options.errorLogger));
   return {
     app,

@@ -6,7 +6,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import ui from "@nuxt/ui/vue-plugin";
 import "./style.css";
 import App from "./App.vue";
-import { createFrontendI18n } from "./shared/i18n";
+import { frontendI18n } from "./shared/i18n";
 import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query";
 import GamesView from "./modules/games/GamesView.vue";
 import GameView from "./modules/games/GameView.vue";
@@ -28,18 +28,18 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      meta: { breadcrumb: { label: "Games", route: "games" } },
+      meta: { breadcrumb: { labelKey: "games.title", route: "games" } },
       children: [
         { path: "", name: "games", component: GamesView, meta: { pageGroup: "games" } },
         {
           path: "games/new",
           name: "game-new",
           component: GamesView,
-          meta: { breadcrumb: { label: "Create game" }, pageGroup: "games" },
+          meta: { breadcrumb: { labelKey: "games.create" }, pageGroup: "games" },
         },
         {
           path: "games/:gameId",
-          meta: { breadcrumb: { label: "Game", route: "game-table" } },
+          meta: { breadcrumb: { labelKey: "ui.game", route: "game-table" } },
           children: [
             {
               path: "",
@@ -51,25 +51,27 @@ const router = createRouter({
               path: "settings",
               name: "game-settings",
               component: GameView,
-              meta: { breadcrumb: { label: "Settings" } },
+              meta: { breadcrumb: { labelKey: "ui.settings" } },
             },
             {
               path: "characters",
-              meta: { breadcrumb: { label: "Characters management", route: "game-characters" } },
+              meta: {
+                breadcrumb: { labelKey: "ui.charactersManagement", route: "game-characters" },
+              },
               children: [
                 { path: "", name: "game-characters", component: GameView },
                 {
                   path: ":characterId",
                   name: "game-character",
                   component: GameView,
-                  meta: { breadcrumb: { label: "Character sheet" } },
+                  meta: { breadcrumb: { labelKey: "ui.characterSheet" } },
                 },
               ],
             },
             {
               path: "classes",
               meta: {
-                breadcrumb: { label: "Game classes", route: "game-classes" },
+                breadcrumb: { labelKey: "ui.gameClasses", route: "game-classes" },
                 pageGroup: "game-classes",
               },
               children: [
@@ -78,32 +80,32 @@ const router = createRouter({
                   path: "copy",
                   name: "game-class-copy",
                   component: ClassCatalogView,
-                  meta: { breadcrumb: { label: "Copy from library" } },
+                  meta: { breadcrumb: { labelKey: "ui.copyFromLibrary" } },
                 },
                 {
                   path: ":classId",
                   name: "game-class-detail",
                   component: ClassCatalogView,
-                  meta: { breadcrumb: { label: "Class details" } },
+                  meta: { breadcrumb: { labelKey: "ui.classDetails" } },
                 },
               ],
             },
             {
               path: "notes",
-              meta: { breadcrumb: { label: "Game notes", route: "game-notes" } },
+              meta: { breadcrumb: { labelKey: "ui.gameNotes", route: "game-notes" } },
               children: [
                 { path: "", name: "game-notes", component: GameNotesView },
                 {
                   path: "new",
                   name: "note-new",
                   component: GameNotesView,
-                  meta: { breadcrumb: { label: "New entry" } },
+                  meta: { breadcrumb: { labelKey: "ui.newEntry" } },
                 },
                 {
                   path: ":entryId",
                   name: "note-detail",
                   component: GameNotesView,
-                  meta: { breadcrumb: { label: "Entry details" } },
+                  meta: { breadcrumb: { labelKey: "ui.entryDetails" } },
                 },
               ],
             },
@@ -114,7 +116,7 @@ const router = createRouter({
     {
       path: "/library/class",
       meta: {
-        breadcrumb: { label: "Class library", route: "class-library" },
+        breadcrumb: { labelKey: "ui.classLibrary", route: "class-library" },
         pageGroup: "class-library",
       },
       children: [
@@ -123,20 +125,20 @@ const router = createRouter({
           path: "new",
           name: "library-class-new",
           component: ClassCatalogView,
-          meta: { breadcrumb: { label: "Create class" } },
+          meta: { breadcrumb: { labelKey: "ui.createClass" } },
         },
         {
           path: ":classId",
           name: "library-class-detail",
           component: ClassCatalogView,
-          meta: { breadcrumb: { label: "Class details" } },
+          meta: { breadcrumb: { labelKey: "ui.classDetails" } },
         },
       ],
     },
     {
       path: "/invite/:token",
       component: InvitationView,
-      meta: { breadcrumb: { label: "Game invitation" } },
+      meta: { breadcrumb: { labelKey: "ui.gameInvitation" } },
     },
   ],
 });
@@ -173,6 +175,6 @@ createApp(App)
   })
   .use(router)
   .use(ui)
-  .use(createFrontendI18n())
+  .use(frontendI18n)
   .use(VueQueryPlugin, { queryClient })
   .mount("#app");

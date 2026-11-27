@@ -25,23 +25,15 @@ function requestError(error: unknown): never {
     throw new RequestError(422, {
       error: {
         code: "validation",
-        message: e.message ?? "Check the roll setup.",
         fields: { [e.field ?? "setup"]: e.message ?? "Check the roll setup." },
       },
     });
   if (status === 400)
     throw new RequestError(400, {
-      error: { code: "bad_request", message: e.message ?? "Invalid request." },
+      error: { code: "bad_request" },
     });
-  const messages: Record<string, string> = {
-    not_found: "Throw not found.",
-    forbidden: "Action not permitted.",
-    stale_revision: "The sheet changed since this roll was prepared.",
-    no_active_character: "Select an active character before rolling.",
-    inactive_character: "That character is no longer active.",
-  };
   throw new RequestError(status, {
-    error: { code: e.code!, message: messages[e.code!] ?? "Request failed." },
+    error: { code: e.code! },
   });
 }
 
@@ -57,8 +49,7 @@ export function throwsController(services: {
       const actor = await services.auth.requireActor(request);
       const gameId = routeId(request.params.gameId);
       const access = await services.games.gameAccess(actor, gameId);
-      if (!access)
-        throw new RequestError(404, { error: { code: "not_found", message: "Game not found." } });
+      if (!access) throw new RequestError(404, { error: { code: "not_found" } });
       return { actor, gameId };
     })
     .registerRoutes(

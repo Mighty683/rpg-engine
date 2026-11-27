@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import LabeledInput from "../../../../shared/design-system/base/LabeledInput.vue";
 const value = defineModel<string>({ required: true });
 </script>
@@ -6,10 +7,10 @@ const value = defineModel<string>({ required: true });
 <template>
   <LabeledInput
     class="theme-field self-end"
-    label="✦ THEME"
+    :label="tr('ui.theme')"
     data-testid="character-theme"
     v-model="value"
-    placeholder="Hope, justice…"
+    :placeholder="tr('ui.hopeJustice')"
   />
 </template>
 <style scoped>

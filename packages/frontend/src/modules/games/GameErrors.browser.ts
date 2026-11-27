@@ -19,7 +19,7 @@ test("API failures show toasts while retry and form input remain available", asy
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (init?.method === "POST") {
         return new Response(
-          JSON.stringify({ error: { fields: { name: "Choose a different name." } } }),
+          JSON.stringify({ error: { code: "ERR01", fields: { name: "ERR41" } } }),
           { status: 422 },
         );
       }
@@ -68,9 +68,9 @@ test("API failures show toasts while retry and form input remain available", asy
     await expect.element(page.getByTestId("game-create-error-toast")).toBeVisible();
     await expect.element(page.getByTestId("game-name")).toHaveValue("My game");
     expect(root.querySelector('[data-testid="game-name-field"]')?.textContent).not.toContain(
-      "Choose a different name.",
+      "Use 20 characters or fewer",
     );
-    expect(document.body.textContent).toContain("Choose a different name.");
+    expect(document.body.textContent).toContain("Use 20 characters or fewer");
   } finally {
     app.unmount();
     root.remove();

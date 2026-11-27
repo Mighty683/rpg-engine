@@ -14,7 +14,7 @@ describe("secure fetch", () => {
       writes++;
       observedTokens.push(new Headers(init?.headers).get("x-csrf-token"));
       return writes === 1
-        ? Response.json({ error: { code: "invalid_csrf" } }, { status: 403 })
+        ? Response.json({ error: { code: "ERR85" } }, { status: 403 })
         : Response.json({ ok: true });
     });
     vi.stubGlobal("fetch", mock);
@@ -32,7 +32,7 @@ describe("secure fetch", () => {
     const mock = vi.fn(async (input: string) =>
       input === "/api/auth/csrf"
         ? Response.json({ csrfToken: "token" })
-        : Response.json({ error: { code: "forbidden" } }, { status: 403 }),
+        : Response.json({ error: { code: "ERR82" } }, { status: 403 }),
     );
     vi.stubGlobal("fetch", mock);
     expect((await secureFetch("/api/games")).status).toBe(403);

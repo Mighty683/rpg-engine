@@ -29,13 +29,13 @@ const save = compileObjectSchema(saveClassToLibrarySchema);
 
 function text(value: string) {
   if (value.includes("\0") || !value.isWellFormed())
-    validationError({ definition: "Use valid text without null characters." });
+    validationError({ definition: "use_valid_text_without_null_characters" });
   return value;
 }
 
 function name(value: string) {
   const trimmed = text(value).trim();
-  if (!trimmed) validationError({ name: "Enter a name." });
+  if (!trimmed) validationError({ name: "enter_a_name" });
   return trimmed;
 }
 
@@ -43,13 +43,13 @@ function cleanDefinition(definition: ClassDefinition): ClassDefinition {
   const used = new Set<string>();
   function unique(id: string) {
     const key = id.toLowerCase();
-    if (used.has(key)) validationError({ definition: "Use distinct skill and benefit IDs." });
+    if (used.has(key)) validationError({ definition: "use_distinct_skill_and_benefit_ids" });
     used.add(key);
     return key;
   }
   function benefit(item: ClassBenefit, free = false): ClassBenefit {
     if (item.kind === "text" && !item.description.trim())
-      validationError({ definition: "Enter a description for each text benefit." });
+      validationError({ definition: "enter_a_description_for_each_text_benefit" });
     const identity = { id: unique(item.id), name: name(item.name) };
     if (item.kind === "text") return { ...item, ...identity, description: text(item.description) };
     const { perRank, ...modifier } = item;

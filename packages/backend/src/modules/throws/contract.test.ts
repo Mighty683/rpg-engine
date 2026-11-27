@@ -50,26 +50,26 @@ it.each([
 it.each([
   [null, "bad_request", "", "Expected a JSON object"],
   [{ setup: free, authorAccountId: id }, "validation", "", "Unknown  field"],
-  [{ setup: free, private: "false" }, "validation", "/private", "Invalid privacy setting"],
+  [{ setup: free, private: "false" }, "validation", "/private", "invalid_privacy_setting"],
   [
     { setup: { ...free, modifier: "0" } },
     "validation",
     "/modifier",
-    "Modifier must be a 32-bit integer",
+    "modifier_must_be_a_32_bit_integer",
   ],
-  [{ setup: { ...attribute, dice: { LUCK: 8 } } }, "validation", "/dice", "Unknown attribute die"],
+  [{ setup: { ...attribute, dice: { LUCK: 8 } } }, "validation", "/dice", "unknown_attribute_die"],
   [
     { setup: { ...attribute, dice: { DEX: 20 } } },
     "validation",
     "/dice",
-    "Attribute dice use d6, d8, d10 or d12",
+    "attribute_dice_use_d6_d8_d10_or_d12",
   ],
   [{ setup: { ...weapon, dice: [8] } }, "validation", "/dice", "Choose 2 valid dice"],
   [
     { setup: { ...free, note: "😀".repeat(501) } },
     "validation",
     "/note",
-    "Note must be 500 characters or fewer",
+    "note_must_be_500_characters_or_fewer",
   ],
 ])("preserves roll validation error contract %#", (input, code, field, message) => {
   expect(() => parseCreateRequest(input)).toThrowError(

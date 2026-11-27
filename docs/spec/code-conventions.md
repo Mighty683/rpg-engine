@@ -22,6 +22,9 @@
 
 - Add stable `data-testid` attributes to UI elements targeted by browser tests.
 
+- Put product copy in `packages/frontend/src/shared/i18n`, including accessibility labels, validation messages and notifications. Translate complete phrases with named parameters; keep user-authored content and protocol identifiers separate from display text.
+- HTTP errors carry `error.code`, not prose. Interpret `ERRnn` within the HTTP method and route defined in `packages/contracts/http-errors.ts`. Never renumber an existing code. Validation `fields` maps field paths to codes in the same namespace; structured conflict data and retry headers retain their original meaning. The frontend supplies the localized fallback for unknown codes.
+
 ## Frontend prototypes
 
 - Keep prototypes under `packages/frontend/prototypes/` and follow its [gallery guidance](../../packages/frontend/prototypes/README.md). Production source must not import prototype code, fixtures, or mocks.

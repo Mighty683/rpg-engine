@@ -32,7 +32,7 @@ describe("note document normalization", () => {
           ops: [{ insert: "text", attributes: { color: "red" } }, { insert: "\n" }],
         }),
       ),
-    ).toEqual(["Unsupported formatting."]);
+    ).toEqual(["unsupported_formatting"]);
   });
 
   it("merges adjacent inserts with identical attributes and keeps block boundaries separate", () => {
@@ -82,16 +82,16 @@ describe("note document normalization", () => {
     ],
   ])("rejects %s", (_name, ops) => {
     expect(issues(normalizeNoteDocument({ ops: [...ops, { insert: "\n" }] }))).toEqual([
-      "Inline formatting applies to text; headings and lists apply to whole lines.",
+      "inline_formatting_applies_to_text_headings_and_lists",
     ]);
   });
 
   it("requires the terminal newline and undecodable body characters even after merging", () => {
     expect(issues(normalizeNoteDocument({ ops: [{ insert: "text" }] }))).toEqual([
-      "The document must end with a newline.",
+      "the_document_must_end_with_a_newline",
     ]);
     expect(issues(normalizeNoteDocument({ ops: [{ insert: "a\0b" }, { insert: "\n" }] }))).toEqual([
-      "The body contains unsupported characters.",
+      "the_body_contains_unsupported_characters",
     ]);
     expect(
       issues(
@@ -99,7 +99,7 @@ describe("note document normalization", () => {
           ops: [{ insert: "unpaired \ud800 surrogate" }, { insert: "\n" }],
         }),
       ),
-    ).toEqual(["The body contains unsupported characters."]);
+    ).toEqual(["the_body_contains_unsupported_characters"]);
   });
 
   it("limits the visible body to 5,000 code points excluding the terminal newline", () => {
@@ -108,9 +108,7 @@ describe("note document normalization", () => {
     const overLimit = {
       ops: [{ insert: `${"a".repeat(noteBodyCodePointLimit)}!\n` }],
     };
-    expect(issues(normalizeNoteDocument(overLimit))).toEqual([
-      "Keep the body to 5,000 characters or fewer.",
-    ]);
+    expect(issues(normalizeNoteDocument(overLimit))).toEqual(["note_body_length"]);
     const textWithInteriorNewline = {
       ops: [{ insert: `${"a".repeat(4997)}\n${"x".repeat(2)}` }, { insert: "\n" }],
     };
@@ -126,20 +124,20 @@ describe("note document normalization", () => {
       }),
     );
     ops.push({ insert: "\n" });
-    expect(issues(normalizeNoteDocument({ ops }))).toEqual([
-      "The formatted document is too large.",
-    ]);
+    expect(issues(normalizeNoteDocument({ ops }))).toEqual(["the_formatted_document_is_too_large"]);
     const small = ops.slice(-1002);
     expect(normalizeNoteDocument({ ops: small }).ok).toBe(true);
     expect(noteDocumentJsonByteLimit).toBe(64 * 1024);
   });
 
   it("keeps titles within the trimmed code point budget", () => {
-    expect(noteTitleIssue("")).toMatch(/1 to 160/);
+    expect(noteTitleIssue("")).toBe("note_title_required");
     expect(noteTitleIssue("ok title")).toBeNull();
     expect(noteTitleIssue("\u{1F600}".repeat(noteTitleCodePointLimit))).toBeNull();
-    expect(noteTitleIssue(`x${"\u{1F600}".repeat(noteTitleCodePointLimit)}`)).toMatch(/160/);
-    expect(noteTitleIssue("title with \0")).toMatch(/unsupported/);
+    expect(noteTitleIssue(`x${"\u{1F600}".repeat(noteTitleCodePointLimit)}`)).toBe(
+      "note_title_length",
+    );
+    expect(noteTitleIssue("title with \0")).toBe("note_title_encoding");
   });
 
   it("exposes visible text without the terminal newline only", () => {

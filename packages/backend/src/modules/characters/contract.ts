@@ -25,7 +25,7 @@ export function parseCreateCharacter(value: unknown): CreateCharacterInput {
   const body = parseEnvelope(createEnvelope, value);
   const name = typeof body.name === "string" ? body.name.trim() : "";
   parseFields(nameValidator, name, "name", {
-    name: "Enter a character name of at most 100 characters.",
+    name: "character_name_length",
   });
   return { id: body.id as string, name };
 }

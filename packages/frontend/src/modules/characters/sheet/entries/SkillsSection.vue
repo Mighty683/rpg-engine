@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import NamedEntries from "./NamedEntries.vue";
 import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
@@ -10,15 +11,15 @@ defineProps<{ entries: NamedEntry[]; locked: boolean; existingOnly?: boolean }>(
   <SheetSection
     ><template #heading
       ><div class="heading-label">
-        ◆ {{ existingOnly ? "MANUAL SKILLS" : "SKILLS" }}
+        ◆ {{ existingOnly ? tr("ui.manualSkills") : tr("ui.skills") }}
         <InfoTooltip
           v-if="!existingOnly"
-          label="About skills"
-          text="Skills are class abilities. Their ranks and effects are not automated here."
+          :label="tr('ui.aboutSkills')"
+          :text="tr('ui.skillsAreClassAbilitiesTheirRanksAndEffectsAre')"
         /></div></template
     ><NamedEntries :existing-only="existingOnly" :entries="entries" :locked="locked" kind="skill" />
     <p v-if="!existingOnly" class="note">
-      Manual level; advancement and skill effects are not automated.
+      {{ tr("ui.manualLevelAdvancementAndSkillEffectsAreNotAutomated") }}
     </p></SheetSection
   >
 </template>

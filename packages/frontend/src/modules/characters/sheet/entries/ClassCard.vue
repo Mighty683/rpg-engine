@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import DetailCard from "../../../../shared/design-system/base/DetailCard.vue";
 import EntryNotesField from "./EntryNotesField.vue";
 import { useEditableEntry } from "./useEditableEntry";
@@ -19,8 +20,8 @@ const draft = useEditableEntry(
     :title="draft.name"
     :notes="draft.notes"
     :remove-test-id="`remove-${draft.id}`"
-    :remove-label="`Remove class ${draft.name}`"
-    :remove-description="`Remove ${draft.name} from this character?`"
+    :remove-label="tr('ui.removeClassValue1', { value1: draft.name })"
+    :remove-description="tr('ui.removeValue1FromThisCharacter', { value1: draft.name })"
     :locked="locked"
     :open="open"
     @update:open="emit('update:open', $event)"

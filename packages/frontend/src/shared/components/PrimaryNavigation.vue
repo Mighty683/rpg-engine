@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../i18n";
 import type { NavigationMenuItem } from "@nuxt/ui";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
@@ -7,7 +8,7 @@ const route = useRoute();
 
 const items = computed<NavigationMenuItem[]>(() => [
   {
-    label: "Games",
+    label: tr("games.title"),
     to: "/",
     exact: true,
     "data-testid": "nav-games",
@@ -15,7 +16,7 @@ const items = computed<NavigationMenuItem[]>(() => [
       route.path === "/" || route.name === "game-new" || typeof route.params.gameId === "string",
   },
   {
-    label: "Class library",
+    label: tr("ui.classLibrary"),
     to: "/library/class",
     exact: true,
     "data-testid": "nav-class-library",
@@ -27,7 +28,7 @@ const items = computed<NavigationMenuItem[]>(() => [
 <template>
   <div>
     <UNavigationMenu
-      aria-label="Primary navigation"
+      :aria-label="tr('ui.primaryNavigation')"
       :items="items"
       color="neutral"
       variant="link"

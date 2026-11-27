@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 import { computed } from "vue";
 
 const props = defineProps<{ label: string; value: number; maximum: number; color: "hp" | "mp" }>();
@@ -12,11 +13,11 @@ const percentage = computed(() =>
     class="resource-bar"
     :class="[color, { 'has-content': $slots.default }]"
     role="progressbar"
-    :aria-label="`${label} remaining`"
+    :aria-label="tr('ui.remaining', { label })"
     :aria-valuenow="Math.min(Math.max(0, value), Math.max(0, maximum))"
     aria-valuemin="0"
     :aria-valuemax="Math.max(0, maximum)"
-    :aria-valuetext="`${value} of ${maximum}`"
+    :aria-valuetext="tr('ui.value1OfValue2', { value1: value, value2: maximum })"
   >
     <div class="fill" :style="{ width: `${percentage}%` }" />
     <span v-if="$slots.default" class="bar-content"><slot /></span>

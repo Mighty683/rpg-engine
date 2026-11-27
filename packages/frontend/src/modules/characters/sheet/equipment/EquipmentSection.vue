@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import NamedEntries from "../entries/NamedEntries.vue";
 import type { NamedEntry } from "../types";
@@ -7,9 +8,9 @@ defineProps<{ entries: NamedEntry[]; locked: boolean }>();
 
 <template>
   <SheetSection
-    ><template #heading>◇ EQUIPMENT</template
+    ><template #heading>{{ tr("ui.equipment") }}</template
     ><NamedEntries :entries="entries" :locked="locked" kind="item" />
-    <p class="note">Equipped armor and shields contribute to defense.</p></SheetSection
+    <p class="note">{{ tr("ui.equippedArmorAndShieldsContributeToDefense") }}</p></SheetSection
   >
 </template>
 

@@ -17,8 +17,8 @@ describe("game API", () => {
     const invalid = await request("/games", "gm", "POST", { name: "", systemId: "bad" });
     expect(invalid.status).toBe(422);
     expect((await invalid.json()).error.fields).toEqual({
-      name: "Enter a game name",
-      systemId: "Select an RPG system",
+      name: "ERR40",
+      systemId: "ERR42",
     });
     const created = await request("/games", "gm", "POST", {
       name: " Test ",

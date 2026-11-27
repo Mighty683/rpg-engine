@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 import type { NpcWrite } from "../npcs/types";
 import type { EditDifference } from "./types";
 export function nested(value: unknown): value is Record<string, unknown> {
@@ -17,13 +18,17 @@ function differences(before: Record<string, unknown>, after: Record<string, unkn
 }
 function fieldLabel(path: string) {
   const [group, field] = path.split(".");
-  if (group === "baseDice") return field + " base die";
+  if (group === "baseDice") return tr("ui.baseDie", { attribute: field });
   if (group === "resources")
-    return field === "fabula" ? "Fabula Points" : "Current " + field?.toUpperCase();
+    return field === "fabula"
+      ? tr("ui.fabulaPoints")
+      : tr("ui.currentValue1", { value1: field?.toUpperCase() });
   if (group === "hp" || group === "mp")
-    return (field === "current" ? "Current " : "Maximum ") + group.toUpperCase();
-  if (group === "magicDefense") return "Magic Defense";
-  if (group === "notes") return "GM notes";
+    return field === "current"
+      ? tr("ui.currentValue1", { value1: group.toUpperCase() })
+      : tr("ui.maximumResource", { resource: group.toUpperCase() });
+  if (group === "magicDefense") return tr("ui.magicDefense");
+  if (group === "notes") return tr("ui.gmNotes");
   return path.charAt(0).toUpperCase() + path.slice(1);
 }
 export function mergedProfile(base: NpcWrite, patch: Record<string, unknown>): NpcWrite {

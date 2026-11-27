@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 import type { Benefit, BenefitDraft, ClassDefinition, RemovalImpact, StoredClass } from "./types";
 import { isClassModifierStat } from "../../shared/fabula/classModifiers";
 
@@ -36,7 +37,7 @@ export function completeDefinition(entry: ClassDefinition): boolean {
 function encodeBenefit(draft: BenefitDraft, wireId: (id: string) => string): Benefit {
   const base = { id: wireId(draft.id), name: draft.name, description: draft.description };
   if (draft.kind === "text") return { ...base, kind: "text" };
-  if (!isClassModifierStat(draft.stat)) throw new Error("Choose a modifier stat.");
+  if (!isClassModifierStat(draft.stat)) throw new Error(tr("ui.chooseAModifierStat"));
   return {
     ...base,
     kind: "modifier",

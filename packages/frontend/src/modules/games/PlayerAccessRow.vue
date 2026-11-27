@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 defineProps<{ name: string; removed: boolean; pending?: boolean }>();
 defineEmits<{ restore: []; remove: [] }>();
 </script>
@@ -7,7 +8,9 @@ defineEmits<{ restore: []; remove: [] }>();
   <li class="flex flex-wrap items-center justify-between gap-small">
     <span
       >{{ name }}
-      <UBadge color="neutral" variant="subtle">{{ removed ? "Removed" : "Active" }}</UBadge></span
+      <UBadge color="neutral" variant="subtle">{{
+        removed ? tr("ui.removed") : tr("ui.active")
+      }}</UBadge></span
     >
     <UButton
       v-if="removed"
@@ -15,10 +18,10 @@ defineEmits<{ restore: []; remove: [] }>();
       variant="outline"
       :disabled="pending"
       @click="$emit('restore')"
-      >Restore access</UButton
+      >{{ tr("ui.restoreAccess") }}</UButton
     >
-    <UButton v-else color="error" variant="outline" :disabled="pending" @click="$emit('remove')"
-      >Remove access</UButton
-    >
+    <UButton v-else color="error" variant="outline" :disabled="pending" @click="$emit('remove')">{{
+      tr("ui.removeAccess")
+    }}</UButton>
   </li>
 </template>

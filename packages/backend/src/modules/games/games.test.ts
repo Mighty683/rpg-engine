@@ -7,13 +7,9 @@ describe("game input", () => {
     [
       { name: "   ", systemId: "unknown" },
       "",
-      { name: "Enter a game name", systemId: "Select an RPG system" },
+      { name: "name_required", systemId: "system_required" },
     ],
-    [
-      { name: "a".repeat(21), systemId: "fabula-ultima" },
-      "a".repeat(21),
-      { name: "Use 20 characters or fewer" },
-    ],
+    [{ name: "a".repeat(21), systemId: "fabula-ultima" }, "a".repeat(21), { name: "name_length" }],
   ])("validates %j", (input, name, fields) => {
     expect(validateGame(input)).toMatchObject({ name, fields });
   });

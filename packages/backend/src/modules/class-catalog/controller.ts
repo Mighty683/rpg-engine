@@ -17,36 +17,32 @@ type GameContext = { actor: GameActor; gameId: string };
 
 function requestError(error: unknown): never {
   const code = (error as { code?: string }).code;
-  if (code === "not_found")
-    throw new RequestError(404, { error: { code, message: "Class or game not found." } });
+  if (code === "not_found") throw new RequestError(404, { error: { code } });
   if (code === "forbidden")
     throw new RequestError(403, {
-      error: { code, message: "Only the GM can change game classes." },
+      error: { code },
     });
   if (code === "stale_revision")
     throw new RequestError(409, {
-      error: { code, message: "This class changed. Reload classes and try again." },
+      error: { code },
     });
   if (code === "id_conflict")
     throw new RequestError(409, {
-      error: { code, message: "This class request ID is already in use." },
+      error: { code },
     });
   if (code === "class_in_use")
     throw new RequestError(409, {
-      error: { code, message: "Remove this class from all characters first." },
+      error: { code },
     });
   if (code === "skill_removal_confirmation_required")
     throw new RequestError(409, {
       error: {
         code,
-        message: "Confirm removal of this skill from the affected characters.",
         impact: (error as { impact: SkillRemovalImpact[] }).impact,
       },
     });
-  if (code === "skill_rank_in_use")
-    validationError({ definition: "A character has learned a rank above this skill limit." });
-  if (code === "skill_id_unavailable")
-    validationError({ definition: "A skill ID already belongs to another game class." });
+  if (code === "skill_rank_in_use") validationError({ definition: "skill_rank_in_use" });
+  if (code === "skill_id_unavailable") validationError({ definition: "skill_id_unavailable" });
   throw error;
 }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { Account } from "./types";
 
@@ -26,11 +27,18 @@ async function submit() {
     const status = (cause as { status?: number }).status;
     const message =
       status === 429
-        ? "Too many attempts. Try again later."
+        ? tr("ui.tooManyAttemptsTryAgainLater")
         : mode.value === "login"
-          ? "Could not sign in. Check your username and password."
-          : "Could not create the account. Check your details and try again.";
-    toast.add({ title: message, color: "error" });
+          ? tr("ui.couldNotSignInCheckYourUsernameAndPassword")
+          : tr("ui.couldNotCreateTheAccountCheckYourDetailsAnd");
+    const detail = (
+      cause as { payload?: { error?: { message: string; fields?: Record<string, string> } } }
+    ).payload?.error;
+    toast.add({
+      title: detail?.message ?? message,
+      description: Object.values(detail?.fields ?? {}).join(" "),
+      color: "error",
+    });
   } finally {
     busy.value = false;
   }
@@ -41,11 +49,11 @@ async function submit() {
   <main class="min-h-screen bg-default text-default flex items-center justify-center p-large">
     <section class="w-full max-w-md space-y-large">
       <h1 class="text-section font-semibold">
-        {{ mode === "login" ? "Sign in" : "Create an account" }}
+        {{ mode === "login" ? tr("ui.signIn") : tr("ui.createAnAccount") }}
       </h1>
       <form class="space-y-medium" @submit.prevent="submit">
         <LabeledInput
-          label="Username"
+          :label="tr('ui.username')"
           id="username"
           v-model="username"
           name="username"
@@ -56,7 +64,7 @@ async function submit() {
           data-testid="auth-username"
         />
         <LabeledInput
-          label="Password"
+          :label="tr('ui.password')"
           id="password"
           v-model="password"
           name="password"
@@ -68,7 +76,7 @@ async function submit() {
           data-testid="auth-password"
         />
         <UButton type="submit" :loading="busy" data-testid="auth-submit">{{
-          mode === "login" ? "Sign in" : "Create account"
+          mode === "login" ? tr("ui.signIn") : tr("ui.createAccount")
         }}</UButton>
       </form>
       <UButton
@@ -78,7 +86,7 @@ async function submit() {
         data-testid="auth-mode"
         @click="mode = mode === 'login' ? 'register' : 'login'"
       >
-        {{ mode === "login" ? "Create an account" : "Already have an account? Sign in" }}
+        {{ mode === "login" ? tr("ui.createAnAccount") : tr("ui.alreadyHaveAnAccountSignIn") }}
       </UButton>
     </section>
   </main>

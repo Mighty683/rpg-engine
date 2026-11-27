@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import FormActions from "../../shared/design-system/base/FormActions.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
@@ -33,8 +34,8 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
     :open="true"
     :close="!pending"
     :dismissible="!pending"
-    title="Make a roll"
-    description="Choose dice and an optional modifier."
+    :title="tr('ui.makeARoll')"
+    :description="tr('ui.chooseDiceAndAnOptionalModifier')"
     @update:open="
       (open: boolean) => {
         if (!open && !pending) emit('cancel');
@@ -46,7 +47,7 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
         <fieldset :disabled="pending" class="space-y-medium">
           <LabeledSelect
             v-if="role === 'GM'"
-            label="Roll as"
+            :label="tr('ui.rollAs')"
             :model-value="draft.characterId"
             :items="rollAsOptions"
             class="w-full"
@@ -60,10 +61,12 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
             </template>
           </LabeledSelect>
           <p v-else class="text-small text-muted" data-testid="player-roll-as">
-            <template v-if="playerHasActive">Rolling as {{ playerActiveName }}.</template>
-            <template v-else
-              >Select an active character in character management before rolling.</template
-            >
+            <template v-if="playerHasActive">{{
+              tr("ui.rollingAsValue1", { value1: playerActiveName })
+            }}</template>
+            <template v-else>{{
+              tr("ui.selectAnActiveCharacterInCharacterManagementBeforeRolling")
+            }}</template>
           </p>
           <DicePoolEditor
             v-model:dice="draft.dice"
@@ -84,18 +87,23 @@ const freeDice = [4, 6, 8, 10, 12, 20] as const;
               @update:model-value="emit('update:opponent', $event)"
             />
           </DicePoolEditor>
-          <LabeledInput label="Note" hint="Optional" v-model="draft.note" data-testid="free-note" />
+          <LabeledInput
+            :label="tr('ui.note')"
+            :hint="tr('ui.optional')"
+            v-model="draft.note"
+            data-testid="free-note"
+          />
           <UCheckbox
             :model-value="privateRoll"
-            label="Private roll"
-            description="Only you can see this roll, including the result and note."
+            :label="tr('ui.privateRoll')"
+            :description="tr('ui.onlyYouCanSeeThisRollIncludingTheResult')"
             :disabled="pending"
             data-testid="private-roll"
             @update:model-value="emit('update:privateRoll', $event === true)"
           />
           <p v-if="error" role="alert" class="text-error" data-testid="free-error">{{ error }}</p>
           <FormActions
-            submit-label="Roll"
+            :submit-label="tr('ui.roll')"
             :pending="pending"
             :blocked="role === 'Player' && !playerHasActive"
             submit-test-id="submit-free-roll"

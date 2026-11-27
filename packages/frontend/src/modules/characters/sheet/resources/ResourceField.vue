@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import ResourceBar from "../../../../shared/design-system/domain/ResourceBar.vue";
 import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
 withDefaults(
@@ -39,7 +40,7 @@ function updateMaximum(event: Event) {
         type="number"
         min="0"
         :data-testid="`character-${label.toLowerCase()}`"
-        :aria-label="`Current ${label}`"
+        :aria-label="tr('ui.currentValue1', { value1: label })"
         :disabled="disabled"
         :value="value ?? maximum"
         @input="update"
@@ -49,23 +50,25 @@ function updateMaximum(event: Event) {
           type="button"
           class="maximum"
           :data-testid="`maximum-button-${label}`"
-          :aria-label="`Edit maximum ${label}, currently ${maximum}`"
+          :aria-label="
+            tr('ui.editMaximumValue1CurrentlyValue2', { value1: label, value2: maximum })
+          "
           :disabled="disabled"
         >
           {{ maximum }}
         </button>
         <template #content>
           <div class="maximum-editor">
-            <label :for="`maximum-${label}`"
-              >Maximum {{ label }}{{ allowCalculated ? " override" : "" }}</label
-            >
+            <label :for="`maximum-${label}`">{{
+              tr(allowCalculated ? "ui.maximumOverride" : "ui.maximumResource", { resource: label })
+            }}</label>
             <input
               :id="`maximum-${label}`"
               :data-testid="`maximum-input-${label}`"
               type="number"
               min="0"
               :value="maximumOverride"
-              :placeholder="allowCalculated ? 'Calculated' : undefined"
+              :placeholder="allowCalculated ? tr('ui.calculated') : undefined"
               :disabled="disabled"
               @input="!allowCalculated && updateMaximum($event)"
               @change="allowCalculated && updateMaximum($event)"
@@ -77,7 +80,7 @@ function updateMaximum(event: Event) {
               variant="outline"
               :disabled="disabled"
               @click="emit('override', null)"
-              >Use calculated</UButton
+              >{{ tr("ui.useCalculated") }}</UButton
             >
           </div>
         </template>
@@ -86,7 +89,7 @@ function updateMaximum(event: Event) {
       v-else
       type="number"
       min="0"
-      aria-label="Fabula points"
+      :aria-label="tr('ui.fabulaPoints2')"
       :disabled="disabled"
       :value="value"
       @input="update"

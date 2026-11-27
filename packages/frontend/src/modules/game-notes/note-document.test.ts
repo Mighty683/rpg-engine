@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 import { describe, expect, it } from "vite-plus/test";
 import {
   normalizeNoteDocument,
@@ -85,7 +86,8 @@ describe("game note document parity with the backend", () => {
       "a".repeat(161),
     ];
     for (const title of titles) {
-      expect(noteTitleIssue(title)).toBe(serverTitleIssue(title));
+      const reason = serverTitleIssue(title);
+      expect(noteTitleIssue(title)).toBe(reason ? tr(`errors.${reason}`) : null);
       expect(codePoints(title)).toBe(Array.from(title).length);
     }
     expect(noteTitleCodePointLimit).toBe(160);

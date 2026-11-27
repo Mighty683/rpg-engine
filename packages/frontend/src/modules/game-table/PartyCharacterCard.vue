@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type { Attribute, PartyCharacter } from "./types";
 import AttributeRollButton from "./AttributeRollButton.vue";
 import WeaponRollButton from "./WeaponRollButton.vue";
@@ -36,14 +37,16 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
     <div class="space-y-card-gap">
       <div>
         <p v-if="playerLabelId" :id="playerLabelId" class="text-card-label text-muted">
-          Your character
+          {{ tr("ui.yourCharacter") }}
         </p>
         <div class="flex flex-wrap items-center gap-card-gap">
           <span class="character-name font-semibold">{{ member.name }}</span>
           <UBadge v-if="member.level" color="neutral" variant="outline" size="sm">
-            Lv {{ member.level }}
+            {{ tr("ui.lvValue1", { value1: member.level }) }}
           </UBadge>
-          <UBadge v-if="member.resources.hp === 0" color="error" variant="subtle">0 HP</UBadge>
+          <UBadge v-if="member.resources.hp === 0" color="error" variant="subtle">{{
+            tr("ui.label0Hp")
+          }}</UBadge>
           <UBadge
             v-for="tag in member.tags ?? []"
             :key="tag.name"
@@ -60,14 +63,14 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
             variant="outline"
             size="sm"
             icon="i-lucide-pencil"
-            aria-label="Edit character"
+            :aria-label="tr('ui.editCharacter')"
             data-testid="edit-character"
             @click="emit('edit')"
           />
           <ViewDetailsButton v-else-if="canView" :name="member.name" @open="emit('edit')" />
         </div>
         <p v-if="!$slots['class-progression']" class="text-card-label text-muted">
-          {{ member.classes.join(", ") || "No classes" }}
+          {{ member.classes.join(", ") || tr("ui.noClasses") }}
         </p>
       </div>
       <VitalResourceSummary
@@ -75,7 +78,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
         :mp="{ current: member.resources.mp, max: member.maxima.mp }"
         hp-test-id="party-hp"
       />
-      <div class="attribute-row" aria-label="Attributes">
+      <div class="attribute-row" :aria-label="tr('ui.attributes2')">
         <AttributeRollButton
           v-for="attribute in attributes"
           :key="attribute"
@@ -89,23 +92,29 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
       <dl class="party-stats grid grid-cols-2 gap-card-gap text-card-label tabular-nums">
         <div class="mini-card">
           <div class="mini-resource">
-            <dt>IP <InfoTooltip label="Inventory Points" text="Inventory Points" /></dt>
+            <dt>
+              {{ tr("ui.ip") }}
+              <InfoTooltip :label="tr('ui.inventoryPoints')" :text="tr('ui.inventoryPoints')" />
+            </dt>
             <dd>
               {{ member.resources.ip }}<span> / {{ member.maxima.ip }}</span>
             </dd>
           </div>
           <div class="mini-resource">
-            <dt>FP <InfoTooltip label="Fabula Points" text="Fabula Points" /></dt>
+            <dt>
+              {{ tr("ui.fp") }}
+              <InfoTooltip :label="tr('ui.fabulaPoints')" :text="tr('ui.fabulaPoints')" />
+            </dt>
             <dd>{{ member.resources.fabula }}</dd>
           </div>
         </div>
         <div class="mini-card">
           <div class="mini-resource">
-            <dt>DEF</dt>
+            <dt>{{ tr("ui.def") }}</dt>
             <dd>{{ member.defense ?? "—" }}</dd>
           </div>
           <div class="mini-resource">
-            <dt>MAG DEF</dt>
+            <dt>{{ tr("ui.magDef") }}</dt>
             <dd>{{ member.magicDefense ?? "—" }}</dd>
           </div>
         </div>
@@ -113,8 +122,8 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
       <slot name="class-progression" />
       <dl class="space-y-card-gap pt-card-gap text-card-label" data-testid="party-weapons">
         <div>
-          <dt class="font-semibold text-muted">Weapons</dt>
-          <dd v-if="!member.weapons.length">None</dd>
+          <dt class="font-semibold text-muted">{{ tr("ui.weapons") }}</dt>
+          <dd v-if="!member.weapons.length">{{ tr("ui.none") }}</dd>
           <dd v-for="weapon in member.weapons" :key="weapon.id" class="mt-card-gap">
             <WeaponRollButton
               :weapon="weapon"

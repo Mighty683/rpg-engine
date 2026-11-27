@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import AbilitiesSkeleton from "./AbilitiesSkeleton.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
@@ -61,7 +62,7 @@ function open() {
       size="xs"
       class="relative w-full cursor-pointer border border-transparent p-0 text-left hover:border-primary"
       :data-testid="`table-classes-${id}`"
-      :aria-label="`View class details for ${name}`"
+      :aria-label="tr('ui.viewClassDetailsForValue1', { value1: name })"
       aria-haspopup="dialog"
       @mouseenter="emit('inspect')"
       @focus="emit('inspect')"
@@ -72,28 +73,30 @@ function open() {
     </UButton>
     <template #content>
       <div class="space-y-small" :data-testid="`class-preview-${id}`">
-        <p class="font-semibold">{{ name }} · Skills</p>
-        <SkeletonRegion v-if="loading" label="Loading skills…" class="space-y-small"
+        <p class="font-semibold">{{ tr("ui.value1Skills", { value1: name }) }}</p>
+        <SkeletonRegion v-if="loading" :label="tr('ui.loadingSkills')" class="space-y-small"
           ><SkeletonBlock class="h-4 w-32" /><SkeletonBlock class="h-4 w-24"
         /></SkeletonRegion>
-        <p v-else-if="failed" class="text-small">Skills could not be loaded.</p>
-        <p v-else-if="!skills.length" class="text-small text-muted">No acquired skills.</p>
+        <p v-else-if="failed" class="text-small">{{ tr("ui.skillsCouldNotBeLoaded") }}</p>
+        <p v-else-if="!skills.length" class="text-small text-muted">
+          {{ tr("ui.noAcquiredSkills") }}
+        </p>
         <p v-for="skill in skills.slice(0, 4)" :key="skill.id" class="text-small">
           {{ skill.name }} {{ character?.ranks[skill.id] }}/{{ skill.maxRank }}
           <span class="text-muted">· {{ skill.className }}</span>
         </p>
         <p v-if="skills.length > 4" class="text-small text-muted">
-          +{{ skills.length - 4 }} more skills
+          {{ tr("ui.value1MoreSkills", { value1: skills.length - 4 }) }}
         </p>
-        <p class="text-small text-muted">Click for full class details.</p>
+        <p class="text-small text-muted">{{ tr("ui.clickForFullClassDetails") }}</p>
       </div>
     </template>
   </UTooltip>
   <UModal
     v-model:open="detailsOpen"
     :ui="{ content: 'max-w-3xl' }"
-    :title="`${name} · Class details`"
-    description="Acquired classes, skill ranks and their benefits."
+    :title="tr('ui.value1ClassDetails', { value1: name })"
+    :description="tr('ui.acquiredClassesSkillRanksAndTheirBenefits')"
   >
     <template #body>
       <AbilitiesSkeleton v-if="loading" expanded />
@@ -112,13 +115,13 @@ function open() {
             block
             data-testid="open-sheet-to-add-class"
             @click="openSheet"
-            >+ Add class</UButton
+            >{{ tr("ui.addClass2") }}</UButton
           >
-          <p v-else class="text-small text-muted">You need edit access to add a class.</p>
+          <p v-else class="text-small text-muted">{{ tr("ui.youNeedEditAccessToAddAClass") }}</p>
         </template>
       </CharacterAbilities>
       <p v-else-if="detailsOpen" class="text-small text-muted">
-        Class progression is unavailable for this character.
+        {{ tr("ui.classProgressionIsUnavailableForThisCharacter") }}
       </p>
     </template>
   </UModal>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type { ProgressionExperience } from "./types";
 
 const props = defineProps<{
@@ -16,8 +17,8 @@ function change(field: keyof ProgressionExperience, event: Event) {
 </script>
 
 <template>
-  <div class="sheet-stat" role="group" aria-label="Experience">
-    <span>EXP</span>
+  <div class="sheet-stat" role="group" :aria-label="tr('ui.experience')">
+    <span>{{ tr("ui.exp") }}</span>
     <p v-if="readOnly">{{ experience.current }} / {{ experience.total }}</p>
     <div v-else class="flex min-w-0 items-center justify-center gap-tight">
       <input
@@ -25,7 +26,7 @@ function change(field: keyof ProgressionExperience, event: Event) {
         type="number"
         min="0"
         :disabled="disabled"
-        aria-label="Current EXP"
+        :aria-label="tr('ui.currentExp')"
         data-testid="current-exp"
         @change="change('current', $event)"
       />
@@ -35,7 +36,7 @@ function change(field: keyof ProgressionExperience, event: Event) {
         type="number"
         min="0"
         :disabled="disabled"
-        aria-label="Total EXP"
+        :aria-label="tr('ui.totalExp')"
         data-testid="total-exp"
         @change="change('total', $event)"
       />

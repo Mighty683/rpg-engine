@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import EntryFieldsSkeleton from "./EntryFieldsSkeleton.vue";
 import NoteCardSkeleton from "./NoteCardSkeleton.vue";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
@@ -24,7 +25,11 @@ const canUseNotes = computed(() => Boolean(account.value && gameRecord.value?.ro
 
 <template>
   <div class="mx-auto max-w-6xl space-y-section">
-    <SkeletonRegion v-if="game.isLoading.value" label="Loading game notes…" class="space-y-section">
+    <SkeletonRegion
+      v-if="game.isLoading.value"
+      :label="tr('ui.loadingGameNotes')"
+      class="space-y-section"
+    >
       <div class="flex justify-between">
         <SkeletonBlock class="h-9 w-40" /><SkeletonBlock class="h-8 w-20" />
       </div>
@@ -33,8 +38,8 @@ const canUseNotes = computed(() => Boolean(account.value && gameRecord.value?.ro
     </SkeletonRegion>
     <ContentState v-else-if="game.isError.value" kind="error" @retry="game.refetch" />
     <div v-else-if="!canUseNotes" class="space-y-medium" data-testid="notes-unavailable">
-      <h1 class="text-heading font-semibold">Game notes</h1>
-      <p class="text-muted">Game notes are only available to the GM of this game.</p>
+      <h1 class="text-heading font-semibold">{{ tr("ui.gameNotes") }}</h1>
+      <p class="text-muted">{{ tr("ui.gameNotesAreOnlyAvailableToTheGmOf") }}</p>
     </div>
     <NotesController v-else :game-id="gameId" />
   </div>

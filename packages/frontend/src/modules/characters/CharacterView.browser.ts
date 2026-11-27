@@ -237,9 +237,7 @@ test("an old browser lock leaves an authorized sheet editable", async () => {
 test("known validation rejection rolls the sheet back", async () => {
   const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) =>
     init?.method === "PATCH"
-      ? Promise.resolve(
-          new Response(JSON.stringify({ error: { code: "validation" } }), { status: 422 }),
-        )
+      ? Promise.resolve(new Response(JSON.stringify({ error: { code: "ERR84" } }), { status: 422 }))
       : Promise.resolve(response()),
   );
   const mounted = await mount(fetchMock);
@@ -260,7 +258,7 @@ test("conflict keeps the draft and offers the latest saved sheet", async () => {
   const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
     if (init?.method === "PATCH")
       return Promise.resolve(
-        new Response(JSON.stringify({ error: { code: "stale_revision" } }), { status: 409 }),
+        new Response(JSON.stringify({ error: { code: "ERR01" } }), { status: 409 }),
       );
     reads += 1;
     return Promise.resolve(response(reads > 1 ? { theme: "Authoritative" } : {}));
@@ -269,10 +267,11 @@ test("conflict keeps the draft and offers the latest saved sheet", async () => {
   try {
     await page.getByTestId("character-theme").fill("Stale");
     await expect
-      .element(page.getByTestId("save-status"))
-      .toHaveTextContent(
-        "Your changes could not be confirmed. Your local draft is shown above. Discard draft and reload",
-      );
+      .element(page.getByTestId("save-conflict-message"))
+      .toHaveTextContent("Your changes could not be confirmed. Your local draft is shown above.");
+    await expect
+      .element(page.getByTestId("discard-draft-and-reload"))
+      .toHaveTextContent("Discard draft and reload");
     const themes = mounted.root.querySelectorAll<HTMLInputElement>(
       '[data-testid="character-theme"]',
     );

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 import { computed } from "vue";
 import type { SelectOption } from "../base/types";
 import LabeledSelect from "../base/LabeledSelect.vue";
@@ -15,7 +16,7 @@ const props = defineProps<{
 defineEmits<{ change: [index: 0 | 1, value: AttributeChoice] }>();
 const attributes: FabulaAttribute[] = ["DEX", "INS", "MIG", "WLP"];
 const items = computed<SelectOption<FabulaAttribute | "unselected">[]>(() => [
-  ...(props.allowEmpty ? [{ label: "Select attribute", value: "unselected" as const }] : []),
+  ...(props.allowEmpty ? [{ label: tr("ui.selectAttribute"), value: "unselected" as const }] : []),
   ...attributes.map((value) => ({ label: value, value })),
 ]);
 </script>
@@ -25,13 +26,17 @@ const items = computed<SelectOption<FabulaAttribute | "unselected">[]>(() => [
     <LabeledSelect
       v-for="index in [0, 1] as const"
       :key="index"
-      :label="`Attribute ${index + 1}`"
+      :label="tr('ui.attributeValue1', { value1: index + 1 })"
       :model-value="props.attributes[index] || (allowEmpty ? 'unselected' : undefined)"
       :items="items"
-      placeholder="Select attribute"
+      :placeholder="tr('ui.selectAttribute')"
       :disabled="disabled"
       :data-testid="testIds?.[index]"
-      :aria-label="context ? `Attribute ${index + 1} for ${context}` : undefined"
+      :aria-label="
+        context
+          ? tr('ui.attributeValue1ForValue2', { value1: index + 1, value2: context })
+          : undefined
+      "
       @update:model-value="$emit('change', index, $event === 'unselected' ? '' : $event!)"
     >
       <template #item-label="{ item }">

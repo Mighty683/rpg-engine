@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import type { Attribute } from "./types";
 import DieIcon from "../../shared/design-system/domain/DieIcon.vue";
 
@@ -8,19 +9,25 @@ defineEmits<{ roll: [] }>();
 
 <template>
   <UTooltip
-    :text="canRoll ? `Roll a ${attribute} check` : 'You cannot roll this character'"
+    :text="
+      canRoll
+        ? tr('ui.rollAValue1Check', { value1: attribute })
+        : tr('ui.youCannotRollThisCharacter')
+    "
     :content="{ side: 'top' }"
   >
     <button
       type="button"
       class="attribute-card"
       :data-testid="`roll-attribute-${attribute}`"
-      :aria-label="`Roll ${attribute} check for ${characterName}`"
+      :aria-label="tr('ui.rollValue1CheckForValue2', { value1: attribute, value2: characterName })"
       :disabled="!canRoll"
       @click="$emit('roll')"
     >
       <span>{{ attribute }}</span>
-      <strong class="die-value"><DieIcon :sides="sides" />d{{ sides }}</strong>
+      <strong class="die-value"
+        ><DieIcon :sides="sides" />{{ tr("ui.dValue1", { value1: sides }) }}</strong
+      >
     </button>
   </UTooltip>
 </template>

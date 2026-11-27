@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 import { computed, onMounted, ref, shallowRef } from "vue";
 import { useToast } from "@nuxt/ui/composables";
 import { useApiServices } from "../../shared/api-services";
@@ -41,13 +42,13 @@ export function useAgentEdit(props: AgentEditRequest, dismiss: () => void) {
     } else {
       const { npcs } = await api.npcs.list(props.gameId);
       const npc = npcs.find((record) => record.id === action.npcId);
-      if (npc?.view !== "gm") throw new Error("This NPC is unavailable.");
+      if (npc?.view !== "gm") throw new Error(tr("ui.thisNpcIsUnavailable"));
       if (
         !profile.value &&
         npc.revision !== action.expectedRevision &&
         Object.values(action.changes).some(nested)
       )
-        throw new Error("The NPC changed before review. Request a fresh proposal.");
+        throw new Error(tr("ui.theNpcChangedBeforeReviewRequestAFreshProposal"));
       npcWrite.value = extractWrite(npc);
       profile.value = npcWrite.value;
       currentRevision = npc.revision;
@@ -67,7 +68,7 @@ export function useAgentEdit(props: AgentEditRequest, dismiss: () => void) {
       }
     }
     if (currentRevision !== revision.value)
-      notice.value = "The saved revision changed. Review the latest values before accepting.";
+      notice.value = tr("ui.theSavedRevisionChangedReviewTheLatestValuesBefore");
     revision.value = currentRevision;
   }
   async function refresh() {
@@ -76,7 +77,7 @@ export function useAgentEdit(props: AgentEditRequest, dismiss: () => void) {
       await load();
     } catch (error) {
       profile.value = undefined;
-      notice.value = error instanceof Error ? error.message : "Could not load the saved profile.";
+      notice.value = error instanceof Error ? error.message : tr("ui.couldNotLoadTheSavedProfile");
     } finally {
       busy.value = false;
     }
@@ -98,12 +99,12 @@ export function useAgentEdit(props: AgentEditRequest, dismiss: () => void) {
           revision.value,
           mergedProfile(npcWrite.value, changes.value),
         );
-      toast.add({ title: "Profile saved." });
+      toast.add({ title: tr("ui.profileSaved") });
       dismiss();
     } catch (error) {
       if ((error as { status?: number }).status === 409) await refresh();
       else {
-        notice.value = "Could not confirm the save. Review the latest saved values.";
+        notice.value = tr("ui.couldNotConfirmTheSaveReviewTheLatestSaved");
         await refresh();
       }
     } finally {

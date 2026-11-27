@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import SurfaceCard from "../../shared/design-system/base/SurfaceCard.vue";
@@ -6,7 +7,7 @@ defineProps<{ screen: string; useBreadcrumbs?: boolean }>();
 </script>
 
 <template>
-  <SkeletonRegion label="Loading classes…" :class="{ 'p-section': !useBreadcrumbs }">
+  <SkeletonRegion :label="tr('ui.loadingClasses')" :class="{ 'p-section': !useBreadcrumbs }">
     <div
       class="mx-auto flex flex-col gap-section"
       :class="useBreadcrumbs ? 'max-w-6xl' : 'max-w-5xl'"

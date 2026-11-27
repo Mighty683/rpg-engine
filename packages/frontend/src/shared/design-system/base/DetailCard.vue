@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 import { ref, watch } from "vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 const props = defineProps<{
@@ -41,7 +42,7 @@ function confirmRemove() {
           type="button"
           class="card-trigger"
           data-testid="open-entry-details"
-          :aria-label="editLabel ?? `Edit ${title}`"
+          :aria-label="editLabel ?? tr('ui.editValue1', { value1: title })"
         >
           <span class="card-copy"
             ><span class="card-title"
@@ -63,7 +64,7 @@ function confirmRemove() {
                 variant="outline"
                 class="shrink-0"
                 type="button"
-                aria-label="Close details"
+                :aria-label="tr('ui.closeDetails')"
                 @click="open = false"
                 >×</UButton
               >
@@ -94,14 +95,14 @@ function confirmRemove() {
         :aria-label="removeLabel"
         @click="confirming = true"
       >
-        Remove
+        {{ tr("ui.remove") }}
       </UButton>
     </div>
     <ConfirmDialog
       :open="confirming"
-      :title="`Remove ${title}?`"
-      :description="removeDescription ?? `Remove ${title}?`"
-      confirm-label="Remove"
+      :title="tr('ui.removeValue1', { value1: title })"
+      :description="removeDescription ?? tr('ui.removeValue1', { value1: title })"
+      :confirm-label="tr('ui.remove')"
       confirm-test-id="confirm-remove"
       cancel-test-id="cancel-remove"
       destructive

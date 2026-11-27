@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import SheetSection from "../../../../shared/design-system/domain/SheetSection.vue";
 import AttributeField from "./AttributeField.vue";
 import type { Attribute, Character } from "../types";
@@ -8,16 +9,17 @@ defineProps<{
   currentDice?: Record<Attribute, number>;
 }>();
 const help = {
-  DEX: "Dexterity measures agility and is the usual base for Defense.",
-  INS: "Insight measures awareness and is the base for Magic Defense.",
-  MIG: "Might measures physical strength and contributes to maximum HP.",
-  WLP: "Willpower measures resolve and contributes to maximum MP.",
+  DEX: tr("ui.dexterityMeasuresAgilityAndIsTheUsualBaseFor"),
+  INS: tr("ui.insightMeasuresAwarenessAndIsTheBaseForMagic"),
+  MIG: tr("ui.mightMeasuresPhysicalStrengthAndContributesToMaximumHp"),
+  WLP: tr("ui.willpowerMeasuresResolveAndContributesToMaximumMp"),
 };
 </script>
 
 <template>
   <SheetSection class="attributes"
-    ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
+    ><template #heading>{{ tr("ui.attributes") }}</template
+    ><template #hint>{{ tr("ui.baseDice") }}</template>
     <div class="grid">
       <AttributeField
         v-for="attribute in ['DEX', 'INS', 'MIG', 'WLP'] as const"

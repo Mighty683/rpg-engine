@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import { newUuid } from "../../shared/uuid";
 import ConfirmDialog from "../../shared/design-system/base/ConfirmDialog.vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
@@ -24,10 +25,10 @@ const relationships: NpcRelationship[] = ["enemy", "neutral", "friend"];
 const confirmingRemoval = ref(false);
 const attributes = ["DEX", "INS", "MIG", "WLP"] as const;
 const attributeHelp = {
-  DEX: "Dexterity measures agility and is the usual base for Defense.",
-  INS: "Insight measures awareness and is the base for Magic Defense.",
-  MIG: "Might measures physical strength and contributes to maximum HP.",
-  WLP: "Willpower measures resolve and contributes to maximum MP.",
+  DEX: tr("ui.dexterityMeasuresAgilityAndIsTheUsualBaseFor"),
+  INS: tr("ui.insightMeasuresAwarenessAndIsTheBaseForMagic"),
+  MIG: tr("ui.mightMeasuresPhysicalStrengthAndContributesToMaximumHp"),
+  WLP: tr("ui.willpowerMeasuresResolveAndContributesToMaximumMp"),
 };
 
 function newNpc(): Npc {
@@ -141,12 +142,14 @@ onUnmounted(() => {
     <fieldset :disabled="readOnly || pending" class="contents">
       <header class="sheet-header border-b border-default pb-small">
         <div class="name-field min-w-0">
-          <p class="sheet-kicker">FABULA ULTIMA <span> / NPC SHEET</span></p>
+          <p class="sheet-kicker">
+            {{ tr("ui.fabulaUltima") }} <span> {{ tr("ui.npcSheet") }}</span>
+          </p>
           <label class="sheet-name min-w-0"
-            ><span class="sr-only">NPC name</span
-            ><input v-model="form.name" placeholder="NPC name" data-testid="npc-name"
+            ><span class="sr-only">{{ tr("ui.npcName") }}</span
+            ><input v-model="form.name" :placeholder="tr('ui.npcName')" data-testid="npc-name"
           /></label>
-          <fieldset class="relationship" aria-label="NPC relationship">
+          <fieldset class="relationship" :aria-label="tr('ui.npcRelationship')">
             <label
               v-for="relationship in relationships"
               :key="relationship"
@@ -158,13 +161,13 @@ onUnmounted(() => {
                 :value="relationship"
                 :data-testid="`npc-relationship-${relationship}`"
               />
-              <span>{{ relationship }}</span>
+              <span>{{ tr(`ui.${relationship}`) }}</span>
             </label>
           </fieldset>
           <fieldset
             v-if="!readOnly"
             class="relationship"
-            aria-label="Player visibility"
+            :aria-label="tr('ui.playerVisibility')"
             data-testid="npc-visibility"
           >
             <label v-for="visibility in ['hidden', 'visible', 'known']" :key="visibility">
@@ -174,14 +177,14 @@ onUnmounted(() => {
                 :value="visibility"
                 :data-testid="`npc-visibility-${visibility}`"
               />
-              <span>{{ visibility }}</span>
+              <span>{{ tr(`ui.${visibility}`) }}</span>
             </label>
           </fieldset>
         </div>
         <CharacterLevelField
           :level="form.level"
           :max="60"
-          label="NPC level"
+          :label="tr('ui.npcLevel')"
           test-id="npc-level"
           @change="form.level = ($event.target as HTMLInputElement).valueAsNumber"
         />
@@ -211,9 +214,10 @@ onUnmounted(() => {
       </header>
 
       <div class="sheet-sections">
-        <ScreenSection aria-label="Attributes">
+        <ScreenSection :aria-label="tr('ui.attributes2')">
           <SheetSection
-            ><template #heading>◈ ATTRIBUTES</template><template #hint>BASE DICE</template>
+            ><template #heading>{{ tr("ui.attributes") }}</template
+            ><template #hint>{{ tr("ui.baseDice") }}</template>
             <div class="stat-grid">
               <AttributeField
                 v-for="attribute in attributes"
@@ -227,10 +231,10 @@ onUnmounted(() => {
             </div>
           </SheetSection>
         </ScreenSection>
-        <ScreenSection aria-label="Defenses">
+        <ScreenSection :aria-label="tr('ui.defenses')">
           <SheetSection>
-            <template #heading>◈ DEFENSES</template
-            ><template v-if="!readOnly" #hint>EDIT VALUES MANUALLY</template>
+            <template #heading>{{ tr("ui.defenses2") }}</template
+            ><template v-if="!readOnly" #hint>{{ tr("ui.editValuesManually") }}</template>
             <div class="defense-grid">
               <DefenseField
                 v-for="stat in ['defense', 'magicDefense'] as const"
@@ -239,8 +243,8 @@ onUnmounted(() => {
                 :label="{ defense: 'DEF', magicDefense: 'MAG DEF' }[stat]"
                 :help="
                   {
-                    defense: 'Defense against physical attacks.',
-                    magicDefense: 'Defense against magical attacks.',
+                    defense: tr('ui.defenseAgainstPhysicalAttacks'),
+                    magicDefense: tr('ui.defenseAgainstMagicalAttacks'),
                   }[stat]
                 "
                 :calculated="null"
@@ -255,21 +259,20 @@ onUnmounted(() => {
               />
             </div>
             <p v-if="!isValid" class="text-label text-muted">
-              Enter a name, level 5–60 and valid non-negative stats. Current HP and MP cannot exceed
-              their maximum. Attacks require a name and a whole-number damage bonus.
+              {{ tr("ui.enterANameLevel560AndValidNon") }}
             </p>
           </SheetSection>
         </ScreenSection>
-        <ScreenSection aria-label="Attacks">
+        <ScreenSection :aria-label="tr('ui.attacks3')">
           <NpcAttacksEditor v-if="!readOnly" :attacks="form.attacks" />
           <SheetSection v-else>
-            <template #heading>⚔ ATTACKS</template>
-            <p v-if="!form.attacks.length" class="text-muted">No attacks.</p>
+            <template #heading>{{ tr("ui.attacks") }}</template>
+            <p v-if="!form.attacks.length" class="text-muted">{{ tr("ui.noAttacks2") }}</p>
             <ul v-else class="space-y-small">
               <li v-for="attack in form.attacks" :key="attack.id">
                 <strong>{{ attack.name }}</strong>
                 <span class="text-small text-muted">
-                  · {{ attack.range }} · {{ attack.attributes.join(" + ") }} · +{{
+                  · {{ tr(`ui.${attack.range}`) }} · {{ attack.attributes.join(" + ") }} · +{{
                     attack.damageBonus
                   }}
                   {{ attack.damageType }}</span
@@ -278,15 +281,16 @@ onUnmounted(() => {
             </ul>
           </SheetSection>
         </ScreenSection>
-        <ScreenSection v-if="!readOnly" aria-label="Notes">
+        <ScreenSection v-if="!readOnly" :aria-label="tr('ui.notes')">
           <SheetSection
-            ><template #heading>✎ NOTES</template><template #hint>GM ONLY</template>
+            ><template #heading>{{ tr("ui.notes2") }}</template
+            ><template #hint>{{ tr("ui.gmOnly") }}</template>
             <textarea
               v-model="form.notes"
               class="text-field notes"
               rows="3"
-              placeholder="Behavior, loot, scene notes…"
-              aria-label="NPC notes"
+              :placeholder="tr('ui.behaviorLootSceneNotes')"
+              :aria-label="tr('ui.npcNotes')"
               data-testid="npc-notes-field"
             ></textarea>
           </SheetSection>
@@ -302,15 +306,15 @@ onUnmounted(() => {
           variant="outline"
           data-testid="remove-npc"
           @click="confirmingRemoval = true"
-          >Remove NPC</UButton
+          >{{ tr("ui.removeNpc") }}</UButton
         >
       </div>
     </fieldset>
     <ConfirmDialog
       :open="confirmingRemoval && !readOnly && Boolean(npc)"
-      :title="`Remove ${npc?.name ?? 'NPC'}?`"
-      description="This permanently removes the NPC from the game."
-      confirm-label="Remove NPC"
+      :title="tr('ui.removeValue1', { value1: npc?.name ?? 'NPC' })"
+      :description="tr('ui.thisPermanentlyRemovesTheNpcFromTheGame')"
+      :confirm-label="tr('ui.removeNpc')"
       destructive
       :pending="pending"
       confirm-test-id="confirm-remove-npc"

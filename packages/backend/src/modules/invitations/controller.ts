@@ -12,7 +12,7 @@ import {
 } from "./contract.ts";
 const deny = (code: string) =>
   new RequestError(code === "forbidden" ? 403 : code === "conflict" ? 409 : 404, {
-    error: { code, message: "Invitation unavailable." },
+    error: { code },
   });
 const param = (value: string | string[]) => (Array.isArray(value) ? value[0]! : value);
 

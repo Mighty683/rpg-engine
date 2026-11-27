@@ -1,10 +1,12 @@
+import { tr } from "./i18n";
+import { errorReason, operationErrors } from "../../../contracts/http-errors.ts";
 let pendingToken: Promise<string> | undefined;
 
 async function csrfToken() {
   if (!pendingToken) {
     pendingToken = fetch("/api/auth/csrf", { cache: "no-store" })
       .then(async (response) => {
-        if (!response.ok) throw new Error("Unable to initialize request security");
+        if (!response.ok) throw new Error(tr("ui.unableToInitializeRequestSecurity"));
         const value: { csrfToken: string } = await response.json();
         return value.csrfToken;
       })
@@ -30,5 +32,7 @@ export async function secureFetch(path: string, init?: RequestInit) {
     .clone()
     .json()
     .catch(() => null);
-  return payload?.error?.code === "invalid_csrf" ? send() : response;
+  return errorReason(operationErrors(method, path), payload?.error?.code) === "invalid_csrf"
+    ? send()
+    : response;
 }

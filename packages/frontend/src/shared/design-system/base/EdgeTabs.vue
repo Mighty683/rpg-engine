@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 import { computed } from "vue";
 
 export type EdgeTab = {
@@ -29,7 +30,7 @@ function select(id: string) {
 </script>
 
 <template>
-  <div class="edge-tabs" role="tablist" aria-label="Side panels">
+  <div class="edge-tabs" role="tablist" :aria-label="tr('ui.sidePanels')">
     <UButton
       v-for="(tab, index) in visibleTabs"
       :key="tab.id"
@@ -37,7 +38,7 @@ function select(id: string) {
       :style="index > 0 ? { marginTop: `-${props.overlap}rem` } : undefined"
       :color="tab.color ?? 'primary'"
       :data-testid="tab.testId ?? `edge-tab-${tab.id}`"
-      :aria-label="openId === tab.id ? `Close ${tab.label}` : tab.label"
+      :aria-label="openId === tab.id ? tr('ui.closeValue1', { value1: tab.label }) : tab.label"
       :aria-pressed="openId === tab.id"
       @click="select(tab.id)"
       >{{ tab.label }}</UButton

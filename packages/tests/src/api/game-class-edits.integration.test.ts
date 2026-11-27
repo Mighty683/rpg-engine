@@ -125,7 +125,7 @@ describe("game class edits", () => {
         body: JSON.stringify(input),
       });
       expect(missingCsrf.status).toBe(403);
-      expect((await missingCsrf.json()).error.code).toBe("invalid_csrf");
+      expect((await missingCsrf.json()).error.code).toBe("ERR85");
       expect(await list(ids.game)).toContainEqual(gameClass);
       expect(await list(ids.otherGame, "outsider")).toEqual([]);
     }
@@ -161,7 +161,7 @@ describe("game class edits", () => {
     ).toBe(200);
     const blocked = await request(path, "gm", "DELETE", { expectedRevision: 0 });
     expect(blocked.status).toBe(409);
-    expect((await blocked.json()).error.code).toBe("class_in_use");
+    expect((await blocked.json()).error.code).toBe("ERR02");
     expect(await record(ids.game, ids.playerCharacter)).toEqual(before);
     expect(await list(ids.game)).toContainEqual(gameClass);
     const cleared = await setRanks(ids.game, ids.playerCharacter, before, gameClass, 0);
@@ -202,7 +202,7 @@ describe("game class edits", () => {
     expect(rejected.status).toBe(409);
     const { error: firstImpact } = await rejected.json();
     expect(firstImpact).toMatchObject({
-      code: "skill_removal_confirmation_required",
+      code: "ERR02",
       impact: [
         {
           skillId: learned!.id,

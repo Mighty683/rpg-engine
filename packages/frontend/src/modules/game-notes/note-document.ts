@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 /**
  * Client mirror of the server-canonical game note document handling. The
  * backend `modules/game-notes/document.ts` is the single canonical authority;
@@ -61,9 +62,9 @@ export function sameNoteDocument(a: NoteOpsSource, b: NoteOpsSource) {
  * wording so a client-side guard and a 422 response say the same thing.
  */
 export function noteTitleIssue(trimmedTitle: string) {
-  if (!trimmedTitle) return "Enter a title of 1 to 160 characters.";
+  if (!trimmedTitle) return tr("ui.enterATitleOf1To160Characters");
   if (codePoints(trimmedTitle) > noteTitleCodePointLimit)
-    return "Use 160 characters or fewer for the title.";
-  if (!isStorableText(trimmedTitle)) return "The title contains unsupported characters.";
+    return tr("ui.use160CharactersOrFewerForTheTitle");
+  if (!isStorableText(trimmedTitle)) return tr("ui.theTitleContainsUnsupportedCharacters");
   return null;
 }

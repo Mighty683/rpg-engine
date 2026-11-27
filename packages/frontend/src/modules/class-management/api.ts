@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 import { request as secureRequest } from "../../shared/api";
 import { applyCatalogChange } from "./catalog";
 import { ContractError, decodeClass, encodeClass } from "./contract";
@@ -24,7 +25,7 @@ function requestCatalog<T>(path: string, method = "GET", body?: unknown): Promis
     throw new ContractError(
       failure.status,
       error?.code ?? "request_failed",
-      error?.message ?? "Could not confirm the class change.",
+      error?.message ?? tr("ui.couldNotConfirmTheClassChange"),
       error?.impact,
     );
   });
@@ -62,7 +63,7 @@ function createCatalogClient(
       try {
         for (const change of changes) {
           if (change.kind === "copy") {
-            if (!gameClassesPath) throw new Error("Open a game before copying a class.");
+            if (!gameClassesPath) throw new Error(tr("ui.openAGameBeforeCopyingAClass"));
             const { gameClass } = await request<{ gameClass: StoredClass }>(
               gameClassesPath,
               "POST",
@@ -74,7 +75,7 @@ function createCatalogClient(
             );
             catalog = replace(catalog, "game", gameClass);
           } else if (change.scope === "game") {
-            if (!api.updateGameClass) throw new Error("Game class editing is unavailable.");
+            if (!api.updateGameClass) throw new Error(tr("ui.gameClassEditingIsUnavailable"));
             catalog = await api.updateGameClass(catalog, change.entry);
           } else {
             const { id, systemId, definition } = encodeClass(change.entry, wireId);
@@ -97,7 +98,7 @@ function createCatalogClient(
         throw new ContractError(
           409,
           "partial_save",
-          "Some class changes were saved. Reload saved classes.",
+          tr("ui.someClassChangesWereSavedReloadSavedClasses"),
         );
       }
       return catalog;

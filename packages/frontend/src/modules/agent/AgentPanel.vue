@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
@@ -57,17 +58,19 @@ function onScroll() {
       @scroll="onScroll"
       class="flex-1 space-y-small overflow-y-auto p-small text-small"
       role="log"
-      aria-label="Conversation with Agent"
+      :aria-label="tr('ui.conversationWithAgent')"
       data-testid="agent-result"
     >
       <SkeletonRegion
         v-if="checking && !messages.length"
-        label="Connecting to Agent…"
+        :label="tr('ui.connectingToAgent')"
         class="space-y-small"
       >
         <SkeletonBlock class="ml-auto h-7 w-2/5" /><SkeletonBlock class="h-10 w-3/4" />
       </SkeletonRegion>
-      <p v-else-if="!messages.length" class="text-muted">What would you like to do at the table?</p>
+      <p v-else-if="!messages.length" class="text-muted">
+        {{ tr("ui.whatWouldYouLikeToDoAtTheTable") }}
+      </p>
       <div
         v-for="message in messages"
         :data-message-id="message.id"
@@ -80,21 +83,21 @@ function onScroll() {
           class="text-small text-muted"
           data-testid="agent-tool-call"
         >
-          Tool · {{ message.text }}
+          {{ tr("ui.toolValue1", { value1: message.text }) }}
         </p>
         <p
           v-else-if="!message.roll"
           class="max-w-[90%] whitespace-pre-wrap break-words rounded-panel px-small py-tight"
           :class="message.role === 'user' ? 'bg-primary text-inverted' : 'bg-elevated'"
         >
-          <span class="sr-only">{{ message.role === "user" ? "You" : "Agent" }}</span>
+          <span class="sr-only">{{ message.role === "user" ? tr("ui.you") : tr("ui.agent") }}</span>
           {{ message.text }}
         </p>
         <slot name="after-message" :message="message" />
       </div>
     </div>
     <p v-if="busy" class="px-small pb-tight text-small text-muted" role="status">
-      Agent is working…
+      {{ tr("ui.agentIsWorking") }}
     </p>
     <p
       v-else-if="!checking && !available"
@@ -102,14 +105,14 @@ function onScroll() {
       role="status"
       data-testid="agent-offline"
     >
-      Agent unavailable. Your message is kept here.
+      {{ tr("ui.agentUnavailableYourMessageIsKeptHere") }}
     </p>
     <p
       v-else-if="!checking && !partyReady && !partyLoading"
       class="px-small pb-tight text-small text-muted"
       role="status"
     >
-      Table data is unavailable.
+      {{ tr("ui.tableDataIsUnavailable") }}
     </p>
     <form
       class="flex items-center gap-small border-t border-default p-medium"
@@ -118,14 +121,18 @@ function onScroll() {
       <UInput
         v-model="draft"
         class="min-w-0 flex-1"
-        aria-label="Message"
-        placeholder="Message Agent…"
+        :aria-label="tr('ui.message')"
+        :placeholder="tr('ui.messageAgent')"
         data-testid="agent-command"
       />
-      <SkeletonRegion v-if="!checking && available && partyLoading" label="Connecting to the table…"
+      <SkeletonRegion
+        v-if="!checking && available && partyLoading"
+        :label="tr('ui.connectingToTheTable')"
         ><SkeletonBlock class="h-8 w-14"
       /></SkeletonRegion>
-      <UButton v-else type="submit" :disabled="!canSend" data-testid="agent-submit">Send</UButton>
+      <UButton v-else type="submit" :disabled="!canSend" data-testid="agent-submit">{{
+        tr("ui.send")
+      }}</UButton>
     </form>
   </div>
 </template>

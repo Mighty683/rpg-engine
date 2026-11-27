@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import NoteCardSkeleton from "./NoteCardSkeleton.vue";
 import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, onMounted, onUnmounted } from "vue";
@@ -39,15 +40,15 @@ onUnmounted(() => window.removeEventListener("scroll", onWindowScroll));
   <div class="space-y-medium">
     <LabeledInput
       :model-value="browse.term"
-      label="Search entries"
-      placeholder="Search title or content"
+      :label="tr('ui.searchEntries')"
+      :placeholder="tr('ui.searchTitleOrContent')"
       data-testid="notes-search"
       @update:model-value="notebook.setTerm(String($event))"
     />
     <div aria-live="polite" class="space-y-small">
       <SkeletonRegion
         v-if="browse.loading"
-        label="Loading entries…"
+        :label="tr('ui.loadingEntries')"
         data-testid="notes-loading"
         class="space-y-small"
       >
@@ -60,7 +61,7 @@ onUnmounted(() => window.removeEventListener("scroll", onWindowScroll));
         @retry="notebook.retryBrowse()"
       />
       <ContentState v-else-if="!entries.length" kind="empty" :data-testid="`notes-${emptyKind}`">
-        {{ emptyKind === "no-match" ? "No matching entries." : "No entries yet." }}
+        {{ emptyKind === "no-match" ? tr("ui.noMatchingEntries") : tr("ui.noEntriesYet") }}
       </ContentState>
       <template v-else>
         <ul class="space-y-small" data-testid="notes-list">
@@ -68,7 +69,7 @@ onUnmounted(() => window.removeEventListener("scroll", onWindowScroll));
             <NoteCard :entry="entry" clickable @open="emit('open', entry.id)" />
           </li>
         </ul>
-        <SkeletonRegion v-if="browse.loadingMore" label="Loading entries…"
+        <SkeletonRegion v-if="browse.loadingMore" :label="tr('ui.loadingEntries')"
           ><NoteCardSkeleton
         /></SkeletonRegion>
         <ContentState

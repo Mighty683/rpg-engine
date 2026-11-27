@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 withDefaults(
   defineProps<{
     submitLabel: string;
@@ -10,7 +11,7 @@ withDefaults(
     submitTestId?: string;
     cancelTestId?: string;
   }>(),
-  { cancelLabel: "Cancel", submitType: "submit" },
+  { cancelLabel: tr("games.cancel"), submitType: "submit" },
 );
 defineEmits<{ confirm: []; cancel: [] }>();
 </script>

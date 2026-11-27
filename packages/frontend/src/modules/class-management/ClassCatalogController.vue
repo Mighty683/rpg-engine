@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import CatalogSkeleton from "./CatalogSkeleton.vue";
 import AbilitiesSkeleton from "../class-progression/AbilitiesSkeleton.vue";
 import { useGameEvents } from "../games/useGameEvents";
@@ -101,7 +102,7 @@ watch(optimistic.error, (error) => {
     title: error.message,
     color: "error",
     actions: optimistic.paused.value
-      ? [{ label: "Reload saved classes", onClick: () => void optimistic.retry() }]
+      ? [{ label: tr("ui.reloadSavedClasses"), onClick: () => void optimistic.retry() }]
       : [],
   });
 });
@@ -114,9 +115,9 @@ async function load() {
   } catch {
     loadFailed.value = true;
     toast.add({
-      title: "Could not load classes.",
+      title: tr("ui.couldNotLoadClasses"),
       color: "error",
-      actions: [{ label: "Retry", onClick: () => void load() }],
+      actions: [{ label: tr("games.retry"), onClick: () => void load() }],
     });
   } finally {
     loading.value = false;
@@ -259,8 +260,8 @@ let newTemplateId = "";
 const templateId = ref("");
 const templates = computed(() => optimistic.displayed.value?.library ?? []);
 const saveModeItems = computed(() => [
-  { label: "Save as new", value: "new" },
-  ...(templates.value.length ? [{ label: "Update existing template", value: "update" }] : []),
+  { label: tr("ui.saveAsNew"), value: "new" },
+  ...(templates.value.length ? [{ label: tr("ui.updateExistingTemplate"), value: "update" }] : []),
 ]);
 
 async function runAction(action: (base: ClassCatalog) => Promise<void>) {
@@ -272,10 +273,10 @@ async function runAction(action: (base: ClassCatalog) => Promise<void>) {
   } catch (error) {
     const actions =
       !(error instanceof ContractError) || error.code === "stale_revision" || error.status >= 500
-        ? [{ label: "Reload saved classes", onClick: () => void load() }]
+        ? [{ label: tr("ui.reloadSavedClasses"), onClick: () => void load() }]
         : [];
     toast.add({
-      title: error instanceof Error ? error.message : "Could not confirm the change.",
+      title: error instanceof Error ? error.message : tr("ui.couldNotConfirmTheChange"),
       color: "error",
       actions,
     });
@@ -298,7 +299,7 @@ function removeSkill(id: string) {
   }
   const next = { ...entry, skills };
   if (!completeDefinition(next)) {
-    report("Finish the incomplete skills or benefits first.");
+    report(tr("ui.finishTheIncompleteSkillsOrBenefitsFirst"));
     return;
   }
   void saveGameEdit({ entry: next, name: skill.name });
@@ -312,7 +313,7 @@ async function saveGameEdit(change: NonNullable<typeof removal.value>) {
         throw new ContractError(
           409,
           "stale_revision",
-          "This class changed. Reload classes and try again.",
+          tr("ui.thisClassChangedReloadClassesAndTryAgain"),
         );
       }
       optimistic.setSnapshot(await api.updateGameClass!(base, change.entry, change.impact));
@@ -373,7 +374,7 @@ watch(
   <ContentState
     v-else-if="loadFailed"
     kind="error"
-    retry-label="Retry loading classes"
+    :retry-label="tr('ui.retryLoadingClasses')"
     retry-test-id="retry-classes"
     @retry="load"
   />
@@ -455,8 +456,8 @@ watch(
   <UModal
     :open="!!removal"
     :dismissible="!actionPending"
-    :title="`Remove ${removal?.name || 'skill'}?`"
-    description="This removes the skill from the game class and these characters."
+    :title="tr('ui.removeValue1', { value1: removal?.name || tr('ui.skill') })"
+    :description="tr('ui.thisRemovesTheSkillFromTheGameClassAnd')"
     @update:open="
       (open: boolean) => {
         if (!open) removal = null;
@@ -469,10 +470,12 @@ watch(
           v-for="character in removal?.impact?.flatMap((item) => item.characters)"
           :key="character.id"
         >
-          {{ character.name }} · Rank {{ character.rank }}
+          {{ tr("ui.value1RankValue2", { value1: character.name, value2: character.rank }) }}
         </li>
       </ul>
-      <p v-if="removal?.impact?.length === 0">No characters currently have ranks in this skill.</p>
+      <p v-if="removal?.impact?.length === 0">
+        {{ tr("ui.noCharactersCurrentlyHaveRanksInThisSkill") }}
+      </p>
     </template>
     <template #footer>
       <UButton
@@ -481,20 +484,20 @@ watch(
         data-testid="cancel-skill-removal"
         :disabled="actionPending"
         @click="removal = null"
-        >Cancel</UButton
+        >{{ tr("games.cancel") }}</UButton
       >
       <UButton
         color="error"
         data-testid="confirm-skill-removal"
         :disabled="actionPending"
         @click="removal && saveGameEdit(removal)"
-        >Remove skill</UButton
+        >{{ tr("ui.removeSkill") }}</UButton
       >
     </template>
   </UModal>
   <UModal
     :open="!!saveSource"
-    title="Save to library"
+    :title="tr('ui.saveToLibrary')"
     :description="saveSource?.name"
     @update:open="
       (open: boolean) => {
@@ -506,7 +509,7 @@ watch(
       <form class="space-y-medium" id="save-class-to-library" @submit.prevent="saveToLibrary">
         <LabeledSelect
           v-model="saveMode"
-          label="Save as"
+          :label="tr('ui.saveAs')"
           :items="saveModeItems"
           :disabled="actionPending"
           data-testid="library-save-mode"
@@ -518,7 +521,7 @@ watch(
         <LabeledInput
           v-if="saveMode === 'new'"
           v-model="saveName"
-          label="Template name"
+          :label="tr('ui.templateName')"
           maxlength="100"
           :disabled="actionPending"
           data-testid="library-save-name"
@@ -526,7 +529,7 @@ watch(
         <LabeledSelect
           v-else
           v-model="templateId"
-          label="Template"
+          :label="tr('ui.template')"
           :items="templates.map(({ id, name }) => ({ label: name, value: id }))"
           :disabled="actionPending"
           data-testid="library-save-template"
@@ -543,7 +546,7 @@ watch(
         variant="outline"
         :disabled="actionPending"
         @click="saveSource = null"
-        >Cancel</UButton
+        >{{ tr("games.cancel") }}</UButton
       >
       <UButton
         type="submit"
@@ -551,7 +554,7 @@ watch(
         :loading="actionPending"
         :disabled="saveMode === 'new' ? !saveName.trim() : !templateId"
         data-testid="confirm-save-to-library"
-        >Save to library</UButton
+        >{{ tr("ui.saveToLibrary") }}</UButton
       >
     </template>
   </UModal>

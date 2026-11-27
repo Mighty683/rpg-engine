@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../../shared/i18n";
 import InfoTooltip from "../../../../shared/design-system/base/InfoTooltip.vue";
 import DieIcon from "../../../../shared/design-system/domain/DieIcon.vue";
 defineProps<{ label: string; help: string; disabled?: boolean; currentDie?: number }>();
@@ -10,7 +11,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
   <div class="die">
     <div class="stat-label">
       <span>{{ label }}</span
-      ><InfoTooltip :label="`About ${label}`" :text="help" />
+      ><InfoTooltip :label="tr('ui.aboutValue1', { value1: label })" :text="help" />
     </div>
     <div class="die-value">
       <DieIcon :sides="value" />
@@ -35,7 +36,7 @@ const dice = ["6", "8", "10", "12"].map((size) => ({ label: `d${size}`, value: s
       v-if="currentDie !== undefined && currentDie !== Number(value)"
       class="text-small text-muted"
     >
-      Current d{{ currentDie }}
+      {{ tr("ui.currentDValue1", { value1: currentDie }) }}
     </p>
   </div>
 </template>

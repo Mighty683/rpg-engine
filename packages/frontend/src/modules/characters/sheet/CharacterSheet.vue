@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../../shared/i18n";
 import ScreenSection from "../../../shared/design-system/base/ScreenSection.vue";
 import { computed, ref } from "vue";
 import CharacterNameField from "./identity/CharacterNameField.vue";
@@ -94,7 +95,10 @@ const defenseDetails = computed(() => props.defenseDetails);
       </fieldset>
     </header>
     <fieldset :disabled="readOnly" class="sheet-sections">
-      <ScreenSection class="sheet-split attributes-resources" aria-label="Attributes and resources">
+      <ScreenSection
+        class="sheet-split attributes-resources"
+        :aria-label="tr('ui.attributesAndResources')"
+      >
         <AttributesSection
           :attributes="attributes"
           :current-dice="currentDice"
@@ -110,7 +114,7 @@ const defenseDetails = computed(() => props.defenseDetails);
       <ScreenSection
         v-if="!$slots['class-progression'] || classes.length || skills.length"
         class="sheet-split"
-        aria-label="Manual classes and skills"
+        :aria-label="tr('ui.manualClassesAndSkills')"
       >
         <ClassesSection
           v-if="!$slots['class-progression'] || classes.length"
@@ -125,7 +129,7 @@ const defenseDetails = computed(() => props.defenseDetails);
           :existing-only="!!$slots['class-progression']"
         />
       </ScreenSection>
-      <ScreenSection class="sheet-split" aria-label="Equipment and defense">
+      <ScreenSection class="sheet-split" :aria-label="tr('ui.equipmentAndDefense')">
         <EquipmentSection :entries="equipment" :locked="readOnly" /><DefenseSection
           :overrides="overrides"
           :calculated="baseDefense"

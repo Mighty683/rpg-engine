@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../i18n";
 import FormActions from "./FormActions.vue";
 withDefaults(
   defineProps<{
@@ -13,7 +14,7 @@ withDefaults(
     cancelTestId?: string;
     close?: boolean;
   }>(),
-  { cancelLabel: "Cancel", close: true },
+  { cancelLabel: tr("games.cancel"), close: true },
 );
 defineEmits<{ confirm: []; cancel: [] }>();
 </script>

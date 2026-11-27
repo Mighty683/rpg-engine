@@ -20,7 +20,7 @@ export function mutationLimiter(
     keyGenerator: (request) => accounts.get(request)!,
     standardHeaders: "draft-8",
     legacyHeaders: false,
-    message: { error: { code: "rate_limited", message: "Too many changes. Try again later." } },
+    message: { error: { code: "ERR86" } },
   });
   return async (request, response, next) => {
     if (["GET", "HEAD", "OPTIONS"].includes(request.method)) {

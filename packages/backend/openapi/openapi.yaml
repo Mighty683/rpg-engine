@@ -8,7 +8,9 @@ info:
     token after login, registration, or logout. Write requests must also satisfy the configured Origin policy.
     Responses include a server-generated X-Request-Id for diagnostics. Game, invitation, and class library mutations share
     a default limit of 60 requests per account per minute across sessions and games. Rejections return 429
-    with Retry-After. Database statement and lock deadlines return 503 with code database_busy.
+    with Retry-After. Each operation documents its local codes in x-error-codes. Shared middleware codes also apply;
+    local mappings take precedence. HTTP error responses contain no human-readable message. Validation fields
+    map field paths to codes. Database statement and lock deadlines return HTTP 503.
 servers:
   - { url: / }
 security:
@@ -32,6 +34,8 @@ paths:
       - $ref: "#/components/parameters/gameId"
     get:
       operationId: getGameAgentStatus
+      x-error-codes:
+        ERR01: not_found
       summary: Read Agent availability and a page of GM history
       parameters:
         - name: before
@@ -62,6 +66,15 @@ paths:
       - $ref: "#/components/parameters/gameId"
     post:
       operationId: sendGameAgentTurn
+      x-error-codes:
+        ERR01: agent_disabled
+        ERR02: agent_game_busy
+        ERR03: agent_context_changed
+        ERR04: agent_busy
+        ERR05: agent_failed
+        ERR06: agent_unavailable
+        ERR07: agent_timeout
+        ERR40: agent_message_length
       summary: Ask the Agent about the current game
       tags: [Agent]
       description: >-
@@ -101,14 +114,14 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409":
-          description: Another turn is active in this game (agent_game_busy), or visibility narrowed during the turn (agent_context_changed).
+          description: Another turn is active in this game (ERR02), or visibility narrowed during the turn (ERR03).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "422": { $ref: "#/components/responses/ValidationError" }
         "429":
-          description: Account rate limit or Agent concurrency limit. Code rate_limited or agent_busy.
+          description: Account rate limit or Agent concurrency limit. Code ERR86 or ERR04.
           headers:
             Retry-After:
               schema: { type: integer, minimum: 0 }
@@ -117,23 +130,25 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "500": { $ref: "#/components/responses/ServerError" }
         "502":
-          description: Invalid provider response or exhausted tool-call budget. Code agent_failed.
+          description: Invalid provider response or exhausted tool-call budget. Code ERR05.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
         "503":
-          description: Agent disabled, provider temporarily unavailable, or database busy. Code agent_disabled, agent_unavailable, or database_busy.
+          description: Agent disabled, provider temporarily unavailable, or database busy. Code ERR01, ERR06, or ERR88.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
         "504":
-          description: Turn deadline exceeded. Code agent_timeout.
+          description: Turn deadline exceeded. Code ERR07.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
   /api/library/class:
     get:
       operationId: listClassTemplates
+      x-error-codes:
+        ERR01: database_busy
       tags:
         - Class catalog
       summary: List class templates
@@ -160,11 +175,19 @@ paths:
           $ref: "#/components/responses/DatabaseUnavailable"
     post:
       operationId: createClassTemplate
+      x-error-codes:
+        ERR40: use_valid_text_without_null_characters
+        ERR41: enter_a_name
+        ERR42: use_distinct_skill_and_benefit_ids
+        ERR43: enter_a_description_for_each_text_benefit
+        ERR44: skill_rank_in_use
+        ERR45: skill_id_unavailable
+        ERR01: id_conflict
       tags:
         - Class catalog
       summary: Create a class template
       description: Create in the authenticated account’s private library. An identical create retry
-        returns 200. A reused ID with different intent returns 409 id_conflict.
+        returns 200. A reused ID with different intent returns 409 ERR01.
       security:
         - sessionCookie: []
           csrfToken: []
@@ -204,10 +227,18 @@ paths:
       - $ref: "#/components/parameters/templateId"
     patch:
       operationId: updateClassTemplate
+      x-error-codes:
+        ERR40: use_valid_text_without_null_characters
+        ERR41: enter_a_name
+        ERR42: use_distinct_skill_and_benefit_ids
+        ERR43: enter_a_description_for_each_text_benefit
+        ERR44: skill_rank_in_use
+        ERR45: skill_id_unavailable
+        ERR01: stale_revision
       tags:
         - Class catalog
       summary: Replace a template definition
-      description: Update only a template owned by the caller. Returns 409 stale_revision when the
+      description: Update only a template owned by the caller. Returns 409 ERR01 when the
         revision differs.
       security:
         - sessionCookie: []
@@ -246,6 +277,8 @@ paths:
       - $ref: "#/components/parameters/gameId"
     get:
       operationId: listGameClasses
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Class catalog
       summary: List game classes
@@ -276,6 +309,9 @@ paths:
           $ref: "#/components/responses/DatabaseUnavailable"
     post:
       operationId: copyClassToGame
+      x-error-codes:
+        ERR01: id_conflict
+        ERR02: stale_revision
       tags:
         - Class catalog
       summary: Copy a library template into a game
@@ -322,6 +358,15 @@ paths:
       - { $ref: "#/components/parameters/gameClassId" }
     patch:
       operationId: updateGameClass
+      x-error-codes:
+        ERR40: use_valid_text_without_null_characters
+        ERR41: enter_a_name
+        ERR42: use_distinct_skill_and_benefit_ids
+        ERR43: enter_a_description_for_each_text_benefit
+        ERR44: skill_rank_in_use
+        ERR45: skill_id_unavailable
+        ERR01: stale_revision
+        ERR02: skill_removal_confirmation_required
       tags: [Class catalog]
       summary: Replace a game class definition
       description:
@@ -348,6 +393,9 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     delete:
       operationId: deleteGameClass
+      x-error-codes:
+        ERR01: stale_revision
+        ERR02: class_in_use
       tags: [Class catalog]
       summary: Remove a game class
       description: GM only. A class with assigned levels cannot be removed.
@@ -375,6 +423,15 @@ paths:
       - $ref: "#/components/parameters/gameClassId"
     post:
       operationId: saveGameClassToLibrary
+      x-error-codes:
+        ERR40: use_valid_text_without_null_characters
+        ERR41: enter_a_name
+        ERR42: use_distinct_skill_and_benefit_ids
+        ERR43: enter_a_description_for_each_text_benefit
+        ERR44: skill_rank_in_use
+        ERR45: skill_id_unavailable
+        ERR01: stale_revision
+        ERR02: id_conflict
       tags:
         - Class catalog
       summary: Save a game class to the library
@@ -419,6 +476,8 @@ paths:
   /api/auth/csrf:
     get:
       operationId: issueCsrfToken
+      x-error-codes:
+        ERR01: unauthorized
       tags:
         - Authentication
       summary: Issue a CSRF token
@@ -447,6 +506,10 @@ paths:
   /api/auth/register:
     post:
       operationId: registerAccount
+      x-error-codes:
+        ERR01: username_taken
+        ERR40: username_format
+        ERR41: password_length
       tags:
         - Authentication
       summary: Register an account
@@ -483,6 +546,8 @@ paths:
   /api/auth/login:
     post:
       operationId: signIn
+      x-error-codes:
+        ERR01: invalid_credentials
       tags:
         - Authentication
       summary: Sign in
@@ -518,6 +583,8 @@ paths:
   /api/auth/me:
     get:
       operationId: getCurrentAccount
+      x-error-codes:
+        ERR01: unauthorized
       tags:
         - Authentication
       summary: Get the signed-in account
@@ -538,6 +605,8 @@ paths:
   /api/auth/logout:
     post:
       operationId: signOut
+      x-error-codes:
+        ERR01: unauthorized
       tags:
         - Authentication
       summary: Sign out
@@ -565,6 +634,8 @@ paths:
   /api/rpg-systems:
     get:
       operationId: listSystems
+      x-error-codes:
+        ERR01: database_busy
       tags:
         - Systems
       summary: List supported RPG systems
@@ -586,6 +657,8 @@ paths:
   /api/games:
     get:
       operationId: listGames
+      x-error-codes:
+        ERR01: database_busy
       tags:
         - Games
       summary: List accessible games
@@ -607,6 +680,11 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createGame
+      x-error-codes:
+        ERR01: validation
+        ERR40: name_required
+        ERR41: name_length
+        ERR42: system_required
       tags:
         - Games
       summary: Create a game
@@ -648,6 +726,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: getGame
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Games
       summary: Get a game
@@ -672,6 +752,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: listCharacters
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Characters
       summary: List character summaries
@@ -695,6 +777,9 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createCharacter
+      x-error-codes:
+        ERR01: id_conflict
+        ERR40: character_name_length
       tags:
         - Characters
       summary: Create a character
@@ -750,6 +835,8 @@ paths:
       - { $ref: "#/components/parameters/characterId" }
     get:
       operationId: getCharacter
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Characters
       summary: Get a character sheet
@@ -771,6 +858,29 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     patch:
       operationId: updateCharacter
+      x-error-codes:
+        ERR40: invalid_equipment
+        ERR41: invalid_weapon
+        ERR42: invalid_equipment_modifiers
+        ERR43: invalid_armor
+        ERR44: invalid_sheet
+        ERR45: enter_a_character_name
+        ERR46: invalid_theme
+        ERR47: level_must_be_between_5_and_50
+        ERR48: invalid_attribute_dice
+        ERR49: invalid_resources
+        ERR50: invalid_overrides
+        ERR51: at_least_one_change_is_required
+        ERR52: unknown_sheet_field
+        ERR53: choose_each_class_once
+        ERR54: choose_each_skill_once
+        ERR55: exp_saved_levels
+        ERR56: insufficient_exp
+        ERR57: exp_assigned_levels
+        ERR58: choose_classes_available_in_this_game
+        ERR59: choose_valid_skill_ranks_within_their_limits
+        ERR60: skill_ranks_cannot_exceed_their_class_level
+        ERR01: stale_revision
       tags:
         - Characters
       summary: Update a character sheet
@@ -811,6 +921,8 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     delete:
       operationId: deleteCharacter
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - Characters
       summary: Delete a character
@@ -840,6 +952,8 @@ paths:
       - { $ref: "#/components/parameters/characterId" }
     put:
       operationId: setGmCharacterActive
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - Characters
       summary: Set a GM character active
@@ -880,6 +994,8 @@ paths:
       - { $ref: "#/components/parameters/characterId" }
     patch:
       operationId: assignCharacter
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - Characters
       summary: Assign character control
@@ -922,6 +1038,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: listActiveParty
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Characters
       summary: List active party characters
@@ -948,6 +1066,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: listNpcs
+      x-error-codes:
+        ERR01: not_found
       tags:
         - NPCs
       summary: List visible NPCs
@@ -971,6 +1091,8 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createNpc
+      x-error-codes:
+        ERR01: id_conflict
       tags:
         - NPCs
       summary: Create an NPC
@@ -1027,6 +1149,8 @@ paths:
       - { $ref: "#/components/parameters/npcId" }
     get:
       operationId: getNpc
+      x-error-codes:
+        ERR01: not_found
       tags:
         - NPCs
       summary: Get an NPC
@@ -1048,6 +1172,8 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     put:
       operationId: replaceNpc
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - NPCs
       summary: Replace an NPC profile
@@ -1089,6 +1215,8 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     delete:
       operationId: deleteNpc
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - NPCs
       summary: Delete an NPC
@@ -1121,6 +1249,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: listGameNotes
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Notes
       summary: List a page of game notes
@@ -1158,6 +1288,17 @@ paths:
           $ref: "#/components/responses/DatabaseUnavailable"
     post:
       operationId: createGameNote
+      x-error-codes:
+        ERR40: inline_formatting_applies_to_text_headings_and_lists
+        ERR41: note_title_required
+        ERR42: note_title_length
+        ERR43: note_title_encoding
+        ERR44: the_body_contains_unsupported_characters
+        ERR45: unsupported_formatting
+        ERR46: the_document_must_end_with_a_newline
+        ERR47: note_body_length
+        ERR48: the_formatted_document_is_too_large
+        ERR01: id_conflict
       tags:
         - Notes
       summary: Create a note with a client-generated ID
@@ -1211,6 +1352,8 @@ paths:
       - { $ref: "#/components/parameters/entryId" }
     get:
       operationId: getGameNote
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Notes
       summary: Read a saved note by ID
@@ -1235,6 +1378,17 @@ paths:
           $ref: "#/components/responses/DatabaseUnavailable"
     patch:
       operationId: updateGameNote
+      x-error-codes:
+        ERR40: inline_formatting_applies_to_text_headings_and_lists
+        ERR41: note_title_required
+        ERR42: note_title_length
+        ERR43: note_title_encoding
+        ERR44: the_body_contains_unsupported_characters
+        ERR45: unsupported_formatting
+        ERR46: the_document_must_end_with_a_newline
+        ERR47: note_body_length
+        ERR48: the_formatted_document_is_too_large
+        ERR01: stale_revision
       tags:
         - Notes
       summary: Save note changes at the expected revision
@@ -1287,6 +1441,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: listThrows
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Throws
       summary: List recent throws
@@ -1319,6 +1475,35 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createThrow
+      x-error-codes:
+        ERR40: invalid_note
+        ERR41: note_must_be_500_characters_or_fewer
+        ERR42: modifier_must_be_a_32_bit_integer
+        ERR43: choose_one_or_two_attributes
+        ERR44: invalid_character
+        ERR45: invalid_expected_revision
+        ERR46: invalid_dice
+        ERR47: unknown_attribute_die
+        ERR48: attribute_dice_use_d6_d8_d10_or_d12
+        ERR49: invalid_character_or_weapon
+        ERR50: invalid_roll_attribution
+        ERR51: invalid_npc
+        ERR52: invalid_npc_or_attack
+        ERR53: invalid_privacy_setting
+        ERR54: invalid_source_throw
+        ERR55: invalid_agent_turn
+        ERR56: invalid_setup
+        ERR57: unknown_setup_type
+        ERR58: a_reroll_keeps_the_original_character
+        ERR59: a_reroll_keeps_the_original_character_and_weapon
+        ERR60: weapon_setup_incomplete
+        ERR61: weapon_dice_use_d6_d8_d10_or_d12
+        ERR62: reroll_setup_changed
+        ERR63: a_reroll_keeps_the_original_npc_and_roll
+        ERR64: a_reroll_keeps_the_original_attack
+        ERR01: stale_revision
+        ERR02: no_active_character
+        ERR03: inactive_character
       tags:
         - Throws
       summary: Resolve and record a throw
@@ -1356,6 +1541,8 @@ paths:
       - { $ref: "#/components/parameters/throwId" }
     delete:
       operationId: deleteThrow
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Throws
       summary: Delete a throw
@@ -1384,6 +1571,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: listMembers
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Memberships
       summary: List accessible memberships
@@ -1411,6 +1600,8 @@ paths:
       - { $ref: "#/components/parameters/membershipId" }
     put:
       operationId: setMemberActiveCharacter
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - Memberships
       summary: Select a player’s active character as GM
@@ -1446,6 +1637,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     put:
       operationId: setOwnActiveCharacter
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - Memberships
       summary: Select your active character as a player
@@ -1482,6 +1675,8 @@ paths:
       - { $ref: "#/components/parameters/membershipId" }
     post:
       operationId: removeMember
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - Memberships
       summary: Remove a membership
@@ -1511,6 +1706,8 @@ paths:
       - { $ref: "#/components/parameters/membershipId" }
     post:
       operationId: restoreMember
+      x-error-codes:
+        ERR01: stale_revision
       tags:
         - Memberships
       summary: Restore a membership
@@ -1539,6 +1736,8 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: listInvitations
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Invitations
       summary: List game invitations
@@ -1563,6 +1762,8 @@ paths:
         "500": { $ref: "#/components/responses/ServerError" }
     post:
       operationId: createInvitation
+      x-error-codes:
+        ERR01: conflict
       tags:
         - Invitations
       summary: Create an invitation
@@ -1599,6 +1800,8 @@ paths:
       - { $ref: "#/components/parameters/invitationId" }
     patch:
       operationId: setInvitationEnabled
+      x-error-codes:
+        ERR01: conflict
       tags:
         - Invitations
       summary: Change invitation availability
@@ -1639,6 +1842,8 @@ paths:
       - { $ref: "#/components/parameters/invitationId" }
     post:
       operationId: rotateInvitation
+      x-error-codes:
+        ERR01: conflict
       tags:
         - Invitations
       summary: Rotate an invitation token
@@ -1667,6 +1872,8 @@ paths:
       - { $ref: "#/components/parameters/token" }
     get:
       operationId: previewInvitation
+      x-error-codes:
+        ERR01: not_found
       tags:
         - Invitations
       summary: Preview an invitation
@@ -1694,6 +1901,8 @@ paths:
       - { $ref: "#/components/parameters/token" }
     post:
       operationId: acceptInvitation
+      x-error-codes:
+        ERR01: conflict
       tags:
         - Invitations
       summary: Accept an invitation
@@ -1726,6 +1935,9 @@ paths:
       - { $ref: "#/components/parameters/gameId" }
     get:
       operationId: subscribeToGameEvents
+      x-error-codes:
+        ERR01: stream_capacity
+        ERR02: server_stopping
       tags:
         - Events
       summary: Subscribe to game events
@@ -1786,7 +1998,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429":
-          description: Stream capacity reached; rejected before SSE headers with code stream_capacity.
+          description: Stream capacity reached; rejected before SSE headers with code ERR01.
           headers:
             Retry-After:
               description: Seconds before retrying; 15 by default.
@@ -1795,7 +2007,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
         "503":
-          description: The event service is shutting down or the database is busy; code server_stopping or database_busy.
+          description: The event service is shutting down or the database is busy; code ERR02 or ERR88.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -1873,15 +2085,13 @@ components:
               error:
                 oneOf:
                   - type: object
-                    required: [code, message]
+                    required: [code]
                     properties:
-                      code: { type: string, const: stale_revision }
-                      message: { type: string }
+                      code: { type: string, const: ERR01 }
                   - type: object
-                    required: [code, message, impact]
+                    required: [code, impact]
                     properties:
-                      code: { type: string, const: skill_removal_confirmation_required }
-                      message: { type: string }
+                      code: { type: string, const: ERR02 }
                       impact: { $ref: "#/components/schemas/SkillRemovalImpact" }
     GameClassDeleteConflict:
       description: Stale revision or class assigned to a character.
@@ -1893,12 +2103,11 @@ components:
             properties:
               error:
                 type: object
-                required: [code, message]
+                required: [code]
                 properties:
                   code:
                     type: string
-                    enum: [stale_revision, class_in_use]
-                  message: { type: string }
+                    enum: [ERR01, ERR02]
     Template:
       description: Saved library template.
       content:
@@ -1957,7 +2166,7 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/FieldError" }
     RateLimited:
-      description: Too many authentication requests or authenticated mutations; code rate_limited.
+      description: Too many authentication requests or authenticated mutations; code ERR86.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -1970,12 +2179,12 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
     DatabaseUnavailable:
-      description: A database statement or lock deadline was exceeded; code database_busy.
+      description: A database statement or lock deadline was exceeded.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
     AuthUnavailable:
-      description: The sign-in service or database is temporarily busy; code auth_busy or database_busy.
+      description: The sign-in service or database is temporarily busy; code ERR89 or ERR88.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -2386,10 +2595,8 @@ components:
           type: object
           required:
             - code
-            - message
           properties:
-            code: { type: string }
-            message: { type: string }
+            code: { type: string, pattern: "^ERR[0-9]{2}$" }
             fields:
               type: object
               additionalProperties: { type: string }
@@ -2402,11 +2609,9 @@ components:
           type: object
           required:
             - code
-            - message
             - fields
           properties:
-            code: { type: string, const: validation }
-            message: { type: string }
+            code: { type: string, enum: [ERR01, ERR84] }
             fields:
               type: object
               additionalProperties: { type: string }

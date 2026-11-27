@@ -14,7 +14,8 @@ for (const layer of ["base", "domain"]) {
       const imports = source.matchAll(/(?:from\s*|import\s*\()\s*["'](\.[^"']+)["']/g);
       for (const [, target] of imports) {
         expect(
-          resolve(directory, target).startsWith(`${allowed}/`),
+          resolve(directory, target) === resolve(root, "../i18n") ||
+            resolve(directory, target).startsWith(`${allowed}/`),
           `${layer}/${file}: ${target}`,
         ).toBe(true);
       }

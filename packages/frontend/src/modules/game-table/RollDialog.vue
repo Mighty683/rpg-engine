@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tr } from "../../shared/i18n";
 import FormActions from "../../shared/design-system/base/FormActions.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import type { RollDraft, Attribute, OpponentDraft } from "./types";
@@ -26,7 +27,7 @@ const attributes: readonly Attribute[] = ["DEX", "INS", "MIG", "WLP"];
 const dieSizes = [6, 8, 10, 12] as const;
 const title = computed(
   () =>
-    `${props.draft.character.name} · ${props.draft.mode === "attribute" ? "Attribute check" : props.draft.weaponName}`,
+    `${props.draft.character.name} · ${props.draft.mode === "attribute" ? tr("ui.attributeCheck") : props.draft.weaponName}`,
 );
 const usedAttributes = computed(() =>
   [props.draft.first, props.draft.second].filter((value): value is Attribute => value !== null),
@@ -52,9 +53,9 @@ function toggleSecond(attribute: Attribute) {
       }
     "
   >
-    <template #description
-      >Adjust dice for temporary effects. These choices only apply to this roll.</template
-    >
+    <template #description>{{
+      tr("ui.adjustDiceForTemporaryEffectsTheseChoicesOnlyApply")
+    }}</template>
     <template #body>
       <form class="space-y-medium" data-testid="roll-dialog" @submit.prevent="emit('submit')">
         <fieldset :disabled="pending" class="space-y-medium">
@@ -63,8 +64,9 @@ function toggleSecond(attribute: Attribute) {
               <div class="flex flex-wrap items-end gap-medium">
                 <fieldset>
                   <legend :class="index === 0 ? 'mb-small text-small font-medium' : 'sr-only'">
-                    {{ attribute }} die<span v-if="index === 1 && attribute === draft.first">
-                      (same size as first)</span
+                    {{ tr("ui.value1Die", { value1: attribute })
+                    }}<span v-if="index === 1 && attribute === draft.first">
+                      {{ tr("ui.sameSizeAsFirst") }}</span
                     >
                   </legend>
                   <div class="flex flex-wrap gap-small">
@@ -82,13 +84,15 @@ function toggleSecond(attribute: Attribute) {
                         "
                       />
                       <span class="die-tile"
-                        ><DieIcon :sides="size" /><span>d{{ size }}</span></span
+                        ><DieIcon :sides="size" /><span>{{
+                          tr("ui.dValue1", { value1: size })
+                        }}</span></span
                       >
                     </label>
                   </div>
                 </fieldset>
                 <label v-if="index === 0" class="modifier-card">
-                  <span>Check modifier</span>
+                  <span>{{ tr("ui.checkModifier") }}</span>
                   <input
                     v-model="draft.modifier"
                     type="number"
@@ -99,7 +103,8 @@ function toggleSecond(attribute: Attribute) {
               </div>
               <fieldset v-if="index === 0 && draft.mode === 'attribute'">
                 <legend class="mb-small text-small font-medium">
-                  Second attribute <span class="text-muted">(optional)</span>
+                  {{ tr("ui.secondAttribute") }}
+                  <span class="text-muted">{{ tr("ui.optional2") }}</span>
                 </legend>
                 <div class="flex flex-wrap gap-small">
                   <button
@@ -118,7 +123,7 @@ function toggleSecond(attribute: Attribute) {
             </template>
           </div>
           <p v-if="draft.mode === 'weapon'">
-            Weapon accuracy bonus:
+            {{ tr("ui.weaponAccuracyBonus") }}
             <strong data-testid="weapon-bonus"
               >{{ draft.weaponBonus >= 0 ? "+" : "" }}{{ draft.weaponBonus }}</strong
             >
@@ -129,18 +134,23 @@ function toggleSecond(attribute: Attribute) {
             :friendly-dice="usedAttributes.map((attribute) => draft.dice[attribute])"
             @update:model-value="emit('update:opponent', $event)"
           />
-          <LabeledInput label="Note" hint="Optional" v-model="draft.note" data-testid="roll-note" />
+          <LabeledInput
+            :label="tr('ui.note')"
+            :hint="tr('ui.optional')"
+            v-model="draft.note"
+            data-testid="roll-note"
+          />
           <UCheckbox
             :model-value="privateRoll"
-            label="Private roll"
-            description="Only you can see this roll, including the result and note."
+            :label="tr('ui.privateRoll')"
+            :description="tr('ui.onlyYouCanSeeThisRollIncludingTheResult')"
             :disabled="pending"
             data-testid="private-roll"
             @update:model-value="emit('update:privateRoll', $event === true)"
           />
           <p v-if="error" role="alert" class="text-error" data-testid="roll-error">{{ error }}</p>
           <FormActions
-            submit-label="Roll"
+            :submit-label="tr('ui.roll')"
             :pending="pending"
             submit-test-id="submit-roll"
             cancel-test-id="cancel-roll"

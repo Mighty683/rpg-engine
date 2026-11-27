@@ -1,3 +1,4 @@
+import { tr } from "../../shared/i18n";
 /** Catalog progression constraints and display projections for managed character progression. */
 import type { BenefitDraft, ClassDefinition } from "../class-management/types";
 import { isClassModifierStat, type ClassModifierStat } from "../../shared/fabula/classModifiers";
@@ -25,13 +26,13 @@ export function experienceError(
   levels: Record<string, number>,
 ): string | undefined {
   if (!Number.isInteger(experience.current) || !Number.isInteger(experience.total))
-    return "Enter whole numbers for current and total EXP.";
-  if (experience.current < 0 || experience.total < 0) return "EXP cannot be negative.";
+    return tr("ui.enterWholeNumbersForCurrentAndTotalExp");
+  if (experience.current < 0 || experience.total < 0) return tr("ui.expCannotBeNegative");
   if (Math.max(experience.current, experience.total) > 2147483647)
-    return "EXP must be at most 2147483647.";
-  if (experience.current > experience.total) return "Total EXP must cover current EXP.";
+    return tr("ui.expMustBeAtMost2147483647");
+  if (experience.current > experience.total) return tr("ui.totalExpMustCoverCurrentExp");
   if (experience.total - experience.current < totalRanks(levels) * CLASS_LEVEL_EXP_COST)
-    return "Total EXP must cover current EXP and the cost of assigned class levels.";
+    return tr("ui.totalExpMustCoverCurrentExpAndTheCost");
 }
 export function progressionError(
   catalog: ProgressionClass[],
@@ -47,7 +48,7 @@ export function progressionError(
         rank > (skills.find((skill) => skill.id === id)?.maxRank ?? -1),
     )
   )
-    return "Choose valid skill ranks within their limits.";
+    return tr("ui.chooseValidSkillRanksWithinTheirLimits");
   if (
     Object.entries(levels).some(
       ([id, level]) =>
@@ -57,12 +58,12 @@ export function progressionError(
         level > 10,
     )
   )
-    return "Choose valid class levels from 0 to 10.";
+    return tr("ui.chooseValidClassLevelsFrom0To10");
   if (Object.values(levels).filter((level) => level > 0).length > MAX_CHARACTER_CLASSES)
-    return `A character can have up to ${MAX_CHARACTER_CLASSES} classes.`;
-  if (totalRanks(levels) > 50) return "A character cannot exceed level 50.";
+    return tr("ui.aCharacterCanHaveUpToValue1Classes", { value1: MAX_CHARACTER_CLASSES });
+  if (totalRanks(levels) > 50) return tr("ui.aCharacterCannotExceedLevel50");
   if (catalog.some((entry) => assignedRanks(entry, ranks) > (levels[entry.id] ?? 0)))
-    return "Skill ranks cannot exceed their class level.";
+    return tr("ui.skillRanksCannotExceedTheirClassLevel");
 
   return undefined;
 }
@@ -75,7 +76,7 @@ export function sourcedBenefits(
     if (!(levels[entry.id] ?? 0)) return [];
     const free = entry.benefits.map((benefit) => ({
       ...benefit,
-      source: `${entry.name} · Free benefit`,
+      source: tr("ui.value1FreeBenefit", { value1: entry.name }),
       rank: 1,
       maxRank: 1,
       isFree: true,

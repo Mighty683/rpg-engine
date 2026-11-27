@@ -93,7 +93,7 @@ it("preserves composed routes and expected errors while forwarding unexpected fa
   });
   expect(response.status).toBe(500);
   expect(await response.json()).toEqual({
-    error: { code: "server_error", message: "Request failed." },
+    error: { code: "ERR99" },
   });
   const requestId = response.headers.get("x-request-id");
   expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
@@ -107,12 +107,12 @@ it("preserves composed routes and expected errors while forwarding unexpected fa
   expect(JSON.stringify(log.mock.calls)).not.toMatch(/secret|password|SQL|untrusted/);
   const conflict = await fetch(path, { method: "PUT" });
   expect(conflict.status).toBe(409);
-  expect(await conflict.json()).toEqual({ error: { code: "stale_revision" } });
+  expect(await conflict.json()).toEqual({ error: { code: "ERR99" } });
   expect(log).toHaveBeenCalledTimes(1);
   const timeout = await fetch(path, { method: "DELETE" });
   expect(timeout.status).toBe(503);
   expect(await timeout.json()).toEqual({
-    error: { code: "database_busy", message: "Database busy. Try again." },
+    error: { code: "ERR88" },
   });
   expect(log.mock.lastCall![0]).toMatchObject({ status: 503, databaseCode: "55P03" });
   const malformed = await fetch(path, {
@@ -121,7 +121,7 @@ it("preserves composed routes and expected errors while forwarding unexpected fa
     body: "{",
   });
   expect(malformed.status).toBe(400);
-  expect(await malformed.json()).toMatchObject({ error: { code: "bad_request" } });
+  expect(await malformed.json()).toMatchObject({ error: { code: "ERR80" } });
   expect((await fetch(`${origin}/api/guard`)).status).toBe(500);
   expect((await fetch(`${origin}/api/ended`)).status).toBe(204);
 });
