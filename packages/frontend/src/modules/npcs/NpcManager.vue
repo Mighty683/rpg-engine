@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import TableCardSkeleton from "../game-table/TableCardSkeleton.vue";
+import CharacterSheetSkeleton from "../characters/sheet/CharacterSheetSkeleton.vue";
 import { newUuid } from "../../shared/uuid";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
@@ -248,13 +252,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <li
-    v-if="loading && !records.length"
-    class="absolute right-0 top-0 rounded-panel bg-elevated px-small text-label text-muted"
-    role="status"
-    data-testid="npc-loading"
-  >
-    <ContentState kind="loading">Loading NPCs…</ContentState>
+  <li v-if="loading && !records.length" class="table-card" data-testid="npc-loading" role="status">
+    <span class="sr-only">Loading NPCs…</span>
+    <TableCardSkeleton />
   </li>
   <NpcCard
     v-for="record in records"
@@ -308,9 +308,19 @@ onUnmounted(() => {
         >
           Saving changes…
         </p>
-        <ContentState v-if="loading && !records.length" kind="loading">
-          Loading NPCs…
-        </ContentState>
+        <SkeletonRegion
+          v-if="loading && !records.length"
+          label="Loading NPCs…"
+          class="space-y-small"
+        >
+          <SkeletonBlock class="h-9 w-1/3" />
+          <CharacterSheetSkeleton v-if="role === 'GM'" />
+          <div v-else class="space-y-small rounded-panel border border-default p-medium">
+            <SkeletonBlock class="h-6 w-1/3" />
+            <SkeletonBlock class="w-1/4" />
+            <SkeletonBlock class="w-2/3" />
+          </div>
+        </SkeletonRegion>
         <ContentState v-else-if="!records.length" kind="empty">{{
           role === "GM"
             ? "No NPCs yet. Create an NPC to get started."

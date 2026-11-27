@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import EntryFieldsSkeleton from "./EntryFieldsSkeleton.vue";
+import NoteCardSkeleton from "./NoteCardSkeleton.vue";
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
@@ -20,7 +24,13 @@ const canUseNotes = computed(() => Boolean(account.value && gameRecord.value?.ro
 
 <template>
   <div class="mx-auto max-w-6xl space-y-section">
-    <ContentState v-if="game.isLoading.value" kind="loading">Loading game…</ContentState>
+    <SkeletonRegion v-if="game.isLoading.value" label="Loading game notes…" class="space-y-section">
+      <div class="flex justify-between">
+        <SkeletonBlock class="h-9 w-40" /><SkeletonBlock class="h-8 w-20" />
+      </div>
+      <EntryFieldsSkeleton v-if="$route.params.entryId || $route.name === 'note-new'" />
+      <template v-else><SkeletonBlock class="h-9" /><NoteCardSkeleton /></template>
+    </SkeletonRegion>
     <ContentState v-else-if="game.isError.value" kind="error" @retry="game.refetch" />
     <div v-else-if="!canUseNotes" class="space-y-medium" data-testid="notes-unavailable">
       <h1 class="text-heading font-semibold">Game notes</h1>

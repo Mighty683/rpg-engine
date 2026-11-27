@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import FormActions from "../../shared/design-system/base/FormActions.vue";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
@@ -202,9 +204,18 @@ function checkGames() {
       </p>
       <p class="text-small text-muted">{{ t("games.joinHint") }}</p>
       <div aria-live="polite">
-        <ContentState v-if="listState === 'loading'" kind="loading">{{
-          t("games.loading")
-        }}</ContentState>
+        <SkeletonRegion
+          v-if="listState === 'loading' && !games.length"
+          :label="t('games.loading')"
+          class="divide-y divide-default rounded-panel border border-default"
+        >
+          <div v-for="row in 2" :key="row" class="flex items-center justify-between p-large">
+            <div class="space-y-tight">
+              <SkeletonBlock class="h-5 w-36" /><SkeletonBlock class="h-4 w-48" />
+            </div>
+            <SkeletonBlock class="h-4 w-4" />
+          </div>
+        </SkeletonRegion>
         <ContentState
           v-else-if="listState === 'error'"
           kind="error"
@@ -255,6 +266,9 @@ function checkGames() {
             v-model="systemId"
             :items="systems.map((system) => ({ label: system.name, value: system.id }))"
             :placeholder="t('games.systemPlaceholder')"
+            :loading-label="
+              systemState === 'loading' && !systems.length ? t('games.systemsLoading') : undefined
+            "
             :disabled="saving || systemState !== 'ready' || !systems.length"
             @update:model-value="setErrors({ systemId: undefined })"
           >
@@ -262,13 +276,14 @@ function checkGames() {
               <span :data-testid="`game-system-option-${item.value}`">{{ item.label }}</span>
             </template>
             <div aria-live="polite" class="mt-small">
-              <p v-if="systemState === 'loading'">{{ t("games.systemsLoading") }}</p>
-              <div v-else-if="systemState === 'error'" class="space-y-small">
+              <div v-if="systemState === 'error'" class="space-y-small">
                 <UButton type="button" color="neutral" variant="outline" @click="loadSystems">{{
                   t("games.retry")
                 }}</UButton>
               </div>
-              <p v-else-if="!systems.length">{{ t("games.systemsEmpty") }}</p>
+              <p v-else-if="systemState === 'ready' && !systems.length">
+                {{ t("games.systemsEmpty") }}
+              </p>
             </div>
           </LabeledSelect>
           <div role="status" aria-live="polite">

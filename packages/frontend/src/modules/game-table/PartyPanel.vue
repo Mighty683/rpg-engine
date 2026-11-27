@@ -2,6 +2,8 @@
 import { computed, useId } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
+import TableCardSkeleton from "./TableCardSkeleton.vue";
 import type { Attribute, PartyCharacter } from "./types";
 import PartyClassSummary from "../class-progression/PartyClassSummary.vue";
 import PlayerEquipment from "./PlayerEquipment.vue";
@@ -54,7 +56,13 @@ const emit = defineEmits<{
       >
         {{ section.title }}
       </h2>
-      <ContentState v-if="isLoading" kind="loading">Loading party…</ContentState>
+      <SkeletonRegion
+        v-if="isLoading"
+        label="Loading party…"
+        class="party-grid table-cards-compact grid grid-cols-2 pt-small md:grid-cols-3 lg:grid-cols-4"
+      >
+        <TableCardSkeleton v-for="card in 2" :key="card" />
+      </SkeletonRegion>
       <ContentState
         v-else-if="isError"
         kind="error"

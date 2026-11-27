@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import NoteCardSkeleton from "./NoteCardSkeleton.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, onMounted, onUnmounted } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
@@ -43,9 +45,14 @@ onUnmounted(() => window.removeEventListener("scroll", onWindowScroll));
       @update:model-value="notebook.setTerm(String($event))"
     />
     <div aria-live="polite" class="space-y-small">
-      <ContentState v-if="browse.loading" kind="loading" data-testid="notes-loading"
-        >Loading entries…</ContentState
+      <SkeletonRegion
+        v-if="browse.loading"
+        label="Loading entries…"
+        data-testid="notes-loading"
+        class="space-y-small"
       >
+        <NoteCardSkeleton v-for="row in 2" :key="row" />
+      </SkeletonRegion>
       <ContentState
         v-else-if="browse.failed"
         kind="error"
@@ -61,7 +68,9 @@ onUnmounted(() => window.removeEventListener("scroll", onWindowScroll));
             <NoteCard :entry="entry" clickable @open="emit('open', entry.id)" />
           </li>
         </ul>
-        <ContentState v-if="browse.loadingMore" kind="loading">Loading entries…</ContentState>
+        <SkeletonRegion v-if="browse.loadingMore" label="Loading entries…"
+          ><NoteCardSkeleton
+        /></SkeletonRegion>
         <ContentState
           v-else-if="browse.moreFailed"
           kind="error"

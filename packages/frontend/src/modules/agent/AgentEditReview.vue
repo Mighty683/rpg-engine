@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import type { EditDifference } from "./types";
 defineProps<{
   profile?: string;
@@ -24,7 +26,9 @@ defineProps<{
         {{ row.newValue ?? "None" }}
       </li>
     </ul>
-    <p v-else-if="busy && !profile" role="status">Loading changes…</p>
+    <SkeletonRegion v-else-if="busy && !profile" label="Loading changes…" class="space-y-tight"
+      ><SkeletonBlock class="h-4 w-4/5" /><SkeletonBlock class="h-4 w-2/3"
+    /></SkeletonRegion>
     <p v-else-if="!busy && profile">The saved values already match this proposal.</p>
     <div class="flex justify-end gap-small">
       <UButton

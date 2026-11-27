@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SkeletonBlock from "./shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "./shared/design-system/base/SkeletonRegion.vue";
 import type { DropdownMenuItem } from "@nuxt/ui";
 import type { Account } from "./modules/auth/types";
 
@@ -70,7 +72,24 @@ onUnmounted(() => window.removeEventListener("session-expired", sessionExpired))
 
 <template>
   <UApp>
-    <div v-if="loading" class="p-large" role="status">Loading account…</div>
+    <SkeletonRegion v-if="loading" label="Loading account…">
+      <div
+        class="grid grid-cols-[1fr_auto] items-center gap-x-small border-b border-default px-large sm:grid-cols-[auto_1fr_auto] sm:gap-x-section"
+      >
+        <SkeletonBlock class="h-5 w-24" />
+        <div
+          class="col-span-2 row-start-2 flex min-h-page items-center sm:col-span-1 sm:col-start-2 sm:row-start-1"
+        >
+          <SkeletonBlock class="h-5 w-32" />
+        </div>
+        <div class="col-start-2 row-start-1 flex min-h-page items-center sm:col-start-3">
+          <SkeletonBlock class="h-6 w-20" />
+        </div>
+      </div>
+      <UContainer class="space-y-section pt-section"
+        ><SkeletonBlock class="h-8 w-40" /><SkeletonBlock class="h-16 max-w-2xl"
+      /></UContainer>
+    </SkeletonRegion>
     <div v-else-if="sessionError && !account" class="p-large" role="alert">
       <UButton @click="loadSession">Try again</UButton>
     </div>

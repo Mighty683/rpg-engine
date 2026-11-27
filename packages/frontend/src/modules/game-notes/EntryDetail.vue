@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import EntryFieldsSkeleton from "./EntryFieldsSkeleton.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
@@ -54,7 +56,9 @@ onUnmounted(() => flush());
   <ScreenSection>
     <div class="space-y-medium">
       <ContentState v-if="failed" kind="error" @retry="load" />
-      <ContentState v-else-if="!editor" kind="loading">Loading entry…</ContentState>
+      <SkeletonRegion v-else-if="!editor" label="Loading entry…"
+        ><EntryFieldsSkeleton
+      /></SkeletonRegion>
       <NoteEntryFields
         v-if="editor"
         :title="editor.fields.title"

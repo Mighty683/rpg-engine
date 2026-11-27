@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import NoteCardSkeleton from "../../src/modules/game-notes/NoteCardSkeleton.vue";
+import SkeletonRegion from "../../src/shared/design-system/base/SkeletonRegion.vue";
 import { newUuid } from "../../src/shared/uuid";
 import { computed, reactive, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
@@ -212,7 +214,9 @@ async function create() {
             class="notes-link text-primary underline"
             >Search all entries</ULink
           >
-          <ContentState v-if="loading" kind="loading">Loading entries…</ContentState>
+          <SkeletonRegion v-if="loading && !entries.length" label="Loading entries…"
+            ><NoteCardSkeleton
+          /></SkeletonRegion>
           <ContentState v-else-if="failed" kind="error" @retry="loadEntries" />
           <ContentState v-else-if="!entries.length" kind="empty">No entries yet.</ContentState>
           <NoteCard
@@ -234,7 +238,9 @@ async function create() {
         data-testid="notes-search"
         @update:model-value="selected = ''"
       />
-      <ContentState v-if="loading" kind="loading">Loading entries…</ContentState>
+      <SkeletonRegion v-if="loading && !entries.length" label="Loading entries…"
+        ><NoteCardSkeleton
+      /></SkeletonRegion>
       <ContentState v-else-if="failed" kind="error" @retry="loadEntries" />
       <ScreenSection v-else-if="editor && editor.entry">
         <div class="space-y-medium">

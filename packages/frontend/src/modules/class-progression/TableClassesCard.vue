@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import AbilitiesSkeleton from "./AbilitiesSkeleton.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import { computed, ref } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import ClassLevelBars from "./ClassLevelBars.vue";
@@ -70,7 +73,9 @@ function open() {
     <template #content>
       <div class="space-y-small" :data-testid="`class-preview-${id}`">
         <p class="font-semibold">{{ name }} · Skills</p>
-        <p v-if="loading" class="text-small">Loading skills…</p>
+        <SkeletonRegion v-if="loading" label="Loading skills…" class="space-y-small"
+          ><SkeletonBlock class="h-4 w-32" /><SkeletonBlock class="h-4 w-24"
+        /></SkeletonRegion>
         <p v-else-if="failed" class="text-small">Skills could not be loaded.</p>
         <p v-else-if="!skills.length" class="text-small text-muted">No acquired skills.</p>
         <p v-for="skill in skills.slice(0, 4)" :key="skill.id" class="text-small">
@@ -91,7 +96,7 @@ function open() {
     description="Acquired classes, skill ranks and their benefits."
   >
     <template #body>
-      <ContentState v-if="loading" kind="loading">Loading classes…</ContentState>
+      <AbilitiesSkeleton v-if="loading" expanded />
       <ContentState v-else-if="failed" kind="error" @retry="emit('retry')" />
       <CharacterAbilities
         v-else-if="detailsOpen && character"

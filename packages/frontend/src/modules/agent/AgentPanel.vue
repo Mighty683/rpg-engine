@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import type { ChatMessage } from "./types";
 
@@ -58,7 +60,14 @@ function onScroll() {
       aria-label="Conversation with Agent"
       data-testid="agent-result"
     >
-      <p v-if="!messages.length" class="text-muted">What would you like to do at the table?</p>
+      <SkeletonRegion
+        v-if="checking && !messages.length"
+        label="Connecting to Agent…"
+        class="space-y-small"
+      >
+        <SkeletonBlock class="ml-auto h-7 w-2/5" /><SkeletonBlock class="h-10 w-3/4" />
+      </SkeletonRegion>
+      <p v-else-if="!messages.length" class="text-muted">What would you like to do at the table?</p>
       <div
         v-for="message in messages"
         :data-message-id="message.id"
@@ -84,19 +93,23 @@ function onScroll() {
         <slot name="after-message" :message="message" />
       </div>
     </div>
-    <p v-if="checking || busy" class="px-small pb-tight text-small text-muted" role="status">
-      {{ checking ? "Connecting to Agent…" : "Agent is working…" }}
+    <p v-if="busy" class="px-small pb-tight text-small text-muted" role="status">
+      Agent is working…
     </p>
     <p
-      v-else-if="!available"
+      v-else-if="!checking && !available"
       class="px-small pb-tight text-small text-muted"
       role="status"
       data-testid="agent-offline"
     >
       Agent unavailable. Your message is kept here.
     </p>
-    <p v-else-if="!partyReady" class="px-small pb-tight text-small text-muted" role="status">
-      {{ partyLoading ? "Connecting to the table…" : "Table data is unavailable." }}
+    <p
+      v-else-if="!checking && !partyReady && !partyLoading"
+      class="px-small pb-tight text-small text-muted"
+      role="status"
+    >
+      Table data is unavailable.
     </p>
     <form
       class="flex items-center gap-small border-t border-default p-medium"
@@ -109,7 +122,10 @@ function onScroll() {
         placeholder="Message Agent…"
         data-testid="agent-command"
       />
-      <UButton type="submit" :disabled="!canSend" data-testid="agent-submit">Send</UButton>
+      <SkeletonRegion v-if="!checking && available && partyLoading" label="Connecting to the table…"
+        ><SkeletonBlock class="h-8 w-14"
+      /></SkeletonRegion>
+      <UButton v-else type="submit" :disabled="!canSend" data-testid="agent-submit">Send</UButton>
     </form>
   </div>
 </template>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import CatalogSkeleton from "./CatalogSkeleton.vue";
+import AbilitiesSkeleton from "../class-progression/AbilitiesSkeleton.vue";
 import { useGameEvents } from "../games/useGameEvents";
 import { computed, onMounted, ref, watch } from "vue";
 import { useToast } from "@nuxt/ui/composables";
@@ -362,9 +364,12 @@ watch(
 </script>
 
 <template>
-  <ContentState v-if="loading" kind="loading" data-testid="loading-classes"
-    >Loading classes…</ContentState
-  >
+  <CatalogSkeleton
+    v-if="loading"
+    :screen="screen"
+    :use-breadcrumbs="useBreadcrumbs"
+    data-testid="loading-classes"
+  />
   <ContentState
     v-else-if="loadFailed"
     kind="error"
@@ -443,7 +448,7 @@ watch(
       </fieldset>
     </template>
     <template #characters>
-      <p v-if="optimistic.saving.value" role="status">Loading character classes…</p>
+      <AbilitiesSkeleton v-if="optimistic.saving.value" />
       <slot v-else name="characters" />
     </template>
   </ClassManagementPreview>

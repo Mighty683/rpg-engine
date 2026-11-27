@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import LabeledSelect from "../../shared/design-system/base/LabeledSelect.vue";
 import type { GameCharacterSummary } from "../characters/types";
 import type { GameInvitation } from "../invitations/types";
@@ -136,9 +138,19 @@ function characterName(id: string | null) {
     </ScreenSection>
     <ScreenSection class="space-y-medium p-large">
       <h2 class="text-section font-semibold">Invitations</h2>
-      <ContentState v-if="invitations.isLoading.value" kind="loading"
-        >Loading invitations…</ContentState
+      <SkeletonRegion
+        v-if="invitations.isLoading.value"
+        label="Loading invitations…"
+        class="space-y-medium"
       >
+        <SkeletonBlock class="h-8 w-32" />
+        <div class="space-y-small">
+          <SkeletonBlock class="w-32" />
+          <div class="flex gap-small">
+            <SkeletonBlock class="h-8 w-44" /><SkeletonBlock class="h-8 w-20" />
+          </div>
+        </div>
+      </SkeletonRegion>
       <ContentState
         v-else-if="invitations.isError.value"
         kind="error"

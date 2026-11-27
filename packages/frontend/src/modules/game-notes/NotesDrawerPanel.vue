@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import NoteCardSkeleton from "./NoteCardSkeleton.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
@@ -39,9 +41,14 @@ function openEntry(id: string) {
     <ULink :to="notesPath" data-testid="notes-open-search" class="notes-link text-primary underline"
       >Search all entries</ULink
     >
-    <ContentState v-if="notebook.recent.loading" kind="loading" data-testid="notes-loading"
-      >Loading entries…</ContentState
+    <SkeletonRegion
+      v-if="notebook.recent.loading"
+      label="Loading entries…"
+      data-testid="notes-loading"
+      class="space-y-small"
     >
+      <NoteCardSkeleton v-for="row in 2" :key="row" />
+    </SkeletonRegion>
     <ContentState
       v-else-if="notebook.recent.failed"
       kind="error"
@@ -66,9 +73,9 @@ function openEntry(id: string) {
         :test-id="'recent-note-' + entry.id"
         @open="openEntry(entry.id)"
       />
-      <ContentState v-if="notebook.recent.loadingMore" kind="loading"
-        >Loading entries…</ContentState
-      >
+      <SkeletonRegion v-if="notebook.recent.loadingMore" label="Loading entries…"
+        ><NoteCardSkeleton
+      /></SkeletonRegion>
       <ContentState
         v-else-if="notebook.recent.moreFailed"
         kind="error"

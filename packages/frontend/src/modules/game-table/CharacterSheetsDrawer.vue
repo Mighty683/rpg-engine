@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import CharacterSheetSkeleton from "../characters/sheet/CharacterSheetSkeleton.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import CharacterSheetTabs from "./CharacterSheetTabs.vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 
@@ -45,7 +48,14 @@ const selectedId = defineModel<string>("selectedId", { required: true });
         @click="open = false"
         >Character sheets</UButton
       >
-      <ContentState v-if="loading && !tabs.length" kind="loading">Loading characters…</ContentState>
+      <SkeletonRegion
+        v-if="loading && !tabs.length"
+        label="Loading characters…"
+        class="space-y-small"
+      >
+        <SkeletonBlock class="h-9 w-1/3" />
+        <CharacterSheetSkeleton />
+      </SkeletonRegion>
       <ContentState v-else-if="failed && !tabs.length" kind="error" @retry="$emit('retry')">
         Could not load characters.
       </ContentState>

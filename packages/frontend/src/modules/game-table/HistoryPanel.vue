@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import type { ThrowRecord } from "./types";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import ScreenSection from "../../shared/design-system/base/ScreenSection.vue";
@@ -83,7 +85,22 @@ function loadOlder() {
       <UButton variant="link" data-testid="retry-history" @click="emit('retry')">Retry</UButton>
     </p>
     <template v-else>
-      <ContentState v-if="isLoading && !throws.length" kind="loading">Loading throws…</ContentState>
+      <SkeletonRegion
+        v-if="isLoading && !throws.length"
+        label="Loading throws…"
+        class="throw-history space-y-small"
+      >
+        <div
+          v-for="row in 2"
+          :key="row"
+          class="space-y-small rounded-panel border border-default p-small"
+        >
+          <div class="flex items-center justify-between">
+            <SkeletonBlock class="h-5 w-1/3" /><SkeletonBlock class="h-6 w-12" />
+          </div>
+          <SkeletonBlock class="w-2/3" />
+        </div>
+      </SkeletonRegion>
       <ContentState v-else-if="!throws.length" kind="empty" data-testid="history-empty"
         >No throws yet.</ContentState
       >

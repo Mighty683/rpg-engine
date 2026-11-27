@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import CharacterSheetSkeleton from "./sheet/CharacterSheetSkeleton.vue";
+import AbilitiesSkeleton from "../class-progression/AbilitiesSkeleton.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import type { CharacterEdit, Snapshot } from "./types";
 import type { Sheet } from "./sheet/types";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
@@ -358,9 +361,9 @@ function changeSkill(id: string, delta: number) {
       <span v-if="effectiveReadOnly">You can view this sheet but cannot edit it.</span>
     </p>
     <UButton v-if="readAccessLost" to="/" color="neutral" variant="outline">My games</UButton>
-    <ContentState v-else-if="query.isPending.value && !draft" kind="loading"
-      >Loading character…</ContentState
-    >
+    <SkeletonRegion v-else-if="query.isPending.value && !draft" label="Loading character…"
+      ><CharacterSheetSkeleton
+    /></SkeletonRegion>
     <ContentState v-else-if="query.isError.value && !draft" kind="error" @retry="query.refetch" />
     <CharacterSheet
       v-else-if="draft"
@@ -382,9 +385,7 @@ function changeSkill(id: string, delta: number) {
         />
       </template>
       <template v-if="abilities" #class-progression>
-        <ContentState v-if="catalogQuery.isLoading.value" kind="loading"
-          >Loading classes…</ContentState
-        >
+        <AbilitiesSkeleton v-if="catalogQuery.isLoading.value" />
         <ContentState
           v-else-if="catalogQuery.isError.value"
           kind="error"

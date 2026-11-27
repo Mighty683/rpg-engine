@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CatalogSkeleton from "./CatalogSkeleton.vue";
 import { computed } from "vue";
 import { useQueryErrorToast } from "../../shared/useQueryErrorToast";
 import { useRoute, useRouter } from "vue-router";
@@ -45,7 +46,7 @@ function navigate(screen: string, id?: string) {
 </script>
 
 <template>
-  <ContentState v-if="gameId && game.isLoading.value" kind="loading">Loading game…</ContentState>
+  <CatalogSkeleton v-if="gameId && game.isLoading.value" :screen="screen" use-breadcrumbs />
   <ContentState v-else-if="gameId && !gameRecord" kind="error" @retry="game.refetch" />
   <ClassCatalogController
     v-else

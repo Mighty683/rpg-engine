@@ -59,6 +59,7 @@ test("a GM can retry a failed game list without a backend", async () => {
 });
 
 test("game creation validates the name and submits trimmed values", async () => {
+  const systemsRequest = Promise.withResolvers<void>();
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     if (requestUrl(input).endsWith("/auth/me"))
       return json({ account: { id: "a1", username: "gm" } });
@@ -67,6 +68,7 @@ test("game creation validates the name and submits trimmed values", async () => 
       return json({ game: { id: "g1", name: "My game" } }, 201);
     }
     if (typeof input === "string" && input.includes("rpg-systems")) {
+      await systemsRequest.promise;
       return new Response(
         JSON.stringify({ systems: [{ id: "fabula-ultima", name: "Fabula Ultima" }] }),
       );
@@ -96,6 +98,14 @@ test("game creation validates the name and submits trimmed values", async () => 
   app.mount(root);
   try {
     await page.getByTestId("open-game-creation").click();
+    const placeholder = page.getByTestId("select-loading");
+    await expect.element(placeholder).toBeVisible();
+    const { y, height } = placeholder.element().getBoundingClientRect();
+    systemsRequest.resolve();
+    await expect.element(page.getByTestId("game-system")).toBeVisible();
+    const trigger = page.getByTestId("game-system").element().getBoundingClientRect();
+    expect(trigger.y).toBe(y);
+    expect(trigger.height).toBe(height);
     await page.getByTestId("game-system").click();
     await page.getByTestId("game-system-option-fabula-ultima").click();
     await page.getByTestId("game-name").fill("   ");

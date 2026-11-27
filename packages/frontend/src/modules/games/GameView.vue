@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import GameBodySkeleton from "./GameBodySkeleton.vue";
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import CreateFormDialog from "../../shared/design-system/base/CreateFormDialog.vue";
 import LabeledInput from "../../shared/design-system/base/LabeledInput.vue";
 import { useApiServices } from "../../shared/api-services";
@@ -236,7 +239,21 @@ async function removeCharacter() {
 
 <template>
   <div data-testid="game-view" class="mx-auto max-w-6xl space-y-section">
-    <ContentState v-if="game.isLoading.value" kind="loading">Loading game…</ContentState>
+    <SkeletonRegion v-if="game.isLoading.value" label="Loading game…" class="space-y-section">
+      <div class="flex flex-wrap items-start justify-between gap-medium">
+        <div class="space-y-tight">
+          <SkeletonBlock class="h-9 w-44" /><SkeletonBlock class="h-5 w-32" />
+        </div>
+        <div v-if="!settings && !management" class="flex gap-small">
+          <SkeletonBlock class="h-8 w-28" /><SkeletonBlock class="h-8 w-36" />
+        </div>
+      </div>
+      <GameBodySkeleton
+        :settings="settings"
+        :management="management"
+        :character-id="managedCharacterId"
+      />
+    </SkeletonRegion>
     <ContentState v-else-if="game.isError.value" kind="error" @retry="game.refetch" />
     <template v-else-if="gameRecord">
       <header class="flex flex-wrap items-start justify-between gap-medium">
@@ -286,9 +303,16 @@ async function removeCharacter() {
           >
         </div>
       </header>
-      <ContentState v-if="(settings || management) && roster.isLoading.value" kind="loading">
-        Loading characters…
-      </ContentState>
+      <SkeletonRegion
+        v-if="(settings || management) && (roster.isLoading.value || membersQuery.isLoading.value)"
+        label="Loading characters…"
+      >
+        <GameBodySkeleton
+          :settings="settings"
+          :management="management"
+          :character-id="managedCharacterId"
+        />
+      </SkeletonRegion>
       <ContentState
         v-else-if="(settings || management) && roster.isError.value"
         kind="error"

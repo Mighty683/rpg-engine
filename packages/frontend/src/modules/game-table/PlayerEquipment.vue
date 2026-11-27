@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
 import { computed } from "vue";
 import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useGameCharacterQuery } from "../characters/hooks";
@@ -17,7 +19,9 @@ const items = computed(
 <template>
   <section aria-label="Equipment" class="space-y-small text-label" data-testid="player-equipment">
     <h3 class="font-semibold text-muted">Equipment</h3>
-    <ContentState v-if="sheet.isPending.value" kind="loading">Loading equipment…</ContentState>
+    <SkeletonRegion v-if="sheet.isPending.value" label="Loading equipment…" class="grid gap-tight">
+      <SkeletonBlock v-for="row in 2" :key="row" class="h-5" />
+    </SkeletonRegion>
     <ContentState v-else-if="sheet.isError.value" kind="error" @retry="sheet.refetch()"
       >Could not load equipment.</ContentState
     >

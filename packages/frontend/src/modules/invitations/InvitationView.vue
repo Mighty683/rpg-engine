@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import SkeletonBlock from "../../shared/design-system/base/SkeletonBlock.vue";
+import SkeletonRegion from "../../shared/design-system/base/SkeletonRegion.vue";
 import type { InvitationPreview } from "./types";
-import ContentState from "../../shared/design-system/base/ContentState.vue";
 import { useToast } from "@nuxt/ui/composables";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -60,7 +61,12 @@ async function accept() {
 <template>
   <div class="mx-auto max-w-xl space-y-section">
     <h1 class="text-heading font-semibold">Game invitation</h1>
-    <ContentState v-if="loading" kind="loading">Loading invitation…</ContentState>
+    <SkeletonRegion v-if="loading" label="Loading invitation…" class="space-y-section">
+      <SkeletonBlock class="h-6 w-4/5" />
+      <div class="flex gap-small">
+        <SkeletonBlock class="h-8 w-24" /><SkeletonBlock class="h-8 w-20" />
+      </div>
+    </SkeletonRegion>
     <template v-else-if="unavailable">
       <UButton to="/" color="neutral" variant="outline">My games</UButton>
     </template>
