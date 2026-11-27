@@ -118,7 +118,7 @@ podman run -d --name rpg-engine-postgres \
 ```
 
 - URL: `postgresql://rpg_engine:local_dev_password@localhost:5432/rpg_engine` — local password only; init vars apply to an empty volume; data survives recreation
-- pgvector once per database, privileged role, before the passage migration:
+- The image enables pgvector automatically on a fresh volume. For an existing volume where pgvector is not yet enabled, run this once before migrating:
 
   ```sh
   podman exec rpg-engine-postgres psql -U rpg_engine -d rpg_engine -c 'CREATE EXTENSION IF NOT EXISTS vector;'
