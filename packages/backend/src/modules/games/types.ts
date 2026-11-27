@@ -1,16 +1,11 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { Database, DatabaseTransaction } from "../../database/types.ts";
 import type { ValidationFields } from "../../shared/validation/types.ts";
 
 export type CreateGameInput = { name: string; systemId: string };
 export type GameValidation = CreateGameInput & { fields: ValidationFields };
 
-type GameRecord = {
-  id: string;
-  name: string;
-  system: { id: string; name: string };
-  createdAt: string;
-  role: "GM" | "Player";
-};
+type GameRecord = ApiSchema["Game"];
 export interface GamesService {
   gameAccess(actor: GameActor, gameId: string): Promise<GameAccess | null>;
   createActorGame(actor: GameActor, name: string, systemId: string): Promise<GameRecord>;

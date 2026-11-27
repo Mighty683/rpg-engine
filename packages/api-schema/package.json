@@ -1,0 +1,21 @@
+{
+  "name": "@rpg-engine/api-schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts"
+    },
+    "./http-errors": "./http-errors.ts",
+    "./openapi.yaml": "./openapi.yaml"
+  },
+  "scripts": {
+    "generate": "openapi-typescript openapi.yaml --default-non-nullable false -o schema.d.ts",
+    "check:generated": "pnpm run generate --check"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "^5.9.3"
+  }
+}

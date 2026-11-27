@@ -11,11 +11,12 @@
     "migrate": "node --env-file-if-exists=.env src/migrate.ts",
     "seed:demo": "node --env-file-if-exists=.env src/seed-demo.ts",
     "build": "tsc --noEmit",
-    "openapi:lint": "redocly lint --extends=minimal openapi/openapi.yaml",
-    "openapi:bundle": "redocly bundle openapi/openapi.yaml --output dist/openapi.json",
+    "openapi:lint": "redocly lint --extends=minimal ../api-schema/openapi.yaml",
+    "openapi:bundle": "redocly bundle ../api-schema/openapi.yaml --output dist/openapi.json",
     "test:mutation": "stryker run"
   },
   "dependencies": {
+    "@rpg-engine/api-schema": "workspace:*",
     "ajv": "8.20.0",
     "argon2": "0.44.0",
     "arrow-express": "4.0.0",

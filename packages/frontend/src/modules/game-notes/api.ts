@@ -1,6 +1,7 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 /** Production HTTP adapter for the game-scoped notes API, over the shared secure request path. */
 import { request } from "../../shared/api";
-import type { GameNotesClient, NoteEntry, NotePage } from "./types";
+import type { GameNotesClient, NotePage } from "./types";
 
 function listQuery(query: { q?: string; cursor?: string }) {
   const params = new URLSearchParams();
@@ -17,17 +18,17 @@ export const gameNotesApi: GameNotesClient = {
       cache: "no-store",
     }),
   read: (gameId, entryId, signal) =>
-    request<{ entry: NoteEntry }>(`/api/games/${gameId}/notes/${entryId}`, {
+    request<ApiSchema["NoteResult"]>(`/api/games/${gameId}/notes/${entryId}`, {
       signal,
       cache: "no-store",
     }).then((result) => result.entry),
   create: (gameId, entry) =>
-    request<{ entry: NoteEntry }>(`/api/games/${gameId}/notes`, {
+    request<ApiSchema["NoteResult"]>(`/api/games/${gameId}/notes`, {
       method: "POST",
       body: JSON.stringify(entry),
     }).then((result) => result.entry),
   update: (gameId, entryId, input) =>
-    request<{ entry: NoteEntry }>(`/api/games/${gameId}/notes/${entryId}`, {
+    request<ApiSchema["NoteResult"]>(`/api/games/${gameId}/notes/${entryId}`, {
       method: "PATCH",
       body: JSON.stringify(input),
     }).then((result) => result.entry),

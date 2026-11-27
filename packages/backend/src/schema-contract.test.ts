@@ -1,5 +1,5 @@
 import { agentTurnInputSchema } from "./modules/agent/schema.ts";
-import { operationErrors } from "../../contracts/http-errors.ts";
+import { operationErrors } from "@rpg-engine/api-schema/http-errors";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import { parse } from "yaml";
@@ -23,7 +23,7 @@ type Operation = {
   parameters?: { name: string; schema: Schema }[];
 };
 const document = parse(
-  readFileSync(new URL("../openapi/openapi.yaml", import.meta.url), "utf8"),
+  readFileSync(new URL(import.meta.resolve("@rpg-engine/api-schema/openapi.yaml")), "utf8"),
 ) as {
   components: { schemas: Record<string, Schema>; parameters: Record<string, { schema: Schema }> };
   paths: Record<string, Record<string, Operation>>;

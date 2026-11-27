@@ -11,6 +11,7 @@ WORKDIR /workspace
 
 # Manifests only, so the dependency layer stays cached while source changes.
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=node:node packages/api-schema/package.json packages/api-schema/package.json
 COPY --chown=node:node packages/backend/package.json packages/backend/package.json
 COPY --chown=node:node packages/frontend/package.json packages/frontend/package.json
 COPY --chown=node:node packages/tests/package.json packages/tests/package.json

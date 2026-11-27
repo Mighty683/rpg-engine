@@ -1,14 +1,10 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 /** Deterministic display records, not production random-number generation. */
-import type {
-  CreateThrowInput,
-  SetupDice,
-  SideOutcomeJson,
-  ThrowRecord,
-} from "../../src/modules/game-table/types";
+import type { SideOutcomeJson, ThrowRecord } from "../../src/modules/game-table/types";
 import { makeThrow } from "../domain/fixtures";
 import { prototypeStore } from "./store";
 
-function outcome(dice: SetupDice[], modifier: number): SideOutcomeJson {
+function outcome(dice: ApiSchema["ResolvedDie"][], modifier: number): SideOutcomeJson {
   const resolved = dice.map((die) => ({ ...die, face: Math.min(6, die.size) }));
   return {
     dice: resolved,
@@ -18,12 +14,12 @@ function outcome(dice: SetupDice[], modifier: number): SideOutcomeJson {
   };
 }
 
-export function createPrototypeThrow(input: CreateThrowInput): ThrowRecord {
+export function createPrototypeThrow(input: ApiSchema["CreateThrow"]): ThrowRecord {
   const setup = input.setup;
   if (setup.type === "npc-attribute" || setup.type === "npc-attack")
     throw new Error("NPC-specific rolls are not supported by the prototype mock");
   const character = prototypeStore.characters.find((entry) => entry.id === setup.characterId);
-  const dice: SetupDice[] =
+  const dice: ApiSchema["ResolvedDie"][] =
     setup.type === "attribute"
       ? setup.attributes.map((attribute) => ({
           label: attribute!,

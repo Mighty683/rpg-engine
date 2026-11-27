@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "4.12.0",
+    "@rpg-engine/api-schema": "workspace:*",
     "@tanstack/vue-query": "^5.106.0",
     "tailwindcss": "4.3.4",
     "vee-validate": "^4.15.1",

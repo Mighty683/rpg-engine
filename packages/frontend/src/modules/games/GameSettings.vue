@@ -72,10 +72,10 @@ function create(kind: "game" | "character") {
   }
   void perform(
     () =>
-      invitationApi.createGameInvitation(props.gameId, {
-        kind,
-        ...(kind === "character" ? { characterId: selectedCharacterId.value } : {}),
-      }),
+      invitationApi.createGameInvitation(
+        props.gameId,
+        kind === "character" ? { kind, characterId: selectedCharacterId.value } : { kind },
+      ),
     tr("ui.invitationCreated"),
   );
 }

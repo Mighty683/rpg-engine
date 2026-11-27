@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { ClassModifierStat } from "../../shared/fabula/classModifiers";
 import type { Sheet } from "../characters/sheet/types";
 import type { PartyCharacter } from "../game-table/types";
@@ -45,9 +46,5 @@ export interface SourcedBenefit extends ProgressionBenefit {
   total: number;
 }
 
-export type ManagedProgression = {
-  experience: ProgressionExperience;
-  classLevels: { gameClassId: string; level: number }[];
-  skillRanks: { skillId: string; rank: number }[];
-};
+export type ManagedProgression = ApiSchema["Progression"];
 export type ManagedAbilities = Pick<ProgressionCharacter, "experience" | "levels" | "ranks">;

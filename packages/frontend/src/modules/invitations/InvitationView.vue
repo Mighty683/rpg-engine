@@ -72,7 +72,7 @@ async function accept() {
       <UButton to="/" color="neutral" variant="outline">{{ tr("ui.myGames") }}</UButton>
     </template>
     <template v-else-if="invitation">
-      <p v-if="isCharacter">
+      <p v-if="invitation.kind === 'character'">
         {{ tr("ui.youHaveBeenInvitedToControl") }} <strong>{{ invitation.characterName }}</strong>
         {{ tr("ui.in") }} <strong>{{ invitation.gameName }}</strong
         >.

@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { ClassBenefit } from "../class-catalog/types.ts";
 import type { FabulaPreview } from "../fabula/types.ts";
 import type { GameActor, GameAccess } from "../games/types.ts";
@@ -5,14 +6,9 @@ import type { Attribute, FabulaSheet, SheetChanges } from "../fabula/types.ts";
 import type { characterEquipment } from "../../database/schema.ts";
 
 export type CreateCharacterInput = { id: string; name: string };
-type Experience = { current: number; total: number };
-export type ClassLevel = { gameClassId: string; level: number };
-export type SkillRank = { skillId: string; rank: number };
-export type Progression = {
-  experience: Experience;
-  classLevels: ClassLevel[];
-  skillRanks: SkillRank[];
-};
+export type ClassLevel = ApiSchema["ClassLevels"][number];
+export type SkillRank = ApiSchema["SkillRanks"][number];
+export type Progression = ApiSchema["Progression"];
 export type CharacterChanges = SheetChanges & { progression?: Partial<Progression> };
 export type UpdateCharacterInput = { expectedRevision: number; changes: CharacterChanges };
 export type ManagedClass = ClassLevel & {
@@ -39,16 +35,7 @@ export type EquipmentInsert = typeof characterEquipment.$inferInsert;
 
 export type CharacterContext = { actor: GameActor; gameId: string; access: GameAccess };
 
-type CharacterSummary = {
-  id: string;
-  name: string;
-  level: number;
-  controllerMembershipId: string | null;
-  controllerName: string | null;
-  canEdit: boolean;
-  active: boolean;
-  createdAt: string;
-};
+type CharacterSummary = ApiSchema["CharacterSummary"];
 export type CharacterRecord = {
   id: string;
   playerId: string | null;

@@ -10,7 +10,7 @@ import { projectDefenses } from "../../src/modules/characters/sheet/defense/mode
 const timestamp = "2026-01-01T00:00:00Z";
 
 function seedCharacter(id: string, name: string, caster: boolean): Character {
-  const sheet: Sheet = {
+  const sheet: Character["sheet"] = {
     name,
     theme: caster ? "Discovery" : "Duty",
     level: 5,
@@ -57,7 +57,25 @@ function seedCharacter(id: string, name: string, caster: boolean): Character {
     updatedAt: timestamp,
     revision: 1,
     sheet,
-    derived: {},
+    canEdit: true,
+    derived: preview(sheet),
+  };
+}
+
+function maxima(sheet: Pick<Sheet, "overrides" | "level" | "baseDice">) {
+  return {
+    hp: sheet.overrides.maxHp ?? sheet.level + sheet.baseDice.MIG * 5,
+    mp: sheet.overrides.maxMp ?? sheet.level + sheet.baseDice.WLP * 5,
+    ip: sheet.overrides.maxIp ?? 6,
+  };
+}
+
+function preview(sheet: Character["sheet"]): Character["derived"] {
+  return {
+    coverage: "partial",
+    currentDice: sheet.baseDice,
+    maxima: maxima(sheet),
+    defenses: projectDefenses(sheet),
   };
 }
 
@@ -95,11 +113,7 @@ export function projectParty(character: Character): PartyCharacter {
     classes: sheet.classes.map((entry) => entry.name),
     baseDice: sheet.baseDice,
     resources: sheet.resources,
-    maxima: {
-      hp: sheet.overrides.maxHp ?? sheet.level + sheet.baseDice.MIG * 5,
-      mp: sheet.overrides.maxMp ?? sheet.level + sheet.baseDice.WLP * 5,
-      ip: sheet.overrides.maxIp ?? 6,
-    },
+    maxima: maxima(sheet),
     defense: sheet.overrides.defense ?? projectDefenses(sheet).defense.calculated,
     magicDefense: sheet.overrides.magicDefense ?? projectDefenses(sheet).magicDefense.calculated,
     canRoll: true,
@@ -125,15 +139,11 @@ export function projectParty(character: Character): PartyCharacter {
 }
 
 export function projectCharacter(character: Character): Character {
-  const party = projectParty(character);
-  const sheet = character.sheet as Sheet;
+  const sheet = character.sheet;
   return {
     ...character,
     name: sheet.name,
     level: sheet.level,
-    derived: {
-      maxima: party.maxima,
-      defenses: projectDefenses(sheet),
-    },
+    derived: preview(sheet),
   };
 }

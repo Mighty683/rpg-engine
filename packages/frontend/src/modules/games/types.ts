@@ -1,22 +1,10 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 export type ApiError = { fields?: Record<string, string>; message?: string };
 
-export type System = { id: string; name: string };
+export type System = ApiSchema["System"];
 
-export type Game = {
-  id: string;
-  name: string;
-  system: System;
-  createdAt: string;
-  role: "GM" | "Player";
-};
+export type Game = ApiSchema["Game"];
 
-export type GameMember = {
-  id: string;
-  accountId: string;
-  name: string;
-  removed: boolean;
-  activeCharacterId: string | null;
-  revision: number;
-};
+export type GameMember = ApiSchema["Member"];
 
 export type GameChangeHint = { type?: string; characterId?: string };

@@ -1,4 +1,4 @@
-import { errorReason, operationErrors } from "../../../contracts/http-errors.ts";
+import { errorReason, operationErrors } from "@rpg-engine/api-schema/http-errors";
 import { tr } from "./i18n";
 
 /** Decode within the operation that failed. Unknown responses get local fallback copy. */

@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 /** Contracts for the NPC table composition and its prototype-only endpoints. */
 import type { Attribute } from "../game-table/types";
 import type { Tag } from "../../shared/types";
@@ -37,7 +38,7 @@ export type Npc = {
   relationship?: NpcRelationship;
   level: number;
   visibility?: NpcVisibility;
-  baseDice: { DEX: number; INS: number; MIG: number; WLP: number };
+  baseDice: NpcWrite["baseDice"];
   hp: { current: number; max: number };
   mp: { current: number; max: number };
   crisis: number;
@@ -54,34 +55,6 @@ export type Npc = {
   notes: string;
 };
 
-type NpcAttackRecord = {
-  id: string;
-  name: string;
-  reach: "melee" | "ranged";
-  attributes: [Attribute, Attribute];
-  damageBonus: number;
-  damageType: string;
-};
-type NpcProfile = {
-  name: string;
-  relationship: "enemy" | "neutral" | "friend";
-  level: number;
-  baseDice: Record<Attribute, number>;
-  hp: { current: number; max: number };
-  mp: { current: number; max: number };
-  defense: number;
-  magicDefense: number;
-  attacks: NpcAttackRecord[];
-};
-export type NpcWrite = NpcProfile & { visibility: "hidden" | "visible" | "known"; notes: string };
-export type GmNpc = NpcWrite & {
-  view: "gm";
-  id: string;
-  revision: number;
-  createdAt: string;
-  updatedAt: string;
-};
-export type NpcRead =
-  | GmNpc
-  | ({ view: "known"; id: string } & NpcProfile)
-  | { view: "visible"; id: string; name: string; relationship: NpcProfile["relationship"] };
+export type NpcWrite = ApiSchema["NpcWrite"];
+export type GmNpc = ApiSchema["NpcGm"];
+export type NpcRead = ApiSchema["Npc"];

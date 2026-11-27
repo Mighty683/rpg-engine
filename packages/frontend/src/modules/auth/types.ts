@@ -1,1 +1,2 @@
-export type Account = { id: string; username: string };
+import type { ApiSchema } from "@rpg-engine/api-schema";
+export type Account = ApiSchema["Account"];

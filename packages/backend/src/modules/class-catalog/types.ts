@@ -1,56 +1,17 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { Database } from "../../database/types.ts";
 import type { GameEventPublisher } from "../events/types.ts";
 import type { GameAccessFactory, GameActor } from "../games/types.ts";
 
-export type ClassModifierStat =
-  | "maxHp"
-  | "maxMp"
-  | "maxIp"
-  | "defense"
-  | "magicDefense"
-  | "dieDex"
-  | "dieIns"
-  | "dieMig"
-  | "dieWlp";
-export type ClassBenefit =
-  | { id: string; name: string; kind: "text"; description: string }
-  | {
-      id: string;
-      name: string;
-      kind: "modifier";
-      description?: string;
-      stat: ClassModifierStat;
-      amount: number;
-      perRank?: boolean;
-    };
-export type ClassSkill = {
-  id: string;
-  name: string;
-  description: string;
-  maxRank: number;
-  benefits: ClassBenefit[];
-};
-export type ClassDefinition = {
-  name: string;
-  description: string;
-  freeBenefits: ClassBenefit[];
-  skills: ClassSkill[];
-};
-export type StoredClass = {
-  id: string;
-  systemId: "fabula-ultima";
-  revision: number;
-  definition: ClassDefinition;
-};
-export type CreateTemplate = Omit<StoredClass, "revision">;
-export type UpdateTemplate = { expectedRevision: number; definition: ClassDefinition };
-export type CopyClass = { id: string; templateId: string; expectedTemplateRevision: number };
-export type SaveClassToLibrary = {
-  expectedRevision: number;
-  target:
-    | { mode: "new"; id: string; name: string }
-    | { mode: "update"; templateId: string; expectedTemplateRevision: number };
-};
+export type ClassModifierStat = ApiSchema["ModifierStat"];
+export type ClassBenefit = ApiSchema["Benefit"];
+export type ClassSkill = ApiSchema["ClassSkill"];
+export type ClassDefinition = ApiSchema["ClassDefinition"];
+export type StoredClass = ApiSchema["StoredClass"];
+export type CreateTemplate = ApiSchema["CreateTemplate"];
+export type UpdateTemplate = ApiSchema["UpdateTemplate"];
+export type CopyClass = ApiSchema["CopyClass"];
+export type SaveClassToLibrary = ApiSchema["SaveClassToLibrary"];
 type ClassCreateResult = { record: StoredClass; created: boolean };
 export type CatalogDependencies = {
   database: Database;
@@ -71,12 +32,9 @@ export interface ClassCatalogService {
   ): Promise<ClassCreateResult>;
 }
 
-export type SkillRemovalImpact = {
-  skillId: string;
-  characters: { id: string; name: string; rank: number }[];
-};
-export type UpdateGameClass = UpdateTemplate & { confirmedSkillRemovals?: SkillRemovalImpact[] };
-export type DeleteGameClass = Pick<UpdateTemplate, "expectedRevision">;
+export type SkillRemovalImpact = ApiSchema["SkillRemovalImpact"][number];
+export type UpdateGameClass = ApiSchema["UpdateGameClass"];
+export type DeleteGameClass = ApiSchema["DeleteGameClass"];
 export interface GameClassEdits {
   updateGameClass(
     actor: GameActor,

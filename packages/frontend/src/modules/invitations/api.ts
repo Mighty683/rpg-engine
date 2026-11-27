@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { GameInvitation, InvitationPreview } from "./types";
 import { publicRequest, request as apiRequest } from "../../shared/api";
 
@@ -16,10 +17,7 @@ function request<T>(token: string, accept?: { makeActive: boolean }): Promise<T>
 export const invitationApi = {
   listGameInvitations: (gameId: string) =>
     apiRequest<{ invitations: GameInvitation[] }>(`/api/games/${gameId}/invitations`),
-  createGameInvitation: (
-    gameId: string,
-    input: { kind: "game" | "character"; characterId?: string },
-  ) =>
+  createGameInvitation: (gameId: string, input: ApiSchema["CreateInvitation"]) =>
     apiRequest<{ invitation: GameInvitation }>(`/api/games/${gameId}/invitations`, {
       method: "POST",
       body: JSON.stringify(input),

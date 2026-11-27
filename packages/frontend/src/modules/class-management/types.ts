@@ -1,4 +1,4 @@
-import type { ClassModifierStat } from "../../shared/fabula/classModifiers";
+import type { ApiSchema } from "@rpg-engine/api-schema";
 
 /** A descriptive or modifier benefit in a class or skill draft. */
 export interface BenefitDraft {
@@ -38,10 +38,7 @@ export type ClassCatalogChange =
   | { kind: "put"; scope: "library" | "game"; entry: ClassDefinition }
   | { kind: "copy"; from: string; id: string };
 
-export type RemovalImpact = {
-  skillId: string;
-  characters: { id: string; name: string; rank: number }[];
-}[];
+export type RemovalImpact = ApiSchema["SkillRemovalImpact"];
 export type SaveLibraryChoice =
   | { mode: "new"; id: string; name: string }
   | { mode: "update"; templateId: string };
@@ -58,27 +55,8 @@ export interface ClassCatalogApi {
   saveToLibrary(base: ClassCatalog, id: string, choice: SaveLibraryChoice): Promise<ClassCatalog>;
 }
 
-type BenefitIdentity = { id: string; name: string };
-export type Benefit =
-  | (BenefitIdentity & { kind: "text"; description: string })
-  | (BenefitIdentity & {
-      kind: "modifier";
-      description?: string;
-      stat: ClassModifierStat;
-      amount: number;
-      perRank?: boolean;
-    });
-type Definition = {
-  name: string;
-  description: string;
-  freeBenefits: Benefit[];
-  skills: { id: string; name: string; description: string; maxRank: number; benefits: Benefit[] }[];
-};
-export type StoredClass = {
-  id: string;
-  revision: number;
-  systemId: "fabula-ultima";
-  definition: Definition;
-};
+export type Benefit = ApiSchema["Benefit"];
+
+export type StoredClass = ApiSchema["StoredClass"];
 
 export type CatalogRequest = <T>(path: string, method?: string, body?: unknown) => Promise<T>;

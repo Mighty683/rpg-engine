@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { Database } from "../../database/types.ts";
 import type { GameAccessFactory, GameActor } from "../games/types.ts";
 
@@ -9,41 +10,17 @@ import type { GameAccessFactory, GameActor } from "../games/types.ts";
  * payloads stay out of events, projections, and logs.
  */
 
-/** Inline formatting applied to text runs. Value is always the literal `true`. */
-type NoteInlineAttributes = {
-  bold?: true;
-  italic?: true;
-  underline?: true;
-  strike?: true;
-};
-
-/** Block formatting applied to the line ending at the op's terminal newline. */
-type NoteBlockAttributes = {
-  header?: 1 | 2 | 3;
-  list?: "bullet" | "ordered";
-};
-
-export type NoteAttributes = NoteInlineAttributes & NoteBlockAttributes;
+export type NoteAttributes = NonNullable<ApiSchema["NoteInsert"]["attributes"]>;
 
 /** One document insert. Attribute placement is validated during normalization. */
-export type NoteInsertOp = { insert: string; attributes?: NoteAttributes };
+export type NoteInsertOp = ApiSchema["NoteInsert"];
 
 /** Canonical, fully-normalized Quill document Delta as stored in the database. */
-export type NoteDocument = { ops: NoteInsertOp[] };
+export type NoteDocument = ApiSchema["NoteContent"];
 
-export type GameNoteEntryRecord = {
-  id: string;
-  title: string;
-  content: NoteDocument;
-  createdAt: string;
-  updatedAt: string;
-  revision: number;
-};
+export type GameNoteEntryRecord = ApiSchema["NoteEntry"];
 
-type GameNotePage = {
-  entries: GameNoteEntryRecord[];
-  nextCursor: string | null;
-};
+type GameNotePage = ApiSchema["NotePage"];
 
 /** Opaque cursor scope: paging is bound to one game and one trimmed query. */
 export type NotePageScope = { gameId: string; queryHash: string };
@@ -51,21 +28,9 @@ export type NotePageScope = { gameId: string; queryHash: string };
 /** Keyset position in the (updatedAt DESC, id ASC) notebook ordering. */
 export type NotePagePosition = { micros: string; id: string };
 
-export type CreateGameNoteInput = {
-  id: string;
-  title: string;
-  content: NoteDocument;
-};
+export type CreateGameNoteInput = ApiSchema["CreateNote"];
 
-type UpdateGameNoteChanges = {
-  title?: string;
-  content?: NoteDocument;
-};
-
-export type UpdateGameNoteInput = {
-  expectedRevision: number;
-  changes: UpdateGameNoteChanges;
-};
+export type UpdateGameNoteInput = ApiSchema["UpdateNote"];
 
 export type GameNotesService = {
   list(

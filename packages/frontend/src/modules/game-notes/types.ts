@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 /**
  * Game notes module types: the stored Quill document shape, the entry record,
  * and the game-scoped client contract implemented by the HTTP adapter and
@@ -5,42 +6,18 @@
  * the server-canonical normalized format from the backend game-notes module.
  */
 
-/** Inline formatting applied to text runs. Value is always the literal `true`. */
-type NoteInlineAttributes = {
-  bold?: true;
-  italic?: true;
-  underline?: true;
-  strike?: true;
-};
-
-/** Block formatting applied to the line ending at the op's terminal newline. */
-type NoteBlockAttributes = {
-  header?: 1 | 2 | 3;
-  list?: "bullet" | "ordered";
-};
-
-export type NoteAttributes = NoteInlineAttributes & NoteBlockAttributes;
-
-/** One document insert as stored by the server normalization. */
-type NoteInsertOp = { insert: string; attributes?: NoteAttributes };
+export type NoteAttributes = NonNullable<ApiSchema["NoteInsert"]["attributes"]>;
 
 /** Canonical, fully-normalized Quill document Delta. */
-export type NoteDocument = { ops: NoteInsertOp[] };
+export type NoteDocument = ApiSchema["NoteContent"];
 
-export type NoteEntry = {
-  id: string;
-  title: string;
-  content: NoteDocument;
-  createdAt: string;
-  updatedAt: string;
-  revision: number;
-};
+export type NoteEntry = ApiSchema["NoteEntry"];
 
-export type NotePage = { entries: NoteEntry[]; nextCursor: string | null };
+export type NotePage = ApiSchema["NotePage"];
 
-export type NoteEntryChanges = { title?: string; content?: NoteDocument };
+export type NoteEntryChanges = ApiSchema["UpdateNote"]["changes"];
 
-type NewNoteEntry = { id: string; title: string; content: NoteDocument };
+type NewNoteEntry = ApiSchema["CreateNote"];
 
 type NoteListQuery = { q?: string; cursor?: string; signal?: AbortSignal };
 
@@ -53,9 +30,5 @@ export type GameNotesClient = {
   list: (gameId: string, query?: NoteListQuery) => Promise<NotePage>;
   read: (gameId: string, entryId: string, signal?: AbortSignal) => Promise<NoteEntry>;
   create: (gameId: string, entry: NewNoteEntry) => Promise<NoteEntry>;
-  update: (
-    gameId: string,
-    entryId: string,
-    input: { expectedRevision: number; changes: NoteEntryChanges },
-  ) => Promise<NoteEntry>;
+  update: (gameId: string, entryId: string, input: ApiSchema["UpdateNote"]) => Promise<NoteEntry>;
 };

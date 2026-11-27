@@ -1,10 +1,11 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { Request } from "express";
 import type { ValidationFields } from "../../shared/validation/types.ts";
 
-export type CredentialsInput = { username: string; password: string };
+export type CredentialsInput = ApiSchema["Login"];
 export type CredentialsValidation = CredentialsInput & { fields: ValidationFields };
 
-type Account = { id: string; username: string };
+type Account = ApiSchema["Account"];
 export interface AuthService {
   requireActor(request: Request): Promise<Actor>;
   requireWriteOrigin(request: Request): void;

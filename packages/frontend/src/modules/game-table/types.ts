@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { Tag } from "../../shared/types";
 
 export type FreeDraft = {
@@ -22,19 +23,13 @@ export type RollDraft = {
   note: string;
 };
 
-export type Attribute = "DEX" | "INS" | "MIG" | "WLP";
+export type Attribute = ApiSchema["Attribute"];
 
 type Die = number;
 
-type ThrowKind =
-  | "attribute-check"
-  | "attribute-roll"
-  | "weapon-accuracy"
-  | "free"
-  | "opposed-check"
-  | "opposed-roll";
+type ThrowKind = ApiSchema["ThrowKind"];
 
-export type SetupDice = { label: string | null; size: number };
+type SetupDice = { label: string | null; size: number };
 
 type AttributeSetup = {
   type: "attribute";
@@ -131,33 +126,9 @@ type NpcResolvedSetup = {
 };
 type ResolvedSetup = CharacterResolvedSetup | NpcResolvedSetup;
 
-export type SideOutcomeJson = {
-  dice: { label: string | null; size: number; face: number }[];
-  modifier: number;
-  total: number;
-  result: "fumble" | "critical" | "ordinary" | "none";
-};
+export type SideOutcomeJson = ApiSchema["ThrowSide"];
 
-type OutcomeJson = {
-  first: SideOutcomeJson;
-  second?: SideOutcomeJson;
-  winner?: "first" | "second" | "tie";
-};
-
-export type ThrowRecord = {
-  id: string;
-  private: boolean;
-  createdAt: string;
-  kind: ThrowKind;
-  role: "GM" | "Player";
-  characterId: string | null;
-  characterName: string;
-  equipmentId: string | null;
-  equipmentName: string | null;
-  setup: ResolvedSetup;
-  outcome: OutcomeJson;
-  canRemove: boolean;
-};
+export type ThrowRecord = Omit<ApiSchema["Throw"], "setup"> & { setup: ResolvedSetup };
 
 export type PartyWeapon = {
   id: string;

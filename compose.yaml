@@ -37,6 +37,7 @@ services:
       # workspace-installed node_modules, built for the container's Node runtime.
       - .:/workspace
       - /workspace/node_modules
+      - /workspace/packages/api-schema/node_modules
       - /workspace/packages/backend/node_modules
       - /workspace/packages/frontend/node_modules
       - /workspace/packages/tests/node_modules

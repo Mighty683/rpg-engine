@@ -1,4 +1,4 @@
-import { errorCode, operationErrors } from "../../../../contracts/http-errors.ts";
+import { errorCode, operationErrors } from "@rpg-engine/api-schema/http-errors";
 
 /** Only structured, public error details cross the HTTP boundary. */
 export function wireError(method: string, path: string, body: unknown) {

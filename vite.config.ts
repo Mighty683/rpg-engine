@@ -1,9 +1,17 @@
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  fmt: { ignorePatterns: ["packages/frontend/prototypes/public/mockServiceWorker.js"] },
+  fmt: {
+    ignorePatterns: [
+      "packages/frontend/prototypes/public/mockServiceWorker.js",
+      "packages/api-schema/schema.d.ts",
+    ],
+  },
   lint: {
-    ignorePatterns: ["packages/frontend/prototypes/public/mockServiceWorker.js"],
+    ignorePatterns: [
+      "packages/frontend/prototypes/public/mockServiceWorker.js",
+      "packages/api-schema/schema.d.ts",
+    ],
     jsPlugins: [
       { name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
       { name: "sql-security", specifier: "./lint/sql-security.js" },

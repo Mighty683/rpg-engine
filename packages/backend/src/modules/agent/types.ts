@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { ObjectInputSchema } from "../../shared/validation/types.ts";
 import type { GameActor } from "../games/types.ts";
 import type { CharacterChanges, CharactersService, PartyCharacter } from "../characters/types.ts";
@@ -5,16 +6,8 @@ import type { NpcWrite, NpcRecord, NpcsService } from "../npcs/types.ts";
 import type { CreateThrowInput, ThrowRecord, ThrowsService } from "../throws/types.ts";
 import type { GameNotesRetrieval } from "../game-notes/types.ts";
 
-export type AgentToolName =
-  | "read_character"
-  | "read_npc"
-  | "read_throws"
-  | "search_notes"
-  | "get_notes"
-  | "prepare_throw"
-  | "prepare_character_edit"
-  | "prepare_npc_edit";
-export type AgentToolSummary = { tool: AgentToolName; label: string };
+export type AgentToolName = ApiSchema["AgentToolSummary"]["tool"];
+export type AgentToolSummary = ApiSchema["AgentToolSummary"];
 export type AgentAction =
   | { kind: "roll"; input: CreateThrowInput; targetLabel?: string }
   | {
@@ -29,7 +22,7 @@ export type AgentAction =
       expectedRevision: number;
       changes: Partial<Omit<NpcWrite, "visibility" | "attacks">>;
     };
-export type AgentTurnInput = { message: string };
+export type AgentTurnInput = ApiSchema["AgentTurnInput"];
 type AgentTurn = {
   id: string;
   reply: string;

@@ -21,7 +21,7 @@ flowchart TB
     end
 
     subgraph BE["packages/backend — Express 5, Node.js 26"]
-        Contracts["JSON Schema validation (Ajv)<br/>canonical OpenAPI 3.1, Swagger UI"]
+        Contracts["JSON Schema validation (Ajv)<br/>Swagger UI"]
         Modules["Domain modules<br/>auth, games, characters, class-catalog, npcs,<br/>throws, game-notes, invitations, fabula, agent"]
         SSE["Live events (SSE)<br/>heartbeats, per-account capacity"]
     end
@@ -38,8 +38,8 @@ flowchart TB
     Modules -->|"GM table agent: chat, retrieval"| Mistral
 ```
 
-- Monorepo (pnpm): `packages/frontend`, `packages/backend`, `packages/tests`
-- Backend: modular monolith, one folder per domain, JSON Schema + Ajv validation, canonical OpenAPI document, Drizzle migrations, SSE live events
+- API contract: edit [`packages/api-schema/openapi.yaml`](packages/api-schema/openapi.yaml), run `pnpm api:generate`, and commit the generated declarations. Backend and frontend import wire types from `@rpg-engine/api-schema`; `pnpm check` detects stale declarations.
+- Backend: modular monolith, one folder per domain, JSON Schema + Ajv validation, Drizzle migrations, SSE live events
 - Frontend: views (render only) / controllers (state, API), injected API services, prototypes with mock backend in `packages/frontend/prototypes`
 - Security: Helmet, session cookies, CSRF, origin checks, PostgreSQL-backed rate limits, one JSON error boundary with request IDs, graceful shutdown
 

@@ -56,6 +56,10 @@ function newNpc(): Npc {
   };
 }
 const form = ref<Npc>(newNpc());
+function setBaseDie(attribute: keyof Npc["baseDice"], value: string) {
+  const size = Number(value);
+  if (size === 6 || size === 8 || size === 10 || size === 12) form.value.baseDice[attribute] = size;
+}
 watch(
   () => props.npc?.id,
   () => {
@@ -226,7 +230,7 @@ onUnmounted(() => {
                 :label="attribute"
                 :help="attributeHelp[attribute]"
                 :disabled="readOnly || pending"
-                @update:model-value="form.baseDice[attribute] = Number($event)"
+                @update:model-value="setBaseDie(attribute, $event)"
               />
             </div>
           </SheetSection>

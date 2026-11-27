@@ -1,15 +1,9 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { DatabaseTransaction } from "../../database/types.ts";
 import type { Actor } from "../auth/types.ts";
 import type { GameAccess } from "../games/types.ts";
 
-type MemberRecord = {
-  id: string;
-  accountId: string;
-  name: string;
-  removed: boolean;
-  activeCharacterId: string | null;
-  revision: number;
-};
+type MemberRecord = ApiSchema["Member"];
 export interface MembershipsService {
   listMembers(actor: Actor, gameId: string): Promise<MemberRecord[]>;
   selectPlayerCharacter(
@@ -29,7 +23,7 @@ export interface MembershipsService {
 
 export type GameContext = { actor: Actor; gameId: string; access: GameAccess };
 
-export type ActiveCharacterInput = { expectedRevision: number; characterId: string | null };
+export type ActiveCharacterInput = ApiSchema["ActiveCharacterSelection"];
 
 export interface MembershipOwnership {
   find(gameId: string, id: string): Promise<MemberRecord | null>;

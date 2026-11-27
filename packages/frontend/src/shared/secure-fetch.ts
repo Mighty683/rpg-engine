@@ -1,5 +1,5 @@
 import { tr } from "./i18n";
-import { errorReason, operationErrors } from "../../../contracts/http-errors.ts";
+import { errorReason, operationErrors } from "@rpg-engine/api-schema/http-errors";
 let pendingToken: Promise<string> | undefined;
 
 async function csrfToken() {

@@ -1,5 +1,6 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { Sheet } from "../characters/sheet/types";
-import type { CreateThrowInput, ThrowRecord } from "../game-table/types";
+import type { CreateThrowInput } from "../game-table/types";
 import type { NpcWrite } from "../npcs/types";
 
 export type ChatMessage = {
@@ -8,14 +9,7 @@ export type ChatMessage = {
   text: string;
   roll?: HistoryTurn["roll"];
 };
-type AgentToolName =
-  | "read_character"
-  | "read_npc"
-  | "read_throws"
-  | "prepare_throw"
-  | "prepare_character_edit"
-  | "prepare_npc_edit";
-type AgentToolSummary = { tool: AgentToolName; label: string };
+type AgentToolSummary = ApiSchema["AgentToolSummary"];
 export type AgentAction =
   | { kind: "roll"; input: CreateThrowInput; targetLabel?: string }
   | {
@@ -39,17 +33,8 @@ export type AgentTurn = {
   tools: AgentToolSummary[];
   action?: AgentAction;
 };
-export type HistoryTurn = Omit<AgentTurn, "action"> & {
-  message: string;
-  author: string;
-  roll?: Pick<ThrowRecord, "characterName" | "equipmentName" | "private" | "outcome">;
-};
-export type AgentStatus = {
-  available: boolean;
-  busy: boolean;
-  nextBefore: string | null;
-  turns: HistoryTurn[];
-};
+export type HistoryTurn = ApiSchema["AgentStatus"]["turns"][number];
+export type AgentStatus = ApiSchema["AgentStatus"];
 
 export type AgentEditRequest = {
   gameId: string;

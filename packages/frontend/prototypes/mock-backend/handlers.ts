@@ -1,9 +1,8 @@
-import { operationErrors, errorCode } from "../../../contracts/http-errors.ts";
+import { operationErrors, errorCode } from "@rpg-engine/api-schema/http-errors";
 import { handleNotes } from "./notes";
 /** MSW HTTP boundary for offline prototypes, including production character clients. */
 import { delay, http, HttpResponse } from "msw";
-import type { Sheet } from "../../src/modules/characters/sheet/types";
-import type { CreateThrowInput } from "../../src/modules/game-table/types";
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import { createPrototypeThrow } from "./throws";
 import { projectCharacter, projectParty, prototypeStore as store } from "./store";
 
@@ -55,7 +54,7 @@ export const prototypeHandlers = [
       return HttpResponse.json({ characters: empty ? [] : store.characters.map(projectParty) });
     if (path.endsWith("/throws")) {
       if (method === "POST") {
-        const record = createPrototypeThrow(body as CreateThrowInput);
+        const record = createPrototypeThrow(body as ApiSchema["CreateThrow"]);
         store.throws.unshift(record);
         return HttpResponse.json({ throw: record }, { status: 201 });
       }
@@ -101,8 +100,8 @@ export const prototypeHandlers = [
           { error: { code: "ERR01" }, character: projectCharacter(character) },
           { status: 409 },
         );
-      const sheet = character.sheet as Sheet;
-      const changes = body.changes as Partial<Sheet>;
+      const sheet = character.sheet;
+      const changes = body.changes as Partial<ApiSchema["CharacterSheet"]>;
       character.sheet = {
         ...sheet,
         ...changes,

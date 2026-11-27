@@ -1,3 +1,4 @@
+import type { ApiSchema } from "@rpg-engine/api-schema";
 import type { Character, NamedEntry } from "../../src/modules/characters/sheet/types";
 import type { PartyCharacter, PartyWeapon, ThrowRecord } from "../../src/modules/game-table/types";
 import type { GameCharacterSummary } from "../../src/modules/characters/types";
@@ -103,14 +104,14 @@ export function makeThrow(
 ): ThrowRecord {
   const opposed = kind === "opposed-check";
   const weapon = kind === "weapon-accuracy";
-  const dice =
+  const dice: ApiSchema["ResolvedDie"][] =
     kind === "free"
       ? [{ label: null, size: 20 }]
       : [
           { label: "DEX", size: 8 },
           { label: "MIG", size: 10 },
         ];
-  const redDice = opposed
+  const redDice: ApiSchema["ResolvedDie"][] = opposed
     ? [
         { label: null, size: 8 },
         { label: null, size: 8 },
